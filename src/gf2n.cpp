@@ -6,7 +6,7 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
 {
   if (n == 4)
     this->prim_poly = 0x13;
-  if (n == 8)
+  else if (n == 8)
     this->prim_poly = 0x11d;
   else if (n == 16)
     this->prim_poly = 0x1100b;
@@ -104,5 +104,11 @@ T GF2N<T>::log(T a, T b)
 template <typename T>
 T GF2N<T>::weak_rand(void)
 {
-  return rand() % my_card;
+  T r;
+
+ retry:
+  r = rand() % my_card;
+  if (0 == r)
+    goto retry;
+  return r;
 }

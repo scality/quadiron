@@ -1,7 +1,7 @@
 
 AR = ar cq
 
-CXXFLAGS = -std=c++11
+CXXFLAGS = -std=c++11 -g
 
 OBJS = gf.o gfp.o gf2n.o vec.o mat.o
 

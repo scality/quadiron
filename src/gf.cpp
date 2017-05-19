@@ -61,5 +61,5 @@ T GF<T>::generic_trial_mult_log(GF *gf, T a, T b)
   }
 
   //not found
-  throw NTLEX_NOT_FOUND;
+  throw NTL_EX_NOT_FOUND;
 }

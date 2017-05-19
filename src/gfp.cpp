@@ -62,5 +62,11 @@ T GFP<T>::log(T a, T b)
 template <typename T>
 T GFP<T>::weak_rand(void)
 {
-  return rand() % this->p;
+  T r;
+
+ retry:
+  r = rand() % this->p;
+  if (0 == r)
+    goto retry;
+  return r;
 }

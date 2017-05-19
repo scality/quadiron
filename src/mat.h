@@ -20,10 +20,15 @@ class Mat
   Mat(GF<T> *gf, int n_rows, int n_cols);
   void zero(void);
   void inv(void);
-  void mult(Vec<T> *output, Mat<T> *a, Mat<T> *b);
-  void vandermonde();
-  void vandermonde_transformed();
-  void cauchy();
+  void mult(Vec<T> *output, Mat<T> *a, Vec<T> *b);
+  void vandermonde(void);
+  void vandermonde_suitable_for_ec(void);
+  void cauchy(void);
+  void dump(void);
+ private:
+  void ec_transform1(Mat<T> *tmp, int i);
+  void ec_transform2(Mat<T> *tmp, int i, int j);
+  bool row_is_identity(Mat<T> *tmp, int row);
 };
 
 #endif

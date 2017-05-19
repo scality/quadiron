@@ -8,7 +8,6 @@ class Vec
  public:
   GF<T> *gf;
   int n;
-  T n_cols;
   T *mem;
 #define VEC_ITEM(vec, i) ((vec)->mem[(i)])
   Vec(GF<T> *gf, int n);

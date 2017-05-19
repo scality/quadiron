@@ -15,7 +15,7 @@
 
 typedef enum
   {
-    NTLEX_NOT_FOUND,
+    NTL_EX_NOT_FOUND,
   } NtlException;
 
 template<typename Type> struct Double {};
