@@ -1,5 +1,5 @@
 
-#include "main.h"
+#include "ntl.h"
 
 template <typename T>
 GF2N<T>::GF2N(T n) : GF<T>(2, n)
@@ -106,5 +106,3 @@ T GF2N<T>::weak_rand(void)
 {
   return rand() % my_card;
 }
-
-template class GF2N<uint32_t>;

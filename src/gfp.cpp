@@ -1,5 +1,5 @@
 
-#include "main.h"
+#include "ntl.h"
 
 template <typename T>
 GFP<T>::GFP(T p) : GF<T>(p, 1)
@@ -64,5 +64,3 @@ T GFP<T>::weak_rand(void)
 {
   return rand() % this->p;
 }
-
-template class GFP<uint32_t>;

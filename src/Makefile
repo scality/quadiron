@@ -1,12 +1,17 @@
 
+AR = ar cq
+
 CXXFLAGS = -std=c++11
 
-OBJS = main.o gf.o gfp.o gf2n.o
+OBJS = gf.o gfp.o gf2n.o vec.o mat.o
 
-all: main
+LIBNTL = libntl.a
 
-main: $(OBJS)
-	$(CXX) -o main $(OBJS)
+all: $(LIBNTL)
+
+$(LIBNTL): $(OBJS)
+	rm -f $(LIBNTL)
+	$(AR) $(LIBNTL) $(OBJS)
 
 clean:
-	$(RM) $(OBJS) main
+	$(RM) $(OBJS) $(LIBNTL)
