@@ -1,0 +1,11 @@
+compile:
+  override:
+    - cd src; make
+    - cd test; make
+    - cd ec; make
+
+test:
+  override:
+    - cd test; ./tests
+    - cd ec; ./test.sh
+    - cd ec; ./test.sh -s
