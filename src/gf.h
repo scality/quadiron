@@ -14,15 +14,15 @@ class GF
   T generic_trial_mult_log(GF *gf, T a, T b);
 
  public:
-  virtual T card(void) {};
-  virtual T add(T a, T b) {};
-  virtual T sub(T a, T b) {};
-  virtual T mul(T a, T b) {};
-  virtual T div(T a, T b) {};
-  virtual T pow(T a, T b) {};
-  virtual T log(T a, T b) {};
-  virtual T inv(T a) {};
-  virtual T weak_rand(void) {};
+  virtual T card(void) = 0;
+  virtual T add(T a, T b) = 0;
+  virtual T sub(T a, T b) = 0;
+  virtual T mul(T a, T b) = 0;
+  virtual T div(T a, T b) = 0;
+  virtual T pow(T a, T b) = 0;
+  virtual T log(T a, T b) = 0;
+  virtual T inv(T a) = 0;
+  virtual T weak_rand(void) = 0;
 };
 
 extern void gf_utest();
