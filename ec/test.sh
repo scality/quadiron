@@ -30,7 +30,8 @@ do_test()
         dd if=/dev/urandom of=foo.d${i} bs=1M count=1 > /dev/null 2>&1
         md5sum foo.d${i} > foo.d${i}.md5sum.1
     done
-    
+
+    echo "coding generation"
     ${valgrind} ${bin} -e ${gf_type} -n ${n_data} -m ${n_coding} -p foo -c ${extraopts} ${vflag}
     checkfail "coding generation"
 
@@ -49,6 +50,7 @@ do_test()
         rm foo.c${i}
     done
 
+    echo "repairing"
     ${valgrind} ${bin} -e ${gf_type} -n ${n_data} -m ${n_coding} -p foo -r ${extraopts} ${vflag}
     checkfail "repairing"
 
@@ -69,6 +71,7 @@ do_test()
 
 do_test ./ec 8 3 3 "0 1" "0" $*
 do_test ./ec 16 3 3 "0 1" "0" $*
+#do_test ./ec 65537 3 3 "0 1" "0" $*
  
 do_test ./ec 8 3 3 "1 2" "2" $*
 do_test ./ec 16 3 3 "1 2" "2" $*

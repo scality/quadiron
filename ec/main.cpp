@@ -117,24 +117,30 @@ class EC
     char filename[1024];
     struct stat stbuf;
     size_t size = -1, wc;
-    
     FILE *d_files[mat->n_cols];
     FILE *c_files[mat->n_rows];
     
+    memset(d_files, 0, sizeof (d_files));
+    memset(c_files, 0, sizeof (c_files));
+
     for (i = 0;i < mat->n_cols;i++) {
       snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
+      if (vflag)
+        std::cerr << "create: opening data " << filename << "\n";
       if (NULL == (d_files[i] = fopen(filename, "r")))
         xerrormsg("error opening", filename);
       if (-1 == fstat(fileno(d_files[i]), &stbuf))
         xerrormsg("error stating", filename);
       if (-1 == size)
-        size = stbuf.st_size;
+        size = stbuf.st_size; 
       else if (size != stbuf.st_size)
         xmsg("bad size", filename);
     }
     
     for (i = 0;i < mat->n_rows;i++) {
       snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
+      if (vflag)
+        std::cerr<< "create: opening coding for writing " << filename << "\n";
       if (NULL == (c_files[i] = fopen(filename, "w")))
         xerrormsg("error opening", filename);
     }
@@ -179,10 +185,13 @@ class EC
     u_int n_data_ok = 0;
     u_int n_coding_ok = 0;
     u_int n_total_ok;
-    
     FILE *d_files[mat->n_cols];
     FILE *r_files[mat->n_cols];
     FILE *c_files[mat->n_rows];
+
+    memset(d_files, 0, sizeof (d_files));
+    memset(r_files, 0, sizeof (r_files));
+    memset(c_files, 0, sizeof (c_files));
     
 #define CLEANUP()                               \
     for (i = 0;i < mat->n_cols;i++) {           \
@@ -198,9 +207,11 @@ class EC
     
     for (i = 0;i < mat->n_cols;i++) {
       snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
+      if (vflag)
+        std::cerr << "repair: stating data " << filename << "\n";
       if (-1 == access(filename, F_OK)) {
         if (vflag)
-          fprintf(stderr, "%s is missing\n", filename);
+          std::cerr << filename << " is missing\n";
         d_files[i] = NULL;
         if (NULL == (r_files[i] = fopen(filename, "w")))
           xerrormsg("error opening", filename);
@@ -220,9 +231,11 @@ class EC
     
     for (i = 0;i < mat->n_rows;i++) {
       snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
+      if (vflag)
+        std::cerr << "repair: stating coding " << filename << "\n";
       if (access(filename, F_OK)) {
         if (vflag)
-          fprintf(stderr, "%s is missing\n", filename);
+          std::cerr << filename << " is missing\n";
         c_files[i] = NULL;
       } else {
         if (NULL == (c_files[i] = fopen(filename, "r")))
@@ -236,8 +249,8 @@ class EC
       return 0;
     }
     
-    if (n_coding_ok < (mat->n_cols-n_data_ok)) {
-      fprintf(stderr, "too many losses\n");
+    if (n_coding_ok < (mat->n_cols - n_data_ok)) {
+      std::cerr << "too many losses\n";
       CLEANUP();
       return -1;
     }
@@ -245,7 +258,7 @@ class EC
     n_total_ok = n_data_ok + n_coding_ok;
     
     if (vflag)
-      fprintf(stderr, "n_data_ok=%d n_coding_ok=%d\n", n_data_ok, n_coding_ok);
+      std::cerr << "n_data_ok=" << n_data_ok << " n_coding_ok=" << n_coding_ok << "\n";
     
     //generate a_prime
     Mat<T> a_prime(gf, n_total_ok, mat->n_cols);
@@ -278,7 +291,7 @@ class EC
     }
     
     if (vflag) {
-      fprintf(stderr, "rebuild matrix:\n");
+      std::cerr << "rebuild matrix:\n";
       a_prime.dump();
     }
     
@@ -321,7 +334,8 @@ class EC
         }
       }
     } 
-    
+
+    CLEANUP();
     return 0;
   }
 
