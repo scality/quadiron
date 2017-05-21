@@ -10,10 +10,10 @@ Vec<T>::Vec(GF<T> *gf, int n)
 }
 
 template <typename T>
-void Vec<T>::zero(void)
+void Vec<T>::zero_fill(void)
 {
   int i;
 
   for (i = 0;i < n;i++)
-    VEC_ITEM(this, i) = 0;
+    VEC_ITEM(this, i) = gf->zero();
 }

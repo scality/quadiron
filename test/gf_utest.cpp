@@ -45,6 +45,14 @@ void gf_utest2(GF<uint32_t> *gf)
   }
 }
 
+void gf_utest3()
+{
+  GFP<uint32_t> gf29(29);
+
+  assert(gf29.sub(gf29.zero(), 18) == 11);
+  assert(gf29.sub(gf29.zero(), 4) == 25);
+}
+
 void gf_utest()
 {
   srand(time(0));
@@ -56,4 +64,6 @@ void gf_utest()
   //std::cout << "gf256\n";
   gf_utest1(&gf256);
   gf_utest2(&gf256);
+
+  gf_utest3();
 }

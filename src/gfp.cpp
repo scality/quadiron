@@ -15,6 +15,31 @@ T GFP<T>::card(void)
 }
 
 template <typename T>
+T GFP<T>::zero(void)
+{
+  return 0;
+}
+
+template <typename T>
+T GFP<T>::one(void)
+{
+  return 1;
+}
+
+template <typename T>
+T GFP<T>::check(T a)
+{
+  assert(a >= 0 && a < this->p);
+  return a;
+}
+
+template <typename T>
+bool GFP<T>::eq(T a, T b)
+{
+  return a == b;
+}
+
+template <typename T>
 T GFP<T>::add(T a, T b)
 {
   return sub(a, this->p - b);
@@ -23,8 +48,10 @@ T GFP<T>::add(T a, T b)
 template <typename T>
 T GFP<T>::sub(T a, T b)
 {
-  T r = a - b;
-  return r + (r > b) * this->p;
+  if (a >= b)
+    return a - b;
+  else
+    return this->p - (b - a);
 }
 
 template <typename T>
@@ -66,7 +93,7 @@ T GFP<T>::weak_rand(void)
 
  retry:
   r = rand() % this->p;
-  if (0 == r)
+  if (zero() == r)
     goto retry;
   return r;
 }

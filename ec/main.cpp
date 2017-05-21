@@ -149,7 +149,7 @@ class EC
     Vec<T> output = Vec<T>(mat->gf, mat->n_cols);
     
     for (i = 0;i < sizew(size);i++) {
-      words.zero();
+      words.zero_fill();
       for (j = 0;j < mat->n_cols;j++) {
         wc = freadw(&VEC_ITEM(&words, j), d_files[j]);
         if (1 != wc)
@@ -302,7 +302,7 @@ class EC
     Vec<T> output(mat->gf, mat->n_cols);
     
     for (i = 0;i < sizew(size);i++) {
-      words.zero();
+      words.zero_fill();
       k = 0;
       for (j = 0;j < mat->n_cols;j++) {
         if (NULL != d_files[j]) {

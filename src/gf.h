@@ -15,6 +15,10 @@ class GF
 
  public:
   virtual T card(void) = 0;
+  virtual T zero(void) = 0;
+  virtual T one(void) = 0;
+  virtual T check(T a) = 0;
+  virtual bool eq(T a, T b) = 0;
   virtual T add(T a, T b) = 0;
   virtual T sub(T a, T b) = 0;
   virtual T mul(T a, T b) = 0;

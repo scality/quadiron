@@ -36,10 +36,10 @@ T GF<T>::generic_pow(GF *gf, T a, T b)
   T r;
   int i;
 
-  if (0 == b)
-    return 1;
+  if (gf->zero() == b)
+    return gf->one();
 
-  if (1 == b)
+  if (gf->one() == b)
     return a;
 
   r = a;
@@ -55,7 +55,7 @@ T GF<T>::generic_trial_mult_log(GF *gf, T a, T b)
 {
   T r;
 
-  for (r = 1;r < card();r++) {
+  for (r = gf->one();r < card();r++) {
     if (gf->pow(a, r) == b)
       return r;
   }
