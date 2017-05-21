@@ -14,6 +14,8 @@ template class Vec<uint32_t>;
 
 void mat_utest1()
 {
+  std::cout << "mat_utest1\n";
+
   GFP<uint32_t> gf11(11);
   Mat<uint32_t> mat(&gf11, 3, 3);
 
@@ -42,6 +44,8 @@ void mat_utest1()
 
 void mat_utest2()
 {
+  std::cout << "mat_utest2\n";
+
   GFP<uint32_t> gf29(29);
   Mat<uint32_t> mat(&gf29, 3, 3);
 
@@ -70,6 +74,8 @@ void mat_utest2()
 
 void mat_utest()
 {
+  std::cout << "mat_utest\n";
+
   mat_utest1();
   mat_utest2();
 }
