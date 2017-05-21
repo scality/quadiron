@@ -168,7 +168,7 @@ void Mat<T>::vandermonde(void)
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = gf->pow(j + 1, i); 
+      MAT_ITEM(this, i, j) = gf->pow(i, j); 
     }
   }
 }
@@ -184,10 +184,12 @@ void Mat<T>::ec_transform1(int i)
   assert(i >= 0 && i < n_rows);
   assert(i >= 0 && i < n_cols);
 
-  int f_minus_1 = gf->div(gf->one(), MAT_ITEM(this, i, i));
+  T f_minus_1 = gf->div(gf->one(), MAT_ITEM(this, i, i));
 
   for (k = 0;k < n_rows;k++) {
-    MAT_ITEM(this, k, i) = gf->mul(f_minus_1, MAT_ITEM(this, k, i));
+    MAT_ITEM(this, k, i) = 
+      gf->mul(f_minus_1, 
+              MAT_ITEM(this, k, i));
   }
 }
 
@@ -202,11 +204,11 @@ void Mat<T>::ec_transform2(int i, int j)
   assert(i >= 0 && i < n_rows);
   assert(j >= 0 && i < n_cols);
 
-  int f_i_j = MAT_ITEM(this, i, j);
+  T f_i_j = MAT_ITEM(this, i, j);
 
   for (k = 0;k < n_rows;k++) {
     MAT_ITEM(this, k, j) = 
-      gf->add(MAT_ITEM(this, k, j),
+      gf->sub(MAT_ITEM(this, k, j),
               gf->mul(f_i_j, MAT_ITEM(this, k, i)));
   }
 }
@@ -223,11 +225,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
 
   Mat<T> tmp(gf, dim, n_cols);
 
-  for (i = 0;i < dim;i++) {
-    for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(&tmp, i, j) = gf->pow(i, j); 
-    }
-  }
+  tmp.vandermonde();
 
   /* perform transformations to get the identity matrix on the top rows */
   i = 0;
@@ -237,18 +235,18 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
       i++;
       continue ;
     }
-    
+
     //this case is mentionned in the paper but cannot happen
     /* if (0 == MAT_ITEM(&tmp, i, i)) {
        for (j = i + 1;j < &tmp->n_cols;j++) {
        if (0 != MAT_ITEM(&tmp, i, j)) {
-       mat_swap_cols(&tmp, i, j);
+       tmp.swap_cols(i, j);
        continue ;
        }
        } */
     
     //check if f_i_i == 1
-    if (1 != MAT_ITEM(&tmp, i, i)) {
+    if (gf->one() != MAT_ITEM(&tmp, i, i)) {
       //check for inverse since f_i_i != 0
       tmp.ec_transform1(i);
     }
@@ -261,6 +259,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
         }
       }
     }
+
     i++;
   }
 
@@ -273,15 +272,15 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
 }
 
 template <typename T>
-void Mat<T>::mult(Vec<T> *output, Mat<T> *a, Vec<T> *b)
+void Mat<T>::mult(Vec<T> *output, Vec<T> *v)
 {
   int i, j;
 
-  assert(output->n == b->n);
-  assert(output->n == a->n_cols);
-  for (i = 0;i < a->n_rows;i++) {
-    for (j = 0;j < a->n_cols;j++) {
-      int x = gf->mul(MAT_ITEM(a, i, j), VEC_ITEM(b, j));
+  assert(output->n == v->n);
+  assert(output->n == n_cols);
+  for (i = 0;i < n_rows;i++) {
+    for (j = 0;j < n_cols;j++) {
+      T x = gf->mul(MAT_ITEM(this, i, j), VEC_ITEM(v, j));
       if (0 == j)
         VEC_ITEM(output, i) = x;
       else

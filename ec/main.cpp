@@ -155,7 +155,7 @@ class EC
         if (1 != wc)
           xperror("short read data");
       }
-      mat->mult(&output, mat, &words);
+      mat->mult(&output, &words);
       for (j = 0;j < mat->n_rows;j++) {
         wc = fwritew(& VEC_ITEM(&output, j), c_files[j]);
         if (1 != wc)
@@ -325,7 +325,7 @@ class EC
         }
       }
       
-      mat->mult(&output, &a_prime, &words);
+      a_prime.mult(&output, &words);
       
       for (j = 0;j < mat->n_cols;j++) {
         if (NULL != r_files[j]) {
