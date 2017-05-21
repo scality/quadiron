@@ -11,81 +11,147 @@ Mat<T>::Mat(GF<T> *gf, int n_rows, int n_cols)
 }
 
 template <typename T>
-void Mat<T>::inv()
+void Mat<T>::zero_fill(void)
 {
-  int dim, i, j, k, tpos, tval, r;
+  int i, j;
 
-  assert(n_rows == n_cols);
-  dim = n_rows;
-
-  Mat<T> aug(this->gf, dim, dim * 2);
-
-  for (i = 0;i < dim;i++) {
-    for (j = 0;j < dim;j++) {
-      MAT_ITEM(&aug, i, j) = MAT_ITEM(this, i, j);
-    }
-  }
-
-  for (i = 0;i < dim;i++) {
-    for (j = dim;j < 2*dim;j++) {
-      if (i == (j % dim))
-        MAT_ITEM(&aug, i, j) = 1;
-      else
-        MAT_ITEM(&aug, i, j) = 0;
-    }
-  }
-
-  /* using gauss-jordan elimination */
-  for (j = 0;j < dim;j++) {
-    tpos = j;
-    
-    /* finding maximum jth column element in last (dimension-j) rows */
-    for (i = j+1;i < dim;i++) {
-      if (MAT_ITEM(&aug, i, j) > MAT_ITEM(&aug, tpos, j))
-        tpos = i;
-    }
-    
-    /* swapping row which has maximum jth column element */
-    if (tpos != j) {
-      for (k=0;k < 2*dim;k++) {
-        tval = MAT_ITEM(&aug, j, k);
-        MAT_ITEM(&aug, j, k) = MAT_ITEM(&aug, tpos, k);
-        MAT_ITEM(&aug, tpos, k) = tval;
-      }
-    }
-    
-    /* performing row operations to form required identity matrix out 
-       of the input matrix */
-    for (i = 0;i < dim;i++) {
-      if (i != j) {
-        r = MAT_ITEM(&aug, i, j);
-        for (k = 0;k < 2*dim;k++) {
-          MAT_ITEM(&aug, i, k) =
-            gf->add(MAT_ITEM(&aug, i, k), 
-                    gf->mul(gf->div(MAT_ITEM(&aug, j, k), 
-                                    MAT_ITEM(&aug, j, j)),
-                            r));
-        }
-      } else {
-        r = MAT_ITEM(&aug, i, j);
-        for (k = 0;k < 2*dim;k++) {
-          MAT_ITEM(&aug, i, k) = gf->div(MAT_ITEM(&aug, i, k), r);
-        }
-      }
-    }
-  }
-
-  for (i = 0;i < dim;i++) {
-    for (j = 0;j < dim;j++) {
-      MAT_ITEM(this, i, j) = MAT_ITEM(&aug, i, dim + j);
+  for (i = 0;i < n_rows;i++) {
+    for (j = 0;j < n_cols;j++) {
+      MAT_ITEM(this, i, j) = gf->zero();
     }
   }
 }
 
 template <typename T>
-bool Mat<T>::row_is_identity(Mat<T> *tmp, int row)
+void Mat<T>::swap_rows(int row0, int row1)
 {
   int j;
+  T tmp;
+  
+  assert(row0 >= 0 && row0 < n_rows);
+  assert(row1 >= 0 && row1 < n_rows);
+
+  for (j = 0;j < n_cols;j++) {
+    tmp = MAT_ITEM(this, row0, j);
+    MAT_ITEM(this, row0, j) = MAT_ITEM(this, row1, j);
+    MAT_ITEM(this, row1, j) = tmp;
+  }
+}
+
+template <typename T>
+void Mat<T>::mul_row(int row, T factor)
+{
+  int j;
+
+  assert(row >= 0 && row < n_rows);
+
+  for (j = 0; j < n_cols; j++) {
+    MAT_ITEM(this, row, j) = gf->mul(MAT_ITEM(this, row, j), factor);
+  }
+}
+
+template <typename T>
+void Mat<T>::add_rows(int src_row, int dst_row, T factor)
+{
+  int j;
+
+  assert(src_row >= 0 && src_row < n_rows);
+  assert(dst_row >= 0 && dst_row < n_rows);
+
+  for (j = 0; j < n_cols; j++) {
+    MAT_ITEM(this, dst_row, j) = 
+      gf->add(MAT_ITEM(this, dst_row, j),
+              gf->mul(MAT_ITEM(this, src_row, j), factor));
+  }
+}
+
+template <typename T>
+void Mat<T>::reduced_row_echelon_form(void)
+{
+  int i, j;
+
+  // Compute row echelon form (REF)
+  int num_pivots = 0;
+  for (j = 0; j < n_cols && num_pivots < n_rows; j++) { // For each column
+    // Find a pivot row for this column
+    int pivot_row = num_pivots;
+    while (pivot_row < n_rows && 
+           gf->eq(MAT_ITEM(this, pivot_row, j), gf->zero()))
+      pivot_row++;
+    if (pivot_row == n_rows)
+      continue;  // Cannot eliminate on this column
+    swap_rows(num_pivots, pivot_row);
+    pivot_row = num_pivots;
+    num_pivots++;
+    
+    // Simplify the pivot row
+    mul_row(pivot_row, gf->div(gf->one(), MAT_ITEM(this, pivot_row, j)));
+    
+    // Eliminate rows below
+    for (i = pivot_row + 1; i < n_rows; i++)
+      add_rows(pivot_row, i, gf->sub(0, MAT_ITEM(this, i, j)));
+  }
+
+  // Compute reduced row echelon form (RREF)
+  for (int i = num_pivots - 1; i >= 0; i--) {
+    // Find pivot
+    int pivot_col = 0;
+    while (pivot_col < n_cols && 
+           gf->eq(MAT_ITEM(this, i, pivot_col), gf->zero()))
+      pivot_col++;
+    if (pivot_col == n_cols)
+      continue;  // Skip this all-zero row
+    
+    // Eliminate rows above
+    for (int j = i - 1; j >= 0; j--)
+      add_rows(i, j, gf->sub(gf->zero(), MAT_ITEM(this, j, pivot_col)));
+  }
+}
+
+/** 
+ * taken from 
+ * https://www.nayuki.io/res/gauss-jordan-elimination-over-any-field/Matrix.java
+ */
+template <typename T>
+void Mat<T>::inv(void)
+{
+  int i, j;
+
+  assert(n_rows == n_cols);
+
+  // Build augmented matrix: [this | identity]
+  Mat<T> tmp(this->gf, n_rows, n_cols * 2);
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
+      MAT_ITEM(&tmp, i, j) = MAT_ITEM(this, i, j);
+      MAT_ITEM(&tmp, i, j + n_cols) = (i == j) ? gf->one() : gf->zero();
+    }
+  }
+
+  // Do the main calculation
+  tmp.reduced_row_echelon_form();
+  
+  // Check that the left half is the identity matrix
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
+      if (!gf->eq(MAT_ITEM(&tmp, i, j), (i == j) ? gf->one() : gf->zero()))
+        assert(false && "matrix is not invertible");
+    }
+  }
+  
+  // Extract inverse matrix from: [identity | inverse]
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++)
+      MAT_ITEM(this, i, j) = MAT_ITEM(&tmp, i, j + n_cols);
+  }
+}
+
+template <typename T>
+bool Mat<T>::row_is_identity(int row)
+{
+  int j;
+
+  assert(row >= 0 && row < n_rows);
 
   for (j = 0;j < n_cols;j++) {
     if (MAT_ITEM(this, row, j) != ((j == row) ? 1 : 0))
@@ -111,13 +177,17 @@ void Mat<T>::vandermonde(void)
  * transform c_i into f_i_i_minus_1 * c_i 
  */
 template <typename T>
-void Mat<T>::ec_transform1(Mat<T> *tmp, int i)
+void Mat<T>::ec_transform1(int i)
 {
   int k;
-  int f_minus_1 = gf->div(1, MAT_ITEM(tmp, i, i));
 
-  for (k = 0;k < tmp->n_rows;k++) {
-    MAT_ITEM(tmp, k, i) = gf->mul(f_minus_1, MAT_ITEM(tmp, k, i));
+  assert(i >= 0 && i < n_rows);
+  assert(i >= 0 && i < n_cols);
+
+  int f_minus_1 = gf->div(gf->one(), MAT_ITEM(this, i, i));
+
+  for (k = 0;k < n_rows;k++) {
+    MAT_ITEM(this, k, i) = gf->mul(f_minus_1, MAT_ITEM(this, k, i));
   }
 }
 
@@ -125,15 +195,19 @@ void Mat<T>::ec_transform1(Mat<T> *tmp, int i)
  * transform c_j into c_j - f_i_j * c_i 
  */
 template <typename T>
-void Mat<T>::ec_transform2(Mat<T> *tmp, int i, int j)
+void Mat<T>::ec_transform2(int i, int j)
 {
   int k;
-  int f_i_j = MAT_ITEM(tmp, i, j);
 
-  for (k = 0;k < tmp->n_rows;k++) {
-    MAT_ITEM(tmp, k, j) = 
-      gf->add(MAT_ITEM(tmp, k, j),
-              gf->mul(f_i_j, MAT_ITEM(tmp, k, i)));
+  assert(i >= 0 && i < n_rows);
+  assert(j >= 0 && i < n_cols);
+
+  int f_i_j = MAT_ITEM(this, i, j);
+
+  for (k = 0;k < n_rows;k++) {
+    MAT_ITEM(this, k, j) = 
+      gf->add(MAT_ITEM(this, k, j),
+              gf->mul(f_i_j, MAT_ITEM(this, k, i)));
   }
 }
 
@@ -159,7 +233,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
   i = 0;
   while (i < n_cols) {
     
-    if (row_is_identity(&tmp, i)) {
+    if (tmp.row_is_identity(i)) {
       i++;
       continue ;
     }
@@ -176,14 +250,14 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
     //check if f_i_i == 1
     if (1 != MAT_ITEM(&tmp, i, i)) {
       //check for inverse since f_i_i != 0
-      ec_transform1(&tmp, i);
+      tmp.ec_transform1(i);
     }
     
     //now f_i_i == 1
     for (j = 0;j < tmp.n_cols;j++) {
       if (i != j) {
         if (0 != MAT_ITEM(&tmp, i, j)) {
-          ec_transform2(&tmp, i, j);
+          tmp.ec_transform2(i, j);
         }
       }
     }
@@ -248,6 +322,7 @@ void Mat<T>::dump(void)
 {
   int i, j;
   
+  std::cout << "--\n";
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
       std::cout << " " << MAT_ITEM(this, i, j);

@@ -11,7 +11,7 @@ class Vec
   T *mem;
 #define VEC_ITEM(vec, i) ((vec)->mem[(i)])
   Vec(GF<T> *gf, int n);
-  void zero(void);
+  void zero_fill(void);
 };
 
 #endif

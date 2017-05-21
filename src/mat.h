@@ -18,7 +18,7 @@ class Mat
   T *mem;
 #define MAT_ITEM(mat, i, j) ((mat)->mem[(i) * (mat)->n_cols + (j)])
   Mat(GF<T> *gf, int n_rows, int n_cols);
-  void zero(void);
+  void zero_fill(void);
   void inv(void);
   void mult(Vec<T> *output, Mat<T> *a, Vec<T> *b);
   void vandermonde(void);
@@ -26,9 +26,13 @@ class Mat
   void cauchy(void);
   void dump(void);
  private:
-  void ec_transform1(Mat<T> *tmp, int i);
-  void ec_transform2(Mat<T> *tmp, int i, int j);
-  bool row_is_identity(Mat<T> *tmp, int row);
+  void swap_rows(int row0, int row1);
+  void mul_row(int row, T factor);
+  void add_rows(int src_row, int dst_row, T factor);
+  void reduced_row_echelon_form(void);
+  void ec_transform1(int i);
+  void ec_transform2(int i, int j);
+  bool row_is_identity(int row);
 };
 
 #endif
