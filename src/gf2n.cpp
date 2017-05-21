@@ -53,10 +53,9 @@ T GF2N<T>::one(void)
 }
 
 template <typename T>
-T GF2N<T>::check(T a)
+bool GF2N<T>::check(T a)
 {
-  assert(a >=0 && a < my_card);
-  return a;
+  return (a >=0 && a < my_card);
 }
 
 template <typename T>

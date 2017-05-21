@@ -27,27 +27,32 @@ T GFP<T>::one(void)
 }
 
 template <typename T>
-T GFP<T>::check(T a)
+bool GFP<T>::check(T a)
 {
-  assert(a >= 0 && a < this->p);
-  return a;
+  return (a >= 0 && a < this->p);
 }
 
 template <typename T>
 bool GFP<T>::eq(T a, T b)
 {
+  assert(check(a) && check(b));
+
   return a == b;
 }
 
 template <typename T>
 T GFP<T>::add(T a, T b)
 {
-  return sub(a, this->p - b);
+  assert(check(a) && check(b));
+
+  return (a + b) % this->p;
 }
 
 template <typename T>
 T GFP<T>::sub(T a, T b)
 {
+  assert(check(a) && check(b));
+
   if (a >= b)
     return a - b;
   else
@@ -57,32 +62,44 @@ T GFP<T>::sub(T a, T b)
 template <typename T>
 T GFP<T>::mul(T a, T b)
 {
+  assert(check(a) && check(b));
+
   using DoubleT = typename Double<T>::T;
+
   return T((DoubleT(a) * b) % this->p);
 }
 
 template <typename T>
 T GFP<T>::div(T a, T b)
 {
+  assert(check(a) && check(b));
+
   T inv_b = inv(b);
+
   return mul(a, inv_b);
 }
 
 template <typename T>
 T GFP<T>::inv(T a)
 {
+  assert(check(a));
+
   return pow(a, this->p - 2);
 }
 
 template <typename T>
 T GFP<T>::pow(T a, T b)
 {
+  assert(check(a) && check(b));
+
   return GF<T>::generic_pow(this, a, b);
 }
 
 template <typename T>
 T GFP<T>::log(T a, T b)
 {
+  assert(check(a) && check(b));
+
   return GF<T>::generic_trial_mult_log(this, a, b);
 }
 

@@ -69,9 +69,9 @@ do_test()
     done
 }
 
+#do_test ./ec 65537 3 3 "0 1" "0" $*
 do_test ./ec 8 3 3 "0 1" "0" $*
 do_test ./ec 16 3 3 "0 1" "0" $*
-#do_test ./ec 65537 3 3 "0 1" "0" $*
  
 do_test ./ec 8 3 3 "1 2" "2" $*
 do_test ./ec 16 3 3 "1 2" "2" $*

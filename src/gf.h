@@ -17,8 +17,8 @@ class GF
   virtual T card(void) = 0;
   virtual T zero(void) = 0;
   virtual T one(void) = 0;
-  virtual T check(T a) = 0;
-  virtual bool eq(T a, T b) = 0;
+  virtual bool check(T a) = 0;
+  virtual bool eq(T a, T b) = 0; //replace by more generic cmp
   virtual T add(T a, T b) = 0;
   virtual T sub(T a, T b) = 0;
   virtual T mul(T a, T b) = 0;

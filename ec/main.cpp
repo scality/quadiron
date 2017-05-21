@@ -262,7 +262,7 @@ class EC
     
     //generate a_prime
     Mat<T> a_prime(gf, n_total_ok, mat->n_cols);
-    
+
     //for each data available generate the corresponding identity
     k = 0;
     for (i = 0;i < mat->n_cols;i++) {
@@ -276,6 +276,7 @@ class EC
         k++;
       }
     }
+
     //finish the matrix with every coding available
     for (i = 0;i < mat->n_rows;i++) {
       if (NULL != c_files[i]) {

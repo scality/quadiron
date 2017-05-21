@@ -252,16 +252,15 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
       //check for inverse since f_i_i != 0
       tmp.ec_transform1(i);
     }
-    
+
     //now f_i_i == 1
     for (j = 0;j < tmp.n_cols;j++) {
       if (i != j) {
-        if (0 != MAT_ITEM(&tmp, i, j)) {
+        if (gf->zero() != MAT_ITEM(&tmp, i, j)) {
           tmp.ec_transform2(i, j);
         }
       }
     }
-    
     i++;
   }
 

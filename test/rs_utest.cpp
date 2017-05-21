@@ -18,6 +18,8 @@ template class Vec<uint32_t>;
  */
 void rs_utest1()
 {
+  std::cout << "rs_utest1\n";
+
   GF2N<uint32_t> gf16(4);
 
   assert(gf16.mul(3, 7) == 9);
@@ -69,6 +71,8 @@ void rs_utest1()
  */
 void rs_utest2()
 {
+  std::cout << "rs_utest2\n";
+
   GF2N<uint32_t> gf16(4);
   Mat<uint32_t> mat(&gf16, 3, 3);
 
@@ -88,6 +92,8 @@ void rs_utest2()
 
 void rs_utest3()
 {
+  std::cout << "rs_utest3\n";
+
   GF2N<uint32_t> gf16(4);
   Mat<uint32_t> mat(&gf16, 3, 3);
 
@@ -96,6 +102,8 @@ void rs_utest3()
 
 void rs_utest4()
 {
+  std::cout << "rs_utest\n";
+
   GF2N<uint32_t> gf256(8);
 
   assert(gf256.mul(3, 7) == 9);

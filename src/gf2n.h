@@ -19,7 +19,7 @@ class GF2N : public GF<T>
   T card(void);
   T zero(void);
   T one(void);
-  T check(T a);
+  bool check(T a);
   bool eq(T a, T b);
   T add(T a, T b);
   T sub(T a, T b);
