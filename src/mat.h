@@ -20,7 +20,7 @@ class Mat
   Mat(GF<T> *gf, int n_rows, int n_cols);
   void zero_fill(void);
   void inv(void);
-  void mult(Vec<T> *output, Mat<T> *a, Vec<T> *b);
+  void mult(Vec<T> *output, Vec<T> *v);
   void vandermonde(void);
   void vandermonde_suitable_for_ec(void);
   void cauchy(void);

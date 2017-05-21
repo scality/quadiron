@@ -8,6 +8,6 @@ extern void mat_utest();
 int main(int argc, char **argv)
 {
   gf_utest();
-  rs_utest();
   mat_utest();
+  rs_utest();
 }
