@@ -15,7 +15,7 @@ static T ipow(T a, T b)
 
   while (b)
     {
-      if (b & 1)
+      if (1 == (b & 1))
         r *= a;
       b >>= 1;
       a *= a;

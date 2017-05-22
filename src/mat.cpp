@@ -135,7 +135,7 @@ void Mat<T>::inv(void)
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
       if (!gf->eq(MAT_ITEM(&tmp, i, j), (i == j) ? gf->one() : gf->zero()))
-        assert(false && "matrix is not invertible");
+        throw NTL_EX_MAT_NOT_INVERTIBLE;
     }
   }
   
