@@ -65,6 +65,12 @@ bool GF2N<T>::eq(T a, T b)
 }
 
 template <typename T>
+T GF2N<T>::neg(T a)
+{
+  return sub(zero(), a);
+}
+
+template <typename T>
 T GF2N<T>::add(T a, T b)
 {
   return a ^ b;
@@ -113,15 +119,15 @@ T GF2N<T>::inv(T a)
 }
 
 template <typename T>
-T GF2N<T>::pow(T a, T b)
+T GF2N<T>::pow(T a)
 {
-  return GF<T>::generic_pow(this, a, b);
+  return gfilog[a];
 }
 
 template <typename T>
-T GF2N<T>::log(T a, T b)
+T GF2N<T>::log(T a)
 {
-  return GF<T>::generic_trial_mult_log(this, a, b);
+  return gflog[a];
 }
 
 template <typename T>

@@ -1,4 +1,6 @@
 
+#CXX = clang++
+
 AR = ar cq
 
 CXXFLAGS = -std=c++11 -g #-DNDEBUG
