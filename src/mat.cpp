@@ -89,7 +89,7 @@ void Mat<T>::reduced_row_echelon_form(void)
     
     // Eliminate rows below
     for (i = pivot_row + 1; i < n_rows; i++)
-      add_rows(pivot_row, i, gf->sub(0, MAT_ITEM(this, i, j)));
+      add_rows(pivot_row, i, gf->neg(MAT_ITEM(this, i, j)));
   }
 
   // Compute reduced row echelon form (RREF)
@@ -104,7 +104,7 @@ void Mat<T>::reduced_row_echelon_form(void)
     
     // Eliminate rows above
     for (int j = i - 1; j >= 0; j--)
-      add_rows(i, j, gf->sub(gf->zero(), MAT_ITEM(this, j, pivot_col)));
+      add_rows(i, j, gf->neg(MAT_ITEM(this, j, pivot_col)));
   }
 }
 
@@ -168,7 +168,7 @@ void Mat<T>::vandermonde(void)
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = gf->pow(i, j); 
+      MAT_ITEM(this, i, j) = gf->generic_naive_exp(gf, i, j); 
     }
   }
 }
@@ -184,7 +184,7 @@ void Mat<T>::ec_transform1(int i)
   assert(i >= 0 && i < n_rows);
   assert(i >= 0 && i < n_cols);
 
-  T f_minus_1 = gf->div(gf->one(), MAT_ITEM(this, i, i));
+  T f_minus_1 = gf->inv(MAT_ITEM(this, i, i));
 
   for (k = 0;k < n_rows;k++) {
     MAT_ITEM(this, k, i) = 
@@ -244,7 +244,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
        continue ;
        }
        } */
-    
+
     //check if f_i_i == 1
     if (gf->one() != MAT_ITEM(&tmp, i, i)) {
       //check for inverse since f_i_i != 0
@@ -296,7 +296,7 @@ void Mat<T>::cauchy()
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = gf->div(1, (gf->add(i, (j + n_rows))));
+      MAT_ITEM(this, i, j) = gf->inv(gf->add(i, (j + n_rows)));
     }
   }
 

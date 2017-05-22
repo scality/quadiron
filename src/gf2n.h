@@ -21,12 +21,13 @@ class GF2N : public GF<T>
   T one(void);
   bool check(T a);
   bool eq(T a, T b);
+  T neg(T a);
   T add(T a, T b);
   T sub(T a, T b);
   T mul(T a, T b);
   T div(T a, T b);
-  T pow(T a, T b);
-  T log(T a, T b);
+  T pow(T a);
+  T log(T a);
   T inv(T a);
   T weak_rand(void);
 };

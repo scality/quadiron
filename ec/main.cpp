@@ -71,12 +71,13 @@ class EC
     this->prefix = xstrdup(prefix);
   }
 
-  u_int log2(u_int v)
+  u_int ilog2(u_int v)
   {
     u_int r = 0;
 
     if (v == 0) 
       return (u_int) -1;
+
     if (v == 1) 
       return 0;
 

@@ -41,6 +41,14 @@ bool GFP<T>::eq(T a, T b)
 }
 
 template <typename T>
+T GFP<T>::neg(T a)
+{
+  assert(check(a));
+
+  return sub(zero(), a);
+}
+
+template <typename T>
 T GFP<T>::add(T a, T b)
 {
   assert(check(a) && check(b));
@@ -84,23 +92,23 @@ T GFP<T>::inv(T a)
 {
   assert(check(a));
 
-  return pow(a, this->p - 2);
+  return GF<T>::generic_mod_exp(this, a, this->p - 2, this->p);
 }
 
 template <typename T>
-T GFP<T>::pow(T a, T b)
+T GFP<T>::pow(T a)
 {
-  assert(check(a) && check(b));
+  assert(check(a));
 
-  return GF<T>::generic_pow(this, a, b);
+  return GF<T>::generic_mod_exp(this, this->p, a, this->p);
 }
 
 template <typename T>
-T GFP<T>::log(T a, T b)
+T GFP<T>::log(T a)
 {
-  assert(check(a) && check(b));
+  assert(check(a));
 
-  return GF<T>::generic_trial_mult_log(this, a, b);
+  return GF<T>::generic_trial_mult_log(this, this->p, a, this->p);
 }
 
 template <typename T>

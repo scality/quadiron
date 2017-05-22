@@ -20,7 +20,7 @@ public:
       
       x = gf->weak_rand();
       //std::cout << "x=" << x << "\n";
-      y = gf->sub(gf->zero(), x);
+      y = gf->neg(x);
       //std::cout << "inv(x)=" << y << "\n";
       assert(gf->add(x, y) == gf->zero());
     }
@@ -48,23 +48,19 @@ public:
     int i;
     
     for (i = 0; i < 100;i++) {
-      T x, y, z, t;
+      T x, y;
       
       //std::cout << "i=" << i << "\n";
       x = gf->weak_rand();
       //std::cout << "x=" << x << "\n";
-      y = gf->weak_rand();
-      //std::cout << "y=" << y << "\n";
       try {
-        z = gf->log(x, y);
+        y = gf->log(x);
       } catch (...) {
         //std::cout << "not found\n";
         continue ;
       }
-      //std::cout << "log" << x << "(" << y << ")=" << z << "\n";
-      t = gf->pow(x, z);
-      //std::cout << x << "^" << z << "=" << t << "\n";
-      assert(t == y);
+      //std::cout << "log(x)=" << y << "\n";
+      assert(gf->pow(y) == x);
     }
   }
   
@@ -122,9 +118,9 @@ public:
     
     std::cout << "test_misc_gf29\n";
     
-    assert(gf29.sub(gf29.zero(), 28) == 1);
-    assert(gf29.sub(gf29.zero(), 18) == 11);
-    assert(gf29.sub(gf29.zero(), 4) == 25);
+    assert(gf29.neg(28) == 1);
+    assert(gf29.neg(18) == 11);
+    assert(gf29.neg(4) == 25);
     
     assert(gf29.add(28, 1) == 0);
   }
