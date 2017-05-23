@@ -17,7 +17,7 @@ void Mat<T>::zero_fill(void)
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = gf->zero();
+      MAT_ITEM(this, i, j) = 0;
     }
   }
 }
@@ -76,7 +76,7 @@ void Mat<T>::reduced_row_echelon_form(void)
     // Find a pivot row for this column
     int pivot_row = num_pivots;
     while (pivot_row < n_rows && 
-           gf->eq(MAT_ITEM(this, pivot_row, j), gf->zero()))
+           MAT_ITEM(this, pivot_row, j) == 0)
       pivot_row++;
     if (pivot_row == n_rows)
       continue;  // Cannot eliminate on this column
@@ -85,7 +85,7 @@ void Mat<T>::reduced_row_echelon_form(void)
     num_pivots++;
     
     // Simplify the pivot row
-    mul_row(pivot_row, gf->div(gf->one(), MAT_ITEM(this, pivot_row, j)));
+    mul_row(pivot_row, gf->div(1, MAT_ITEM(this, pivot_row, j)));
     
     // Eliminate rows below
     for (i = pivot_row + 1; i < n_rows; i++)
@@ -97,7 +97,7 @@ void Mat<T>::reduced_row_echelon_form(void)
     // Find pivot
     int pivot_col = 0;
     while (pivot_col < n_cols && 
-           gf->eq(MAT_ITEM(this, i, pivot_col), gf->zero()))
+           MAT_ITEM(this, i, pivot_col) == 0)
       pivot_col++;
     if (pivot_col == n_cols)
       continue;  // Skip this all-zero row
@@ -124,7 +124,7 @@ void Mat<T>::inv(void)
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
       MAT_ITEM(&tmp, i, j) = MAT_ITEM(this, i, j);
-      MAT_ITEM(&tmp, i, j + n_cols) = (i == j) ? gf->one() : gf->zero();
+      MAT_ITEM(&tmp, i, j + n_cols) = (i == j) ? 1 : 0;
     }
   }
 
@@ -134,7 +134,7 @@ void Mat<T>::inv(void)
   // Check that the left half is the identity matrix
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
-      if (!gf->eq(MAT_ITEM(&tmp, i, j), (i == j) ? gf->one() : gf->zero()))
+      if (MAT_ITEM(&tmp, i, j) != (i == j) ? 1 : 0)
         throw NTL_EX_MAT_NOT_INVERTIBLE;
     }
   }
@@ -246,7 +246,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
        } */
 
     //check if f_i_i == 1
-    if (gf->one() != MAT_ITEM(&tmp, i, i)) {
+    if (1 != MAT_ITEM(&tmp, i, i)) {
       //check for inverse since f_i_i != 0
       tmp.ec_transform1(i);
     }
@@ -254,7 +254,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
     //now f_i_i == 1
     for (j = 0;j < tmp.n_cols;j++) {
       if (i != j) {
-        if (gf->zero() != MAT_ITEM(&tmp, i, j)) {
+        if (0 != MAT_ITEM(&tmp, i, j)) {
           tmp.ec_transform2(i, j);
         }
       }

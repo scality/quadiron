@@ -13,7 +13,8 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
   else
     assert(false); //XXX generate polynomial
 
-  this->my_card = one() << n;
+  T one = 1;
+  this->my_card = one << n;
   setup_tables();
 }
 
@@ -41,33 +42,15 @@ T GF2N<T>::card(void)
 }
 
 template <typename T>
-T GF2N<T>::zero(void)
-{
-  return 0;
-}
-
-template <typename T>
-T GF2N<T>::one(void)
-{
-  return 1;
-}
-
-template <typename T>
 bool GF2N<T>::check(T a)
 {
   return (a >=0 && a < my_card);
 }
 
 template <typename T>
-bool GF2N<T>::eq(T a, T b)
-{
-  return a == b;
-}
-
-template <typename T>
 T GF2N<T>::neg(T a)
 {
-  return sub(zero(), a);
+  return sub(0, a);
 }
 
 template <typename T>
@@ -137,7 +120,7 @@ T GF2N<T>::weak_rand(void)
 
  retry:
   r = rand() % my_card;
-  if (zero() == r)
+  if (0 == r)
     goto retry;
   return r;
 }

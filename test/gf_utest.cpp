@@ -22,7 +22,7 @@ public:
       //std::cout << "x=" << x << "\n";
       y = gf->neg(x);
       //std::cout << "inv(x)=" << y << "\n";
-      assert(gf->add(x, y) == gf->zero());
+      assert(gf->add(x, y) == 0);
     }
   }
 
@@ -39,7 +39,7 @@ public:
       //std::cout << "x=" << x << "\n";
       y = gf->inv(x);
       //std::cout << "inv(x)=" << y << "\n";
-      assert(gf->mul(x, y) == gf->one());
+      assert(gf->mul(x, y) == 1);
     }
   }
 

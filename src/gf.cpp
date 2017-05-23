@@ -46,10 +46,10 @@ T GF<T>::generic_naive_exp(GF *gf, T base, T exponent)
   T result;
   T i;
 
-  if (gf->zero() == exponent)
-    return gf->one();
+  if (0 == exponent)
+    return 1;
 
-  if (gf->one() == exponent)
+  if (1 == exponent)
     return base;
 
   result = base;
@@ -105,7 +105,7 @@ T GF<T>::generic_trial_mult_log(GF *gf, T base, T exponent, T modulus)
 {
   T result;
 
-  for (result = gf->one();result < card();result++) {
+  for (result = 1;result < card();result++) {
     if (generic_mod_exp(gf, base, result, modulus) == exponent)
       return result;
   }
