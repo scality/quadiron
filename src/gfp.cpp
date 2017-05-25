@@ -72,7 +72,7 @@ T GFP<T>::inv(T a)
 {
   assert(check(a));
 
-  return GF<T>::generic_mod_exp(this, a, this->p - 2, this->p);
+  return GF<T>::_mod_exp(a, this->p - 2, this->p);
 }
 
 template <typename T>
@@ -80,7 +80,7 @@ T GFP<T>::pow(T a)
 {
   assert(check(a));
 
-  return GF<T>::generic_mod_exp(this, this->p, a, this->p);
+  return GF<T>::_mod_exp(this->p, a, this->p);
 }
 
 template <typename T>
@@ -88,7 +88,7 @@ T GFP<T>::log(T a)
 {
   assert(check(a));
 
-  return GF<T>::generic_trial_mult_log(this, this->p, a, this->p);
+  return GF<T>::_trial_mult_log(this->p, a, this->p);
 }
 
 template <typename T>

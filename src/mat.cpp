@@ -168,7 +168,7 @@ void Mat<T>::vandermonde(void)
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = gf->generic_naive_exp(gf, i, j); 
+      MAT_ITEM(this, i, j) = gf->exp(i, j); 
     }
   }
 }
