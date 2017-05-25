@@ -18,6 +18,7 @@ class Mat
   T *mem;
 #define MAT_ITEM(mat, i, j) ((mat)->mem[(i) * (mat)->n_cols + (j)])
   Mat(GF<T> *gf, int n_rows, int n_cols);
+  ~Mat();
   void zero_fill(void);
   void inv(void);
   void mult(Vec<T> *output, Vec<T> *v);

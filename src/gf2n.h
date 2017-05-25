@@ -16,6 +16,7 @@ class GF2N : public GF<T>
 
  public:
   GF2N(T n);
+  ~GF2N();
   T card(void);
   bool check(T a);
   T neg(T a);
@@ -26,7 +27,6 @@ class GF2N : public GF<T>
   T pow(T a);
   T log(T a);
   T inv(T a);
-  T weak_rand(void);
 };
 
 #endif

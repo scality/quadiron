@@ -160,21 +160,21 @@ T GF<T>::_log2(T exponent)
  * @param bezout_coef[output] computed bezout coefficients, might be NULL
  * @param quotient_gcd[output] computed quotient by the GCD, might be NULL
  * 
+ * XXX take care of the signs of input
+ *
  * @return the GCD
  */
 template <typename T>
-T GF<T>::extended_gcd(T a, T b, T bezout_coef[2], T quotient_gcd[2])
+SignedDoubleT<T> GF<T>::_extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2])
 {
-  using SignedDoubleT = typename SignedDouble<T>::T;
-
-  SignedDoubleT s = 0;
-  SignedDoubleT old_s = 1;
-  SignedDoubleT t = 1;
-  SignedDoubleT old_t = 0;
-  SignedDoubleT r = b;
-  SignedDoubleT old_r = a;
-  SignedDoubleT quotient;
-  SignedDoubleT tmp;
+  SignedDoubleT<T> s = 0;
+  SignedDoubleT<T> old_s = 1;
+  SignedDoubleT<T> t = 1;
+  SignedDoubleT<T> old_t = 0;
+  SignedDoubleT<T> r = b;
+  SignedDoubleT<T> old_r = a;
+  SignedDoubleT<T> quotient;
+  SignedDoubleT<T> tmp;
   
   while (0 != r) {
     quotient = old_r / r;
@@ -198,8 +198,8 @@ T GF<T>::extended_gcd(T a, T b, T bezout_coef[2], T quotient_gcd[2])
   }
 
   if (quotient_gcd) {
-    quotient_gcd[0] = old_s;
-    quotient_gcd[1] = old_t;
+    quotient_gcd[0] = t;
+    quotient_gcd[1] = s;
   }
 
   return old_r;
@@ -212,42 +212,54 @@ T GF<T>::extended_gcd(T a, T b, T bezout_coef[2], T quotient_gcd[2])
  * @param a the a's (integers)
  * @param n the n's (moduli)
  * 
- * @return 
+ * XXX check if there is a solution
+ *
+ * @return the solution
+ * @throw NTL_EX_NO_SOLUTION
  */
 template <typename T>
-T GF<T>::chinese_remainder(int n_mod, T a[], T n[])
+T GF<T>::_chinese_remainder(int n_mod, T a[], T n[])
 {
   int i;
-  T _N, x;
-  T N[n_mod];
-  T M[n_mod];
+  SignedDoubleT<T> _N, x;
+  SignedDoubleT<T> *N = new SignedDoubleT<T>[n_mod];
+  SignedDoubleT<T> *M = new SignedDoubleT<T>[n_mod];
 
   _N = 1;
-  for (i = 0;i < n_mod;i++) {
-    std::cerr << "x = " << a[i] << " mod " << n[i] << "\n";
+  for (i = 0;i < n_mod;i++)
     _N *= n[i];
-  }
-
-  std::cerr << "_N=" << _N << "\n";
 
   for (i = 0;i < n_mod;i++) {
-    T bezout[2];
+    SignedDoubleT<T> bezout[2];
 
     N[i] = _N / n[i];
-    std::cerr << "N_i=" << N[i] << " n_i=" << n[i] << "\n";
-    std::cerr << "extended_gcd=(" << N[i] << ", " << n[i] << ")\n";
-    extended_gcd(N[i], n[i], bezout, NULL);
-    std::cerr << "bezout=(" << bezout[0] << ", " << bezout[1] << ")\n";
-    M[i] = bezout[0];
-    std::cerr << "M_i=" << M[i] << "\n";
+    _extended_gcd(N[i], n[i], bezout, NULL);
+    M[i] = bezout[0] % n[i];
   }
   
   x = 0;
-  for (i = 0;i < n_mod;i++) {
+  for (i = 0;i < n_mod;i++)
     x += N[i] * M[i] * a[i];
-  }
 
-  std::cerr << "x=" << x << "\n";
+  delete N;
+  delete M;
 
-  return x % _N;
+  x = x % _N;
+
+  if (x < 0)
+    x = _N + x;
+  
+  return x;
+}
+
+template <typename T>
+T GF<T>::weak_rand(void)
+{
+  T r;
+
+ retry:
+  r = rand() % card();
+  if (0 == r)
+    goto retry;
+  return r;
 }
