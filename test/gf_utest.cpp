@@ -158,6 +158,10 @@ template class GF<uint32_t>;
 template class GFP<uint32_t>;
 template class GF2N<uint32_t>;
 
+template class GF<uint64_t>;
+template class GFP<uint64_t>;
+template class GF2N<uint64_t>;
+
 template class GF<mpz_class>;
 template class GFP<mpz_class>;
 
@@ -165,6 +169,8 @@ void gf_utest()
 {
   GFUtest<uint32_t> gfutest_uint32;
   gfutest_uint32.gf_utest();
+  GFUtest<uint64_t> gfutest_uint64;
+  gfutest_uint64.gf_utest();
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n(); //XXX gf2n broken for now
 }

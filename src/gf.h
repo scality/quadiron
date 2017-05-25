@@ -11,10 +11,6 @@ class GF
   GF(T p, T n);
 
  public:
-  T generic_card(GF *gf);
-  T generic_naive_exp(GF *gf, T base, T exponent);
-  T generic_mod_exp(GF *gf, T base, T exponent, T modulus);
-  T generic_trial_mult_log(GF *gf, T base, T exponent, T modulus);
   virtual T card(void) = 0;
   virtual bool check(T a) = 0;
   virtual T neg(T a) = 0;
@@ -26,8 +22,14 @@ class GF
   virtual T log(T a) = 0;
   virtual T inv(T a) = 0;
   virtual T weak_rand(void) = 0;
+  T _card();
+  T exp(T base, T exponent);
+  T _exp(T base, T exponent);
+  T _mod_exp(T base, T exponent, T modulus);
+  T _trial_mult_log(T base, T exponent, T modulus);
+  T _log2(T exponent);
+  T extended_gcd(T a, T b, T bezout_coef[2], T quotient_gcd[2]);
+  T chinese_remainder(int n_mod, T a[], T n[]);
 };
-
-extern void gf_utest();
 
 #endif
