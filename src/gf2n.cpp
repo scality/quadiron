@@ -19,6 +19,13 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
 }
 
 template <typename T>
+GF2N<T>::~GF2N()
+{
+  delete gflog;
+  delete gfilog;
+}
+
+template <typename T>
 void GF2N<T>::setup_tables(void)
 {
   T b, log;
@@ -111,16 +118,4 @@ template <typename T>
 T GF2N<T>::log(T a)
 {
   return gflog[a];
-}
-
-template <typename T>
-T GF2N<T>::weak_rand(void)
-{
-  T r;
-
- retry:
-  r = rand() % my_card;
-  if (0 == r)
-    goto retry;
-  return r;
 }

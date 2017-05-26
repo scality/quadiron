@@ -19,7 +19,6 @@ public:
   T pow(T a);
   T log(T a);
   T inv(T a);
-  T weak_rand(void);
 };
 
 #endif

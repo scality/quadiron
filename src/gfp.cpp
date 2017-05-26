@@ -52,9 +52,7 @@ T GFP<T>::mul(T a, T b)
 {
   assert(check(a) && check(b));
 
-  using DoubleT = typename Double<T>::T;
-
-  return T((DoubleT(a) * b) % this->p);
+  return T((DoubleT<T>(a) * b) % this->p);
 }
 
 template <typename T>
@@ -89,16 +87,4 @@ T GFP<T>::log(T a)
   assert(check(a));
 
   return GF<T>::_trial_mult_log(this->p, a, this->p);
-}
-
-template <typename T>
-T GFP<T>::weak_rand(void)
-{
-  T r;
-
- retry:
-  r = rand() % this->p;
-  if (0 == r)
-    goto retry;
-  return r;
 }

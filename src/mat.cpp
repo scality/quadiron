@@ -11,6 +11,12 @@ Mat<T>::Mat(GF<T> *gf, int n_rows, int n_cols)
 }
 
 template <typename T>
+Mat<T>::~Mat()
+{
+  delete this->mem;
+}
+
+template <typename T>
 void Mat<T>::zero_fill(void)
 {
   int i, j;
