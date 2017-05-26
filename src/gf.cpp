@@ -234,7 +234,7 @@ T GF<T>::_chinese_remainder(int n_mod, T a[], T n[])
 
     N[i] = _N / n[i];
     _extended_gcd(N[i], n[i], bezout, NULL);
-    M[i] = bezout[0] % n[i];
+    M[i] = bezout[0]; //XXX % n[i];
   }
   
   x = 0;
@@ -250,6 +250,26 @@ T GF<T>::_chinese_remainder(int n_mod, T a[], T n[])
     x = _N + x;
   
   return x;
+}
+
+/** 
+ * check if q is a quadractic residue in GF_p^n
+ * 
+ * @param q 
+ * 
+ * @return boolean
+ */
+template <typename T>
+bool GF<T>::is_quadratic_residue(T q)
+{
+  T i;
+
+  for (i = 0; i < card();i++) {
+    if (exp(i, 2) == q)
+      return true;
+  }
+
+  return false;
 }
 
 template <typename T>

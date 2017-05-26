@@ -35,6 +35,7 @@ class GF
   T _log2(T exponent);
   SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
   T _chinese_remainder(int n_mod, T a[], T n[]);
+  bool is_quadratic_residue(T q);
   T weak_rand(void);
 };
 

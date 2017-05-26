@@ -9,7 +9,7 @@ class FFTUtest
 {
 public:
 
-  void test_gcd(GF<T> *gf)
+  void test_gcd1(GF<T> *gf)
   {
     SignedDoubleT<T> bezout[2];
 
@@ -35,12 +35,12 @@ public:
     }
   }
 
-  void test_gcd_gf97()
+  void test_gcd()
   {
-    std::cout << "test_gcd_gf97\n";
+    std::cout << "test_gcd\n";
 
     GFP<T> gf(97);
-    test_gcd(&gf);
+    test_gcd1(&gf);
   }
 
   /** 
@@ -74,7 +74,7 @@ public:
     a[1] = 0;
     n[1] = 6;
     omega = gf->_chinese_remainder(2, a, n);
-    //no solution
+    //no solution XXX detect it
   }
 
   /** 
@@ -98,21 +98,41 @@ public:
     assert(omega == 25559439);
   }
 
-  void test_chinese_remainder_gf5()
+  void test_chinese_remainder()
   {
-    std::cout << "test_chinese_remainder_gf5\n";
+    std::cout << "test_chinese_remainder\n";
 
     GFP<T> gf5(5);
     test_chinese_remainder1(&gf5);
     test_chinese_remainder2(&gf5);
   }
 
+  void test_quadratic_residues()
+  {
+    std::cout << "test_quadratic_residues\n";
+
+    GFP<T> gf32(32);
+    int i;
+    for (i = 0;i < 32;i++) {
+      assert(gf32.is_quadratic_residue(gf32.exp(i, 2)));
+    }
+
+    GFP<T> gf7(7);
+    assert(gf7.is_quadratic_residue(2));
+    assert(!gf7.is_quadratic_residue(5));
+
+    GFP<T> gf8(8);
+    assert(gf8.is_quadratic_residue(1));
+    assert(!gf8.is_quadratic_residue(3));
+  }
+
   void fft_utest()
   {
     std::cout << "fft_utest\n";
 
-    test_gcd_gf97();
-    test_chinese_remainder_gf5();
+    test_gcd();
+    test_chinese_remainder();
+    test_quadratic_residues();
   }
 };
 
