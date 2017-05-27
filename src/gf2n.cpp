@@ -21,8 +21,8 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
 template <typename T>
 GF2N<T>::~GF2N()
 {
-  delete gflog;
-  delete gfilog;
+  delete[] gflog;
+  delete[] gfilog;
 }
 
 template <typename T>

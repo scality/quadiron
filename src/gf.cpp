@@ -55,7 +55,6 @@ T GF<T>::exp(T base, T exponent)
 
 /** 
  * Regular exponentation 
- * Note: does not respect Galois field multiplication
  * 
  * @param gf 
  * @param base 
@@ -80,7 +79,6 @@ T GF<T>::_exp(T base, T exponent)
 
 /** 
  * Modular exponentation taken from Applied Cryptography by Bruce Schneier.
- * Note: does not respect Galois field multiplication
  * 
  * @param gf 
  * @param base 
@@ -241,8 +239,8 @@ T GF<T>::_chinese_remainder(int n_mod, T a[], T n[])
   for (i = 0;i < n_mod;i++)
     x += N[i] * M[i] * a[i];
 
-  delete N;
-  delete M;
+  delete[] N;
+  delete[] M;
 
   x = x % _N;
 
@@ -270,6 +268,68 @@ bool GF<T>::is_quadratic_residue(T q)
   }
 
   return false;
+}
+
+/** 
+ * Compute the jacobi symbol of the 2 numbers
+ * https://groups.google.com/forum/#!topic/sci.crypt/v9_cNF06XjU
+ * 
+ * @param n
+ * @param m 
+ * 
+ * @return the jacobi symbol
+ * @throw NT_EX_INVAL if b is even or b is negative
+ */
+template <typename T>
+int GF<T>::_jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m)
+{
+  SignedDoubleT<T> t;
+  int jac;
+
+  //m must be odd
+  if ((m % 2) == 0) 
+    throw NTL_EX_INVAL;
+
+  //m must be positive
+  if (m < 0)
+    throw NTL_EX_INVAL;
+  
+  jac = 1;
+  while (m != 1) {
+    //if the gcd of $n$ and $m$ is $>1$ Jacobi returns $0$
+    if ((n == 0) || ((n % 2 == 0) && (m % 2 == 0))) {
+      jac = 0;
+      m = 1;
+    }
+    //$J(n,2*m) = J(n,m) * J(n,2) = J(n,m) * (-1)^{(n^2-1)/8}$
+    else if (m % 2 == 0) {
+      if ((n % 8 == 3) || (n % 8 == 5)) 
+        jac = -jac;
+      m = m / 2;
+    }
+    //$J(2*n,m) = J(n,m) * J(2,m) = J(n,m) * (-1)^{(m^2-1)/8}$
+    else if (n % 2 == 0) {
+      if ((m % 8 == 3) || (m % 8 == 5))
+        jac = -jac;
+      n = n / 2;
+    }
+    //$J(-n,m) = J(n,m) * J(-1,m) = J(n,m) * (-1)^{(m-1)/2}$
+    else if (n < 0) {
+      if (m % 4 == 3)
+        jac = -jac;
+      n = -n;
+    }
+    //$J(n,m) = J(m,n) * (-1)^{(n-1)*(m-1)/4}$ (quadratic reciprocity)
+    else {
+      if ((n % 4 == 3) && (m % 4 == 3))
+        jac = -jac;
+      t = n;
+      n = m % n;
+      m = t;
+    }
+  }
+
+  return jac;
 }
 
 template <typename T>
