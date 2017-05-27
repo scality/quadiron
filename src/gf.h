@@ -8,6 +8,15 @@ using DoubleT = typename Double<T>::T;
 template<typename T>
 using SignedDoubleT = typename SignedDouble<T>::T;
 
+/** 
+ * Generic class for Galois Fields of p^n
+ * 
+ * @note Functions starting with _ are convenience function that does
+ *       not call GF specific operations
+ *
+ * @param p primer number
+ * @param n exponent
+ */
 template<typename T>
 class GF
 {
@@ -36,6 +45,7 @@ class GF
   SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
   T _chinese_remainder(int n_mod, T a[], T n[]);
   bool is_quadratic_residue(T q);
+  int _jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m);
   T weak_rand(void);
 };
 

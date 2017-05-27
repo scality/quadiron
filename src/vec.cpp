@@ -12,7 +12,7 @@ Vec<T>::Vec(GF<T> *gf, int n)
 template <typename T>
 Vec<T>::~Vec()
 {
-  delete this->mem;
+  delete[] this->mem;
 }
 
 template <typename T>

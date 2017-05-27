@@ -94,7 +94,7 @@ public:
     a[1] = 243;
     n[1] = p2;
     T omega = gf->_chinese_remainder(2, a, n);
-    std::cerr << "p1=" << p1 << " p2=" << p2 << " m=" << m << " omega=" << omega << "\n";
+    //std::cerr << "p1=" << p1 << " p2=" << p2 << " m=" << m << " omega=" << omega << "\n";
     assert(omega == 25559439);
   }
 
@@ -126,6 +126,18 @@ public:
     assert(!gf8.is_quadratic_residue(3));
   }
 
+  void test_jacobi()
+  {
+    GFP<T> gf(3);
+    
+    assert(gf._jacobi(1001, 9907) == -1);
+    assert(gf._jacobi(19, 45) == 1);
+    assert(gf._jacobi(8, 21) == -1);
+    assert(gf._jacobi(5, 21) == 1);
+    assert(gf._jacobi(47, 221) == -1);
+    assert(gf._jacobi(2, 221) == -1);
+  }
+
   void fft_utest()
   {
     std::cout << "fft_utest\n";
@@ -133,6 +145,7 @@ public:
     test_gcd();
     test_chinese_remainder();
     test_quadratic_residues();
+    test_jacobi();
   }
 };
 
@@ -140,19 +153,19 @@ template class GF<uint32_t>;
 template class GFP<uint32_t>;
 template class GF2N<uint32_t>;
 
-//template class GF<uint64_t>;
-//template class GFP<uint64_t>;
-//template class GF2N<uint64_t>;
+template class GF<uint64_t>;
+template class GFP<uint64_t>;
+template class GF2N<uint64_t>;
 
-//template class GF<mpz_class>;
-//template class GFP<mpz_class>;
+template class GF<mpz_class>;
+template class GFP<mpz_class>;
 
 void fft_utest()
 {
   FFTUtest<uint32_t> fftutest_uint32;
   fftutest_uint32.fft_utest();
-  //FFTUtest<uint64_t> fftutest_uint64;
-  //fftutest_uint64.fft_utest();
-  //FFTUtest<mpz_class> fftutest_mpz;
-  //fftutest_mpz.fft_utest();
+  FFTUtest<uint64_t> fftutest_uint64;
+  fftutest_uint64.fft_utest();
+  FFTUtest<mpz_class> fftutest_mpz;
+  fftutest_mpz.fft_utest();
 }
