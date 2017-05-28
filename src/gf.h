@@ -46,6 +46,9 @@ class GF
   T _chinese_remainder(int n_mod, T a[], T n[]);
   bool is_quadratic_residue(T q);
   int _jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m);
+  bool _solovay_strassen1(T a, T n);
+  bool _solovay_strassen(T n);
+  T _weak_rand(T max);
   T weak_rand(void);
 };
 

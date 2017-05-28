@@ -333,13 +333,57 @@ int GF<T>::_jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m)
 }
 
 template <typename T>
-T GF<T>::weak_rand(void)
+bool GF<T>::_solovay_strassen1(T a, T n)
+{
+  T _n = (n - 1) / 2;
+  T _j = _mod_exp(a, _n, n);
+  int j = _jacobi(a, n);
+  if (j < 0)
+    _j = _j - n;
+  return j == _j;
+}
+
+/** 
+ * Perform the Solvay-Strassen primality test
+ * 
+ * @param gf 
+ * @param n check if n is prime
+ * 
+ * @return true if n is prime else false
+ */
+template <typename T>
+bool GF<T>::_solovay_strassen(T n)
+{
+  int ok = 0;
+  for (int i = 0;i < 100;i++) {
+    T a = _weak_rand(n);
+    if (!_solovay_strassen1(a, n))
+      return false;
+  }
+  return true;
+}
+
+/** 
+ * Returns a number n such as 0 < n < max
+ * 
+ * @param max 
+ * 
+ * @return 
+ */
+template <typename T>
+T GF<T>::_weak_rand(T max)
 {
   T r;
 
  retry:
-  r = rand() % card();
+  r = rand() % max;
   if (0 == r)
     goto retry;
   return r;
+}
+
+template <typename T>
+T GF<T>::weak_rand(void)
+{
+  return _weak_rand(card());
 }
