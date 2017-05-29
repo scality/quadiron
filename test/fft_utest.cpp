@@ -3,6 +3,8 @@
 #include "gf.cpp"
 #include "gfp.cpp"
 #include "gf2n.cpp"
+#include "mat.cpp"
+#include "vec.cpp"
 
 template<typename T>
 class FFTUtest
@@ -49,8 +51,12 @@ public:
    * 
    * @param gf 
    */
-  void test_chinese_remainder1(GF<T> *gf)
+  void test_chinese_remainder()
   {
+    std::cout << "test_chinese_remainder\n";
+
+    GFP<T> gf5(5);
+
     T a[4];
     T n[4];
     T omega;
@@ -59,52 +65,22 @@ public:
     n[0] = 107;
     a[1] = 2;
     n[1] = 74;
-    omega = gf->_chinese_remainder(2, a, n);
+    omega = gf5._chinese_remainder(2, a, n);
     assert(omega == 5996);
 
     a[0] = 6;
     n[0] = 7;
     a[1] = 4;
     n[1] = 8;
-    omega = gf->_chinese_remainder(2, a, n);
+    omega = gf5._chinese_remainder(2, a, n);
     assert(omega == 20);
 
     a[0] = 3;
     n[0] = 4;
     a[1] = 0;
     n[1] = 6;
-    omega = gf->_chinese_remainder(2, a, n);
+    omega = gf5._chinese_remainder(2, a, n);
     //no solution XXX detect it
-  }
-
-  /** 
-   * Example taken from Pierre Meunier's book
-   * 
-   * @param gf 
-   */
-  void test_chinese_remainder2(GF<T> *gf)
-  {
-    T p1 = 2 * gf->_exp(2, 15) + 1;
-    T p2 = 5 * gf->_exp(2, 15) + 1;
-    DoubleT<T> m = p1 * p2;
-    T a[2];
-    T n[2];
-    a[0] = 9;
-    n[0] = p1;
-    a[1] = 243;
-    n[1] = p2;
-    T omega = gf->_chinese_remainder(2, a, n);
-    //std::cerr << "p1=" << p1 << " p2=" << p2 << " m=" << m << " omega=" << omega << "\n";
-    assert(omega == 25559439);
-  }
-
-  void test_chinese_remainder()
-  {
-    std::cout << "test_chinese_remainder\n";
-
-    GFP<T> gf5(5);
-    test_chinese_remainder1(&gf5);
-    test_chinese_remainder2(&gf5);
   }
 
   void test_quadratic_residues()
@@ -138,7 +114,42 @@ public:
     assert(gf._jacobi(2, 221) == -1);
   }
 
-  void fft_utest()
+  /** 
+   * Example taken from Pierre Meunier's book
+   * 
+   * @param gf 
+   */
+  void test_mul_bignum()
+  {
+    std::cout << "test_mul_bignum\n";
+
+    GFP<T> gf(3);
+    T p1 = 2 * gf._exp(2, 15) + 1;
+    T p2 = 5 * gf._exp(2, 15) + 1;
+    DoubleT<T> m = p1 * p2;
+    T a[2];
+    T n[2];
+    a[0] = 9;
+    n[0] = p1;
+    a[1] = 243;
+    n[1] = p2;
+    T omega = gf._chinese_remainder(2, a, n);
+    std::cerr << "p1=" << p1 << " p2=" << p2 << " m=" << m << " omega=" << omega << "\n";
+    assert(omega == 25559439);
+    int _n = 15;
+    int N = gf.__exp(2, _n);
+
+    GFP<T> gf_m(m);
+    T invN = gf_m.inv(N);
+    std::cerr << "invN=" << invN << "\n";
+    Vec<T> W(&gf_m, N);
+    for (int i = 0;i < N;i++) {
+      VEC_ITEM(&W, i) = gf_m.exp(omega, i);
+      std::cerr << i << " " << VEC_ITEM(&W, i) << "\n";
+    }
+  }
+
+  void fft_utest_no_mul_bignum()
   {
     std::cout << "fft_utest\n";
 
@@ -147,7 +158,27 @@ public:
     test_quadratic_residues();
     test_jacobi();
   }
+
+  void fft_utest()
+  {
+    std::cout << "fft_utest\n";
+
+    test_gcd();
+    test_chinese_remainder();
+    test_quadratic_residues();
+    test_jacobi();
+    test_mul_bignum();
+  }
 };
+
+template class Mat<uint32_t>;
+template class Vec<uint32_t>;
+
+template class Mat<uint64_t>;
+template class Vec<uint64_t>;
+
+template class Mat<mpz_class>;
+template class Vec<mpz_class>;
 
 template class GF<uint32_t>;
 template class GFP<uint32_t>;
@@ -163,9 +194,9 @@ template class GFP<mpz_class>;
 void fft_utest()
 {
   FFTUtest<uint32_t> fftutest_uint32;
-  fftutest_uint32.fft_utest();
+  fftutest_uint32.fft_utest_no_mul_bignum();
   FFTUtest<uint64_t> fftutest_uint64;
-  fftutest_uint64.fft_utest();
+  fftutest_uint64.fft_utest();//_no_mul_bignum();
   FFTUtest<mpz_class> fftutest_mpz;
   fftutest_mpz.fft_utest();
 }

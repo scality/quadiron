@@ -25,7 +25,6 @@ T GF<T>::_card()
 
 /** 
  * Naive exponentiation
- * Note: honor Galois field multiplication 
  *
  * @param gf 
  * @param base 
@@ -64,6 +63,30 @@ T GF<T>::exp(T base, T exponent)
  * @return
  */
 template <typename T>
+u_int GF<T>::__exp(u_int base, u_int exponent)
+{
+  u_int result = 1;
+  while (exponent > 0) {
+    if (exponent % 2 == 1)
+      result *= base;
+    exponent >>= 1;
+    base *= base;
+  }
+
+  return result;
+}
+
+/** 
+ * Regular exponentation 
+ * 
+ * @param gf 
+ * @param base 
+ * @param exponent 
+ * @param modulus 
+ * 
+ * @return
+ */
+template <typename T>
 T GF<T>::_exp(T base, T exponent)
 {
   T result = 1;
@@ -86,13 +109,20 @@ T GF<T>::_exp(T base, T exponent)
  * @param modulus 
  * 
  * @return
+ * throw NTL_EX_OVERFLOW on overflow
  */
 template <typename T>
 T GF<T>::_mod_exp(T base, T exponent, T modulus)
 {
   if (1 == modulus)
     return 0;
-  //XXX assert (modulus - 1) * (modulus - 1) does not overflow base
+
+#ifndef NDEBUG
+  T tmp = (modulus - 1) * (modulus - 1);
+  if ((tmp / (modulus - 1)) != (modulus - 1))
+    throw NTL_EX_OVERFLOW;
+#endif
+
   T result = 1;
   base = base % modulus;
   while (exponent > 0) {
@@ -151,7 +181,10 @@ T GF<T>::_log2(T exponent)
 
 /** 
  * Extended Euclidean algorithm (from Wikipedia)
- * Perform GCD of a and b
+ * Perform ax+by = gcd(a, b)
+ *   If a and b are coprime then:
+ *         x = inv(a) mod b
+ *         y = inv(b) mod a
  *
  * @param a
  * @param b

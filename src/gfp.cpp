@@ -70,7 +70,18 @@ T GFP<T>::inv(T a)
 {
   assert(check(a));
 
+#if 0
   return GF<T>::_mod_exp(a, this->p - 2, this->p);
+#else
+  SignedDoubleT<T> x = a;
+  SignedDoubleT<T> n = this->p;
+  SignedDoubleT<T> bezout[2];
+
+  GF<T>::_extended_gcd(x, n, bezout, NULL);
+  if (bezout[0] < 0)
+    bezout[0] = this->p + bezout[0];
+  return bezout[0];
+#endif
 }
 
 template <typename T>

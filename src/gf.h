@@ -38,6 +38,7 @@ class GF
   virtual T inv(T a) = 0;
   T _card();
   T exp(T base, T exponent);
+  u_int __exp(u_int base, u_int exponent);
   T _exp(T base, T exponent);
   T _mod_exp(T base, T exponent, T modulus);
   T _trial_mult_log(T base, T exponent, T modulus);
