@@ -2,10 +2,10 @@ compile:
   override:
     - cd src; make
     - cd test; make
-    - cd ec; make
+    - cd tools; make
 
 test:
   override:
     - cd test; ./tests
-    - cd ec; ./test.sh
-    - cd ec; ./test.sh -s
+    - cd tools; ./test_ec.sh
+    - cd tools; ./test_ec.sh -s

@@ -58,17 +58,6 @@ void rs_utest3()
   assert(gf256.div(3, 7) == 211);
 }
 
-
-void rs_utest4()
-{
-  std::cout << "rs_utest4\n";
-
-  GFP<uint32_t> gf(65537);
-  Mat<uint32_t> mat(&gf, 3, 3);
-
-  mat.vandermonde_suitable_for_ec();
-}
-
 void rs_utest()
 {
   std::cout << "rs_utest\n";
@@ -76,5 +65,4 @@ void rs_utest()
   rs_utest1();
   rs_utest2();
   rs_utest3();
-  rs_utest4();
 }
