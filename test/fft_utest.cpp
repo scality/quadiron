@@ -160,18 +160,32 @@ public:
     T omega = gf._chinese_remainder(2, a, n);
     std::cerr << "p1=" << p1 << " p2=" << p2 << " m=" << m << " omega=" << omega << "\n";
     assert(omega == 25559439);
-    int _n = 15;
-    int N = gf.__exp(2, _n);
+    int q = 15;
+    int N = gf.__exp(2, q);
 
     GFP<T> gf_m(m);
     T invN = gf_m.inv(N);
     std::cerr << "invN=" << invN << "\n";
 
-    FFT<T> fft(&gf_m, omega, _n);
+    FFT<T> fft(&gf_m, omega, q);
 
-    assert(fft._get_p(1, 0) == 1);
-    assert(fft._get_p(4, 2) == 1);
-    assert(fft._get_p(42, 1) == fft._get_p0(42, 1, _n));
+    //test fft internals
+    assert(fft._get_p(0, 1) == 0);
+    assert(fft._get_p(1, 1) == 1);
+    assert(fft._get_p(1, 2) == 0);
+    assert(fft._get_p(2, 1) == 0);
+    assert(fft._get_p(2, 2) == 1);
+    assert(fft._get_p(N-1, 1) == 1);
+    assert(fft._get_p(N-1, q) == 1);
+#if 0
+    for (int i = 0;i <= N-1;i++) {
+      for (int j = 1;j <= q;j++) {
+        std::cerr << fft._get_p(i, j) << " ";
+      }
+      std::cerr << "\n";
+    }
+    exit(0);
+#endif
 
     //parse the big numbers
     char X[] = "1236548787985654354598651354984132468";

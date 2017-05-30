@@ -11,5 +11,5 @@ int main(int argc, char **argv)
   gf_utest();
   mat_utest();
   rs_utest();
-  //fft_utest();
+  fft_utest();
 }
