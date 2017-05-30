@@ -71,24 +71,56 @@ class EC
     this->prefix = xstrdup(prefix);
   }
 
-  int word_size()
-  {
-    return log2(gf->card()) / 8;
-  }
-  
   size_t sizew(size_t size)
   {
-    return size / word_size();
+    if (gf->_get_n() == 8)
+      return size;
+    else if (gf->_get_n() == 16)
+      return size / 2;
+    else
+      assert(false && "no such size");
   }
   
-  size_t freadw(void *ptr, FILE *stream)
+  size_t freadw(T *ptr, FILE *stream)
   {
-    return fread(ptr, word_size(), 1, stream);
+    size_t s;
+
+    if (gf->_get_n() == 8) {
+      u_char c;
+      if ((s = fread(&c, 1, 1, stream)) != 1)
+        return s;
+      *ptr = c;
+      return s;
+    } else if (gf->_get_n() == 16) {
+      u_short c;
+      if ((s = fread(&c, 2, 1, stream)) != 1)
+        return s;
+      *ptr = c;
+      return s;
+    } else {
+      assert(false && "no such size");
+      return 0;
+    }
   }
 
-  size_t fwritew(const void *ptr, FILE *stream)
+  size_t fwritew(T val, FILE *stream)
   {
-    return fwrite(ptr, word_size(), 1, stream);
+    size_t s;
+
+    if (gf->_get_n() == 8) {
+      u_char c = val;
+      if ((s = fwrite(&c, 1, 1, stream)) != 1)
+        return s;
+      return s;
+    } else if (gf->_get_n() == 16) {
+      u_short c = val;
+      if ((s = fwrite(&c, 2, 1, stream)) != 1)
+        return s;
+      return s;
+    } else {
+      assert(false && "no such size");
+      return 0;
+    }
   }
   
   /** 
@@ -135,13 +167,16 @@ class EC
     for (i = 0;i < sizew(size);i++) {
       words.zero_fill();
       for (j = 0;j < mat->n_cols;j++) {
-        wc = freadw(&VEC_ITEM(&words, j), d_files[j]);
+        T tmp;
+        wc = freadw(&tmp, d_files[j]);
         if (1 != wc)
           xperror("short read data");
+        words.set(j, tmp);
       }
       mat->mult(&output, &words);
       for (j = 0;j < mat->n_rows;j++) {
-        wc = fwritew(& VEC_ITEM(&output, j), c_files[j]);
+        T tmp = output.get(j);
+        wc = fwritew(tmp, c_files[j]);
         if (1 != wc)
           xperror("short write coding");
       }
@@ -244,8 +279,8 @@ class EC
     if (vflag)
       std::cerr << "n_data_ok=" << n_data_ok << " n_coding_ok=" << n_coding_ok << "\n";
     
-    //generate a_prime
-    Mat<T> a_prime(gf, n_total_ok, mat->n_cols);
+    //generate repair_mat
+    Mat<T> repair_mat(gf, n_total_ok, mat->n_cols);
 
     //for each data available generate the corresponding identity
     k = 0;
@@ -253,9 +288,9 @@ class EC
       if (NULL != d_files[i]) {
         for (j = 0;j < mat->n_cols;j++) {
           if (i == j)
-            MAT_ITEM(&a_prime, k, j) = 1;
+            repair_mat.set(k, j, 1);
           else
-            MAT_ITEM(&a_prime, k, j) = 0;
+            repair_mat.set(k, j, 0);
         }
         k++;
       }
@@ -266,7 +301,7 @@ class EC
       if (NULL != c_files[i]) {
         //copy corresponding row in vandermonde matrix
         for (j = 0;j < mat->n_cols;j++) {
-          MAT_ITEM(&a_prime, k, j) = MAT_ITEM(mat, i, j);
+          repair_mat.set(k, j, mat->get(i, j));
         }
         k++;
         //stop when we have enough codings
@@ -277,10 +312,10 @@ class EC
     
     if (vflag) {
       std::cerr << "rebuild matrix:\n";
-      a_prime.dump();
+      repair_mat.dump();
     }
     
-    a_prime.inv();
+    repair_mat.inv();
     
     //read-and-repair
     Vec<T> words(mat->gf, mat->n_cols);
@@ -291,17 +326,21 @@ class EC
       k = 0;
       for (j = 0;j < mat->n_cols;j++) {
         if (NULL != d_files[j]) {
-          wc = freadw(&VEC_ITEM(&words, k), d_files[j]);
+          T tmp;
+          wc = freadw(&tmp, d_files[j]);
           if (1 != wc)
             xperror("short read data");
+          words.set(k, tmp);
           k++;
         }
       }
       for (j = 0;j < mat->n_rows;j++) {
         if (NULL != c_files[j]) {
-          wc = freadw(&VEC_ITEM(&words, k), c_files[j]);
+          T tmp;
+          wc = freadw(&tmp, c_files[j]);
           if (1 != wc)
             xperror("short read coding");
+          words.set(k, tmp);
           k++;
           //stop when we have enough codings
           if (mat->n_cols == k)
@@ -309,11 +348,12 @@ class EC
         }
       }
       
-      a_prime.mult(&output, &words);
+      repair_mat.mult(&output, &words);
       
       for (j = 0;j < mat->n_cols;j++) {
         if (NULL != r_files[j]) {
-          wc = fwritew(& VEC_ITEM(&output, j), r_files[j]);
+          T tmp = output.get(j);
+          wc = fwritew(tmp, r_files[j]);
           if (1 != wc)
             xperror("short write coding");
         }
@@ -347,8 +387,6 @@ int main(int argc, char **argv)
         eflag = 8;
       else if (!strcmp(optarg, "16"))
         eflag = 16;
-      else if (!strcmp(optarg, "65537"))
-        eflag = 65537;
       else
         xusage();
       break ;
@@ -399,13 +437,8 @@ int main(int argc, char **argv)
 
   EC<uint32_t> *ec;
 
-  if (eflag == 65537) {
-    GFP<uint32_t> *gf = new GFP<uint32_t>(eflag);
-    ec = new EC<uint32_t> (gf, n_coding, n_data, prefix);
-  } else {
-    GF2N<uint32_t> *gf = new GF2N<uint32_t>(eflag);
-    ec = new EC<uint32_t> (gf, n_coding, n_data, prefix);
-  }
+  GF2N<uint32_t> *gf = new GF2N<uint32_t>(eflag);
+  ec = new EC<uint32_t> (gf, n_coding, n_data, prefix);
 
   if (rflag) {
     if (0 != ec->repair_data_files()) {
