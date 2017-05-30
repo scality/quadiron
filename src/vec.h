@@ -5,10 +5,11 @@
 template<typename T>
 class Vec
 {
+ private:
+  T *mem;
  public:
   GF<T> *gf;
   int n;
-  T *mem;
   Vec(GF<T> *gf, int n);
   ~Vec();
   void zero_fill(void);

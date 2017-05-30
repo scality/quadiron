@@ -15,7 +15,6 @@ class Mat
   GF<T> *gf;
   int n_rows;
   int n_cols;
-  T *mem;
   Mat(GF<T> *gf, int n_rows, int n_cols);
   ~Mat();
   void zero_fill(void);
@@ -28,6 +27,7 @@ class Mat
   void cauchy(void);
   void dump(void);
  private:
+  T *mem;
   void swap_rows(int row0, int row1);
   void mul_row(int row, T factor);
   void add_rows(int src_row, int dst_row, T factor);
