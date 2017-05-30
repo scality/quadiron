@@ -21,7 +21,23 @@ void Vec<T>::zero_fill(void)
   int i;
 
   for (i = 0;i < n;i++)
-    VEC_ITEM(this, i) = 0;
+    set(i, 0);
+}
+
+template <typename T>
+void Vec<T>::set(int i, T val)
+{
+  assert(i >= 0 && i < n);
+  
+  mem[i] = val;
+}
+
+template <typename T>
+T Vec<T>::get(int i)
+{
+  assert(i >= 0 && i < n);
+  
+  return mem[i];
 }
 
 template <typename T>
@@ -31,6 +47,6 @@ void Vec<T>::dump(void)
   
   std::cout << "--\n";
   for (i = 0;i < n;i++)
-    std::cout << " " << VEC_ITEM(this, i);
+    std::cout << " " << get(i);
   std::cout << "\n";
 }

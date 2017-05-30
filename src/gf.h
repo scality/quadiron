@@ -36,6 +36,8 @@ class GF
   virtual T pow(T a) = 0;
   virtual T log(T a) = 0;
   virtual T inv(T a) = 0;
+  T _get_p();
+  T _get_n();
   T _card();
   T exp(T base, T exponent);
   u_int __exp(u_int base, u_int exponent);

@@ -18,6 +18,18 @@ GF<T>::GF(T p, T n)
 }
 
 template <typename T>
+T GF<T>::_get_p()
+{
+  return p;
+}
+
+template <typename T>
+T GF<T>::_get_n()
+{
+  return n;
+}
+
+template <typename T>
 T GF<T>::_card()
 {
   return _exp(p, n);

@@ -30,15 +30,17 @@ void FFT<T>::compute_omegas(void)
     std::ofstream file;
     file.open(filename.str().c_str(), std::ios::out);
     for (int i = 0;i < N;i++) {
-      VEC_ITEM(W, i) = gf->exp(omega, i);
-      file << VEC_ITEM(W, i) << "\n";
+      W->set(i, gf->exp(omega, i));
+      file << W->get(i) << "\n";
     }
   } else {
     std::ifstream file;
     int i = 0;
     file.open(filename.str().c_str(), std::ios::in);
     while (!file.eof()) {
-      file >> VEC_ITEM(W, i);
+      T tmp;
+      file >> tmp;
+      W->set(i, tmp);
       i++;
     }
     assert(i == N + 1);
@@ -108,7 +110,7 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
 
   //compute phi[0][i]
   for (int i = 0;i < N-1;i++)
-    MAT_ITEM(phi, 0, i) = VEC_ITEM(input, i);
+    phi->set(0, i, input->get(i));
   
   //compute phi[1][i]
   for (int i = 0;i < N-1;i++) {
@@ -122,10 +124,10 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
       tmp1 += _get_p1(i, k, q) * gf->__exp(2, k-1);
 
     //XXX redefine with GF operations
-    MAT_ITEM(phi, 1, i) = 
-      (MAT_ITEM(phi, 0, tmp0) +
-       VEC_ITEM(W, gf->__exp(2, q-1) * _get_p(i, q)) *
-       MAT_ITEM(phi, 0, tmp1)) % gf->card();
+    phi->set(1, i,
+            (phi->get(0, tmp0) +
+             W->get(gf->__exp(2, q-1) * _get_p(i, q)) *
+             phi->get(0, tmp1)) % gf->card());
   }
 
   Vec<T> *t = new Vec<T>(gf, q);
@@ -138,7 +140,7 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
       for (int k = 1;k < mm;k++)
         tmp1 += _get_p(i, q-mm+k) * gf->__exp(2, mm-k);
 
-      VEC_ITEM(t, mm) = gf->__exp(2, q-mm) * tmp1;
+      t->set(mm, gf->__exp(2, q-mm) * tmp1);
 
       T tmp2 = 0;
       for (int k = 1;k < mm;k++)
@@ -148,11 +150,10 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
       for (int k = 1;k < q;k++)
         tmp3 += _get_p1(i, k, q-mm+1) * gf->__exp(2, k-1);
 
-      MAT_ITEM(phi, mm, i) = 
-        (MAT_ITEM(phi, mm-1, tmp2) +
-         VEC_ITEM(W, 
-                  VEC_ITEM(t, mm) *
-                  MAT_ITEM(phi, mm-1, tmp3))) % gf->card();
+      phi->set(mm, i,
+              (phi->get(mm-1, tmp2) +
+               W->get(t->get(mm) *
+                     phi->get(mm-1, tmp3))) % gf->card());
     }
 
     //compute FFT
@@ -161,12 +162,10 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
       T tmp = 0;
       for (int k = 1;k < q;k++)
         tmp += _get_p(i, q-k+1) * gf->__exp(2, k-1);
-
-      VEC_ITEM(output, i) =
-        MAT_ITEM(phi, q, tmp);
+      
+      output->set(i, phi->get(q, tmp));
     }
   }
-
 
   delete t;
   delete phi;

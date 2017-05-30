@@ -25,15 +25,15 @@ void rs_utest1()
   mat.vandermonde_suitable_for_ec();
   //mat.dump();
 
-  assert(MAT_ITEM(&mat, 0, 0) == 1);
-  assert(MAT_ITEM(&mat, 0, 1) == 1);
-  assert(MAT_ITEM(&mat, 0, 2) == 1);
-  assert(MAT_ITEM(&mat, 1, 0) == 15);
-  assert(MAT_ITEM(&mat, 1, 1) == 8);
-  assert(MAT_ITEM(&mat, 1, 2) == 6);
-  assert(MAT_ITEM(&mat, 2, 0) == 14);
-  assert(MAT_ITEM(&mat, 2, 1) == 9);
-  assert(MAT_ITEM(&mat, 2, 2) == 6);
+  assert(mat.get(0, 0) == 1);
+  assert(mat.get(0, 1) == 1);
+  assert(mat.get(0, 2) == 1);
+  assert(mat.get(1, 0) == 15);
+  assert(mat.get(1, 1) == 8);
+  assert(mat.get(1, 2) == 6);
+  assert(mat.get(2, 0) == 14);
+  assert(mat.get(2, 1) == 9);
+  assert(mat.get(2, 2) == 6);
 }
 
 void rs_utest2()

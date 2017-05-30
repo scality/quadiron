@@ -23,9 +23,27 @@ void Mat<T>::zero_fill(void)
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = 0;
+      set(i, j, 0);
     }
   }
+}
+
+template <typename T>
+void Mat<T>::set(int i, int j, T val)
+{
+  assert(i >= 0 && i < n_rows);
+  assert(j >= 0 && j < n_cols);
+
+  mem[i * n_cols + j] = val;
+}
+
+template <typename T>
+T Mat<T>::get(int i, int j)
+{
+  assert(i >= 0 && i < n_rows);
+  assert(j >= 0 && j < n_cols);
+
+  return mem[i * n_cols + j];
 }
 
 template <typename T>
@@ -38,9 +56,9 @@ void Mat<T>::swap_rows(int row0, int row1)
   assert(row1 >= 0 && row1 < n_rows);
 
   for (j = 0;j < n_cols;j++) {
-    tmp = MAT_ITEM(this, row0, j);
-    MAT_ITEM(this, row0, j) = MAT_ITEM(this, row1, j);
-    MAT_ITEM(this, row1, j) = tmp;
+    tmp = get(row0, j);
+    set(row0, j, get(row1, j));
+    set(row1, j, tmp);
   }
 }
 
@@ -52,7 +70,7 @@ void Mat<T>::mul_row(int row, T factor)
   assert(row >= 0 && row < n_rows);
 
   for (j = 0; j < n_cols; j++) {
-    MAT_ITEM(this, row, j) = gf->mul(MAT_ITEM(this, row, j), factor);
+    set(row, j, gf->mul(get(row, j), factor));
   }
 }
 
@@ -65,9 +83,9 @@ void Mat<T>::add_rows(int src_row, int dst_row, T factor)
   assert(dst_row >= 0 && dst_row < n_rows);
 
   for (j = 0; j < n_cols; j++) {
-    MAT_ITEM(this, dst_row, j) = 
-      gf->add(MAT_ITEM(this, dst_row, j),
-              gf->mul(MAT_ITEM(this, src_row, j), factor));
+    set(dst_row, j,
+        gf->add(get(dst_row, j),
+                gf->mul(get(src_row, j), factor)));
   }
 }
 
@@ -82,7 +100,7 @@ void Mat<T>::reduced_row_echelon_form(void)
     // Find a pivot row for this column
     int pivot_row = num_pivots;
     while (pivot_row < n_rows && 
-           MAT_ITEM(this, pivot_row, j) == 0)
+           get(pivot_row, j) == 0)
       pivot_row++;
     if (pivot_row == n_rows)
       continue;  // Cannot eliminate on this column
@@ -91,11 +109,11 @@ void Mat<T>::reduced_row_echelon_form(void)
     num_pivots++;
     
     // Simplify the pivot row
-    mul_row(pivot_row, gf->div(1, MAT_ITEM(this, pivot_row, j)));
+    mul_row(pivot_row, gf->div(1, get(pivot_row, j)));
     
     // Eliminate rows below
     for (i = pivot_row + 1; i < n_rows; i++)
-      add_rows(pivot_row, i, gf->neg(MAT_ITEM(this, i, j)));
+      add_rows(pivot_row, i, gf->neg(get(i, j)));
   }
 
   // Compute reduced row echelon form (RREF)
@@ -103,14 +121,14 @@ void Mat<T>::reduced_row_echelon_form(void)
     // Find pivot
     int pivot_col = 0;
     while (pivot_col < n_cols && 
-           MAT_ITEM(this, i, pivot_col) == 0)
+           get(i, pivot_col) == 0)
       pivot_col++;
     if (pivot_col == n_cols)
       continue;  // Skip this all-zero row
     
     // Eliminate rows above
     for (int j = i - 1; j >= 0; j--)
-      add_rows(i, j, gf->neg(MAT_ITEM(this, j, pivot_col)));
+      add_rows(i, j, gf->neg(get(j, pivot_col)));
   }
 }
 
@@ -129,8 +147,8 @@ void Mat<T>::inv(void)
   Mat<T> tmp(this->gf, n_rows, n_cols * 2);
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
-      MAT_ITEM(&tmp, i, j) = MAT_ITEM(this, i, j);
-      MAT_ITEM(&tmp, i, j + n_cols) = (i == j) ? 1 : 0;
+      tmp.set(i, j, get(i, j));
+      tmp.set(i, j + n_cols, (i == j) ? 1 : 0);
     }
   }
 
@@ -140,7 +158,7 @@ void Mat<T>::inv(void)
   // Check that the left half is the identity matrix
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
-      if (MAT_ITEM(&tmp, i, j) != (i == j) ? 1 : 0)
+      if (tmp.get(i, j) != (i == j) ? 1 : 0)
         throw NTL_EX_MAT_NOT_INVERTIBLE;
     }
   }
@@ -148,7 +166,7 @@ void Mat<T>::inv(void)
   // Extract inverse matrix from: [identity | inverse]
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++)
-      MAT_ITEM(this, i, j) = MAT_ITEM(&tmp, i, j + n_cols);
+      set(i, j, tmp.get(i, j + n_cols));
   }
 }
 
@@ -160,7 +178,7 @@ bool Mat<T>::row_is_identity(int row)
   assert(row >= 0 && row < n_rows);
 
   for (j = 0;j < n_cols;j++) {
-    if (MAT_ITEM(this, row, j) != ((j == row) ? 1 : 0))
+    if (get(row, j) != ((j == row) ? 1 : 0))
       return false;
   }
 
@@ -174,7 +192,7 @@ void Mat<T>::vandermonde(void)
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = gf->exp(i, j); 
+      set(i, j, gf->exp(i, j));
     }
   }
 }
@@ -190,12 +208,12 @@ void Mat<T>::ec_transform1(int i)
   assert(i >= 0 && i < n_rows);
   assert(i >= 0 && i < n_cols);
 
-  T f_minus_1 = gf->inv(MAT_ITEM(this, i, i));
+  T f_minus_1 = gf->inv(get(i, i));
 
   for (k = 0;k < n_rows;k++) {
-    MAT_ITEM(this, k, i) = 
-      gf->mul(f_minus_1, 
-              MAT_ITEM(this, k, i));
+    set(k, i,
+        gf->mul(f_minus_1, 
+                get(k, i)));
   }
 }
 
@@ -210,12 +228,12 @@ void Mat<T>::ec_transform2(int i, int j)
   assert(i >= 0 && i < n_rows);
   assert(j >= 0 && i < n_cols);
 
-  T f_i_j = MAT_ITEM(this, i, j);
+  T f_i_j = get(i, j);
 
   for (k = 0;k < n_rows;k++) {
-    MAT_ITEM(this, k, j) = 
-      gf->sub(MAT_ITEM(this, k, j),
-              gf->mul(f_i_j, MAT_ITEM(this, k, i)));
+    set(k, j,
+        gf->sub(get(k, j),
+                gf->mul(f_i_j, get(k, i))));
   }
 }
 
@@ -243,16 +261,16 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
     }
 
     //this case is mentionned in the paper but cannot happen
-    /* if (0 == MAT_ITEM(&tmp, i, i)) {
+    /* if (0 == tmp.get(i, i)) {
        for (j = i + 1;j < &tmp->n_cols;j++) {
-       if (0 != MAT_ITEM(&tmp, i, j)) {
+       if (0 != tmp.get(i, j)) {
        tmp.swap_cols(i, j);
        continue ;
        }
        } */
 
     //check if f_i_i == 1
-    if (1 != MAT_ITEM(&tmp, i, i)) {
+    if (1 != tmp.get(i, i)) {
       //check for inverse since f_i_i != 0
       tmp.ec_transform1(i);
     }
@@ -260,7 +278,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
     //now f_i_i == 1
     for (j = 0;j < tmp.n_cols;j++) {
       if (i != j) {
-        if (0 != MAT_ITEM(&tmp, i, j)) {
+        if (0 != tmp.get(i, j)) {
           tmp.ec_transform2(i, j);
         }
       }
@@ -272,7 +290,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
   //copy last n_rows rows of tmp into mat
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = MAT_ITEM(&tmp, n_cols + i, j);
+      set(i, j, tmp.get(n_cols + i, j));
     }
   }
 }
@@ -286,11 +304,11 @@ void Mat<T>::mult(Vec<T> *output, Vec<T> *v)
   assert(output->n == n_cols);
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      T x = gf->mul(MAT_ITEM(this, i, j), VEC_ITEM(v, j));
+      T x = gf->mul(get(i, j), v->get(j));
       if (0 == j)
-        VEC_ITEM(output, i) = x;
+        output->set(i, x);
       else
-        VEC_ITEM(output, i) = gf->add(VEC_ITEM(output, i), x);
+        output->set(i, gf->add(output->get(i), x));
     }
   }
 }
@@ -302,7 +320,7 @@ void Mat<T>::cauchy()
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = gf->inv(gf->add(i, (j + n_rows)));
+      set(i, j, gf->inv(gf->add(i, (j + n_rows))));
     }
   }
 
@@ -310,13 +328,13 @@ void Mat<T>::cauchy()
   // convert 1st row to all 1s
   for (j = 0;j < n_cols;j++) {
     for (i = 0;i < n_rows;i++) {
-      MAT_ITEM(this, i, j) = gf->div(MAT_ITEM(this, i, j), MAT_ITEM(this, 0, j));
+      set(i, j, gf->div(get(i, j), get(0, j)));
     }
   }
   // convert 1st element of each row to 1
   for (i = 1;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      MAT_ITEM(this, i, j) = gf->div(MAT_ITEM(this, i, j), MAT_ITEM(this, i, 0));
+      set(i, j, gf->div(get(i, j), get(i, 0)));
     }
   }
 }
@@ -329,7 +347,7 @@ void Mat<T>::dump(void)
   std::cout << "--\n";
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
-      std::cout << " " << MAT_ITEM(this, i, j);
+      std::cout << " " << get(i, j);
     }
     std::cout << "\n";
   }

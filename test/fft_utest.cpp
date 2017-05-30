@@ -129,10 +129,10 @@ public:
     int len = strlen(num);
     
     for (i = 0;i < len;i++) {
-      VEC_ITEM(vec, i) = num[len - i - 1] + '0';
+      vec->set(i, num[len - i - 1] + '0');
     }
     for (;i < N;i++) {  
-      VEC_ITEM(vec, i) = 0;
+      vec->set(i, 0);
     }
     
     return vec;

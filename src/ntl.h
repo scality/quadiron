@@ -39,4 +39,7 @@ typedef enum
 #include "fft.h"
 #include "misc.h"
 
+#define MAT_ITEM(mat, i, j) ((mat)->mem[(i) * (mat)->n_cols + (j)])
+#define VEC_ITEM(vec, i) ((vec)->mem[(i)])
+
 #endif
