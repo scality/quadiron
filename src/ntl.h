@@ -8,6 +8,10 @@
 #include <inttypes.h>
 #include <assert.h>
 #include <gmpxx.h>
+#include <unistd.h>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 template<typename Type> struct Double {};
 template<>           struct Double<uint32_t> {typedef uint64_t T;};
@@ -32,6 +36,7 @@ typedef enum
 #include "gf2n.h"
 #include "vec.h"
 #include "mat.h"
+#include "fft.h"
 #include "misc.h"
 
 #endif

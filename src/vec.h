@@ -13,6 +13,7 @@ class Vec
   Vec(GF<T> *gf, int n);
   ~Vec();
   void zero_fill(void);
+  void dump(void);
 };
 
 #endif
