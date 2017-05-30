@@ -23,3 +23,14 @@ void Vec<T>::zero_fill(void)
   for (i = 0;i < n;i++)
     VEC_ITEM(this, i) = 0;
 }
+
+template <typename T>
+void Vec<T>::dump(void)
+{
+  int i, j;
+  
+  std::cout << "--\n";
+  for (i = 0;i < n;i++)
+    std::cout << " " << VEC_ITEM(this, i);
+  std::cout << "\n";
+}

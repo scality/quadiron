@@ -5,6 +5,7 @@
 #include "gf2n.cpp"
 #include "mat.cpp"
 #include "vec.cpp"
+#include "fft.cpp"
 
 template<typename T>
 class FFTUtest
@@ -113,6 +114,29 @@ public:
     assert(gf._jacobi(47, 221) == -1);
     assert(gf._jacobi(2, 221) == -1);
   }
+  
+  /** 
+   * convert a number into a vector of digits padded with zeros
+   * 
+   * @param num 
+   * 
+   * @return 
+   */
+  Vec<T> *_convert(GF<T> *gf, int N, char num[])
+  {
+    int i;
+    Vec<T> *vec = new Vec<T>(gf, N);
+    int len = strlen(num);
+    
+    for (i = 0;i < len;i++) {
+      VEC_ITEM(vec, i) = num[len - i - 1] + '0';
+    }
+    for (;i < N;i++) {  
+      VEC_ITEM(vec, i) = 0;
+    }
+    
+    return vec;
+  }
 
   /** 
    * Example taken from Pierre Meunier's book
@@ -142,11 +166,32 @@ public:
     GFP<T> gf_m(m);
     T invN = gf_m.inv(N);
     std::cerr << "invN=" << invN << "\n";
-    Vec<T> W(&gf_m, N);
-    for (int i = 0;i < N;i++) {
-      VEC_ITEM(&W, i) = gf_m.exp(omega, i);
-      std::cerr << i << " " << VEC_ITEM(&W, i) << "\n";
-    }
+
+    FFT<T> fft(&gf_m, omega, _n);
+
+    assert(fft._get_p(1, 0) == 1);
+    assert(fft._get_p(4, 2) == 1);
+    assert(fft._get_p(42, 1) == fft._get_p0(42, 1, _n));
+
+    //parse the big numbers
+    char X[] = "1236548787985654354598651354984132468";
+    char Y[] = "745211515185321545554545854598651354984132468";
+
+    Vec<T> *_X = _convert(&gf_m, N, X);
+    //_X->dump();
+    Vec<T> *_Y = _convert(&gf_m, N, Y);
+    //_Y->dump();
+
+    Vec<T> *sfX = new Vec<T>(&gf_m, N);
+    Vec<T> *sfY = new Vec<T>(&gf_m, N);
+
+    fft.fft(sfX, _X);
+    fft.fft(sfY, _Y);
+
+    delete sfX;
+    delete sfY;
+    delete _X;
+    delete _Y;
   }
 
   void fft_utest_no_mul_bignum()
@@ -173,9 +218,11 @@ public:
 
 template class Mat<uint32_t>;
 template class Vec<uint32_t>;
+template class FFT<uint32_t>;
 
 template class Mat<uint64_t>;
 template class Vec<uint64_t>;
+template class FFT<uint64_t>;
 
 template class Mat<mpz_class>;
 template class Vec<mpz_class>;
@@ -196,7 +243,7 @@ void fft_utest()
   FFTUtest<uint32_t> fftutest_uint32;
   fftutest_uint32.fft_utest_no_mul_bignum();
   FFTUtest<uint64_t> fftutest_uint64;
-  fftutest_uint64.fft_utest();//_no_mul_bignum();
+  fftutest_uint64.fft_utest();
   FFTUtest<mpz_class> fftutest_mpz;
-  fftutest_mpz.fft_utest();
+  fftutest_mpz.fft_utest_no_mul_bignum(); //too slow
 }
