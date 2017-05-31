@@ -2,37 +2,40 @@
 #include "ntl.h"
 
 template <typename T>
-FFT<T>::FFT(GF<T> *gf, T omega, int q)
+FFT<T>::FFT(GF<T> *gf, T w, int q)
 {
   this->gf = gf;
-  this->omega = omega;
+  this->w = w;
+  this->invw = gf->inv(w);
   this->q = q;
   this->N = gf->__exp(2, q);
   this->W = new Vec<T>(gf, this->N);
+  this->invW = new Vec<T>(gf, this->N);
 
-  compute_omegas();
+  compute_W(W, w);
+  compute_W(invW, invw);
 }
 
 template <typename T>
 FFT<T>::~FFT()
 {
+  delete this->invW;
   delete this->W;
 }
 
 template <typename T>
-void FFT<T>::compute_omegas(void)
+void FFT<T>::compute_W(Vec<T> *_W, T _w)
 {
   std::ostringstream filename;  
 
-  filename << "W" << omega << ".cache";
+  filename << "W" << _w << ".cache";
 
   if (-1 == access(filename.str().c_str(), F_OK)) {
     std::ofstream file;
     file.open(filename.str().c_str(), std::ios::out);
     for (int i = 0;i < N;i++) {
-      W->set(i, gf->exp(omega, i));
-      std::cerr << i << " " << N << "\n";
-      file << W->get(i) << "\n";
+      _W->set(i, gf->exp(_w, i));
+      file << _W->get(i) << "\n";
     }
   } else {
     std::ifstream file;
@@ -40,7 +43,7 @@ void FFT<T>::compute_omegas(void)
     file.open(filename.str().c_str(), std::ios::in);
     T tmp;
     while (file >> tmp) {
-      W->set(i, tmp);
+      _W->set(i, tmp);
       i++;
     }
     assert(i == N);
@@ -110,7 +113,7 @@ int FFT<T>::_get_p1(int i, int j, int s)
 }
 
 template <typename T>
-void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
+void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
 {
   Mat<T> *phi = new Mat<T>(gf, q+1, N);
 
@@ -131,7 +134,7 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
 
     phi->set(1, i,
             (phi->get(0, tmp0) +
-             W->get(gf->__exp(2, q-1) * _get_p(i, q)) *
+             _W->get(gf->__exp(2, q-1) * _get_p(i, q)) *
              phi->get(0, tmp1)) % gf->card());
   }
 
@@ -154,7 +157,7 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
 
       phi->set(mm, i,
               (phi->get(mm-1, tmp2) +
-               W->get(gf->__exp(2, q-mm) * tmp1) *
+               _W->get(gf->__exp(2, q-mm) * tmp1) *
                phi->get(mm-1, tmp3)) % gf->card());
     }
 
@@ -170,4 +173,16 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
   }
 
   delete phi;
+}
+
+template <typename T>
+void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
+{
+  return _fft(output, input, W);
+}
+
+template <typename T>
+void FFT<T>::ifft(Vec<T> *output, Vec<T> *input)
+{
+  return _fft(output, input, invW);
 }
