@@ -122,14 +122,14 @@ public:
    * 
    * @return 
    */
-  Vec<T> *_convert(GF<T> *gf, int N, char num[])
+  Vec<T> *_convert_string2vec(GF<T> *gf, int N, char num[])
   {
     int i;
     Vec<T> *vec = new Vec<T>(gf, N);
     int len = strlen(num);
     
     for (i = 0;i < len;i++) {
-      vec->set(i, num[len - i - 1] + '0');
+      vec->set(i, num[len - i - 1] - '0');
     }
     for (;i < N;i++) {  
       vec->set(i, 0);
@@ -138,6 +138,26 @@ public:
     return vec;
   }
 
+  
+  char *_convert_vec2string(Vec<T> *vec) 
+  {
+    int i;
+    std::ostringstream s;  
+    int ignore_zeros = 1;
+
+    for (i = vec->n-1;i >= 0;i--) {
+      if (ignore_zeros) {
+        if (vec->get(i) == 0) {
+          ignore_zeros = 0;
+          continue ;
+        }
+      }
+      s << vec->get(i);
+    }
+    
+    return strdup(s.str().c_str());
+  }
+  
   /** 
    * Example taken from Pierre Meunier's book
    * 
@@ -158,50 +178,45 @@ public:
     a[1] = 243;
     n[1] = p2;
     T omega = gf._chinese_remainder(2, a, n);
-    std::cerr << "p1=" << p1 << " p2=" << p2 << " m=" << m << " omega=" << omega << "\n";
+    //std::cerr << "p1=" << p1 << " p2=" << p2 << " m=" << m << " omega=" << omega << "\n";
     assert(omega == 25559439);
+
     int q = 15;
     int N = gf.__exp(2, q);
 
     GFP<T> gf_m(m);
-    T invN = gf_m.inv(N);
-    std::cerr << "invN=" << invN << "\n";
-
     FFT<T> fft(&gf_m, omega, q);
-
-    //test fft internals
-    assert(fft._get_p(0, 1) == 0);
-    assert(fft._get_p(1, 1) == 1);
-    assert(fft._get_p(1, 2) == 0);
-    assert(fft._get_p(2, 1) == 0);
-    assert(fft._get_p(2, 2) == 1);
-    assert(fft._get_p(N-1, 1) == 1);
-    assert(fft._get_p(N-1, q) == 1);
-#if 0
-    for (int i = 0;i <= N-1;i++) {
-      for (int j = 1;j <= q;j++) {
-        std::cerr << fft._get_p(i, j) << " ";
-      }
-      std::cerr << "\n";
-    }
-    exit(0);
-#endif
 
     //parse the big numbers
     char X[] = "1236548787985654354598651354984132468";
     char Y[] = "745211515185321545554545854598651354984132468";
 
-    Vec<T> *_X = _convert(&gf_m, N, X);
+    Vec<T> *_X = _convert_string2vec(&gf_m, N, X);
     //_X->dump();
-    Vec<T> *_Y = _convert(&gf_m, N, Y);
+    Vec<T> *_Y = _convert_string2vec(&gf_m, N, Y);
     //_Y->dump();
 
     Vec<T> *sfX = new Vec<T>(&gf_m, N);
     Vec<T> *sfY = new Vec<T>(&gf_m, N);
+    Vec<T> *_XY = new Vec<T>(&gf_m, N);
+    Vec<T> *sfXY = new Vec<T>(&gf_m, N);
 
     fft.fft(sfX, _X);
     fft.fft(sfY, _Y);
 
+    for (int i = 0;i <= N-1;i++) {
+      _XY->set(i, gf_m.mul(sfX->get(i), sfY->get(i)));
+    }
+
+    fft.ifft(sfXY, _XY);
+
+    sfXY->dump();
+    //char *s = _convert_vec2string(sfXY);
+    //std::cout << s << "\n";
+
+    //free(s);
+    delete sfXY;
+    delete _XY;
     delete sfX;
     delete sfY;
     delete _X;
