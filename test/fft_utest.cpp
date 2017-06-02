@@ -142,20 +142,20 @@ public:
   char *_convert_vec2string(Vec<T> *vec) 
   {
     int i;
-    std::ostringstream s;  
+    std::string s;  
     int ignore_zeros = 1;
 
     for (i = vec->n-1;i >= 0;i--) {
       if (ignore_zeros) {
-        if (vec->get(i) == 0) {
+        if (vec->get(i) != 0)
           ignore_zeros = 0;
+        else
           continue ;
-        }
       }
-      s << vec->get(i);
+      s.append(1, vec->get(i) + '0');
     }
-    
-    return strdup(s.str().c_str());
+
+    return strdup(s.c_str());
   }
   
   /** 
@@ -167,25 +167,60 @@ public:
   {
     std::cout << "test_mul_bignum\n";
 
-    GFP<T> gf(3);
-    T p1 = 2 * gf._exp(2, 15) + 1;
-    T p2 = 5 * gf._exp(2, 15) + 1;
-    DoubleT<T> m = p1 * p2;
-    T a[2];
-    T n[2];
-    a[0] = 9;
-    n[0] = p1;
-    a[1] = 243;
-    n[1] = p2;
-    T omega = gf._chinese_remainder(2, a, n);
-    //std::cerr << "p1=" << p1 << " p2=" << p2 << " m=" << m << " omega=" << omega << "\n";
-    assert(omega == 25559439);
+    GFP<T> gf(3); //just to do basic calculations
 
-    int q = 15;
-    int N = gf.__exp(2, q);
+    int b = 10; //base
+    int p = 14; //we could multiply integers of 2^p digits
+    int max_digits = gf.__exp(2, p);
+    //std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
+
+    int n = p + 1;
+    int N = gf.__exp(2, n);
+    //std::cerr << "n=" << n << " N=" << N << "\n";
+
+    //choose 2 prime numbers
+    T a1 = 2;
+    T a2 = 5;
+    T p1 = a1 * gf._exp(2, 15) + 1;
+    T p2 = a2 * gf._exp(2, 15) + 1;
+    //std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
+    assert(gf._solovay_strassen(p1));
+    assert(gf._solovay_strassen(p2));
+    
+    //ensure their product is bounded (b-1)^2*2^(n-1) < m
+    T m = p1 * p2;
+    //check overflow
+    assert(m/p1 == p2);
+    //std::cerr << " m=" << m << "\n";
+    assert(gf.__exp((b - 1), 2) * gf.__exp(p, 2) < m);
+
+    assert(gf._jacobi(3, p1) == gf._jacobi(p1, 3));
+    assert(gf._jacobi(p1, 3) == gf._jacobi(2, 3));
+    assert(gf._jacobi(3, p2) == gf._jacobi(p2, 3));
+    assert(gf._jacobi(p2, 3) == gf._jacobi(2, 3));
+    assert(gf._jacobi(2, 3) == -1);
+    //which means 3 is not a quadratic residue
+
+    //therefore we can compute the roots of unity in GF_p1 and GF_p2
+    T w1 = gf.__exp(3, a1);
+    T w2 = gf.__exp(3, a2);
+    //std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
+    assert(w1 == 9);
+    assert(w2 == 243);
+
+    //find root of unity in GF_p1p2
+    T _a[2];
+    T _n[2];
+    _a[0] = w1;
+    _n[0] = p1;
+    _a[1] = w2;
+    _n[1] = p2;
+    T w = gf._chinese_remainder(2, _a, _n);
+    //std::cerr << " w=" << w << "\n";
+    assert(w == 25559439);
 
     GFP<T> gf_m(m);
-    FFT<T> fft(&gf_m, omega, q);
+    FFT<T> fft(&gf_m, n, 25559439);
 
     //parse the big numbers
     char X[] = "1236548787985654354598651354984132468";
@@ -205,12 +240,35 @@ public:
     fft.fft(sfY, _Y);
 
     for (int i = 0;i <= N-1;i++) {
-      _XY->set(i, gf_m.mul(sfX->get(i), sfY->get(i)));
+      DoubleT<T> val = DoubleT<T>(sfX->get(i)) * sfY->get(i);
+      _XY->set(i, val % m);
     }
 
     fft.ifft(sfXY, _XY);
 
-    sfXY->dump();
+    T inv_N = gf_m.inv(N);
+    //std::cerr << "inv_N=" << inv_N << "\n";
+
+#if 0
+    for (int i = 0;i <= N-1;i++) {
+      DoubleT<T> val = DoubleT<T>(sfXY->get(i)) * inv_N;
+      sfXY->set(i, val % m);
+    }
+#endif
+
+    //sfXY->dump();
+    //exit(0);
+
+    mpz_class z = 0;
+    for (int i = 0;i <= N-1;i++) {
+      mpz_class t, b;
+      b = 10;
+      mpz_pow_ui(t.get_mpz_t(), b.get_mpz_t(), i);
+      z += ((sfXY->get(i) * inv_N) % m) * t;
+    }
+
+    std::cout << z << "\n";
+
     //char *s = _convert_vec2string(sfXY);
     //std::cout << s << "\n";
 
