@@ -5,7 +5,7 @@ AR = ar cq
 
 CXXFLAGS = -std=c++11 -g #-DNDEBUG
 
-OBJS = gf.o gfp.o gf2n.o vec.o mat.o fft.o misc.o
+OBJS = misc.o
 
 LIBNTL = libntl.a
 

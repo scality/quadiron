@@ -1,10 +1,5 @@
 
 #include "ntl.h"
-#include "gf.cpp"
-#include "gfp.cpp"
-#include "gf2n.cpp"
-#include "mat.cpp"
-#include "vec.cpp"
 
 template class GF<uint32_t>;
 template class GFP<uint32_t>;
