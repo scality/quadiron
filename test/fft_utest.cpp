@@ -138,26 +138,6 @@ public:
     return vec;
   }
 
-  
-  char *_convert_vec2string(Vec<T> *vec) 
-  {
-    int i;
-    std::string s;  
-    int ignore_zeros = 1;
-
-    for (i = vec->n-1;i >= 0;i--) {
-      if (ignore_zeros) {
-        if (vec->get(i) != 0)
-          ignore_zeros = 0;
-        else
-          continue ;
-      }
-      s.append(1, vec->get(i) + '0');
-    }
-
-    return strdup(s.c_str());
-  }
-  
   /** 
    * Example taken from Pierre Meunier's book
    * 
@@ -249,16 +229,7 @@ public:
     T inv_N = gf_m.inv(N);
     //std::cerr << "inv_N=" << inv_N << "\n";
 
-#if 0
-    for (int i = 0;i <= N-1;i++) {
-      DoubleT<T> val = DoubleT<T>(sfXY->get(i)) * inv_N;
-      sfXY->set(i, val % m);
-    }
-#endif
-
-    //sfXY->dump();
-    //exit(0);
-
+    //carry propagation
     mpz_class z = 0;
     for (int i = 0;i <= N-1;i++) {
       mpz_class t, b;
@@ -267,12 +238,9 @@ public:
       z += ((sfXY->get(i) * inv_N) % m) * t;
     }
 
-    std::cout << z << "\n";
+    //std::cout << z << "\n";
+    assert(z.get_str() == "921490395895362412399910100421159322712298564831565484737491129935640058571771024");
 
-    //char *s = _convert_vec2string(sfXY);
-    //std::cout << s << "\n";
-
-    //free(s);
     delete sfXY;
     delete _XY;
     delete sfX;
