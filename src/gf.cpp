@@ -297,7 +297,9 @@ T GF<T>::_chinese_remainder(int n_mod, T a[], T n[])
 
 /** 
  * check if q is a quadractic residue in GF_p^n
- * 
+ *
+ * q is a quadratic residue, if x^2 == q % n
+ *
  * @param q 
  * 
  * @return boolean
@@ -319,6 +321,11 @@ bool GF<T>::is_quadratic_residue(T q)
  * Compute the jacobi symbol of the 2 numbers
  * https://groups.google.com/forum/#!topic/sci.crypt/v9_cNF06XjU
  * 
+ * The jacobi symbol is defined as follow:
+ *    n    |  0 if n % m == 0
+ *  ( _) = |  1 if n % m != 0 and for some x, n % m == x^2 (quadratic residue)
+ *    m    | -1 if n % m != 0 and there is no such x 
+ *
  * @param n
  * @param m 
  * 
@@ -391,7 +398,6 @@ bool GF<T>::_solovay_strassen1(T a, T n)
 /** 
  * Perform the Solvay-Strassen primality test
  * 
- * @param gf 
  * @param n check if n is prime
  * 
  * @return true if n is prime else false

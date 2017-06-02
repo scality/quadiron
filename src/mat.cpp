@@ -340,6 +340,17 @@ void Mat<T>::cauchy()
 }
 
 template <typename T>
+void Mat<T>::dump_row(int row)
+{
+  assert(row >= 0 && row < n_rows);
+
+  for (int j = 0;j < n_cols;j++) {
+    std::cout << " " << get(row, j);
+  }
+  std::cout << "\n";
+}
+
+template <typename T>
 void Mat<T>::dump(void)
 {
   int i, j;

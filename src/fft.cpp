@@ -2,24 +2,24 @@
 #include "ntl.h"
 
 template <typename T>
-FFT<T>::FFT(GF<T> *gf, T w, int q)
+FFT<T>::FFT(GF<T> *gf, int n, T w)
 {
   this->gf = gf;
+  this->n = n;
+  this->N = gf->__exp(2, n);
   this->w = w;
-  this->invw = gf->inv(w);
-  this->q = q;
-  this->N = gf->__exp(2, q);
-  this->W = new Vec<T>(gf, this->N);
-  this->invW = new Vec<T>(gf, this->N);
+  this->inv_w = gf->inv(w);
+  this->W = new Vec<T>(gf, this->N + 1);
+  this->inv_W = new Vec<T>(gf, this->N + 1);
 
   compute_W(W, w);
-  compute_W(invW, invw);
+  compute_W(inv_W, inv_w);
 }
 
 template <typename T>
 FFT<T>::~FFT()
 {
-  delete this->invW;
+  delete this->inv_W;
   delete this->W;
 }
 
@@ -33,7 +33,7 @@ void FFT<T>::compute_W(Vec<T> *_W, T _w)
   if (-1 == access(filename.str().c_str(), F_OK)) {
     std::ofstream file;
     file.open(filename.str().c_str(), std::ios::out);
-    for (int i = 0;i < N;i++) {
+    for (int i = 0;i <= N;i++) {
       _W->set(i, gf->exp(_w, i));
       file << _W->get(i) << "\n";
     }
@@ -46,23 +46,23 @@ void FFT<T>::compute_W(Vec<T> *_W, T _w)
       _W->set(i, tmp);
       i++;
     }
-    assert(i == N);
+    assert(i == N + 1);
   }
 }
 
 /** 
  * Simulate the bit matrix
  *
- * [0][0]=undef   [0][1]=0   [0][2]=0   ... [0][q]=0    <= 0
- * [1][0]=undef   [1][1]=1   [1][2]=0   ... [1][q]=0    <= 1
- * [2][0]=undef   [2][1]=0   [2][2]=1   ... [2][q]=0    <= 2
+ * [0][0]=undef   [0][1]=0   [0][2]=0   ... [0][n]=0    <= 0
+ * [1][0]=undef   [1][1]=1   [1][2]=0   ... [1][n]=0    <= 1
+ * [2][0]=undef   [2][1]=0   [2][2]=1   ... [2][n]=0    <= 2
  * ...
- * [N-1][0]=undef [N-1][1]=1 [N-1][2]=1 ... [N-1][q]=1  <= N-1
+ * [N-1][0]=undef [N-1][1]=1 [N-1][2]=1 ... [N-1][n]=1  <= N-1
  *
  * where the numbers from 0 .. N-1 are encoded in reverse order
  * 
  * @param i 0 <= i <= N-1
- * @param j 1 <= j <= q
+ * @param j 1 <= j <= n
  * 
  * @return
  */
@@ -70,7 +70,7 @@ template <typename T>
 int FFT<T>::_get_p(int i, int j)
 {
   assert(i >= 0 && i <= N-1);
-  assert(j >= 1 && j <= q);
+  assert(j >= 1 && j <= n);
   
   int x = i;
   int y = 1;
@@ -95,7 +95,7 @@ template <typename T>
 int FFT<T>::_get_p0(int i, int j, int s)
 {
   assert(i >=0 && i <= N-1);
-  assert(j >=1 && j <= q);
+  assert(j >=1 && j <= n);
   
   return (j == s) ? 0 : _get_p(i, j);
 }
@@ -107,7 +107,7 @@ template <typename T>
 int FFT<T>::_get_p1(int i, int j, int s)
 {
   assert(i >=0 && i <= N-1);
-  assert(j >=1 && j <= q);
+  assert(j >=1 && j <= n);
   
   return (j == s) ? 1 : _get_p(i, j);
 }
@@ -115,7 +115,7 @@ int FFT<T>::_get_p1(int i, int j, int s)
 template <typename T>
 void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
 {
-  Mat<T> *phi = new Mat<T>(gf, q+1, N);
+  Mat<T> *phi = new Mat<T>(gf, n+1, N);
 
   //compute phi[0][i]
   for (int i = 0;i <= N-1;i++)
@@ -124,52 +124,56 @@ void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
   //compute phi[1][i]
   for (int i = 0;i <= N-1;i++) {
 
-    T tmp0 = 0;
-    for (int k = 1;k <= q;k++)
-      tmp0 += _get_p0(i, k, q) * gf->__exp(2, k-1);
-
     T tmp1 = 0;
-    for (int k = 1;k <= q;k++)
-      tmp1 += _get_p1(i, k, q) * gf->__exp(2, k-1);
+    for (int k = 1;k <= n;k++)
+      tmp1 += _get_p0(i, k, n) * gf->__exp(2, k-1);
 
-    phi->set(1, i,
-            (phi->get(0, tmp0) +
-             _W->get(gf->__exp(2, q-1) * _get_p(i, q)) *
-             phi->get(0, tmp1)) % gf->card());
+    T tmp2 = 0;
+    for (int k = 1;k <= n;k++)
+      tmp2 += _get_p1(i, k, n) * gf->__exp(2, k-1);
+
+    DoubleT<T> val = 
+      DoubleT<T>(_W->get(gf->__exp(2, n-1) * _get_p(i, n))) *
+      phi->get(0, tmp2) +
+      phi->get(0, tmp1);
+
+    phi->set(1, i, val % gf->card());
   }
 
-  //compute phi[2,3] to phi[q,N-1]
-  for (int mm = 2; mm <= q;mm++) {
+  //compute phi[2,3] to phi[n,N-1]
+  for (int mm = 2; mm <= n;mm++) {
 
     for (int i = 0;i <= N-1;i++) {
       
       T tmp1 = 0;
       for (int k = 1;k <= mm;k++)
-        tmp1 += _get_p(i, q-mm+k) * gf->__exp(2, mm-k);
+        tmp1 += _get_p(i, n-mm+k) * gf->__exp(2, mm-k);
 
       T tmp2 = 0;
-      for (int k = 1;k <= q;k++)
-        tmp2 += _get_p0(i, k, q-mm+1) * gf->__exp(2, k-1);
+      for (int k = 1;k <= n;k++)
+        tmp2 += _get_p0(i, k, n-mm+1) * gf->__exp(2, k-1);
 
       T tmp3 = 0;
-      for (int k = 1;k <= q;k++)
-        tmp3 += _get_p1(i, k, q-mm+1) * gf->__exp(2, k-1);
+      for (int k = 1;k <= n;k++)
+        tmp3 += _get_p1(i, k, n-mm+1) * gf->__exp(2, k-1);
 
-      phi->set(mm, i,
-              (phi->get(mm-1, tmp2) +
-               _W->get(gf->__exp(2, q-mm) * tmp1) *
-               phi->get(mm-1, tmp3)) % gf->card());
+      DoubleT<T>val = 
+        DoubleT<T>(_W->get(gf->__exp(2, n-mm) * tmp1)) *
+        phi->get(mm-1, tmp3) +
+        phi->get(mm-1, tmp2);
+
+      phi->set(mm, i, val % gf->card());
     }
+  }
 
-    //compute FFT
-    for (int i = 0;i <= N-1;i++) {
-
-      T tmp = 0;
-      for (int k = 1;k <= q;k++)
-        tmp += _get_p(i, q-k+1) * gf->__exp(2, k-1);
-      
-      output->set(i, phi->get(q, tmp));
-    }
+  //compute FFT
+  for (int i = 0;i <= N-1;i++) {
+    
+    T tmp = 0;
+    for (int k = 1;k <= n;k++)
+      tmp += _get_p(i, n-k+1) * gf->__exp(2, k-1);
+    
+    output->set(i, phi->get(n, tmp));
   }
 
   delete phi;
@@ -184,5 +188,10 @@ void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
 template <typename T>
 void FFT<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
-  return _fft(output, input, invW);
+  return _fft(output, input, inv_W);
+}
+
+template <typename T>
+void FFT<T>::_debug(void)
+{
 }

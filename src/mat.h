@@ -25,6 +25,7 @@ class Mat
   void vandermonde(void);
   void vandermonde_suitable_for_ec(void);
   void cauchy(void);
+  void dump_row(int row);
   void dump(void);
  private:
   T *mem;
