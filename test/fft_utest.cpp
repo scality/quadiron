@@ -1,11 +1,5 @@
 
 #include "ntl.h"
-#include "gf.cpp"
-#include "gfp.cpp"
-#include "gf2n.cpp"
-#include "mat.cpp"
-#include "vec.cpp"
-#include "fft.cpp"
 
 template<typename T>
 class FFTUtest

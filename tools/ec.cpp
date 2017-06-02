@@ -1,10 +1,5 @@
 
 #include "ntl.h"
-#include "gf.cpp"
-#include "gfp.cpp"
-#include "gf2n.cpp"
-#include "mat.cpp"
-#include "vec.cpp"
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>

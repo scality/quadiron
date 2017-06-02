@@ -1,6 +1,5 @@
-
-#ifndef __NTL_H__
-#define __NTL_H__ 1
+/* -*- mode: c++ -*- */
+#pragma once
 
 #include <iostream>
 #include <math.h>
@@ -39,5 +38,3 @@ typedef enum
 #include "mat.h"
 #include "fft.h"
 #include "misc.h"
-
-#endif

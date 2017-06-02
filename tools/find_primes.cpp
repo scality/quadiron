@@ -1,8 +1,5 @@
 
 #include "ntl.h"
-#include "gf.cpp"
-#include "gfp.cpp"
-#include "gf2n.cpp"
 #include <signal.h>
 
 template class GF<mpz_class>;
