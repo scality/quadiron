@@ -1,6 +1,7 @@
 #!/bin/sh
 
 #vflag=-v
+#valgrind="valgrind --leak-check=full"
 #valgrind=valgrind
 
 checkfail()
