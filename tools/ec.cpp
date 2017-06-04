@@ -459,7 +459,7 @@ public:
   {
     assert(gf->_jacobi(3, 65537) == -1);
 
-    n = gf->__log2(n_coding + n_data) + 1;
+    n = __gf._log2(n_coding + n_data) + 1;
     
     std::cerr << "n=" << n << "\n";
 

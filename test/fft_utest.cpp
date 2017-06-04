@@ -99,14 +99,12 @@ public:
 
   void test_jacobi()
   {
-    GFP<T> gf(3);
-    
-    assert(gf._jacobi(1001, 9907) == -1);
-    assert(gf._jacobi(19, 45) == 1);
-    assert(gf._jacobi(8, 21) == -1);
-    assert(gf._jacobi(5, 21) == 1);
-    assert(gf._jacobi(47, 221) == -1);
-    assert(gf._jacobi(2, 221) == -1);
+    assert(__gf._jacobi(1001, 9907) == -1);
+    assert(__gf._jacobi(19, 45) == 1);
+    assert(__gf._jacobi(8, 21) == -1);
+    assert(__gf._jacobi(5, 21) == 1);
+    assert(__gf._jacobi(47, 221) == -1);
+    assert(__gf._jacobi(2, 221) == -1);
   }
   
   /** 
@@ -133,6 +131,7 @@ public:
   }
 
   /** 
+   * Schönhage-Strassen algorithm
    * Example taken from Pierre Meunier's book
    * 
    * @param gf 
@@ -141,55 +140,56 @@ public:
   {
     std::cout << "test_mul_bignum\n";
 
-    GFP<T> gf(3); //just to do basic calculations
-
     int b = 10; //base
     int p = 14; //we could multiply integers of 2^p digits
-    int max_digits = gf.__exp(2, p);
+    int max_digits = __gf._exp(2, p);
     //std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
-    int n = p + 1;
-    int N = gf.__exp(2, n);
+    uint64_t n = p + 1;
+    uint64_t N = __gf._exp(2, n);
     //std::cerr << "n=" << n << " N=" << N << "\n";
 
-    //choose 2 prime numbers
-    T a1 = 2;
-    T a2 = 5;
-    T p1 = a1 * gf._exp(2, 15) + 1;
-    T p2 = a2 * gf._exp(2, 15) + 1;
+    //choose 2 prime numbers of the form p=a.2^n+1
+    //because if x is not a quadratic residue then w=x^a is
+    //a 2^n-th principal root of unity in GF_p
+    uint64_t a1 = 2;
+    uint64_t a2 = 5;
+    uint64_t p1 = a1 * __gf._exp(2, 15) + 1;
+    uint64_t p2 = a2 * __gf._exp(2, 15) + 1;
     //std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
-    assert(gf._solovay_strassen(p1));
-    assert(gf._solovay_strassen(p2));
+    assert(__gf._is_prime(p1));
+    assert(__gf._is_prime(p2));
     
     //ensure their product is bounded (b-1)^2*2^(n-1) < m
-    T m = p1 * p2;
+    uint64_t m = p1 * p2;
     //check overflow
     assert(m/p1 == p2);
     //std::cerr << " m=" << m << "\n";
-    assert(gf.__exp((b - 1), 2) * gf.__exp(p, 2) < m);
+    assert(__gf._exp((b - 1), 2) * __gf._exp(p, 2) < m);
 
-    assert(gf._jacobi(3, p1) == gf._jacobi(p1, 3));
-    assert(gf._jacobi(p1, 3) == gf._jacobi(2, 3));
-    assert(gf._jacobi(3, p2) == gf._jacobi(p2, 3));
-    assert(gf._jacobi(p2, 3) == gf._jacobi(2, 3));
-    assert(gf._jacobi(2, 3) == -1);
-    //which means 3 is not a quadratic residue
+    //find x so it is not a quadratic residue in GF_p1 and GF_p2
+    assert(__gf._jacobi(3, p1) == __gf._jacobi(p1, 3));
+    assert(__gf._jacobi(p1, 3) == __gf._jacobi(2, 3));
+    assert(__gf._jacobi(3, p2) == __gf._jacobi(p2, 3));
+    assert(__gf._jacobi(p2, 3) == __gf._jacobi(2, 3));
+    assert(__gf._jacobi(2, 3) == -1);
+    //which means x=3 is not a quadratic residue in GF_p1 and GF_p2
 
-    //therefore we can compute the roots of unity in GF_p1 and GF_p2
-    T w1 = gf.__exp(3, a1);
-    T w2 = gf.__exp(3, a2);
+    //therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
+    uint64_t w1 = __gf._exp(3, a1);
+    uint64_t w2 = __gf._exp(3, a2);
     //std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
     assert(w1 == 9);
     assert(w2 == 243);
 
     //find root of unity in GF_p1p2
-    T _a[2];
-    T _n[2];
+    uint64_t _a[2];
+    uint64_t _n[2];
     _a[0] = w1;
     _n[0] = p1;
     _a[1] = w2;
     _n[1] = p2;
-    T w = gf._chinese_remainder(2, _a, _n);
+    uint64_t w = __gf._chinese_remainder(2, _a, _n);
     //std::cerr << " w=" << w << "\n";
     assert(w == 25559439);
 

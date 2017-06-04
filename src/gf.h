@@ -40,11 +40,10 @@ class GF
   T _get_n();
   T _card();
   T exp(T base, T exponent);
-  u_int __exp(u_int base, u_int exponent);
+  T _sqrt(T n);
   T _exp(T base, T exponent);
   T _mod_exp(T base, T exponent, T modulus);
   T _trial_mult_log(T base, T exponent, T modulus);
-  u_int __log2(u_int exponent);
   T _log2(T exponent);
   SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
   T _chinese_remainder(int n_mod, T a[], T n[]);
@@ -52,6 +51,7 @@ class GF
   int _jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m);
   bool _solovay_strassen1(T a, T n);
   bool _solovay_strassen(T n);
+  bool _is_prime(T n);
   T _weak_rand(T max);
   T weak_rand(void);
 };
@@ -111,28 +111,34 @@ T GF<T>::exp(T base, T exponent)
 }
 
 /** 
- * u_int based exponentation 
+ * integer square root (from Wikipedia)
  * 
- * @param gf 
- * @param base 
- * @param exponent 
- * @param modulus 
+ * @param n 
  * 
- * @return
+ * @return 
  */
 template <typename T>
-u_int GF<T>::__exp(u_int base, u_int exponent)
+T GF<T>::_sqrt(T remainder)
 {
-  u_int result = 1;
-  while (exponent > 0) {
-    if (exponent % 2 == 1)
-      result *= base;
-    exponent >>= 1;
-    base *= base;
-  }
-
-  return result;
-}
+  // calculated by precompiler = same runtime as: place = 0x40000000  
+  T place = (T)1 << (sizeof (T) * 8 - 2);
+  while (place > remainder)  
+    place /= 4; // optimized by complier as place >>= 2  
+  
+  T root = 0;  
+  while (place)  
+    {  
+      if (remainder >= root+place)  
+        {  
+          remainder -= root+place;  
+          root += place * 2;  
+        }  
+      root /= 2;  
+      place /= 4;  
+    }  
+  
+  return root;  
+}  
 
 /** 
  * Regular exponentation 
@@ -216,32 +222,6 @@ T GF<T>::_trial_mult_log(T base, T exponent, T modulus)
 
   //not found
   throw NTL_EX_NOT_FOUND;
-}
-
-/** 
- * u_int base log2
- * 
- * @param exponent 
- * 
- * @return 
- */
-template <typename T>
-u_int GF<T>::__log2(u_int exponent)
-{
-  u_int result = 0;
-
-  if (exponent == 0) 
-    throw NTL_EX_INVAL;
-
-  if (exponent == 1) 
-    return 0;
-
-  while (exponent > 1) {
-    exponent >>= 1;
-    result++;
-  }
-
-  return result;
 }
 
 /** 
@@ -479,7 +459,7 @@ bool GF<T>::_solovay_strassen1(T a, T n)
  * 
  * @param n check if n is prime
  * 
- * @return true if n is prime else false
+ * @return true if n is (probably) prime else false
  */
 template <typename T>
 bool GF<T>::_solovay_strassen(T n)
@@ -488,6 +468,27 @@ bool GF<T>::_solovay_strassen(T n)
   for (int i = 0;i < 100;i++) {
     T a = _weak_rand(n);
     if (!_solovay_strassen1(a, n))
+      return false;
+  }
+  return true;
+}
+
+/** 
+ * Brute force prime checking until sqrt(n)
+ * 
+ * @param n 
+ * 
+ * @return 
+ */
+template <typename T>
+bool GF<T>::_is_prime(T n)
+{
+  if (n == 2)
+    return true;
+
+  T root = _sqrt(n);
+  for (T i = 2;i <= root;i++) {
+    if (n % i == 0)
       return false;
   }
   return true;

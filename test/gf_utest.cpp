@@ -6,6 +6,16 @@ class GFUtest
 {
 public:
 
+  void test_basic_ops()
+  {
+    assert(__gf._sqrt(2025) == 45);
+    assert(__gf._is_prime(2));
+    assert(__gf._is_prime(3));
+    assert(__gf._is_prime(13));
+    assert(!__gf._is_prime(4));
+    assert(!__gf._is_prime(15));
+  }
+
   void test_negation(GF<T> *gf)
   {
     int i;
@@ -128,6 +138,7 @@ public:
     
     srand(time(0));
 
+    test_basic_ops();
     test_negation_gf5();
     test_reciprocal_gf5();
     test_log_gf5();
@@ -143,6 +154,7 @@ public:
     
     srand(time(0));
 
+    test_basic_ops();
     test_negation_gf5();
     test_reciprocal_gf5();
     test_log_gf5();

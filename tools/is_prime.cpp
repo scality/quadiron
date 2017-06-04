@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  bool result = gfp._solovay_strassen(n); 
+  bool result = gfp._is_prime(n); 
   std::cerr << result << "\n";
   exit(result == true ? 0 : 1);
 }

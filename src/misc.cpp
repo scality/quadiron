@@ -1,6 +1,11 @@
 
 #include "ntl.h"
 
+template class GF<uint64_t>;
+
+//not a real GF, just for accessing basic arithmetic routines
+GFP<uint64_t> __gf(3);
+
 std::ostream&
 operator<<( std::ostream& dest, __uint128_t value )
 {

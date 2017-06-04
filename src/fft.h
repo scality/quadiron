@@ -30,7 +30,7 @@ FFT<T>::FFT(GF<T> *gf, int n, T w)
 {
   this->gf = gf;
   this->n = n;
-  this->N = gf->__exp(2, n);
+  this->N = __gf._exp(2, n);
   this->w = w;
   this->inv_w = gf->inv(w);
   this->W = new Vec<T>(gf, this->N + 1);
@@ -150,14 +150,14 @@ void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
 
     T tmp1 = 0;
     for (int k = 1;k <= n;k++)
-      tmp1 += _get_p0(i, k, n) * gf->__exp(2, k-1);
+      tmp1 += _get_p0(i, k, n) * __gf._exp(2, k-1);
 
     T tmp2 = 0;
     for (int k = 1;k <= n;k++)
-      tmp2 += _get_p1(i, k, n) * gf->__exp(2, k-1);
+      tmp2 += _get_p1(i, k, n) * __gf._exp(2, k-1);
 
     DoubleT<T> val = 
-      DoubleT<T>(_W->get(gf->__exp(2, n-1) * _get_p(i, n))) *
+      DoubleT<T>(_W->get(__gf._exp(2, n-1) * _get_p(i, n))) *
       phi->get(0, tmp2) +
       phi->get(0, tmp1);
 
@@ -171,18 +171,18 @@ void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
       
       T tmp1 = 0;
       for (int k = 1;k <= mm;k++)
-        tmp1 += _get_p(i, n-mm+k) * gf->__exp(2, mm-k);
+        tmp1 += _get_p(i, n-mm+k) * __gf._exp(2, mm-k);
 
       T tmp2 = 0;
       for (int k = 1;k <= n;k++)
-        tmp2 += _get_p0(i, k, n-mm+1) * gf->__exp(2, k-1);
+        tmp2 += _get_p0(i, k, n-mm+1) * __gf._exp(2, k-1);
 
       T tmp3 = 0;
       for (int k = 1;k <= n;k++)
-        tmp3 += _get_p1(i, k, n-mm+1) * gf->__exp(2, k-1);
+        tmp3 += _get_p1(i, k, n-mm+1) * __gf._exp(2, k-1);
 
       DoubleT<T>val = 
-        DoubleT<T>(_W->get(gf->__exp(2, n-mm) * tmp1)) *
+        DoubleT<T>(_W->get(__gf._exp(2, n-mm) * tmp1)) *
         phi->get(mm-1, tmp3) +
         phi->get(mm-1, tmp2);
 
@@ -195,7 +195,7 @@ void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
     
     T tmp = 0;
     for (int k = 1;k <= n;k++)
-      tmp += _get_p(i, n-k+1) * gf->__exp(2, k-1);
+      tmp += _get_p(i, n-k+1) * __gf._exp(2, k-1);
     
     output->set(i, phi->get(n, tmp));
   }
