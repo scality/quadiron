@@ -16,7 +16,7 @@ int sflag = 0;
 
 void xusage()
 {
-  std::cerr << "Usage: ec [-e 8|16][-n n_data][-m n_coding][-s (use cauchy instead of vandermonde)][-p prefix][-v (verbose)] -c (encode) | -r (repair) | -u (utest)\n";
+  std::cerr << "Usage: ec [-e 8|16][-n n_data][-m n_coding][-s (use cauchy instead of vandermonde)][-f (use fermat fields)][-p prefix][-v (verbose)] -c (encode) | -r (repair)\n";
   exit(1);
 }
 
@@ -50,21 +50,37 @@ char *xstrdup(const char *str)
 template<typename T>
 class EC
 {
- public:
+protected:
   GF<T> *gf;
-  Mat<T> *mat;
-  const char *prefix;
+  char *prefix;
+  int n_data;
+  int n_coding;
 
-  EC(GF<T> *gf, int n_coding, int n_data, const char *prefix) {
+ public:
+
+  EC(GF<T> *gf, const char *prefix, int n_data, int n_coding)
+  {
     this->gf = gf;
-    this->mat = new Mat<T>(gf, n_coding, n_data);
-    if (sflag) {
-      mat->cauchy();
-    } else {
-      mat->vandermonde_suitable_for_ec();
-    }
     this->prefix = xstrdup(prefix);
+    this->n_data = n_data;
+    this->n_coding = n_coding;
   }
+
+  ~EC()
+  {
+    free(prefix);
+  }
+
+public:
+
+  virtual void encode(Vec<T> *output, Vec<T> *words) = 0;
+  virtual void repair_init(int n_data_ok, int n_coding_ok) = 0;
+  virtual void repair_add_data(int k, int i) = 0;
+  virtual void repair_add_coding(int k, int i) = 0;
+  virtual void repair_build(void) = 0;
+  virtual void repair(Vec<T> *output, Vec<T> *words) = 0;
+
+private:
 
   size_t sizew(size_t size)
   {
@@ -117,9 +133,11 @@ class EC
       return 0;
     }
   }
-  
+
+public:
+
   /** 
-   * (re-)create missing prefix.c1 ... cm files acc/to Vandermonde matrix
+   * (re-)create missing prefix.c1 ... cm files
    *
    */
   void create_coding_files()
@@ -128,13 +146,13 @@ class EC
     char filename[1024];
     struct stat stbuf;
     size_t size = -1, wc;
-    FILE *d_files[mat->n_cols];
-    FILE *c_files[mat->n_rows];
+    FILE *d_files[n_data];
+    FILE *c_files[n_coding];
     
     memset(d_files, 0, sizeof (d_files));
     memset(c_files, 0, sizeof (c_files));
 
-    for (i = 0;i < mat->n_cols;i++) {
+    for (i = 0;i < n_data;i++) {
       snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
       if (vflag)
         std::cerr << "create: opening data " << filename << "\n";
@@ -148,7 +166,7 @@ class EC
         xmsg("bad size", filename);
     }
     
-    for (i = 0;i < mat->n_rows;i++) {
+    for (i = 0;i < n_coding;i++) {
       snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
       if (vflag)
         std::cerr<< "create: opening coding for writing " << filename << "\n";
@@ -156,20 +174,20 @@ class EC
         xerrormsg("error opening", filename);
     }
     
-    Vec<T> words = Vec<T>(mat->gf, mat->n_cols);
-    Vec<T> output = Vec<T>(mat->gf, mat->n_cols);
+    Vec<T> words = Vec<T>(gf, n_data);
+    Vec<T> output = Vec<T>(gf, n_data);
     
     for (i = 0;i < sizew(size);i++) {
       words.zero_fill();
-      for (j = 0;j < mat->n_cols;j++) {
+      for (j = 0;j < n_data;j++) {
         T tmp;
         wc = freadw(&tmp, d_files[j]);
         if (1 != wc)
           xperror("short read data");
         words.set(j, tmp);
       }
-      mat->mult(&output, &words);
-      for (j = 0;j < mat->n_rows;j++) {
+      encode(&output, &words);
+      for (j = 0;j < n_coding;j++) {
         T tmp = output.get(j);
         wc = fwritew(tmp, c_files[j]);
         if (1 != wc)
@@ -177,11 +195,11 @@ class EC
       }
     } 
     
-    for (i = 0;i < mat->n_cols;i++) {
+    for (i = 0;i < n_data;i++) {
       fclose(d_files[i]);
     }
     
-    for (i = 0;i < mat->n_rows;i++) {
+    for (i = 0;i < n_coding;i++) {
       fclose(c_files[i]);
     }
   }
@@ -198,28 +216,27 @@ class EC
     size_t size = -1, wc;
     u_int n_data_ok = 0;
     u_int n_coding_ok = 0;
-    u_int n_total_ok;
-    FILE *d_files[mat->n_cols];
-    FILE *r_files[mat->n_cols];
-    FILE *c_files[mat->n_rows];
+    FILE *d_files[n_data];
+    FILE *r_files[n_data];
+    FILE *c_files[n_coding];
 
     memset(d_files, 0, sizeof (d_files));
     memset(r_files, 0, sizeof (r_files));
     memset(c_files, 0, sizeof (c_files));
     
 #define CLEANUP()                               \
-    for (i = 0;i < mat->n_cols;i++) {           \
+    for (i = 0;i < n_data;i++) {           \
       if (NULL != d_files[i])                   \
         fclose(d_files[i]);                     \
       if (NULL != r_files[i])                   \
         fclose(r_files[i]);                     \
     }                                           \
-    for (i = 0;i < mat->n_rows;i++) {           \
+    for (i = 0;i < n_coding;i++) {           \
       if (NULL != c_files[i])                   \
         fclose(c_files[i]);                     \
     }
     
-    for (i = 0;i < mat->n_cols;i++) {
+    for (i = 0;i < n_data;i++) {
       snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
       if (vflag)
         std::cerr << "repair: stating data " << filename << "\n";
@@ -243,7 +260,7 @@ class EC
       }
     }
     
-    for (i = 0;i < mat->n_rows;i++) {
+    for (i = 0;i < n_coding;i++) {
       snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
       if (vflag)
         std::cerr << "repair: stating coding " << filename << "\n";
@@ -258,68 +275,52 @@ class EC
       }
     }
     
-    if (n_data_ok == mat->n_cols) {
+    if (n_data_ok == n_data) {
       CLEANUP();
       return 0;
     }
     
-    if (n_coding_ok < (mat->n_cols - n_data_ok)) {
+    if (n_coding_ok < (n_data - n_data_ok)) {
       std::cerr << "too many losses\n";
       CLEANUP();
       return -1;
     }
     
-    n_total_ok = n_data_ok + n_coding_ok;
-    
     if (vflag)
-      std::cerr << "n_data_ok=" << n_data_ok << " n_coding_ok=" << n_coding_ok << "\n";
+      std::cerr << "n_data_ok=" << n_data_ok << 
+        " n_coding_ok=" << n_coding_ok << "\n";
     
-    //generate repair_mat
-    Mat<T> repair_mat(gf, n_total_ok, mat->n_cols);
+    repair_init(n_data_ok, n_coding_ok);
 
-    //for each data available generate the corresponding identity
     k = 0;
-    for (i = 0;i < mat->n_cols;i++) {
+    for (i = 0;i < n_data;i++) {
       if (NULL != d_files[i]) {
-        for (j = 0;j < mat->n_cols;j++) {
-          if (i == j)
-            repair_mat.set(k, j, 1);
-          else
-            repair_mat.set(k, j, 0);
-        }
+        repair_add_data(k, i);
         k++;
       }
     }
 
-    //finish the matrix with every coding available
-    for (i = 0;i < mat->n_rows;i++) {
+    //finish with codings available
+    for (i = 0;i < n_coding;i++) {
       if (NULL != c_files[i]) {
-        //copy corresponding row in vandermonde matrix
-        for (j = 0;j < mat->n_cols;j++) {
-          repair_mat.set(k, j, mat->get(i, j));
-        }
+        repair_add_coding(k, i);
         k++;
-        //stop when we have enough codings
-        if (mat->n_cols == k)
+        //stop when we have enough codings - XXX is it better to have more ?
+        if (n_data == k)
           break ;
       }
     }
-    
-    if (vflag) {
-      std::cerr << "rebuild matrix:\n";
-      repair_mat.dump();
-    }
-    
-    repair_mat.inv();
+
+    repair_build();
     
     //read-and-repair
-    Vec<T> words(mat->gf, mat->n_cols);
-    Vec<T> output(mat->gf, mat->n_cols);
+    Vec<T> words(gf, n_data);
+    Vec<T> output(gf, n_data);
     
     for (i = 0;i < sizew(size);i++) {
       words.zero_fill();
       k = 0;
-      for (j = 0;j < mat->n_cols;j++) {
+      for (j = 0;j < n_data;j++) {
         if (NULL != d_files[j]) {
           T tmp;
           wc = freadw(&tmp, d_files[j]);
@@ -329,7 +330,7 @@ class EC
           k++;
         }
       }
-      for (j = 0;j < mat->n_rows;j++) {
+      for (j = 0;j < n_coding;j++) {
         if (NULL != c_files[j]) {
           T tmp;
           wc = freadw(&tmp, c_files[j]);
@@ -338,14 +339,14 @@ class EC
           words.set(k, tmp);
           k++;
           //stop when we have enough codings
-          if (mat->n_cols == k)
+          if (n_data == k)
             break ;
         }
       }
+
+      repair(&output, &words);
       
-      repair_mat.mult(&output, &words);
-      
-      for (j = 0;j < mat->n_cols;j++) {
+      for (j = 0;j < n_data;j++) {
         if (NULL != r_files[j]) {
           T tmp = output.get(j);
           wc = fwritew(tmp, r_files[j]);
@@ -361,7 +362,79 @@ class EC
 
 };
 
+template<typename T>
+class ECGF2NRS : public EC<T>
+{
+private:
+  Mat<T> *mat = NULL;
+  Mat<T> *repair_mat = NULL;
+
+public:
+
+  ECGF2NRS(GF<T> *gf, const char *prefix, int n_data, int n_coding) : 
+  EC<T>(gf, prefix, n_data, n_coding)
+  {
+    this->mat = new Mat<T>(gf, n_coding, n_data);
+    if (sflag) {
+      mat->cauchy();
+    } else {
+      mat->vandermonde_suitable_for_ec();
+    }
+  }
+
+  ~ECGF2NRS()
+  {
+    delete mat;
+    delete repair_mat;
+  }
+
+  void encode(Vec<T> *output, Vec<T> *words)
+  {
+    mat->mult(output, words);
+  }
+  
+  void repair_init(int n_data_ok, int n_coding_ok)
+  {
+    repair_mat = new Mat<T>(this->gf, n_data_ok + n_coding_ok, mat->n_cols);
+  }
+
+  void repair_add_data(int k, int i)
+  {
+    //for each data available generate the corresponding identity
+    for (int j = 0;j < mat->n_cols;j++) {
+      if (i == j)
+        repair_mat->set(k, j, 1);
+      else
+        repair_mat->set(k, j, 0);
+    }
+  }
+
+  void repair_add_coding(int k, int i)
+  {
+    //copy corresponding row in vandermonde matrix
+    for (int j = 0;j < mat->n_cols;j++) {
+      repair_mat->set(k, j, mat->get(i, j));
+    }
+  }
+
+  void repair_build()
+  {
+    if (vflag) {
+      std::cerr << "rebuild matrix:\n";
+      repair_mat->dump();
+    }
+    
+    repair_mat->inv();
+  }
+
+  void repair(Vec<T> *output, Vec<T> *words)
+  {
+    repair_mat->mult(output, words);
+  }
+};
+
 template class EC<uint32_t>;
+template class ECGF2NRS<uint32_t>;
 
 int main(int argc, char **argv)
 {
@@ -421,6 +494,7 @@ int main(int argc, char **argv)
     xusage();
 
 #if 0
+  //XXX TODO
   if (0 != check(n_data + n_coding)) {
     std::cerr << "Number of fragments is too big compared to Galois field size\n";
     exit(1);
@@ -430,10 +504,10 @@ int main(int argc, char **argv)
   if (-1 == n_data || -1 == n_coding || NULL == prefix)
     xusage();
 
-  EC<uint32_t> *ec;
+  ECGF2NRS<uint32_t> *ec;
 
   GF2N<uint32_t> *gf = new GF2N<uint32_t>(eflag);
-  ec = new EC<uint32_t> (gf, n_coding, n_data, prefix);
+  ec = new ECGF2NRS<uint32_t>(gf, prefix, n_data, n_coding);
 
   if (rflag) {
     if (0 != ec->repair_data_files()) {
@@ -444,6 +518,7 @@ int main(int argc, char **argv)
   ec->create_coding_files();
 
  end:
+  delete ec;
   free(prefix);
   return 0;
 }
