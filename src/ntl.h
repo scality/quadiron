@@ -34,7 +34,7 @@ typedef enum
 #include "gf.h"
 #include "gfp.h"
 #include "gf2n.h"
+#include "misc.h"
 #include "vec.h"
 #include "mat.h"
 #include "fft.h"
-#include "misc.h"
