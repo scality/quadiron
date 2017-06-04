@@ -44,6 +44,7 @@ class GF
   T _exp(T base, T exponent);
   T _mod_exp(T base, T exponent, T modulus);
   T _trial_mult_log(T base, T exponent, T modulus);
+  u_int __log2(u_int exponent);
   T _log2(T exponent);
   SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
   T _chinese_remainder(int n_mod, T a[], T n[]);
@@ -110,7 +111,7 @@ T GF<T>::exp(T base, T exponent)
 }
 
 /** 
- * Regular exponentation 
+ * u_int based exponentation 
  * 
  * @param gf 
  * @param base 
@@ -217,6 +218,39 @@ T GF<T>::_trial_mult_log(T base, T exponent, T modulus)
   throw NTL_EX_NOT_FOUND;
 }
 
+/** 
+ * u_int base log2
+ * 
+ * @param exponent 
+ * 
+ * @return 
+ */
+template <typename T>
+u_int GF<T>::__log2(u_int exponent)
+{
+  u_int result = 0;
+
+  if (exponent == 0) 
+    throw NTL_EX_INVAL;
+
+  if (exponent == 1) 
+    return 0;
+
+  while (exponent > 1) {
+    exponent >>= 1;
+    result++;
+  }
+
+  return result;
+}
+
+/** 
+ * T based log2
+ * 
+ * @param exponent 
+ * 
+ * @return 
+ */
 template <typename T>
 T GF<T>::_log2(T exponent)
 {
