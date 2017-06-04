@@ -16,7 +16,7 @@ int sflag = 0;
 
 void xusage()
 {
-  std::cerr << "Usage: ec [-e 8|16][-n n_data][-m n_coding][-s (use cauchy instead of vandermonde)][-f (use fermat fields)][-p prefix][-v (verbose)] -c (encode) | -r (repair)\n";
+  std::cerr << "Usage: ec [-e 8|16|65537 (fermat fields)][-n n_data][-m n_coding][-s (use cauchy instead of vandermonde)][-p prefix][-v (verbose)] -c (encode) | -r (repair)\n";
   exit(1);
 }
 
@@ -52,15 +52,26 @@ class EC
 {
 protected:
   GF<T> *gf;
+  u_int word_size;
   char *prefix;
   int n_data;
   int n_coding;
 
  public:
 
-  EC(GF<T> *gf, const char *prefix, int n_data, int n_coding)
+  /** 
+   * Create an encode
+   * 
+   * @param gf 
+   * @param word_size in bytes
+   * @param prefix fragment files prefix
+   * @param n_data 
+   * @param n_coding 
+   */
+  EC(GF<T> *gf, u_int word_size, const char *prefix, int n_data, int n_coding)
   {
     this->gf = gf;
+    this->word_size = word_size;
     this->prefix = xstrdup(prefix);
     this->n_data = n_data;
     this->n_coding = n_coding;
@@ -84,25 +95,20 @@ private:
 
   size_t sizew(size_t size)
   {
-    if (gf->_get_n() == 8)
-      return size;
-    else if (gf->_get_n() == 16)
-      return size / 2;
-    else
-      assert(false && "no such size");
+    return size / word_size;
   }
   
   size_t freadw(T *ptr, FILE *stream)
   {
     size_t s;
 
-    if (gf->_get_n() == 8) {
+    if (word_size == 1) {
       u_char c;
       if ((s = fread(&c, 1, 1, stream)) != 1)
         return s;
       *ptr = c;
       return s;
-    } else if (gf->_get_n() == 16) {
+    } else if (word_size == 2) {
       u_short c;
       if ((s = fread(&c, 2, 1, stream)) != 1)
         return s;
@@ -118,12 +124,12 @@ private:
   {
     size_t s;
 
-    if (gf->_get_n() == 8) {
+    if (word_size == 1) {
       u_char c = val;
       if ((s = fwrite(&c, 1, 1, stream)) != 1)
         return s;
       return s;
-    } else if (gf->_get_n() == 16) {
+    } else if (word_size == 2) {
       u_short c = val;
       if ((s = fwrite(&c, 2, 1, stream)) != 1)
         return s;
@@ -362,6 +368,9 @@ public:
 
 };
 
+/** 
+ * GF_2^n based RS (Cauchy or Vandermonde)
+ */
 template<typename T>
 class ECGF2NRS : public EC<T>
 {
@@ -371,8 +380,8 @@ private:
 
 public:
 
-  ECGF2NRS(GF<T> *gf, const char *prefix, int n_data, int n_coding) : 
-  EC<T>(gf, prefix, n_data, n_coding)
+  ECGF2NRS(GF<T> *gf, u_int word_size, const char *prefix, int n_data, int n_coding) : 
+    EC<T>(gf, word_size, prefix, n_data, n_coding)
   {
     this->mat = new Mat<T>(gf, n_coding, n_data);
     if (sflag) {
@@ -433,8 +442,64 @@ public:
   }
 };
 
+/** 
+ * GF_2^2^k+1 based RS (Fermat Number Transform)
+ */
+template<typename T>
+class ECFNTRS : public EC<T>
+{
+private:
+  FFT<T> *fft = NULL;
+  int n;
+
+public:
+
+  ECFNTRS(GF<T> *gf, u_int word_size, const char *prefix, int n_data, int n_coding) : 
+    EC<T>(gf, word_size, prefix, n_data, n_coding)
+  {
+    assert(gf->_jacobi(3, 65537) == -1);
+
+    n = gf->__log2(n_coding + n_data) + 1;
+    
+    std::cerr << "n=" << n << "\n";
+
+    this->fft = new FFT<T>(gf, 16, 9);
+  }
+
+  ~ECFNTRS()
+  {
+    delete fft;
+  }
+
+  void encode(Vec<T> *output, Vec<T> *words)
+  {
+    //fft.fft(output, words);
+  }
+  
+  void repair_init(int n_data_ok, int n_coding_ok)
+  {
+  }
+
+  void repair_add_data(int k, int i)
+  {
+  }
+
+  void repair_add_coding(int k, int i)
+  {
+  }
+
+  void repair_build()
+  {
+  }
+
+  void repair(Vec<T> *output, Vec<T> *words)
+  {
+  }
+};
+
 template class EC<uint32_t>;
 template class ECGF2NRS<uint32_t>;
+template class ECFNTRS<uint32_t>;
 
 int main(int argc, char **argv)
 {
@@ -455,6 +520,8 @@ int main(int argc, char **argv)
         eflag = 8;
       else if (!strcmp(optarg, "16"))
         eflag = 16;
+      else if (!strcmp(optarg, "65537"))
+        eflag = 65537;
       else
         xusage();
       break ;
@@ -504,21 +571,33 @@ int main(int argc, char **argv)
   if (-1 == n_data || -1 == n_coding || NULL == prefix)
     xusage();
 
-  ECGF2NRS<uint32_t> *ec;
-
-  GF2N<uint32_t> *gf = new GF2N<uint32_t>(eflag);
-  ec = new ECGF2NRS<uint32_t>(gf, prefix, n_data, n_coding);
-
-  if (rflag) {
-    if (0 != ec->repair_data_files()) {
-      exit(1);
+  if (eflag == 65537) {
+    ECFNTRS<uint32_t> *ec;
+    GFP<uint32_t> *gf = new GFP<uint32_t>(65537); //2^2^4+1
+    ec = new ECFNTRS<uint32_t>(gf, 2, prefix, n_data, n_coding);
+    
+    if (rflag) {
+      if (0 != ec->repair_data_files()) {
+        exit(1);
+      }
     }
+    ec->create_coding_files();
+    delete ec;
+  } else {
+    ECGF2NRS<uint32_t> *ec;
+    GF2N<uint32_t> *gf = new GF2N<uint32_t>(eflag);
+    ec = new ECGF2NRS<uint32_t>(gf, eflag / 8, prefix, n_data, n_coding);
+    
+    if (rflag) {
+      if (0 != ec->repair_data_files()) {
+        exit(1);
+      }
+    }
+    ec->create_coding_files();
+    delete ec;
   }
-  
-  ec->create_coding_files();
 
  end:
-  delete ec;
   free(prefix);
   return 0;
 }
