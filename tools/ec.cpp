@@ -85,7 +85,7 @@ protected:
 public:
 
   virtual void encode(Vec<T> *output, Vec<T> *words) = 0;
-  virtual void repair_init(int n_data_ok, int n_coding_ok) = 0;
+  virtual void repair_init(void) = 0;
   virtual void repair_add_data(int k, int i) = 0;
   virtual void repair_add_coding(int k, int i) = 0;
   virtual void repair_build(void) = 0;
@@ -181,7 +181,7 @@ public:
     }
     
     Vec<T> words = Vec<T>(gf, n_data);
-    Vec<T> output = Vec<T>(gf, n_data);
+    Vec<T> output = Vec<T>(gf, n_coding);
     
     for (i = 0;i < sizew(size);i++) {
       words.zero_fill();
@@ -296,7 +296,7 @@ public:
       std::cerr << "n_data_ok=" << n_data_ok << 
         " n_coding_ok=" << n_coding_ok << "\n";
     
-    repair_init(n_data_ok, n_coding_ok);
+    repair_init();
 
     k = 0;
     for (i = 0;i < n_data;i++) {
@@ -389,6 +389,11 @@ public:
     } else {
       mat->vandermonde_suitable_for_ec();
     }
+
+    if (vflag) {
+      std::cerr << "encode matrix:\n";
+      mat->dump();
+    }
   }
 
   ~ECGF2NRS()
@@ -402,9 +407,10 @@ public:
     mat->mult(output, words);
   }
   
-  void repair_init(int n_data_ok, int n_coding_ok)
+  void repair_init(void)
   {
-    repair_mat = new Mat<T>(this->gf, n_data_ok + n_coding_ok, mat->n_cols);
+    //has to be a n_data*n_data invertible square matrix
+    repair_mat = new Mat<T>(this->gf, mat->n_cols, mat->n_cols);
   }
 
   void repair_add_data(int k, int i)
@@ -444,26 +450,52 @@ public:
 
 /** 
  * GF_2^2^k+1 based RS (Fermat Number Transform)
+ * As suggested by the paper:
+ * FNT-based Reed-Solomon Erasure Codes
+ * by Alexandre Soro and Jerome Lacan
  */
 template<typename T>
 class ECFNTRS : public EC<T>
 {
 private:
   FFT<T> *fft = NULL;
-  int n;
 
 public:
+  u_int n;
+  u_int r;
 
   ECFNTRS(GF<T> *gf, u_int word_size, const char *prefix, int n_data, int n_coding) : 
     EC<T>(gf, word_size, prefix, n_data, n_coding)
   {
-    assert(gf->_jacobi(3, 65537) == -1);
+    u_int q = 65537;
+    //order of a number is the lowest power of the number equals 1.
+    //if q=65537 in GF_q 3 is a primitive root because is order is q-1: 
+    //3^(q-1) = 1 mod q, and for each i such as 0 < i < q-1, 3^i mod q != 1
+    assert(gf->_jacobi(3, q) == -1);
 
-    n = __gf._log2(n_coding + n_data) + 1;
-    
+    u_int i = __gf._log2(n_coding + n_data) + 1;
+    std::cerr << "i=" << i << "\n";
+    //n = __gf._exp(2, i);
+    n = n_coding + n_data;
     std::cerr << "n=" << n << "\n";
 
-    this->fft = new FFT<T>(gf, 16, 9);
+    //XXX suggested by the paper
+    //r = __gf._exp(3, __gf._exp(2, 16-i));;
+    //std::cerr << "r=" << r << "\n";
+
+    //find r such as r^(n-1)=1 mod q
+    r;
+    bool found = false;
+    for (r = 2;r < q;r++) {
+      if ((__gf._exp(r, n-1) % q) == 1) {
+        std::cerr << "r=" << r << "\n";
+        found = true;
+        break ;
+      }
+    } 
+    assert(found);
+
+    this->fft = new FFT<T>(gf, n, r);
   }
 
   ~ECFNTRS()
@@ -473,10 +505,11 @@ public:
 
   void encode(Vec<T> *output, Vec<T> *words)
   {
-    //fft.fft(output, words);
+    VVec<T> vwords(words, 100);//n + 1);
+    fft->fft(output, &vwords);
   }
   
-  void repair_init(int n_data_ok, int n_coding_ok)
+  void repair_init(void)
   {
   }
 

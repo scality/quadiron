@@ -31,7 +31,9 @@ class GF2N : public GF<T>
 template <typename T>
 GF2N<T>::GF2N(T n) : GF<T>(2, n)
 {
-  if (n == 4)
+  if (n == 3)
+    this->prim_poly = 0xb;
+  else if (n == 4)
     this->prim_poly = 0x13;
   else if (n == 8)
     this->prim_poly = 0x11d;
