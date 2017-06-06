@@ -31,14 +31,49 @@ void rs_utest1()
   assert(mat.get(2, 2) == 6);
 }
 
+/** 
+ * Example taken from
+ * An Introduction to Galois Fields and Reed-Solomon Coding
+ * James Westall James Martin
+ * 
+ * Note: the Vandermonde matrix is not generated the same way as we do
+ */
 void rs_utest2()
 {
   std::cout << "rs_utest2\n";
 
-  GF2N<uint32_t> gf16(4);
-  Mat<uint32_t> mat(&gf16, 3, 3);
+  GF2N<uint32_t> gf8(3);
+  Mat<uint32_t> mat(&gf8, 5, 3);
+  Vec<uint32_t> vec(&gf8, 3);
+  Vec<uint32_t> output(&gf8, 5);
 
-  mat.cauchy();
+  mat.set(0, 0, 1);
+  mat.set(0, 1, 1);
+  mat.set(0, 2, 6);
+  mat.set(1, 0, 4);
+  mat.set(1, 1, 3);
+  mat.set(1, 2, 2);
+  mat.set(2, 0, 5);
+  mat.set(2, 1, 2);
+  mat.set(2, 2, 2);
+  mat.set(3, 0, 5);
+  mat.set(3, 1, 3);
+  mat.set(3, 2, 4);
+  mat.set(4, 0, 4);
+  mat.set(4, 1, 2);
+  mat.set(4, 2, 4);
+  //mat.dump();
+  vec.set(0, 4);
+  vec.set(1, 5);
+  vec.set(2, 6);
+  //vec.dump();
+  mat.mult(&output, &vec);
+  //output.dump();
+  assert(output.get(0) == 3);
+  assert(output.get(1) == 5);
+  assert(output.get(2) == 4);
+  assert(output.get(3) == 3);
+  assert(output.get(4) == 2);
 }
 
 void rs_utest3()

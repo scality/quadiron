@@ -336,8 +336,9 @@ void Mat<T>::mult(Vec<T> *output, Vec<T> *v)
 {
   int i, j;
 
-  assert(output->n == v->n);
-  assert(output->n == n_cols);
+  assert(n_cols == v->n);
+  assert(n_rows == output->n);
+
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
       T x = gf->mul(get(i, j), v->get(j));

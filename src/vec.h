@@ -13,7 +13,7 @@ class Vec
   ~Vec();
   void zero_fill(void);
   void set(int i, T val);
-  T get(int i);
+  virtual T get(int i);
   void dump(void);
 };
 
