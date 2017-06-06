@@ -42,14 +42,26 @@ do_test()
         md5sum foo.c${i} > foo.c${i}.md5sum.1
     done
 
+    j=0
     for i in $data_loss
     do
         rm foo.d${i}
+        if [ "${gf_type}" = 65537 ]
+        then
+            rm foo.c${j}
+        fi
+        j=`expr ${j} + 1`
     done
-
+    
     for i in $coding_loss
     do
-        rm foo.c${i}
+        if [ "${gf_type}" = 65537 ]
+        then
+            rm foo.c${j}
+        else
+            rm foo.c${i}
+        fi
+        j=`expr ${j} + 1`
     done
 
     echo "repairing"

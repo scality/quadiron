@@ -47,15 +47,22 @@ char *xstrdup(const char *str)
   return n;
 }
 
+enum tec_type
+  {
+    EC_TYPE_1, //take n_data input, generate n_coding outputs
+    EC_TYPE_2  //take n_data input, generate n_data+n_coding outputs
+  };
+
 template<typename T>
 class EC
 {
 protected:
   GF<T> *gf;
+  tec_type ec_type;
   u_int word_size;
   char *prefix;
-  int n_data;
-  int n_coding;
+  u_int n_data;
+  u_int n_coding;
 
  public:
 
@@ -68,9 +75,12 @@ protected:
    * @param n_data 
    * @param n_coding 
    */
-  EC(GF<T> *gf, u_int word_size, const char *prefix, int n_data, int n_coding)
+  EC(GF<T> *gf, tec_type type, u_int word_size, const char *prefix, u_int n_data, u_int n_coding)
   {
+    assert(ec_type == EC_TYPE_1 || ec_type == EC_TYPE_2);
+
     this->gf = gf;
+    this->ec_type = ec_type;
     this->word_size = word_size;
     this->prefix = xstrdup(prefix);
     this->n_data = n_data;
@@ -84,6 +94,7 @@ protected:
 
 public:
 
+  virtual u_int get_n_outputs() = 0;
   virtual void encode(Vec<T> *output, Vec<T> *words) = 0;
   virtual void repair_init(void) = 0;
   virtual void repair_add_data(int k, int i) = 0;
@@ -153,10 +164,10 @@ public:
     struct stat stbuf;
     size_t size = -1, wc;
     FILE *d_files[n_data];
-    FILE *c_files[n_coding];
+    FILE *c_files[get_n_outputs()];
     
-    memset(d_files, 0, sizeof (d_files));
-    memset(c_files, 0, sizeof (c_files));
+    memset(d_files, 0, n_data * sizeof (FILE *));
+    memset(c_files, 0, get_n_outputs() * sizeof (FILE *));
 
     for (i = 0;i < n_data;i++) {
       snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
@@ -172,7 +183,7 @@ public:
         xmsg("bad size", filename);
     }
     
-    for (i = 0;i < n_coding;i++) {
+    for (i = 0;i < get_n_outputs();i++) {
       snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
       if (vflag)
         std::cerr<< "create: opening coding for writing " << filename << "\n";
@@ -181,7 +192,7 @@ public:
     }
     
     Vec<T> words = Vec<T>(gf, n_data);
-    Vec<T> output = Vec<T>(gf, n_coding);
+    Vec<T> output = Vec<T>(gf, get_n_outputs());
     
     for (i = 0;i < sizew(size);i++) {
       words.zero_fill();
@@ -193,7 +204,7 @@ public:
         words.set(j, tmp);
       }
       encode(&output, &words);
-      for (j = 0;j < n_coding;j++) {
+      for (j = 0;j < get_n_outputs();j++) {
         T tmp = output.get(j);
         wc = fwritew(tmp, c_files[j]);
         if (1 != wc)
@@ -205,7 +216,7 @@ public:
       fclose(d_files[i]);
     }
     
-    for (i = 0;i < n_coding;i++) {
+    for (i = 0;i < get_n_outputs();i++) {
       fclose(c_files[i]);
     }
   }
@@ -224,49 +235,52 @@ public:
     u_int n_coding_ok = 0;
     FILE *d_files[n_data];
     FILE *r_files[n_data];
-    FILE *c_files[n_coding];
+    FILE *c_files[get_n_outputs()];
 
-    memset(d_files, 0, sizeof (d_files));
-    memset(r_files, 0, sizeof (r_files));
-    memset(c_files, 0, sizeof (c_files));
+    memset(d_files, 0, n_data * sizeof (FILE *));
+    memset(r_files, 0, n_data * sizeof (FILE *));
+    memset(c_files, 0, get_n_outputs() * sizeof (FILE *));
     
 #define CLEANUP()                               \
-    for (i = 0;i < n_data;i++) {           \
+    for (i = 0;i < n_data;i++) {                \
       if (NULL != d_files[i])                   \
         fclose(d_files[i]);                     \
       if (NULL != r_files[i])                   \
         fclose(r_files[i]);                     \
     }                                           \
-    for (i = 0;i < n_coding;i++) {           \
+    for (i = 0;i < get_n_outputs();i++) {       \
       if (NULL != c_files[i])                   \
         fclose(c_files[i]);                     \
     }
     
-    for (i = 0;i < n_data;i++) {
-      snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
-      if (vflag)
-        std::cerr << "repair: stating data " << filename << "\n";
-      if (-1 == access(filename, F_OK)) {
+    if (ec_type == EC_TYPE_1) {
+      //re-read data
+      for (i = 0;i < n_data;i++) {
+        snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
         if (vflag)
-          std::cerr << filename << " is missing\n";
-        d_files[i] = NULL;
-        if (NULL == (r_files[i] = fopen(filename, "w")))
-          xerrormsg("error opening", filename);
-      } else {
-        r_files[i] = NULL;
-        if (NULL == (d_files[i] = fopen(filename, "r")))
-          xerrormsg("error opening", filename);
-        if (-1 == fstat(fileno(d_files[i]), &stbuf))
-          xerrormsg("error stating", filename);
-        if (-1 == size)
-          size = stbuf.st_size;
-        else if (size != stbuf.st_size)
-          xmsg("bad size", filename);
-        n_data_ok++;
+          std::cerr << "repair: stating data " << filename << "\n";
+        if (-1 == access(filename, F_OK)) {
+          if (vflag)
+            std::cerr << filename << " is missing\n";
+          d_files[i] = NULL;
+          if (NULL == (r_files[i] = fopen(filename, "w")))
+            xerrormsg("error opening", filename);
+        } else {
+          r_files[i] = NULL;
+          if (NULL == (d_files[i] = fopen(filename, "r")))
+            xerrormsg("error opening", filename);
+          if (-1 == fstat(fileno(d_files[i]), &stbuf))
+            xerrormsg("error stating", filename);
+          if (-1 == size)
+            size = stbuf.st_size;
+          else if (size != stbuf.st_size)
+            xmsg("bad size", filename);
+          n_data_ok++;
+        }
       }
     }
     
-    for (i = 0;i < n_coding;i++) {
+    for (i = 0;i < get_n_outputs();i++) {
       snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
       if (vflag)
         std::cerr << "repair: stating coding " << filename << "\n";
@@ -307,7 +321,7 @@ public:
     }
 
     //finish with codings available
-    for (i = 0;i < n_coding;i++) {
+    for (i = 0;i < get_n_outputs();i++) {
       if (NULL != c_files[i]) {
         repair_add_coding(k, i);
         k++;
@@ -336,7 +350,7 @@ public:
           k++;
         }
       }
-      for (j = 0;j < n_coding;j++) {
+      for (j = 0;j < get_n_outputs();j++) {
         if (NULL != c_files[j]) {
           T tmp;
           wc = freadw(&tmp, c_files[j]);
@@ -380,8 +394,8 @@ private:
 
 public:
 
-  ECGF2NRS(GF<T> *gf, u_int word_size, const char *prefix, int n_data, int n_coding) : 
-    EC<T>(gf, word_size, prefix, n_data, n_coding)
+  ECGF2NRS(GF<T> *gf, u_int word_size, const char *prefix, u_int n_data, u_int n_coding) : 
+    EC<T>(gf, EC_TYPE_1, word_size, prefix, n_data, n_coding)
   {
     this->mat = new Mat<T>(gf, n_coding, n_data);
     if (sflag) {
@@ -400,6 +414,11 @@ public:
   {
     delete mat;
     delete repair_mat;
+  }
+
+  u_int get_n_outputs()
+  {
+    return this->n_coding;
   }
 
   void encode(Vec<T> *output, Vec<T> *words)
@@ -462,10 +481,11 @@ private:
 
 public:
   u_int n;
+  u_int N;
   u_int r;
 
-  ECFNTRS(GF<T> *gf, u_int word_size, const char *prefix, int n_data, int n_coding) : 
-    EC<T>(gf, word_size, prefix, n_data, n_coding)
+  ECFNTRS(GF<T> *gf, u_int word_size, const char *prefix, u_int n_data, u_int n_coding) : 
+    EC<T>(gf, EC_TYPE_2, word_size, prefix, n_data, n_coding)
   {
     u_int q = 65537;
     //order of a number is the lowest power of the number equals 1.
@@ -473,21 +493,16 @@ public:
     //3^(q-1) = 1 mod q, and for each i such as 0 < i < q-1, 3^i mod q != 1
     assert(gf->_jacobi(3, q) == -1);
 
-    u_int i = __gf._log2(n_coding + n_data) + 1;
-    std::cerr << "i=" << i << "\n";
-    //n = __gf._exp(2, i);
-    n = n_coding + n_data;
+    //with this encoder we cannot exactly satisfy users request, we need to pad
+    n = __gf._log2(n_coding + n_data) + 1;
     std::cerr << "n=" << n << "\n";
+    N = __gf._exp(2, n);
+    std::cerr << "N=" << N << "\n";
 
-    //XXX suggested by the paper
-    //r = __gf._exp(3, __gf._exp(2, 16-i));;
-    //std::cerr << "r=" << r << "\n";
-
-    //find r such as r^(n-1)=1 mod q
-    r;
+    //find r such as r^(N-1)=1 mod q
     bool found = false;
     for (r = 2;r < q;r++) {
-      if ((__gf._exp(r, n-1) % q) == 1) {
+      if ((__gf._exp(r, N-1) % q) == 1) {
         std::cerr << "r=" << r << "\n";
         found = true;
         break ;
@@ -503,9 +518,14 @@ public:
     delete fft;
   }
 
+  u_int get_n_outputs()
+  {
+    return this->N;
+  }
+
   void encode(Vec<T> *output, Vec<T> *words)
   {
-    VVec<T> vwords(words, 100);//n + 1);
+    VVec<T> vwords(words, N);
     fft->fft(output, &vwords);
   }
   
@@ -515,6 +535,7 @@ public:
 
   void repair_add_data(int k, int i)
   {
+    //not applicable
   }
 
   void repair_add_coding(int k, int i)
