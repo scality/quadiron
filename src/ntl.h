@@ -12,6 +12,7 @@
 #include <sstream>
 #include <string>
 #include <cstdint>
+#include <vector>
 
 template<typename Type> struct Double {};
 template<>           struct Double<uint32_t> {typedef uint64_t T;};
@@ -29,6 +30,7 @@ typedef enum
     NTL_EX_MAT_NOT_INVERTIBLE,
     NTL_EX_INVAL,
     NTL_EX_OVERFLOW,
+    NTL_EX_IO,
   } NtlException;
 
 #include "gf.h"
@@ -39,3 +41,6 @@ typedef enum
 #include "vvec.h"
 #include "mat.h"
 #include "fft.h"
+#include "fec.h"
+#include "fecgf2nrs.h"
+#include "fecfntrs.h"
