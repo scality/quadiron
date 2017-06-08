@@ -45,10 +45,10 @@ do_test()
     j=0
     for i in $data_loss
     do
-        rm foo.d${i}
+        mv foo.d${i} foo.d${i}.1
         if [ "${gf_type}" = 65537 ]
         then
-            rm foo.c${j}
+            mv foo.c${j} foo.c${j}.1
         fi
         j=`expr ${j} + 1`
     done
@@ -57,9 +57,9 @@ do_test()
     do
         if [ "${gf_type}" = 65537 ]
         then
-            rm foo.c${j}
+            mv foo.c${j} foo.c${j}.1
         else
-            rm foo.c${i}
+            mv foo.c${i} foo.c${i}.1
         fi
         j=`expr ${j} + 1`
     done
