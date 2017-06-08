@@ -77,16 +77,14 @@ void create_coding_files(FEC<T> *fec)
 
   fec->encode_bufs(d_files, c_files);
 
-  //XXX close
-#if 0
   for (int i = 0;i < fec->n_data;i++) {
-    d_files[i]->close();
+    (static_cast<std::ifstream*>(d_files[i]))->close();
+    delete d_files[i];
   }
-#endif
-  
-  //XXX close
+
   for (int i = 0;i < fec->get_n_outputs();i++) {
-    c_files[i]->flush();
+    (static_cast<std::ofstream*>(c_files[i]))->close();
+    delete c_files[i];
   }
 }
 
@@ -135,27 +133,26 @@ bool repair_data_files(FEC<T> *fec)
 
   fec->decode_bufs(d_files, c_files, r_files);
 
-  //XXX close
-#if 0
   for (int i = 0;i < fec->n_data;i++) { 
-    if (nullptr != d_files[i])                         
-      d_files[i]->flush();
+    if (nullptr != d_files[i]) {
+      (static_cast<std::ifstream*>(d_files[i]))->close();
+      delete d_files[i];
+    }
   }
-#endif
 
-  //XXX close
   for (int i = 0;i < fec->n_data;i++) {                
-    if (nullptr != r_files[i])                         
-      r_files[i]->flush();
+    if (nullptr != r_files[i]) {
+      (static_cast<std::ofstream*>(r_files[i]))->close();
+      delete r_files[i];
+    }
   }                       
              
-  //XXX close
-#if 0
   for (int i = 0;i < fec->get_n_outputs();i++) {       
-    if (nullptr != c_files[i])                         
-      c_files[i]->flush();
+    if (nullptr != c_files[i]) {
+      (static_cast<std::ifstream*>(c_files[i]))->close();
+      delete c_files[i];
+    }
   }
-#endif
   
   return 0;
 }
@@ -241,6 +238,7 @@ int main(int argc, char **argv)
     }
     create_coding_files<uint32_t>(fec);
     delete fec;
+    delete gf;
   } else {
     FECGF2NRS<uint32_t> *fec;
     GF2N<uint32_t> *gf = new GF2N<uint32_t>(eflag);
@@ -253,6 +251,7 @@ int main(int argc, char **argv)
     }
     create_coding_files<uint32_t>(fec);
     delete fec;
+    delete gf;
   }
 
  end:
