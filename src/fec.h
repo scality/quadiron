@@ -163,42 +163,43 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
   u_int n_data_ok = 0;
   u_int n_parities_ok = 0;
 
-  if (fec_type == TYPE_1) {
-    assert(input_data_bufs.size() == n_data);
-  } else if (fec_type == TYPE_2) {
-    assert(input_data_bufs.size() == 0);
-  }
+  assert(input_data_bufs.size() == n_data);
   assert(input_parities_bufs.size() == get_n_outputs());
   assert(output_data_bufs.size() == n_data);
 
   repair_init();
 
   int k = 0;
-  for (int i = 0;i < n_data;i++) {
-    if (input_data_bufs[i] != nullptr) {
-      repair_add_data(k, i);
-      k++;
-      n_data_ok++;
+  if (fec_type == TYPE_1) {
+    for (int i = 0;i < n_data;i++) {
+      if (input_data_bufs[i] != nullptr) {
+        repair_add_data(k, i);
+        k++;
+        n_data_ok++;
+      }
     }
   }
 
-  //finish with parities available
-  for (int i = 0;i < get_n_outputs();i++) {
-    if (input_parities_bufs[i] != nullptr) {
-      repair_add_parities(k, i);
-      k++;
-      n_parities_ok++;
-      //stop when we have enough parities
-      if (n_data == k)
-        break ;
-    }
-  }
-
-  if (n_data_ok == n_data)
-    return true;
+  //XXX optim
+  //if (k == n_data)
+  //return true;
   
-  if (n_parities_ok < (n_data - n_data_ok))
-    return false;
+  if (k < n_data) {
+    //finish with parities available
+    for (int i = 0;i < get_n_outputs();i++) {
+      if (input_parities_bufs[i] != nullptr) {
+        repair_add_parities(k, i);
+        k++;
+        n_parities_ok++;
+        //stop when we have enough parities
+        if (n_data == k)
+          break ;
+      }
+    }
+    
+    if (n_parities_ok < (n_data - n_data_ok))
+      return false;
+  }
     
   repair_build();
     
@@ -209,18 +210,23 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
   while (true) {
     words.zero_fill();
     k = 0;
-    for (int i = 0;i < n_data;i++) {
-      if (input_data_bufs[i] != nullptr) {
-        T tmp;
-        if (!readw(&tmp, input_data_bufs[i])) {
-          cont = false;
-          break ;
+    if (fec_type == TYPE_1) {
+      for (int i = 0;i < n_data;i++) {
+        if (input_data_bufs[i] != nullptr) {
+          T tmp;
+          if (!readw(&tmp, input_data_bufs[i])) {
+            cont = false;
+            break ;
+          }
+          words.set(k, tmp);
+          k++;
         }
-        words.set(k, tmp);
-        k++;
       }
+      if (!cont)
+        break ;
     }
-    if (!cont)
+    //stop when we have enough parities
+    if (n_data == k)
       break ;
     for (int i = 0;i < get_n_outputs();i++) {
       if (input_parities_bufs[i] != nullptr) {
@@ -235,9 +241,9 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
         if (n_data == k)
           break ;
       }
-      if (!cont)
-        break ;
     }
+    if (!cont)
+      break ;
 
     repair(&output, &words);
       

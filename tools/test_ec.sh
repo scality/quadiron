@@ -42,13 +42,23 @@ do_test()
         md5sum foo.c${i} > foo.c${i}.md5sum.1
     done
 
+    if [ "${gf_type}" = 65537 ]
+    then
+        #remove all data
+        for i in foo.d[0-9]
+        do
+            mv ${i} ${i}.1
+        done
+    fi
+
     j=0
     for i in $data_loss
     do
-        mv foo.d${i} foo.d${i}.1
         if [ "${gf_type}" = 65537 ]
         then
             mv foo.c${j} foo.c${j}.1
+        else
+            mv foo.d${i} foo.d${i}.1
         fi
         j=`expr ${j} + 1`
     done
@@ -68,20 +78,23 @@ do_test()
     ${valgrind} ${bin} -e ${gf_type} -n ${n_data} -m ${n_coding} -p foo -r ${extraopts} ${vflag}
     checkfail "repairing"
 
-    for i in $data_loss
+    for i in `seq 0 $(expr ${n_data} - 1)`
     do
         md5sum foo.d${i} > foo.d${i}.md5sum.2
         diff foo.d${i}.md5sum.1 foo.d${i}.md5sum.2
         checkfail "data files mismatch"
     done
-
-    for i in $coding_loss
+    for i in `seq 0 $(expr ${n_coding} - 1)`
     do
         md5sum foo.c${i} > foo.c${i}.md5sum.2
         diff foo.c${i}.md5sum.1 foo.c${i}.md5sum.2
         checkfail "coding files mismatch"
     done
 }
+
+#do_test ./ec 65537 3 3 "" "" $*
+do_test ./ec 8 3 3 "" "" $*
+do_test ./ec 16 3 3 "" "" $*
 
 #do_test ./ec 65537 3 3 "0 1" "0" $*
 do_test ./ec 8 3 3 "0 1" "0" $*
