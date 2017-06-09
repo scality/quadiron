@@ -1,10 +1,14 @@
 
 #include "ntl.h"
 
+template class GF<uint32_t>;
 template class GF<uint64_t>;
+template class GF<mpz_class>;
 
-//not a real GF, just for accessing basic arithmetic routines
-GFP<uint64_t> __gf(3);
+//not real GFs, just for accessing basic arithmetic routines
+GFP<uint32_t> __gf32(3);
+GFP<uint64_t> __gf64(3);
+GFP<mpz_class> __gfmpz(3);
 
 std::ostream&
 operator<<( std::ostream& dest, __uint128_t value )
