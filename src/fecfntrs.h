@@ -82,5 +82,7 @@ public:
 
   void repair(Vec<T> *output, Vec<T> *words)
   {
+    VVec<T> vwords(words, N);
+    fft->ifft(output, &vwords);
   }
 };

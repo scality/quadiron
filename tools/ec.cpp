@@ -100,21 +100,19 @@ bool repair_data_files(FEC<T> *fec)
   std::vector<std::istream*> c_files(fec->get_n_outputs(), nullptr);
   std::vector<std::ostream*> r_files(fec->n_data, nullptr);
 
-  if (fec->fec_type == FEC<T>::TYPE_1) {
-    //re-read data
-    for (int i = 0;i < fec->n_data;i++) {
-      snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
+  //re-read data
+  for (int i = 0;i < fec->n_data;i++) {
+    snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
+    if (vflag)
+      std::cerr << "repair: stating data " << filename << "\n";
+    if (-1 == access(filename, F_OK)) {
       if (vflag)
-        std::cerr << "repair: stating data " << filename << "\n";
-      if (-1 == access(filename, F_OK)) {
-        if (vflag)
-          std::cerr << filename << " is missing\n";
-        d_files[i] = nullptr;
-        r_files[i] = new std::ofstream(filename);
-      } else {
-        r_files[i] = nullptr;
-        d_files[i] = new std::ifstream(filename);
-      }
+        std::cerr << filename << " is missing\n";
+      d_files[i] = nullptr;
+      r_files[i] = new std::ofstream(filename);
+    } else {
+      r_files[i] = nullptr;
+      d_files[i] = new std::ifstream(filename);
     }
   }
   
