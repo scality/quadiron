@@ -8,12 +8,12 @@ public:
 
   void test_basic_ops()
   {
-    assert(__gf._sqrt(2025) == 45);
-    assert(__gf._is_prime(2));
-    assert(__gf._is_prime(3));
-    assert(__gf._is_prime(13));
-    assert(!__gf._is_prime(4));
-    assert(!__gf._is_prime(15));
+    assert(__gf64._sqrt(2025) == 45);
+    assert(__gf64._is_prime(2));
+    assert(__gf64._is_prime(3));
+    assert(__gf64._is_prime(13));
+    assert(!__gf64._is_prime(4));
+    assert(!__gf64._is_prime(15));
   }
 
   void test_negation(GF<T> *gf)

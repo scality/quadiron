@@ -99,12 +99,12 @@ public:
 
   void test_jacobi()
   {
-    assert(__gf._jacobi(1001, 9907) == -1);
-    assert(__gf._jacobi(19, 45) == 1);
-    assert(__gf._jacobi(8, 21) == -1);
-    assert(__gf._jacobi(5, 21) == 1);
-    assert(__gf._jacobi(47, 221) == -1);
-    assert(__gf._jacobi(2, 221) == -1);
+    assert(__gf64._jacobi(1001, 9907) == -1);
+    assert(__gf64._jacobi(19, 45) == 1);
+    assert(__gf64._jacobi(8, 21) == -1);
+    assert(__gf64._jacobi(5, 21) == 1);
+    assert(__gf64._jacobi(47, 221) == -1);
+    assert(__gf64._jacobi(2, 221) == -1);
   }
   
   /** 
@@ -142,11 +142,11 @@ public:
 
     int b = 10; //base
     int p = 14; //we could multiply integers of 2^p digits
-    int max_digits = __gf._exp(2, p);
+    int max_digits = __gf64._exp(2, p);
     //std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
     uint64_t n = p + 1;
-    uint64_t N = __gf._exp(2, n);
+    uint64_t N = __gf64._exp(2, n);
     //std::cerr << "n=" << n << " N=" << N << "\n";
 
     //choose 2 prime numbers of the form p=a.2^n+1
@@ -154,30 +154,30 @@ public:
     //a 2^n-th principal root of unity in GF_p
     uint64_t a1 = 2;
     uint64_t a2 = 5;
-    uint64_t p1 = a1 * __gf._exp(2, 15) + 1;
-    uint64_t p2 = a2 * __gf._exp(2, 15) + 1;
+    uint64_t p1 = a1 * __gf64._exp(2, 15) + 1;
+    uint64_t p2 = a2 * __gf64._exp(2, 15) + 1;
     //std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
-    assert(__gf._is_prime(p1));
-    assert(__gf._is_prime(p2));
+    assert(__gf64._is_prime(p1));
+    assert(__gf64._is_prime(p2));
     
     //ensure their product is bounded (b-1)^2*2^(n-1) < m
     uint64_t m = p1 * p2;
     //check overflow
     assert(m/p1 == p2);
     //std::cerr << " m=" << m << "\n";
-    assert(__gf._exp((b - 1), 2) * __gf._exp(p, 2) < m);
+    assert(__gf64._exp((b - 1), 2) * __gf64._exp(p, 2) < m);
 
     //find x so it is not a quadratic residue in GF_p1 and GF_p2
-    assert(__gf._jacobi(3, p1) == __gf._jacobi(p1, 3));
-    assert(__gf._jacobi(p1, 3) == __gf._jacobi(2, 3));
-    assert(__gf._jacobi(3, p2) == __gf._jacobi(p2, 3));
-    assert(__gf._jacobi(p2, 3) == __gf._jacobi(2, 3));
-    assert(__gf._jacobi(2, 3) == -1);
+    assert(__gf64._jacobi(3, p1) == __gf64._jacobi(p1, 3));
+    assert(__gf64._jacobi(p1, 3) == __gf64._jacobi(2, 3));
+    assert(__gf64._jacobi(3, p2) == __gf64._jacobi(p2, 3));
+    assert(__gf64._jacobi(p2, 3) == __gf64._jacobi(2, 3));
+    assert(__gf64._jacobi(2, 3) == -1);
     //which means x=3 is not a quadratic residue in GF_p1 and GF_p2
 
     //therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
-    uint64_t w1 = __gf._exp(3, a1);
-    uint64_t w2 = __gf._exp(3, a2);
+    uint64_t w1 = __gf64._exp(3, a1);
+    uint64_t w2 = __gf64._exp(3, a2);
     //std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
     assert(w1 == 9);
     assert(w2 == 243);
@@ -189,7 +189,7 @@ public:
     _n[0] = p1;
     _a[1] = w2;
     _n[1] = p2;
-    uint64_t w = __gf._chinese_remainder(2, _a, _n);
+    uint64_t w = __gf64._chinese_remainder(2, _a, _n);
     //std::cerr << " w=" << w << "\n";
     assert(w == 25559439);
 

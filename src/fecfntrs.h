@@ -17,46 +17,29 @@ public:
   u_int n;
   u_int N;
   u_int r;
-  T inv_N;
 
   FECFNTRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities) : 
     FEC<T>(gf, FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     u_int q = 65537;
+    u_int R = 3; //primitive root
     //order of a number is the lowest power of the number equals 1.
     //if q=65537 in GF_q 3 is a primitive root because is order is q-1: 
     //3^(q-1) = 1 mod q, and for each i such as 0 < i < q-1, 3^i mod q != 1
-    assert(gf->_jacobi(3, q) == -1);
+    assert(gf->_jacobi(R, q) == -1);
 
-#if 1
-    n = 3;
-    N = __gf._exp(2, n);
-    //r = gf->_exp(3, gf->_exp(2, 16-n)) % gf->p;
-    r = 4096;
-#else
     //with this encoder we cannot exactly satisfy users request, we need to pad
-    n = __gf._log2(n_parities + n_data) + 1;
-    N = __gf._exp(2, n);
-    //find r such as r^(N-1)=1 mod q
-    bool found = false;
-    for (r = 2;r < q;r++) {
-      if (gf->exp(r, N-1) == 1) {
-        std::cerr << "r=" << r << "\n";
-        found = true;
-        break ;
-      }
-    } 
-    assert(found);
-#endif
+    n = __gf64._log2(n_parities + n_data) + 1;
+    N = __gf64._exp(2, n);
 
-    inv_N = gf->inv(N);
+    //compute root of order N-1 such as r^(N-1) mod q == 1
+    //formula given in the paper (very large numbers):
+    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-n)) % gf->p;
+    r = _r.get_ui();
 
-    std::cerr << "n=" << n << "\n";
-    std::cerr << "N=" << N << "\n";
-    std::cerr << "r=" << r << "\n";
-
-    //std::cerr << gf->exp(r, N-1) << "\n";
-    //assert(gf->exp(r, N-1) == 1);
+    //std::cerr << "n=" << n << "\n";
+    //std::cerr << "N=" << N << "\n";
+    //std::cerr << "r=" << r << "\n";
 
     this->fft = new FFT<T>(gf, n, r);
   }
