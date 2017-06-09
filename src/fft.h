@@ -5,10 +5,13 @@
 template<typename T>
 class FFT
 {
- private:
+public:
   GF<T> *gf;
+  
+private:
   int n;
   int N;
+  T inv_N;
   T w;
   T inv_w;
   Vec<T> *W;
@@ -31,6 +34,7 @@ FFT<T>::FFT(GF<T> *gf, int n, T w)
   this->gf = gf;
   this->n = n;
   this->N = __gf._exp(2, n);
+  this->inv_N = gf->inv(N);
   this->w = w;
   this->inv_w = gf->inv(w);
   this->W = new Vec<T>(gf, this->N + 1);
@@ -206,11 +210,14 @@ void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
 template <typename T>
 void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
 {
-  return _fft(output, input, W);
+  _fft(output, input, W);
 }
 
 template <typename T>
 void FFT<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
-  return _fft(output, input, inv_W);
+  _fft(output, input, inv_W);
+
+  for (int i = 0; i <= N - 1;i++)
+    output->set(i, gf->mul(output->get(i), inv_N));
 }

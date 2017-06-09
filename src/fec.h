@@ -25,11 +25,13 @@ protected:
 
  public:
   FEC(GF<T> *gf, FECType fec_type, u_int word_size, u_int n_data, u_int n_parities);
-  virtual u_int get_n_outputs() = 0;
+  virtual int get_n_fragments_required() = 0;
+  virtual int get_n_inputs() = 0;
+  virtual int get_n_outputs() = 0;
   virtual void encode(Vec<T> *output, Vec<T> *words) = 0;
   virtual void repair_init(void) = 0;
-  virtual void repair_add_data(int k, int i) = 0;
-  virtual void repair_add_parities(int k, int i) = 0;
+  virtual void repair_add_data(int fragment_index, int row) = 0;
+  virtual void repair_add_parities(int fragment_index, int row) = 0;
   virtual void repair_build(void) = 0;
   virtual void repair(Vec<T> *output, Vec<T> *words) = 0;
 
@@ -160,8 +162,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 {
   bool cont = true;
 
-  u_int n_data_ok = 0;
-  u_int n_parities_ok = 0;
+  u_int fragment_index = 0;
 
   assert(input_data_bufs.size() == n_data);
   assert(input_parities_bufs.size() == get_n_outputs());
@@ -169,64 +170,62 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 
   repair_init();
 
-  int k = 0;
   if (fec_type == TYPE_1) {
     for (int i = 0;i < n_data;i++) {
       if (input_data_bufs[i] != nullptr) {
-        repair_add_data(k, i);
-        k++;
-        n_data_ok++;
+        repair_add_data(fragment_index, i);
+        fragment_index++;
       }
     }
-  }
 
-  //XXX optim
-  //if (k == n_data)
-  //return true;
+    //data is in clear so nothing to do
+    if (fragment_index == n_data)
+      return true;
+  }
   
-  if (k < n_data) {
+  if (fragment_index < get_n_fragments_required()) {
     //finish with parities available
     for (int i = 0;i < get_n_outputs();i++) {
       if (input_parities_bufs[i] != nullptr) {
-        repair_add_parities(k, i);
-        k++;
-        n_parities_ok++;
+        repair_add_parities(fragment_index, i);
+        fragment_index++;
         //stop when we have enough parities
-        if (n_data == k)
+        if (fragment_index == get_n_fragments_required())
           break ;
       }
     }
     
-    if (n_parities_ok < (n_data - n_data_ok))
+    //unable to decode
+    if (fragment_index < get_n_fragments_required())
       return false;
   }
     
   repair_build();
     
   //read-and-repair
-  Vec<T> words(gf, n_data);
-  Vec<T> output(gf, n_data);
+  Vec<T> words(gf, get_n_inputs());
+  Vec<T> output(gf, get_n_inputs());
     
   while (true) {
     words.zero_fill();
-    k = 0;
+    fragment_index = 0;
     if (fec_type == TYPE_1) {
-      for (int i = 0;i < n_data;i++) {
+      for (int i = 0;i < get_n_inputs();i++) {
         if (input_data_bufs[i] != nullptr) {
           T tmp;
           if (!readw(&tmp, input_data_bufs[i])) {
             cont = false;
             break ;
           }
-          words.set(k, tmp);
-          k++;
+          words.set(fragment_index, tmp);
+          fragment_index++;
         }
       }
       if (!cont)
         break ;
     }
     //stop when we have enough parities
-    if (n_data == k)
+    if (fragment_index == get_n_fragments_required())
       break ;
     for (int i = 0;i < get_n_outputs();i++) {
       if (input_parities_bufs[i] != nullptr) {
@@ -235,10 +234,10 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
           cont = false;
           break ;
         }
-        words.set(k, tmp);
-        k++;
+        words.set(fragment_index, tmp);
+        fragment_index++;
         //stop when we have enough parities
-        if (n_data == k)
+        if (fragment_index == get_n_fragments_required())
           break ;
       }
     }

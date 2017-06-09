@@ -17,6 +17,7 @@ public:
   u_int n;
   u_int N;
   u_int r;
+  T inv_N;
 
   FECFNTRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities) : 
     FEC<T>(gf, FEC<T>::TYPE_2, word_size, n_data, n_parities)
@@ -27,22 +28,35 @@ public:
     //3^(q-1) = 1 mod q, and for each i such as 0 < i < q-1, 3^i mod q != 1
     assert(gf->_jacobi(3, q) == -1);
 
+#if 1
+    n = 3;
+    N = __gf._exp(2, n);
+    //r = gf->_exp(3, gf->_exp(2, 16-n)) % gf->p;
+    r = 4096;
+#else
     //with this encoder we cannot exactly satisfy users request, we need to pad
     n = __gf._log2(n_parities + n_data) + 1;
-    std::cerr << "n=" << n << "\n";
     N = __gf._exp(2, n);
-    std::cerr << "N=" << N << "\n";
-
     //find r such as r^(N-1)=1 mod q
     bool found = false;
     for (r = 2;r < q;r++) {
-      if ((__gf._exp(r, N-1) % q) == 1) {
+      if (gf->exp(r, N-1) == 1) {
         std::cerr << "r=" << r << "\n";
         found = true;
         break ;
       }
     } 
     assert(found);
+#endif
+
+    inv_N = gf->inv(N);
+
+    std::cerr << "n=" << n << "\n";
+    std::cerr << "N=" << N << "\n";
+    std::cerr << "r=" << r << "\n";
+
+    //std::cerr << gf->exp(r, N-1) << "\n";
+    //assert(gf->exp(r, N-1) == 1);
 
     this->fft = new FFT<T>(gf, n, r);
   }
@@ -52,7 +66,18 @@ public:
     delete fft;
   }
 
-  u_int get_n_outputs()
+  int get_n_fragments_required()
+  {
+    //XXX temp
+    return this->N;
+  }
+
+  int get_n_inputs()
+  {
+    return this->N;
+  }
+
+  int get_n_outputs()
   {
     return this->N;
   }
@@ -67,13 +92,15 @@ public:
   {
   }
 
-  void repair_add_data(int k, int i)
+  void repair_add_data(int fragment_index, int row)
   {
     //not applicable
+    assert(false);
   }
 
-  void repair_add_parities(int k, int i)
+  void repair_add_parities(int fragment_index, int row)
   {
+    std::cerr << "fragment_index=" << fragment_index << " row=" << row << "\n";
   }
 
   void repair_build()
