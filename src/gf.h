@@ -19,9 +19,11 @@ using SignedDoubleT = typename SignedDouble<T>::T;
 template<typename T>
 class GF
 {
- protected:
+public:
   T p;
   T n;
+
+protected:
   GF(T p, T n);
 
  public:
@@ -35,8 +37,6 @@ class GF
   virtual T pow(T a) = 0;
   virtual T log(T a) = 0;
   virtual T inv(T a) = 0;
-  T _get_p();
-  T _get_n();
   T _card();
   T exp(T base, T exponent);
   T _sqrt(T n);
@@ -60,18 +60,6 @@ GF<T>::GF(T p, T n)
 {
   this->p = p;
   this->n = n;
-}
-
-template <typename T>
-T GF<T>::_get_p()
-{
-  return p;
-}
-
-template <typename T>
-T GF<T>::_get_n()
-{
-  return n;
 }
 
 template <typename T>

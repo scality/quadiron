@@ -40,7 +40,17 @@ public:
     delete repair_mat;
   }
 
-  u_int get_n_outputs()
+  int get_n_fragments_required()
+  {
+    return this->n_data;
+  } 
+
+  int get_n_inputs()
+  {
+    return this->n_data;
+  }
+
+  int get_n_outputs()
   {
     return this->n_parities;
   }
@@ -56,22 +66,22 @@ public:
     repair_mat = new Mat<T>(this->gf, mat->n_cols, mat->n_cols);
   }
 
-  void repair_add_data(int k, int i)
+  void repair_add_data(int fragment_index, int row)
   {
     //for each data available generate the corresponding identity
     for (int j = 0;j < mat->n_cols;j++) {
-      if (i == j)
-        repair_mat->set(k, j, 1);
+      if (row == j)
+        repair_mat->set(fragment_index, j, 1);
       else
-        repair_mat->set(k, j, 0);
+        repair_mat->set(fragment_index, j, 0);
     }
   }
 
-  void repair_add_parities(int k, int i)
+  void repair_add_parities(int fragment_index, int row)
   {
     //copy corresponding row in vandermonde matrix
     for (int j = 0;j < mat->n_cols;j++) {
-      repair_mat->set(k, j, mat->get(i, j));
+      repair_mat->set(fragment_index, j, mat->get(row, j));
     }
   }
 

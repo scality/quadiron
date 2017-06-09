@@ -220,16 +220,13 @@ public:
 
     fft.ifft(sfXY, _XY);
 
-    T inv_N = gf_m.inv(N);
-    //std::cerr << "inv_N=" << inv_N << "\n";
-
     //carry propagation
     mpz_class z = 0;
     for (int i = 0;i <= N-1;i++) {
       mpz_class t, b;
       b = 10;
       mpz_pow_ui(t.get_mpz_t(), b.get_mpz_t(), i);
-      z += ((sfXY->get(i) * inv_N) % m) * t;
+      z += sfXY->get(i) * t;
     }
 
     //std::cout << z << "\n";
