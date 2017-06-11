@@ -14,6 +14,7 @@ class Vec
   void zero_fill(void);
   void set(int i, T val);
   virtual T get(int i);
+  void mul_scalar(T scalar);
   void dump(void);
 };
 
@@ -56,13 +57,23 @@ T Vec<T>::get(int i)
   return mem[i];
 }
 
+/** 
+ * Multiplication of a vector by a scalar
+ * 
+ * @param scalar 
+ */
+template <typename T>
+void Vec<T>::mul_scalar(T scalar)
+{
+  for (int i = 0; i < n;i++)
+    set(i, gf->mul(get(i), scalar));
+}
+
 template <typename T>
 void Vec<T>::dump(void)
 {
-  int i, j;
-  
   std::cout << "--\n";
-  for (i = 0;i < n;i++)
+  for (int i = 0;i < n;i++)
     std::cout << " " << get(i);
   std::cout << "\n";
 }
