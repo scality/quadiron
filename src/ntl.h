@@ -13,6 +13,8 @@
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <map>
+#include <utility>
 
 template<typename Type> struct Double {};
 template<>           struct Double<uint32_t> {typedef uint64_t T;};
@@ -37,6 +39,7 @@ typedef enum
 #include "gfp.h"
 #include "gf2n.h"
 #include "misc.h"
+#include "config.h"
 #include "vec.h"
 #include "vvec.h"
 #include "mat.h"

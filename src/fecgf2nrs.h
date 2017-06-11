@@ -15,29 +15,35 @@ public:
     CAUCHY,
   };
 
+  FECGF2NRSType type;
+
 private:
   Mat<T> *mat = NULL;
-  Mat<T> *repair_mat = NULL;
+  Mat<T> *decode_mat = NULL;
 
 public:
 
   FECGF2NRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities, FECGF2NRSType type) : 
     FEC<T>(gf, FEC<T>::TYPE_1, word_size, n_data, n_parities)
   {
+    assert(type == VANDERMONDE || type == CAUCHY);
+    this->type = type;
+
     this->mat = new Mat<T>(gf, n_parities, n_data);
     if (type == CAUCHY) {
       mat->cauchy();
     } else if (type == VANDERMONDE) {
       mat->vandermonde_suitable_for_ec();
-    } else {
-      throw NTL_EX_INVAL;
     }
+
+    //has to be a n_data*n_data invertible square matrix
+    decode_mat = new Mat<T>(this->gf, mat->n_cols, mat->n_cols);
   }
 
   ~FECGF2NRS()
   {
     delete mat;
-    delete repair_mat;
+    delete decode_mat;
   }
 
   int get_n_fragments_required()
@@ -55,43 +61,53 @@ public:
     return this->n_parities;
   }
 
-  void encode(Vec<T> *output, Vec<T> *words)
+  void encode_init()
+  {
+  } 
+
+  void encode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
   {
     mat->mult(output, words);
   }
-  
-  void repair_init(void)
+
+  void encode_finish()
   {
-    //has to be a n_data*n_data invertible square matrix
-    repair_mat = new Mat<T>(this->gf, mat->n_cols, mat->n_cols);
+  }
+  
+  void decode_init(void)
+  {
   }
 
-  void repair_add_data(int fragment_index, int row)
+  void decode_add_data(int fragment_index, int row)
   {
     //for each data available generate the corresponding identity
     for (int j = 0;j < mat->n_cols;j++) {
       if (row == j)
-        repair_mat->set(fragment_index, j, 1);
+        decode_mat->set(fragment_index, j, 1);
       else
-        repair_mat->set(fragment_index, j, 0);
+        decode_mat->set(fragment_index, j, 0);
     }
   }
 
-  void repair_add_parities(int fragment_index, int row)
+  void decode_add_parities(int fragment_index, int row)
   {
     //copy corresponding row in vandermonde matrix
     for (int j = 0;j < mat->n_cols;j++) {
-      repair_mat->set(fragment_index, j, mat->get(row, j));
+      decode_mat->set(fragment_index, j, mat->get(row, j));
     }
   }
 
-  void repair_build()
+  void decode_build()
   {
-    repair_mat->inv();
+    decode_mat->inv();
   }
 
-  void repair(Vec<T> *output, Vec<T> *words)
+  void decode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
   {
-    repair_mat->mult(output, words);
+    decode_mat->mult(output, words);
+  }
+
+  void decode_finish()
+  {
   }
 };

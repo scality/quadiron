@@ -217,7 +217,5 @@ template <typename T>
 void FFT<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
   _fft(output, input, inv_W);
-
-  for (int i = 0; i <= N - 1;i++)
-    output->set(i, gf->mul(output->get(i), inv_N));
+  output->mul_scalar(inv_N);
 }

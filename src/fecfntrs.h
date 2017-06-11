@@ -12,7 +12,7 @@ class FECFNTRS : public FEC<T>
 {
 private:
   FFT<T> *fft = NULL;
-
+  
 public:
   u_int n;
   u_int N;
@@ -65,34 +65,65 @@ public:
     return this->N;
   }
 
-  void encode(Vec<T> *output, Vec<T> *words)
-  {
-    VVec<T> vwords(words, N);
-    fft->fft(output, &vwords);
-  }
-  
-  void repair_init(void)
+  void encode_init()
   {
   }
 
-  void repair_add_data(int fragment_index, int row)
+  void encode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
+  {
+    VVec<T> vwords(words, N);
+    fft->fft(output, &vwords);
+    //check for 65536 value in output
+    for (int i = 0;i < N;i++) {
+      if (output->get(i) == 65536) {
+        //std::cerr << "offset=" << offset << " 65536\n";
+        char buf[256];
+        snprintf(buf, sizeof (buf), "%lu", offset);
+        assert(nullptr != props[i]);
+        props[i]->insert(std::make_pair(buf, "unused"));
+      }
+    }
+  }
+  
+  void encode_finish()
+  {
+    //set_write("special_vals.tmp", special_vals);
+  }
+
+  void decode_init(void)
+  {
+    //set_read("special_vals.tmp", special_vals);
+  }
+
+  void decode_add_data(int fragment_index, int row)
   {
     //not applicable
     assert(false);
   }
 
-  void repair_add_parities(int fragment_index, int row)
+  void decode_add_parities(int fragment_index, int row)
   {
-    std::cerr << "fragment_index=" << fragment_index << " row=" << row << "\n";
+    //std::cerr << "fragment_index=" << fragment_index << " row=" << row << "\n";
   }
 
-  void repair_build()
+  void decode_build()
   {
   }
 
-  void repair(Vec<T> *output, Vec<T> *words)
+  void decode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
   {
+    for (int i = 0;i < N;i++) {
+      char buf[256];
+      snprintf(buf, sizeof (buf), "%lu", offset);
+      assert(nullptr != props[i]);
+      if (props[i]->is_key(buf))
+        words->set(i, 65536);
+    }
     VVec<T> vwords(words, N);
     fft->ifft(output, &vwords);
+  }
+
+  void decode_finish()
+  {
   }
 };

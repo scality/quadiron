@@ -57,6 +57,7 @@ do_test()
         if [ "${gf_type}" = 65537 ]
         then
             mv foo.c${j} foo.c${j}.1
+            mv foo.c${j}.props foo.c${j}.props.1
         else
             mv foo.d${i} foo.d${i}.1
         fi
@@ -68,8 +69,10 @@ do_test()
         if [ "${gf_type}" = 65537 ]
         then
             mv foo.c${j} foo.c${j}.1
+            mv foo.c${j}.props foo.c${j}.props.1
         else
             mv foo.c${i} foo.c${i}.1
+            mv foo.c${i}.props foo.c${i}.props.1
         fi
         j=`expr ${j} + 1`
     done
@@ -92,7 +95,7 @@ do_test()
     done
 }
 
-#do_test ./ec 65537 3 3 "" "" $*
+do_test ./ec 65537 3 3 "" "" $*
 do_test ./ec 8 3 3 "" "" $*
 do_test ./ec 16 3 3 "" "" $*
 

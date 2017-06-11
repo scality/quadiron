@@ -60,6 +60,8 @@ void create_coding_files(FEC<T> *fec)
   char filename[1024];
   std::vector<std::istream*> d_files(fec->n_data, nullptr);
   std::vector<std::ostream*> c_files(fec->get_n_outputs(), nullptr);
+  std::vector<std::ostream*> c_props_files(fec->get_n_outputs(), nullptr);
+  std::vector<KeyValue*> c_props(fec->get_n_outputs(), nullptr);
   
   for (int i = 0;i < fec->n_data;i++) {
     snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
@@ -73,9 +75,14 @@ void create_coding_files(FEC<T> *fec)
     if (vflag)
       std::cerr<< "create: opening coding for writing " << filename << "\n";
     c_files[i] = new std::ofstream(filename);
+    snprintf(filename, sizeof (filename), "%s.c%d.props", prefix, i);
+    if (vflag)
+      std::cerr<< "create: opening coding props for writing " << filename << "\n";
+    c_props_files[i] = new std::ofstream(filename);
+    c_props[i] = new KeyValue();
   }
 
-  fec->encode_bufs(d_files, c_files);
+  fec->encode_bufs(d_files, c_files, c_props);
 
   for (int i = 0;i < fec->n_data;i++) {
     (static_cast<std::ifstream*>(d_files[i]))->close();
@@ -83,6 +90,13 @@ void create_coding_files(FEC<T> *fec)
   }
 
   for (int i = 0;i < fec->get_n_outputs();i++) {
+
+    *(c_props_files[i]) << *(c_props[i]);
+
+    (static_cast<std::ofstream*>(c_props_files[i]))->close();
+    delete c_props_files[i];
+    delete c_props[i];
+
     (static_cast<std::ofstream*>(c_files[i]))->close();
     delete c_files[i];
   }
@@ -98,13 +112,15 @@ bool repair_data_files(FEC<T> *fec)
   char filename[1024];
   std::vector<std::istream*> d_files(fec->n_data, nullptr);
   std::vector<std::istream*> c_files(fec->get_n_outputs(), nullptr);
+  std::vector<std::istream*> c_props_files(fec->get_n_outputs(), nullptr);
+  std::vector<KeyValue*> c_props(fec->get_n_outputs(), nullptr);
   std::vector<std::ostream*> r_files(fec->n_data, nullptr);
 
   //re-read data
   for (int i = 0;i < fec->n_data;i++) {
     snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
     if (vflag)
-      std::cerr << "repair: stating data " << filename << "\n";
+      std::cerr << "repair: checking data " << filename << "\n";
     if (-1 == access(filename, F_OK)) {
       if (vflag)
         std::cerr << filename << " is missing\n";
@@ -119,7 +135,7 @@ bool repair_data_files(FEC<T> *fec)
   for (int i = 0;i < fec->get_n_outputs();i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
-      std::cerr << "repair: stating coding " << filename << "\n";
+      std::cerr << "repair: checking coding " << filename << "\n";
     if (access(filename, F_OK)) {
       if (vflag)
         std::cerr << filename << " is missing\n";
@@ -127,14 +143,41 @@ bool repair_data_files(FEC<T> *fec)
     } else {
       c_files[i] = new std::ifstream(filename);
     }
+
+    snprintf(filename, sizeof (filename), "%s.c%d.props", prefix, i);
+    if (vflag)
+      std::cerr << "repair: checking coding props " << filename << "\n";
+    if (access(filename, F_OK)) {
+      c_props_files[i] = nullptr;
+      c_props[i] = nullptr;
+    } else {
+      c_props_files[i] = new std::ifstream(filename);
+      c_props[i] = new KeyValue();
+      *(c_props_files[i]) >> *(c_props[i]);
+    }
   }
 
-  fec->decode_bufs(d_files, c_files, r_files);
+  fec->decode_bufs(d_files, c_files, c_props, r_files);
 
   for (int i = 0;i < fec->n_data;i++) { 
     if (nullptr != d_files[i]) {
       (static_cast<std::ifstream*>(d_files[i]))->close();
       delete d_files[i];
+    }
+  }
+
+  for (int i = 0;i < fec->get_n_outputs();i++) {       
+    if (nullptr != c_props_files[i]) {
+      (static_cast<std::ifstream*>(c_props_files[i]))->close();
+      delete c_props_files[i];
+    }
+
+    if (nullptr != c_props[i])
+      delete c_props[i];
+
+    if (nullptr != c_files[i]) {
+      (static_cast<std::ifstream*>(c_files[i]))->close();
+      delete c_files[i];
     }
   }
 
@@ -144,13 +187,6 @@ bool repair_data_files(FEC<T> *fec)
       delete r_files[i];
     }
   }                       
-             
-  for (int i = 0;i < fec->get_n_outputs();i++) {       
-    if (nullptr != c_files[i]) {
-      (static_cast<std::ifstream*>(c_files[i]))->close();
-      delete c_files[i];
-    }
-  }
   
   return 0;
 }
