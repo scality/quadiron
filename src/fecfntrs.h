@@ -65,10 +65,6 @@ public:
     return this->N;
   }
 
-  void encode_init()
-  {
-  }
-
   void encode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
   {
     VVec<T> vwords(words, N);
@@ -85,16 +81,6 @@ public:
     }
   }
   
-  void encode_finish()
-  {
-    //set_write("special_vals.tmp", special_vals);
-  }
-
-  void decode_init(void)
-  {
-    //set_read("special_vals.tmp", special_vals);
-  }
-
   void decode_add_data(int fragment_index, int row)
   {
     //not applicable
@@ -121,9 +107,5 @@ public:
     }
     VVec<T> vwords(words, N);
     fft->ifft(output, &vwords);
-  }
-
-  void decode_finish()
-  {
   }
 };

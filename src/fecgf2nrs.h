@@ -61,21 +61,9 @@ public:
     return this->n_parities;
   }
 
-  void encode_init()
-  {
-  } 
-
   void encode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
   {
     mat->mult(output, words);
-  }
-
-  void encode_finish()
-  {
-  }
-  
-  void decode_init(void)
-  {
   }
 
   void decode_add_data(int fragment_index, int row)
@@ -105,9 +93,5 @@ public:
   void decode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
   {
     decode_mat->mult(output, words);
-  }
-
-  void decode_finish()
-  {
   }
 };

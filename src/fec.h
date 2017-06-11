@@ -28,15 +28,11 @@ protected:
   virtual int get_n_fragments_required() = 0;
   virtual int get_n_inputs() = 0;
   virtual int get_n_outputs() = 0;
-  virtual void encode_init() = 0;
   virtual void encode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words) = 0;
-  virtual void encode_finish() = 0;
-  virtual void decode_init(void) = 0;
   virtual void decode_add_data(int fragment_index, int row) = 0;
   virtual void decode_add_parities(int fragment_index, int row) = 0;
   virtual void decode_build(void) = 0;
   virtual void decode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words) = 0;
-  virtual void decode_finish() = 0;
 
   bool readw(T *ptr, std::istream *stream);  
   bool writew(T val, std::ostream *stream);  
@@ -130,8 +126,6 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
   assert(output_parities_bufs.size() == get_n_outputs());
   assert(output_parities_props.size() == get_n_outputs());
 
-  encode_init();
- 
   Vec<T> words = Vec<T>(gf, n_data);
   Vec<T> output = Vec<T>(gf, get_n_outputs());
   
@@ -154,8 +148,6 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
     }
     offset += word_size;
   } 
-
-  encode_finish();
 }
 
 /** 
@@ -185,8 +177,6 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
   assert(input_parities_bufs.size() == get_n_outputs());
   assert(input_parities_props.size() == get_n_outputs());
   assert(output_data_bufs.size() == n_data);
-
-  decode_init();
 
   if (fec_type == TYPE_1) {
     for (int i = 0;i < n_data;i++) {
@@ -272,8 +262,6 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 
     offset += word_size;
   } 
-
-  decode_finish();
 
   return true;
 }
