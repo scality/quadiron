@@ -67,7 +67,7 @@ void rs_utest2()
   vec.set(1, 5);
   vec.set(2, 6);
   //vec.dump();
-  mat.mult(&output, &vec);
+  mat.mul(&output, &vec);
   //output.dump();
   assert(output.get(0) == 3);
   assert(output.get(1) == 5);

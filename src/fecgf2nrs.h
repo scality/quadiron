@@ -63,7 +63,7 @@ public:
 
   void encode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
   {
-    mat->mult(output, words);
+    mat->mul(output, words);
   }
 
   void decode_add_data(int fragment_index, int row)
@@ -92,6 +92,6 @@ public:
 
   void decode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
   {
-    decode_mat->mult(output, words);
+    decode_mat->mul(output, words);
   }
 };

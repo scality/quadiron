@@ -33,6 +33,7 @@ typedef enum
     NTL_EX_INVAL,
     NTL_EX_OVERFLOW,
     NTL_EX_IO,
+    NTL_EX_DIV_BY_ZERO
   } NtlException;
 
 #include "gf.h"
@@ -44,6 +45,7 @@ typedef enum
 #include "vvec.h"
 #include "mat.h"
 #include "fft.h"
+#include "poly.h"
 #include "fec.h"
 #include "fecgf2nrs.h"
 #include "fecfntrs.h"

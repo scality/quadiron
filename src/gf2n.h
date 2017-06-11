@@ -18,6 +18,8 @@ class GF2N : public GF<T>
   ~GF2N();
   T card(void);
   bool check(T a);
+  T max(T a, T b);
+  T min(T a, T b);
   T neg(T a);
   T add(T a, T b);
   T sub(T a, T b);
@@ -84,26 +86,55 @@ bool GF2N<T>::check(T a)
 }
 
 template <typename T>
+T GF2N<T>::max(T a, T b)
+{
+  assert(check(a));
+  assert(check(b));
+
+  return (a >= b) ? a : b;
+}
+
+template <typename T>
+T GF2N<T>::min(T a, T b)
+{
+  assert(check(a));
+  assert(check(b));
+
+  return (a < b) ? a : b;
+}
+
+template <typename T>
 T GF2N<T>::neg(T a)
 {
+  assert(check(a));
+
   return sub(0, a);
 }
 
 template <typename T>
 T GF2N<T>::add(T a, T b)
 {
+  assert(check(a));
+  assert(check(b));
+
   return a ^ b;
 }
 
 template <typename T>
 T GF2N<T>::sub(T a, T b)
 {
+  assert(check(a));
+  assert(check(b));
+
   return a ^ b;
 }
 
 template <typename T>
 T GF2N<T>::mul(T a, T b)
 {
+  assert(check(a));
+  assert(check(b));
+
   int sum_log;
 
   if (a == 0 || b == 0)
@@ -118,6 +149,9 @@ T GF2N<T>::mul(T a, T b)
 template <typename T>
 T GF2N<T>::div(T a, T b)
 {
+  assert(check(a));
+  assert(check(b));
+
   int diff_log;
 
   if (a == 0) 
@@ -134,17 +168,23 @@ T GF2N<T>::div(T a, T b)
 template <typename T>
 T GF2N<T>::inv(T a)
 {
+  assert(check(a));
+
   return div(1, a);
 }
 
 template <typename T>
 T GF2N<T>::pow(T a)
 {
+  assert(check(a));
+
   return gfilog[a];
 }
 
 template <typename T>
 T GF2N<T>::log(T a)
 {
+  assert(check(a));
+
   return gflog[a];
 }

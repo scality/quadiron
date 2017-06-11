@@ -12,7 +12,9 @@ class FECFNTRS : public FEC<T>
 {
 private:
   FFT<T> *fft = NULL;
-  
+  int max_fragment_index = 0;
+  Poly<T> *A;
+
 public:
   u_int n;
   u_int N;
@@ -42,6 +44,8 @@ public:
     //std::cerr << "r=" << r << "\n";
 
     this->fft = new FFT<T>(gf, n, r);
+
+    this->A = new Poly<T>(gf);
   }
 
   ~FECFNTRS()
@@ -52,7 +56,8 @@ public:
   int get_n_fragments_required()
   {
     //XXX temp
-    return this->N;
+    //return this->N;
+    return this->n_data;
   }
 
   int get_n_inputs()
@@ -89,7 +94,8 @@ public:
 
   void decode_add_parities(int fragment_index, int row)
   {
-    //std::cerr << "fragment_index=" << fragment_index << " row=" << row << "\n";
+    std::cerr << "fragment_index=" << fragment_index << " row=" << row << "\n";
+    max_fragment_index = fragment_index;
   }
 
   void decode_build()
@@ -101,11 +107,17 @@ public:
     for (int i = 0;i < N;i++) {
       char buf[256];
       snprintf(buf, sizeof (buf), "%lu", offset);
-      assert(nullptr != props[i]);
-      if (props[i]->is_key(buf))
-        words->set(i, 65536);
+      if (nullptr != props[i]) {
+        if (props[i]->is_key(buf))
+          words->set(i, 65536);
+      }
     }
-    VVec<T> vwords(words, N);
-    fft->ifft(output, &vwords);
+    if (max_fragment_index == N-1) {
+      //ideal case
+      VVec<T> vwords(words, N);
+      fft->ifft(output, &vwords);
+    } else {
+      //std::cerr << "missing codings\n";
+    }
   }
 };
