@@ -20,7 +20,7 @@ class Mat
   void set(int i, int j, T val);
   T get(int i, int j);
   void inv(void);
-  void mult(Vec<T> *output, Vec<T> *v);
+  void mul(Vec<T> *output, Vec<T> *v);
   void vandermonde(void);
   void vandermonde_suitable_for_ec(void);
   void cauchy(void);
@@ -332,7 +332,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
 }
 
 template <typename T>
-void Mat<T>::mult(Vec<T> *output, Vec<T> *v)
+void Mat<T>::mul(Vec<T> *output, Vec<T> *v)
 {
   int i, j;
 

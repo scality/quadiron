@@ -9,6 +9,8 @@ public:
   GFP(T p);
   T card(void);
   bool check(T a);
+  T max(T a, T b);
+  T min(T a, T b);
   T neg(T a);
   T add(T a, T b);
   T sub(T a, T b);
@@ -39,6 +41,24 @@ bool GFP<T>::check(T a)
 }
 
 template <typename T>
+T GFP<T>::max(T a, T b)
+{
+  assert(check(a));
+  assert(check(b));
+
+  return (a >= b) ? a : b;
+}
+
+template <typename T>
+T GFP<T>::min(T a, T b)
+{
+  assert(check(a));
+  assert(check(b));
+
+  return (a < b) ? a : b;
+}
+
+template <typename T>
 T GFP<T>::neg(T a)
 {
   assert(check(a));
@@ -49,7 +69,8 @@ T GFP<T>::neg(T a)
 template <typename T>
 T GFP<T>::add(T a, T b)
 {
-  assert(check(a) && check(b));
+  assert(check(a));
+  assert(check(b));
 
   return (a + b) % this->p;
 }
@@ -57,7 +78,8 @@ T GFP<T>::add(T a, T b)
 template <typename T>
 T GFP<T>::sub(T a, T b)
 {
-  assert(check(a) && check(b));
+  assert(check(a));
+  assert(check(b));
 
   if (a >= b)
     return a - b;
@@ -68,7 +90,8 @@ T GFP<T>::sub(T a, T b)
 template <typename T>
 T GFP<T>::mul(T a, T b)
 {
-  assert(check(a) && check(b));
+  assert(check(a));
+  assert(check(b));
 
   return T((DoubleT<T>(a) * b) % this->p);
 }
@@ -76,7 +99,8 @@ T GFP<T>::mul(T a, T b)
 template <typename T>
 T GFP<T>::div(T a, T b)
 {
-  assert(check(a) && check(b));
+  assert(check(a));
+  assert(check(b));
 
   T inv_b = inv(b);
 
