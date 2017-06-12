@@ -46,22 +46,12 @@ public:
     delete decode_mat;
   }
 
-  int get_n_fragments_required()
-  {
-    return this->n_data;
-  } 
-
-  int get_n_inputs()
-  {
-    return this->n_data;
-  }
-
   int get_n_outputs()
   {
     return this->n_parities;
   }
 
-  void encode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
+  void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *words)
   {
     mat->mul(output, words);
   }
@@ -90,7 +80,7 @@ public:
     decode_mat->inv();
   }
 
-  void decode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
+  void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *fragments_ids, Vec<T> *words)
   {
     decode_mat->mul(output, words);
   }

@@ -120,6 +120,21 @@ void poly_utest5()
   assert(p4.get(0) == 1);
 }
 
+void poly_utest6()
+{
+  std::cout << "poly_utest6\n";
+  GFP<uint32_t> gfp(11);
+  Poly<uint32_t> p1(&gfp);
+  p1.set(4, 4);
+  p1.set(1, 1);
+  p1.set(0, 19);
+  Poly<uint32_t> p2(&gfp);
+  p1.derivative(&p2);
+  assert(p2.degree() == 3);
+  assert(p2.get(3) == 5);
+  assert(p2.get(0) == 1);
+}
+
 void poly_utest()
 {
   std::cout << "poly_utest\n";
@@ -129,4 +144,5 @@ void poly_utest()
   poly_utest3();
   poly_utest4();
   poly_utest5();
+  poly_utest6();
 }

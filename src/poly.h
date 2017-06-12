@@ -34,6 +34,7 @@ private:
   void sub(Poly<T> *result, Poly<T> *a, Poly<T> *b);
   void mul(Poly<T> *result, Poly<T> *a, Poly<T> *b);
   void div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d);
+  void derivative(Poly<T> *result);
   void dump();
 };
 
@@ -53,6 +54,7 @@ template <typename T>
 void Poly<T>::copy(Poly<T> *src)
 {
   clear();
+
   for (int i = src->degree(); i >= 0; i--)
     set(i, src->get(i));
 }
@@ -96,6 +98,8 @@ void Poly<T>::set(T exponent, T coef)
 template <typename T>
 void Poly<T>::add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 {
+  result->clear();
+
   T max = gf->max(a->degree(), b->degree());
 
   for (int i = max; i >= 0; i--)
@@ -106,6 +110,8 @@ void Poly<T>::add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 template <typename T>
 void Poly<T>::sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 {
+  result->clear();
+
   T max = gf->max(a->degree(), b->degree());
 
   for (int i = max; i >= 0; i--)
@@ -116,11 +122,13 @@ void Poly<T>::sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 template <typename T>
 void Poly<T>::mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 {
+  result->clear();
+
   for (int i = a->degree(); i >= 0; i--)
     for (int j = b->degree(); j >= 0; j--)
       result->set(i + j,
                   gf->add(result->get(i + j),
-                          gf->mul(a->terms[i], b->terms[j])));
+                          gf->mul(a->get(i), b->get(j))));
 }
 
 /** 
@@ -149,6 +157,15 @@ void Poly<T>::div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
     sub(&_r, r, &_m);
     r->copy(&_r);
   }
+}
+
+template <typename T>
+void Poly<T>::derivative(Poly<T> *result)
+{
+  result->clear();
+
+  for (int i = degree(); i > 0; i--)
+    result->set(i - 1, gf->mul(get(i), i));
 }
 
 template <typename T>

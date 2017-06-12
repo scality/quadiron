@@ -12,8 +12,6 @@ class FECFNTRS : public FEC<T>
 {
 private:
   FFT<T> *fft = NULL;
-  int max_fragment_index = 0;
-  Poly<T> *A;
 
 public:
   u_int n;
@@ -44,8 +42,6 @@ public:
     //std::cerr << "r=" << r << "\n";
 
     this->fft = new FFT<T>(gf, n, r);
-
-    this->A = new Poly<T>(gf);
   }
 
   ~FECFNTRS()
@@ -53,24 +49,12 @@ public:
     delete fft;
   }
 
-  int get_n_fragments_required()
-  {
-    //XXX temp
-    //return this->N;
-    return this->n_data;
-  }
-
-  int get_n_inputs()
-  {
-    return this->N;
-  }
-
   int get_n_outputs()
   {
     return this->N;
   }
 
-  void encode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
+  void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *words)
   {
     VVec<T> vwords(words, N);
     fft->fft(output, &vwords);
@@ -94,15 +78,15 @@ public:
 
   void decode_add_parities(int fragment_index, int row)
   {
-    std::cerr << "fragment_index=" << fragment_index << " row=" << row << "\n";
-    max_fragment_index = fragment_index;
+    //we can't anticipate here
   }
 
   void decode_build()
   {
+    //nothing to do
   }
 
-  void decode(std::vector<KeyValue*> props, off_t offset, Vec<T> *output, Vec<T> *words)
+  void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *fragments_ids, Vec<T> *words)
   {
     for (int i = 0;i < N;i++) {
       char buf[256];
@@ -112,12 +96,11 @@ public:
           words->set(i, 65536);
       }
     }
-    if (max_fragment_index == N-1) {
-      //ideal case
-      VVec<T> vwords(words, N);
-      fft->ifft(output, &vwords);
-    } else {
-      //std::cerr << "missing codings\n";
-    }
+    //XXX ideal case
+    //VVec<T> vwords(words, N);
+    //fft->ifft(output, &vwords);
+    
+    //output is n_data length
+    
   }
 };
