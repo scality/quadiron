@@ -29,18 +29,6 @@ void xperror(const char *str)
   exit(1);
 }
 
-void xerrormsg(const char *str1, const char *str2)
-{
-  std::cerr << str1 << " " << str2 << ": " << strerror(errno) << "\n";
-  exit(1);
-}
-
-void xmsg(const char *str1, const char *str2)
-{
-  std::cerr << str1 << " " << str2 << "\n";
-  exit(1);
-}
-
 char *xstrdup(const char *str)
 {
   char *n;
