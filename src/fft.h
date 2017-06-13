@@ -62,7 +62,7 @@ void FFT<T>::compute_W(Vec<T> *_W, T _w)
     std::ofstream file;
     file.open(filename.str().c_str(), std::ios::out);
     for (int i = 0;i <= N;i++) {
-      _W->set(i, gf->exp(_w, i));
+      _W->set(i, gf->expNaive(_w, i));
       file << _W->get(i) << "\n";
     }
   } else {

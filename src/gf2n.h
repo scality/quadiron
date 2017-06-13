@@ -25,9 +25,9 @@ class GF2N : public GF<T>
   T sub(T a, T b);
   T mul(T a, T b);
   T div(T a, T b);
-  T pow(T a);
-  T log(T a);
   T inv(T a);
+  T exp(T a, T b);
+  T log(T a, T b);
 };
 
 template <typename T>
@@ -174,17 +174,18 @@ T GF2N<T>::inv(T a)
 }
 
 template <typename T>
-T GF2N<T>::pow(T a)
+T GF2N<T>::exp(T a, T b)
 {
   assert(check(a));
+  assert(check(b));
 
-  return gfilog[a];
+  return GF<T>::expNaive(a, b);
 }
 
 template <typename T>
-T GF2N<T>::log(T a)
+T GF2N<T>::log(T a, T b)
 {
   assert(check(a));
 
-  return gflog[a];
+  return GF<T>::logNaive(a, b);
 }

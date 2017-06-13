@@ -36,15 +36,15 @@ protected:
   virtual T sub(T a, T b) = 0;
   virtual T mul(T a, T b) = 0;
   virtual T div(T a, T b) = 0;
-  virtual T pow(T a) = 0;
-  virtual T log(T a) = 0;
   virtual T inv(T a) = 0;
+  virtual T exp(T a, T b) = 0;
+  virtual T log(T a, T b) = 0;
   T _card();
-  T exp(T base, T exponent);
+  T expNaive(T base, T exponent);
   T _sqrt(T n);
   T _exp(T base, T exponent);
   T _mod_exp(T base, T exponent, T modulus);
-  T _trial_mult_log(T base, T exponent, T modulus);
+  T logNaive(T base, T exponent);
   T _log2(T exponent);
   SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
   T _chinese_remainder(int n_mod, T a[], T n[]);
@@ -71,7 +71,7 @@ T GF<T>::_card()
 }
 
 /** 
- * Naive exponentiation
+ * Naive exponentiation in the field
  *
  * @param gf 
  * @param base 
@@ -80,7 +80,7 @@ T GF<T>::_card()
  * @return 
  */
 template <typename T>
-T GF<T>::exp(T base, T exponent)
+T GF<T>::expNaive(T base, T exponent)
 {
   T result;
   T i;
@@ -92,9 +92,8 @@ T GF<T>::exp(T base, T exponent)
     return base;
 
   result = base;
-  for (i = 1; i < exponent;i++) {
+  for (i = 1; i < exponent;i++)
     result = this->mul(result, base);
-  }
 
   return result;
 }
@@ -194,18 +193,18 @@ T GF<T>::_mod_exp(T base, T exponent, T modulus)
  * @param gf 
  * @param base 
  * @param exponent 
- * @param modulus 
  * 
  * @throw NTL_EX_NOT_FOUND if result is not found
+ *
  * return
  */
 template <typename T>
-T GF<T>::_trial_mult_log(T base, T exponent, T modulus)
+T GF<T>::logNaive(T base, T exponent)
 {
   T result;
 
   for (result = 1;result < card();result++) {
-    if (_mod_exp(base, result, modulus) == exponent)
+    if (exp(base, result) == exponent)
       return result;
   }
 
