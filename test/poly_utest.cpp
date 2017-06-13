@@ -127,12 +127,24 @@ void poly_utest6()
   Poly<uint32_t> p1(&gfp);
   p1.set(4, 4);
   p1.set(1, 1);
-  p1.set(0, 19);
+  p1.set(0, 8);
   Poly<uint32_t> p2(&gfp);
   p1.derivative(&p2);
   assert(p2.degree() == 3);
   assert(p2.get(3) == 5);
   assert(p2.get(0) == 1);
+}
+
+void poly_utest7()
+{
+  std::cout << "poly_utest7\n";
+  GFP<uint32_t> gfp(11);
+  Poly<uint32_t> p1(&gfp);
+  p1.set(4, 4);
+  p1.set(1, 1);
+  p1.set(0, 8);
+  uint32_t result = p1.eval(3);
+  assert(result == 5);
 }
 
 void poly_utest()
@@ -145,4 +157,5 @@ void poly_utest()
   poly_utest4();
   poly_utest5();
   poly_utest6();
+  poly_utest7();
 }

@@ -61,12 +61,16 @@ public:
     //check for 65536 value in output
     for (int i = 0;i < N;i++) {
       if (output->get(i) == 65536) {
-        //std::cerr << "offset=" << offset << " 65536\n";
         char buf[256];
-        snprintf(buf, sizeof (buf), "%lu", offset);
+        snprintf(buf, sizeof (buf), "%lu:%d", offset, i);
         assert(nullptr != props[i]);
-        props[i]->insert(std::make_pair(buf, "unused"));
+        props[i]->insert(std::make_pair(buf, "65536"));
       }
+    }
+    if (offset == 0) {
+      std::cout << "encode\n";
+      words->dump();
+      output->dump();
     }
   }
   
@@ -86,21 +90,80 @@ public:
     //nothing to do
   }
 
+  /** 
+   * Perform a Lagrange interpolation to find the coefficients of the polynomial
+   *
+   * @note If all fragments are available ifft(words) is enough
+   * 
+   * @param output must be exactly n_data
+   * @param props special values dictionary
+   * @param offset used to locate special values
+   * @param fragments_ids unused
+   * @param words v=(x_0, x_1, ..., x_k-1) k must be exactly n_data
+   */
   void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *fragments_ids, Vec<T> *words)
   {
+    //Lagrange interpolation
+    Poly<T> A(this->gf), _A(this->gf);
+
+    //compute A(x) = prod_j(x-x_j)
+    A.set(0, 1);
     for (int i = 0;i < N;i++) {
       char buf[256];
-      snprintf(buf, sizeof (buf), "%lu", offset);
+      snprintf(buf, sizeof (buf), "%lu:%d", offset, i);
       if (nullptr != props[i]) {
         if (props[i]->is_key(buf))
           words->set(i, 65536);
       }
+      Poly<T> _t(this->gf), _t2(this->gf);
+      _t.set(1, 1);
+      T word = words->get(i);
+      _t.set(0, word == 0 ? 0 : this->gf->p - words->get(i));
+      A.mul(&_t2, &A, &_t);
+      A.copy(&_t2);
     }
-    //XXX ideal case
-    //VVec<T> vwords(words, N);
-    //fft->ifft(output, &vwords);
-    
+    //A.dump();
+
+    //compute A'(x) since A_i(x_i) = A'_i(x_i) 
+    A.derivative(&_A);
+
+    //evaluate n_i=v_i/A'_i(x_i)
+    Vec<T> n(this->gf, N);
+    for (int i = 0;i < N;i++) {
+      n.set(i, 
+            this->gf->div(words->get(i),
+                          _A.eval(words->get(i))));
+    }
+    //n.dump();
+
+    //We have to find the numerator of the following expression:
+    //P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n    
+    //using Taylor series we rewrite the expression into
+    //P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
+
+    Poly<T> S2(this->gf), _S2(this->gf);
+    for (int i = 0;i <= this->n_data-1;i++) {
+      Poly<T> S1(this->gf), _S1(this->gf);
+      for (int j = 0;j <= N-1;j++) {
+        Poly<T> _s(this->gf);
+        T tmp1 = this->gf->inv(this->gf->exp(words->get(i), j+1));
+        T tmp2 = this->gf->mul(n.get(i), tmp1);
+        _s.set(j, tmp2);
+        S1.add(&_S1, &S1, &_s);
+        S1.copy(&_S1);
+      }
+      S2.add(&_S2, &S2, &S1);
+      S2.copy(&_S2);
+    }
+    S2.neg(&_S2, &S2);
+    if (offset == 0) {
+      std::cout << "decode:\n";
+      words->dump();
+      _S2.dump();
+    }
+
     //output is n_data length
-    
+    for (int i = 0;i < this->n_data;i++)
+      output->set(i, _S2.get(i));
   }
 };

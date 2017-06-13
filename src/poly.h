@@ -7,21 +7,11 @@ class Poly
 {
 public:
 
-  struct Term: std::map <T, T>
-  {
-    bool is_key(T &s) const
-    {
-      return count(s) != 0;
-    }
-  };
-  
+  struct Term: std::map <T, T> {}; 
+ 
   GF<T> *gf;
-
   Term terms;
   
-private:
-
- public:
   Poly(GF<T> *gf);
   void clear();
   void copy(Poly<T> *src);
@@ -30,11 +20,13 @@ private:
   bool is_zero();
   T get(T exponent);
   void set(T exponent, T coef);
+  void neg(Poly<T> *result, Poly<T> *a);
   void add(Poly<T> *result, Poly<T> *a, Poly<T> *b);
   void sub(Poly<T> *result, Poly<T> *a, Poly<T> *b);
   void mul(Poly<T> *result, Poly<T> *a, Poly<T> *b);
   void div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d);
   void derivative(Poly<T> *result);
+  T eval(T x);
   void dump();
 };
 
@@ -88,11 +80,22 @@ T Poly<T>::get(T exponent)
 template <typename T>
 void Poly<T>::set(T exponent, T coef)
 {
+  assert(gf->check(coef));
+
   typename Term::const_iterator it = terms.find(exponent);
 
   if (it == terms.end() && coef == 0)
     return ;
   terms[exponent] = coef;
+}
+
+template <typename T>
+void Poly<T>::neg(Poly<T> *result, Poly<T> *a)
+{
+  result->clear();
+
+  Poly<T> b(gf);
+  sub(result, &b, a);
 }
 
 template <typename T>
@@ -166,6 +169,18 @@ void Poly<T>::derivative(Poly<T> *result)
 
   for (int i = degree(); i > 0; i--)
     result->set(i - 1, gf->mul(get(i), i));
+}
+
+template <typename T>
+T Poly<T>::eval(T x)
+{
+  T result = 0;
+
+  for (int i = degree(); i >= 0; i--)
+    result = gf->add(result, 
+                     gf->mul(get(i), gf->exp(x, i)));
+  
+  return result;
 }
 
 template <typename T>

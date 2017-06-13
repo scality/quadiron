@@ -16,9 +16,11 @@ public:
   T sub(T a, T b);
   T mul(T a, T b);
   T div(T a, T b);
-  T pow(T a);
-  T log(T a);
   T inv(T a);
+  T invExp(T a);
+  T invBezout(T a);
+  T exp(T a, T b);
+  T log(T a, T b);
 };
 
 template <typename T>
@@ -107,14 +109,33 @@ T GFP<T>::div(T a, T b)
   return mul(a, inv_b);
 }
 
+/** 
+ * Inverse by exponentiation
+ * 
+ * @param a 
+ * 
+ * @return 
+ */
 template <typename T>
-T GFP<T>::inv(T a)
+T GFP<T>::invExp(T a)
 {
   assert(check(a));
 
-#if 0
   return GF<T>::_mod_exp(a, this->p - 2, this->p);
-#else
+}
+
+/** 
+ * Inverse by Bezout
+ * 
+ * @param a 
+ * 
+ * @return 
+ */
+template <typename T>
+T GFP<T>::invBezout(T a)
+{
+  assert(check(a));
+
   SignedDoubleT<T> x = a;
   SignedDoubleT<T> n = this->p;
   SignedDoubleT<T> bezout[2];
@@ -123,21 +144,27 @@ T GFP<T>::inv(T a)
   if (bezout[0] < 0)
     bezout[0] = this->p + bezout[0];
   return bezout[0];
-#endif
 }
 
 template <typename T>
-T GFP<T>::pow(T a)
+T GFP<T>::inv(T a)
 {
-  assert(check(a));
-
-  return GF<T>::_mod_exp(this->p, a, this->p);
+  return invBezout(a);
 }
 
 template <typename T>
-T GFP<T>::log(T a)
+T GFP<T>::exp(T a, T b)
+{
+  assert(check(a));
+  assert(check(b));
+
+  return GF<T>::_mod_exp(a, b, this->p);
+}
+
+template <typename T>
+T GFP<T>::log(T a, T b)
 {
   assert(check(a));
 
-  return GF<T>::_trial_mult_log(this->p, a, this->p);
+  return GF<T>::logNaive(a, b);
 }

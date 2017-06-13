@@ -5,6 +5,9 @@
 #valgrind=valgrind
 #valgrind="gdb --args"
 
+bs=100K
+#bs=1M
+
 checkfail()
 {
     if [ $? -ne 0 ]
@@ -29,7 +32,7 @@ do_test()
     
     for i in `seq 0 $(expr ${n_data} - 1)`
     do
-        dd if=/dev/urandom of=foo.d${i} bs=1M count=1 > /dev/null 2>&1
+        dd if=/dev/urandom of=foo.d${i} bs=${bs} count=1 > /dev/null 2>&1
         md5sum foo.d${i} > foo.d${i}.md5sum.1
     done
 

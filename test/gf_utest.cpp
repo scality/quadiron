@@ -54,20 +54,25 @@ public:
   {
     int i;
     
-    for (i = 0; i < 100;i++) {
-      T x, y;
+    for (i = 0; i < 1000;i++) {
+      T x, y, z, t;
       
       //std::cout << "i=" << i << "\n";
+      //std::cout << gf->card() << "\n";
       x = gf->weak_rand();
+      y = gf->weak_rand();
       //std::cout << "x=" << x << "\n";
+      //std::cout << "y=" << y << "\n";
       try {
-        y = gf->log(x);
+        z = gf->log(x, y);
+        //std::cout << "z=" << z << "\n";
       } catch (...) {
         //std::cout << "not found\n";
         continue ;
       }
-      //std::cout << "log(x)=" << y << "\n";
-      assert(gf->pow(y) == x);
+      t = gf->exp(x, z);
+      //std::cout << "t=" << t << "\n";
+      assert(t == y);
     }
   }
   
@@ -87,12 +92,12 @@ public:
     test_reciprocal(&gf5);
   }
 
-  void test_log_gf5()
+  void test_log_gf()
   {
-    std::cout << "test_log_gf5\n";
+    std::cout << "test_log_gf\n";
 
-    GFP<T> gf5(5);
-    test_log(&gf5);
+    GFP<T> gf(32);
+    test_log(&gf);
   }
 
   void test_negation_gf256()
@@ -141,7 +146,7 @@ public:
     test_basic_ops();
     test_negation_gf5();
     test_reciprocal_gf5();
-    test_log_gf5();
+    test_log_gf();
     test_negation_gf256();
     test_reciprocal_gf256();
     test_log_gf256();
@@ -157,7 +162,7 @@ public:
     test_basic_ops();
     test_negation_gf5();
     test_reciprocal_gf5();
-    test_log_gf5();
+    test_log_gf();
     test_misc_gf29();
   }
 
