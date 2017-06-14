@@ -179,7 +179,7 @@ T GF2N<T>::exp(T a, T b)
   assert(check(a));
   assert(check(b));
 
-  return GF<T>::expNaive(a, b);
+  return GF<T>::exp_naive(a, b);
 }
 
 template <typename T>
@@ -187,5 +187,5 @@ T GF2N<T>::log(T a, T b)
 {
   assert(check(a));
 
-  return GF<T>::logNaive(a, b);
+  return GF<T>::log_naive(a, b);
 }

@@ -160,6 +160,7 @@ public:
       std::cout << "decode:\n";
       words->dump();
       _S2.dump();
+      exit(0);
     }
 
     //output is n_data length
