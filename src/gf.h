@@ -40,11 +40,11 @@ protected:
   virtual T exp(T a, T b) = 0;
   virtual T log(T a, T b) = 0;
   T _card();
-  T expNaive(T base, T exponent);
+  T exp_naive(T base, T exponent);
   T _sqrt(T n);
   T _exp(T base, T exponent);
-  T _mod_exp(T base, T exponent, T modulus);
-  T logNaive(T base, T exponent);
+  T _exp_mod(T base, T exponent, T modulus);
+  T log_naive(T base, T exponent);
   T _log2(T exponent);
   SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
   T _chinese_remainder(int n_mod, T a[], T n[]);
@@ -80,7 +80,7 @@ T GF<T>::_card()
  * @return 
  */
 template <typename T>
-T GF<T>::expNaive(T base, T exponent)
+T GF<T>::exp_naive(T base, T exponent)
 {
   T result;
   T i;
@@ -154,26 +154,19 @@ T GF<T>::_exp(T base, T exponent)
 
 /** 
  * Modular exponentation taken from Applied Cryptography by Bruce Schneier.
- * 
+ *
  * @param gf 
  * @param base 
  * @param exponent 
  * @param modulus 
  * 
  * @return
- * throw NTL_EX_OVERFLOW on overflow
  */
 template <typename T>
-T GF<T>::_mod_exp(T base, T exponent, T modulus)
+T GF<T>::_exp_mod(T base, T exponent, T modulus)
 {
   if (1 == modulus)
     return 0;
-
-#ifndef NDEBUG
-  T tmp = (modulus - 1) * (modulus - 1);
-  if ((tmp / (modulus - 1)) != (modulus - 1))
-    throw NTL_EX_OVERFLOW;
-#endif
 
   T result = 1;
   base = base % modulus;
@@ -199,7 +192,7 @@ T GF<T>::_mod_exp(T base, T exponent, T modulus)
  * return
  */
 template <typename T>
-T GF<T>::logNaive(T base, T exponent)
+T GF<T>::log_naive(T base, T exponent)
 {
   T result;
 
@@ -435,7 +428,7 @@ template <typename T>
 bool GF<T>::_solovay_strassen1(T a, T n)
 {
   T _n = (n - 1) / 2;
-  T _j = _mod_exp(a, _n, n);
+  T _j = _exp_mod(a, _n, n);
   int j = _jacobi(a, n);
   if (j < 0)
     _j = _j - n;

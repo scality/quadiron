@@ -17,8 +17,8 @@ public:
   T mul(T a, T b);
   T div(T a, T b);
   T inv(T a);
-  T invExp(T a);
-  T invBezout(T a);
+  T inv_exp(T a);
+  T inv_bezout(T a);
   T exp(T a, T b);
   T log(T a, T b);
 };
@@ -117,11 +117,11 @@ T GFP<T>::div(T a, T b)
  * @return 
  */
 template <typename T>
-T GFP<T>::invExp(T a)
+T GFP<T>::inv_exp(T a)
 {
   assert(check(a));
 
-  return GF<T>::_mod_exp(a, this->p - 2, this->p);
+  return exp(a, this->p - 2);
 }
 
 /** 
@@ -132,7 +132,7 @@ T GFP<T>::invExp(T a)
  * @return 
  */
 template <typename T>
-T GFP<T>::invBezout(T a)
+T GFP<T>::inv_bezout(T a)
 {
   assert(check(a));
 
@@ -149,7 +149,7 @@ T GFP<T>::invBezout(T a)
 template <typename T>
 T GFP<T>::inv(T a)
 {
-  return invBezout(a);
+  return inv_bezout(a);
 }
 
 template <typename T>
@@ -158,7 +158,7 @@ T GFP<T>::exp(T a, T b)
   assert(check(a));
   assert(check(b));
 
-  return GF<T>::_mod_exp(a, b, this->p);
+  return GF<T>::exp_naive(a, b);
 }
 
 template <typename T>
@@ -166,5 +166,5 @@ T GFP<T>::log(T a, T b)
 {
   assert(check(a));
 
-  return GF<T>::logNaive(a, b);
+  return GF<T>::log_naive(a, b);
 }
