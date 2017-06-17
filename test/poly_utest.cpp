@@ -33,7 +33,7 @@ void poly_utest2()
   p2.set(3, 4);
   //p2.dump();
   Poly<uint32_t> p3(&gfp);
-  p1.add(&p3, &p1, &p2);
+  p1._add(&p3, &p1, &p2);
   //p3.dump();
   assert(p3.degree() == 6);
   assert(p3.get(6) == 6);
@@ -57,7 +57,7 @@ void poly_utest3()
   p2.set(3, 4);
   //p2.dump();
   Poly<uint32_t> p3(&gfp);
-  p1.sub(&p3, &p1, &p2);
+  p1._sub(&p3, &p1, &p2);
   assert(p3.degree() == 6);
   assert(p3.get(6) == 5);
   assert(p3.get(5) == 1);
@@ -80,7 +80,7 @@ void poly_utest4()
   p2.set(3, 4);
   //p2.dump();
   Poly<uint32_t> p3(&gfp);
-  p1.mul(&p3, &p1, &p2);
+  p1._mul(&p3, &p1, &p2);
   assert(p3.degree() == 11);
   assert(p3.get(11) == 6);
   assert(p3.get(9) == 7);
@@ -106,7 +106,7 @@ void poly_utest5()
   //p2.dump();
   Poly<uint32_t> p3(&gfp);
   Poly<uint32_t> p4(&gfp);
-  p1.div(&p3, &p4, &p1, &p2);
+  p1._div(&p3, &p4, &p1, &p2);
   //p3.dump();
   //p4.dump();
   assert(p3.degree() == 2);
@@ -129,7 +129,7 @@ void poly_utest6()
   p1.set(1, 1);
   p1.set(0, 8);
   Poly<uint32_t> p2(&gfp);
-  p1.derivative(&p2);
+  p1._derivative(&p2, &p1);
   assert(p2.degree() == 3);
   assert(p2.get(3) == 5);
   assert(p2.get(0) == 1);

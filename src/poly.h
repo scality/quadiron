@@ -20,12 +20,19 @@ public:
   bool is_zero();
   T get(T exponent);
   void set(T exponent, T coef);
-  void neg(Poly<T> *result, Poly<T> *a);
-  void add(Poly<T> *result, Poly<T> *a, Poly<T> *b);
-  void sub(Poly<T> *result, Poly<T> *a, Poly<T> *b);
-  void mul(Poly<T> *result, Poly<T> *a, Poly<T> *b);
-  void div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d);
-  void derivative(Poly<T> *result);
+  void _neg(Poly<T> *result, Poly<T> *a);
+  void _add(Poly<T> *result, Poly<T> *a, Poly<T> *b);
+  void _sub(Poly<T> *result, Poly<T> *a, Poly<T> *b);
+  void _mul(Poly<T> *result, Poly<T> *a, Poly<T> *b);
+  void _div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d);
+  void _derivative(Poly<T> *result, Poly<T> *a);
+  void neg();
+  void add(Poly<T> *b);
+  void sub(Poly<T> *b);
+  void mul(Poly<T> *b);
+  void div(Poly<T> *d);
+  void mod(Poly<T> *d);
+  void derivative();
   T eval(T x);
   void dump();
 };
@@ -90,7 +97,7 @@ void Poly<T>::set(T exponent, T coef)
 }
 
 template <typename T>
-void Poly<T>::neg(Poly<T> *result, Poly<T> *a)
+void Poly<T>::_neg(Poly<T> *result, Poly<T> *a)
 {
   result->clear();
 
@@ -99,7 +106,7 @@ void Poly<T>::neg(Poly<T> *result, Poly<T> *a)
 }
 
 template <typename T>
-void Poly<T>::add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
+void Poly<T>::_add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 {
   result->clear();
 
@@ -111,7 +118,7 @@ void Poly<T>::add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 }
 
 template <typename T>
-void Poly<T>::sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
+void Poly<T>::_sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 {
   result->clear();
 
@@ -123,7 +130,7 @@ void Poly<T>::sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 }
 
 template <typename T>
-void Poly<T>::mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
+void Poly<T>::_mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 {
   result->clear();
 
@@ -143,32 +150,94 @@ void Poly<T>::mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
  * @param d divisor
  */
 template <typename T>
-void Poly<T>::div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
+void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
 {
+  Poly<T> _q(gf), _r(gf);
+
   if (d->is_zero())
     throw NTL_EX_DIV_BY_ZERO;
 
-  q->clear();
-  r->copy(n);
-  while (!r->is_zero() && (r->degree() >= d->degree())) {
-    Poly<T> t(gf), _q(gf), _r(gf), _m(gf);
-    t.set(r->degree() - d->degree(), 
-          gf->div(r->lead(), d->lead()));
-    add(&_q, q, &t);
-    q->copy(&_q);
-    mul(&_m, &t, d);
-    sub(&_r, r, &_m);
-    r->copy(&_r);
+  _q.clear();
+  _r.copy(n);
+  while (!_r.is_zero() && (_r.degree() >= d->degree())) {
+    Poly<T> _t(gf);
+    _t.set(_r.degree() - d->degree(), 
+           gf->div(_r.lead(), d->lead()));
+    _q.add(&_t);
+    _t.mul(d);
+    _r.sub(&_t);
   }
+  
+  if (q != nullptr)
+    q->copy(&_q);
+
+  if (r != nullptr)
+    r->copy(&_r);
 }
 
 template <typename T>
-void Poly<T>::derivative(Poly<T> *result)
+void Poly<T>::_derivative(Poly<T> *result, Poly<T> *a)
 {
   result->clear();
 
-  for (int i = degree(); i > 0; i--)
-    result->set(i - 1, gf->mul(get(i), i));
+  for (int i = a->degree(); i > 0; i--)
+    result->set(i - 1, gf->mul(a->get(i), i));
+}
+
+template <typename T>
+void Poly<T>::neg()
+{
+  Poly<T> a(gf), b(gf);
+  b.copy(this);
+  _sub(this, &a, &b);
+}
+
+template <typename T>
+void Poly<T>::add(Poly<T> *b)
+{
+  Poly<T> a(gf);
+  a.copy(this);
+  _add(this, &a, b);
+}
+
+template <typename T>
+void Poly<T>::sub(Poly<T> *b)
+{
+  Poly<T> a(gf);
+  a.copy(this);
+  _sub(this, &a, b);
+}
+
+template <typename T>
+void Poly<T>::mul(Poly<T> *b)
+{
+  Poly<T> a(gf);
+  a.copy(this);
+  _mul(this, &a, b);
+}
+
+template <typename T>
+void Poly<T>::div(Poly<T> *b)
+{
+  Poly<T> a(gf);
+  a.copy(this);
+  _div(this, NULL, &a, b);
+}
+
+template <typename T>
+void Poly<T>::mod(Poly<T> *b)
+{
+  Poly<T> a(gf);
+  a.copy(this);
+  _div(NULL, this, &a, b);
+}
+
+template <typename T>
+void Poly<T>::derivative()
+{
+  Poly<T> a(gf);
+  a.copy(this);
+  _derivative(this, &a);
 }
 
 template <typename T>
