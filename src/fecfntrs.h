@@ -115,17 +115,18 @@ public:
         if (props[i]->is_key(buf))
           words->set(i, 65536);
       }
-      Poly<T> _t(this->gf), _t2(this->gf);
+      Poly<T> _t(this->gf);
       _t.set(1, 1);
       T word = words->get(i);
       _t.set(0, word == 0 ? 0 : this->gf->p - words->get(i));
-      A.mul(&_t2, &A, &_t);
-      A.copy(&_t2);
+      A.mul(&_t);
     }
-    //A.dump();
+    A.dump();
 
     //compute A'(x) since A_i(x_i) = A'_i(x_i) 
-    A.derivative(&_A);
+    _A.copy(&A);
+    _A.derivative();
+    _A.dump();
 
     //evaluate n_i=v_i/A'_i(x_i)
     Vec<T> n(this->gf, N);
@@ -134,37 +135,37 @@ public:
             this->gf->div(words->get(i),
                           _A.eval(words->get(i))));
     }
-    //n.dump();
+    n.dump();
 
     //We have to find the numerator of the following expression:
     //P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n    
     //using Taylor series we rewrite the expression into
     //P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
 
-    Poly<T> S2(this->gf), _S2(this->gf);
+    Poly<T> S2(this->gf);
     for (int i = 0;i <= this->n_data-1;i++) {
-      Poly<T> S1(this->gf), _S1(this->gf);
+      Poly<T> S1(this->gf);
       for (int j = 0;j <= N-1;j++) {
-        Poly<T> _s(this->gf);
+        Poly<T> _t(this->gf);
         T tmp1 = this->gf->inv(this->gf->exp(words->get(i), j+1));
         T tmp2 = this->gf->mul(n.get(i), tmp1);
-        _s.set(j, tmp2);
-        S1.add(&_S1, &S1, &_s);
-        S1.copy(&_S1);
+        _t.set(j, tmp2);
+        S1.add(&_t);
       }
-      S2.add(&_S2, &S2, &S1);
-      S2.copy(&_S2);
+      S2.add(&S1);
     }
-    S2.neg(&_S2, &S2);
+    S2.neg();
+    //_S2.dump();
+    //S2.mul(&S2, &A);
     if (offset == 0) {
       std::cout << "decode:\n";
       words->dump();
-      _S2.dump();
+      S2.dump();
       exit(0);
     }
 
     //output is n_data length
     for (int i = 0;i < this->n_data;i++)
-      output->set(i, _S2.get(i));
+      output->set(i, S2.get(i));
   }
 };
