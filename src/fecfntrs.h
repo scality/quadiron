@@ -171,7 +171,11 @@ public:
       std::cout << "S2="; S2.dump();
     }
     S2.neg();
-    //S2.mul(&A);
+    S2.mul(&A);
+    Poly<T> X(this->gf);
+    X.set(N, 1);
+    std::cout << "X="; X.dump();
+    S2.mod(&X);
     if (offset == 0) {
       std::cout << "S2="; S2.dump();
       exit(0);
