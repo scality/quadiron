@@ -72,8 +72,8 @@ void Vec<T>::mul_scalar(T scalar)
 template <typename T>
 void Vec<T>::dump(void)
 {
-  std::cout << "--\n";
+  std::cout << "( ";
   for (int i = 0;i < n;i++)
-    std::cout << " " << get(i);
-  std::cout << "\n";
+    std::cout << get(i) << " ";
+  std::cout << ")\n";
 }

@@ -56,6 +56,11 @@ public:
 
   void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *words)
   {
+    if (offset == 0) {
+      std::cout << "encode:\n";
+      std::cout << "words="; words->dump();
+    }
+
     VVec<T> vwords(words, N);
     fft->fft(output, &vwords);
     //check for 65536 value in output
@@ -68,9 +73,7 @@ public:
       }
     }
     if (offset == 0) {
-      std::cout << "encode\n";
-      words->dump();
-      output->dump();
+      std::cout << "output="; output->dump();
     }
   }
   
@@ -103,6 +106,13 @@ public:
    */
   void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *fragments_ids, Vec<T> *words)
   {
+    int k = this->n_data; //number of fragments received
+
+    if (offset == 0) {
+      std::cout << "decode:\n";
+      std::cout << "input="; words->dump();
+    }
+
     //Lagrange interpolation
     Poly<T> A(this->gf), _A(this->gf);
 
@@ -119,14 +129,15 @@ public:
       _t.set(1, 1);
       T word = words->get(i);
       _t.set(0, word == 0 ? 0 : this->gf->p - words->get(i));
+      _t.dump();
       A.mul(&_t);
     }
-    A.dump();
+    std::cout << "A(x)="; A.dump();
 
     //compute A'(x) since A_i(x_i) = A'_i(x_i) 
     _A.copy(&A);
     _A.derivative();
-    _A.dump();
+    std::cout << "A'(x)="; _A.dump();
 
     //evaluate n_i=v_i/A'_i(x_i)
     Vec<T> n(this->gf, N);
@@ -135,7 +146,7 @@ public:
             this->gf->div(words->get(i),
                           _A.eval(words->get(i))));
     }
-    n.dump();
+    std::cout << "n="; n.dump();
 
     //We have to find the numerator of the following expression:
     //P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n    
@@ -143,24 +154,26 @@ public:
     //P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
 
     Poly<T> S2(this->gf);
-    for (int i = 0;i <= this->n_data-1;i++) {
+    for (int i = 0;i <= k-1;i++) {
       Poly<T> S1(this->gf);
       for (int j = 0;j <= N-1;j++) {
         Poly<T> _t(this->gf);
-        T tmp1 = this->gf->inv(this->gf->exp(words->get(i), j+1));
-        T tmp2 = this->gf->mul(n.get(i), tmp1);
-        _t.set(j, tmp2);
+        T tmp1 = this->gf->exp(words->get(i), j+1);
+        T tmp2 = this->gf->inv(tmp1);
+        T tmp3 = this->gf->mul(n.get(i), tmp2);
+        _t.set(j, tmp3);
+        //std::cout << "_t="; _t.dump();
         S1.add(&_t);
+        //std::cout << "S1="; S1.dump();
       }
+      std::cout << "S1="; S1.dump();
       S2.add(&S1);
+      std::cout << "S2="; S2.dump();
     }
     S2.neg();
-    //_S2.dump();
-    //S2.mul(&S2, &A);
+    //S2.mul(&A);
     if (offset == 0) {
-      std::cout << "decode:\n";
-      words->dump();
-      S2.dump();
+      std::cout << "S2="; S2.dump();
       exit(0);
     }
 
