@@ -56,11 +56,6 @@ public:
 
   void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *words)
   {
-    if (offset == 0) {
-      std::cout << "encode:\n";
-      std::cout << "words="; words->dump();
-    }
-
     VVec<T> vwords(words, N);
     fft->fft(output, &vwords);
     //check for 65536 value in output
@@ -71,9 +66,6 @@ public:
         assert(nullptr != props[i]);
         props[i]->insert(std::make_pair(buf, "65536"));
       }
-    }
-    if (offset == 0) {
-      std::cout << "output="; output->dump();
     }
   }
   
@@ -113,13 +105,6 @@ public:
       vx.set(i, this->gf->exp(r, fragments_ids->get(i)));
     }
 
-
-    if (offset == 0) {
-      std::cout << "decode:\n";
-      std::cout << "input="; words->dump();
-      std::cout << "vx"; vx.dump();
-    }
-
     //Lagrange interpolation
     Poly<T> A(this->gf), _A(this->gf);
 
@@ -130,7 +115,7 @@ public:
       snprintf(buf, sizeof (buf), "%lu:%d", offset, i);
       if (nullptr != props[i]) {
         if (props[i]->is_key(buf))
-          vx.set(i, 65536);
+          words->set(i, 65536);
       }
       Poly<T> _t(this->gf);
       _t.set(1, 1);
@@ -183,10 +168,6 @@ public:
     X.set(N, 1);
 //    std::cout << "X="; X.dump();
     S2.mod(&X);
-    if (offset == 0) {
-      std::cout << "S2="; S2.dump();
-//      exit(0);
-    }
 
     //output is n_data length
     for (int i = 0;i < this->n_data;i++)
