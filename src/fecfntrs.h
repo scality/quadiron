@@ -56,11 +56,6 @@ public:
 
   void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *words)
   {
-    if (offset == 0) {
-      std::cout << "encode:\n";
-      std::cout << "words="; words->dump();
-    }
-
     VVec<T> vwords(words, N);
     fft->fft(output, &vwords);
     //check for 65536 value in output
@@ -71,9 +66,6 @@ public:
         assert(nullptr != props[i]);
         props[i]->insert(std::make_pair(buf, "65536"));
       }
-    }
-    if (offset == 0) {
-      std::cout << "output="; output->dump();
     }
   }
   
@@ -102,15 +94,15 @@ public:
    * @param props special values dictionary
    * @param offset used to locate special values
    * @param fragments_ids unused
-   * @param words v=(x_0, x_1, ..., x_k-1) k must be exactly n_data
+   * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
    */
   void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *fragments_ids, Vec<T> *words)
   {
     int k = this->n_data; //number of fragments received
-
-    if (offset == 0) {
-      std::cout << "decode:\n";
-      std::cout << "input="; words->dump();
+    // vector x=(x_0, x_1, ..., x_k-1)
+    Vec<T> vx(this->gf, N);
+    for (int i = 0; i < k; i++) {
+      vx.set(i, this->gf->exp(r, fragments_ids->get(i)));
     }
 
     //Lagrange interpolation
@@ -118,7 +110,7 @@ public:
 
     //compute A(x) = prod_j(x-x_j)
     A.set(0, 1);
-    for (int i = 0;i < N;i++) {
+    for (int i = 0;i < k;i++) {
       char buf[256];
       snprintf(buf, sizeof (buf), "%lu:%d", offset, i);
       if (nullptr != props[i]) {
@@ -127,26 +119,25 @@ public:
       }
       Poly<T> _t(this->gf);
       _t.set(1, 1);
-      T word = words->get(i);
-      _t.set(0, word == 0 ? 0 : this->gf->p - words->get(i));
-      _t.dump();
+      _t.set(0, this->gf->sub(0, vx.get(i)));
+//      _t.dump();
       A.mul(&_t);
     }
-    std::cout << "A(x)="; A.dump();
+//    std::cout << "A(x)="; A.dump();
 
     //compute A'(x) since A_i(x_i) = A'_i(x_i) 
     _A.copy(&A);
     _A.derivative();
-    std::cout << "A'(x)="; _A.dump();
+//    std::cout << "A'(x)="; _A.dump();
 
     //evaluate n_i=v_i/A'_i(x_i)
-    Vec<T> n(this->gf, N);
-    for (int i = 0;i < N;i++) {
+    Vec<T> n(this->gf, k);
+    for (int i = 0;i < k;i++) {
       n.set(i, 
             this->gf->div(words->get(i),
-                          _A.eval(words->get(i))));
+                          _A.eval(vx.get(i))));
     }
-    std::cout << "n="; n.dump();
+//    std::cout << "n="; n.dump();
 
     //We have to find the numerator of the following expression:
     //P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n    
@@ -158,7 +149,7 @@ public:
       Poly<T> S1(this->gf);
       for (int j = 0;j <= N-1;j++) {
         Poly<T> _t(this->gf);
-        T tmp1 = this->gf->exp(words->get(i), j+1);
+        T tmp1 = this->gf->exp(vx.get(i), j+1);
         T tmp2 = this->gf->inv(tmp1);
         T tmp3 = this->gf->mul(n.get(i), tmp2);
         _t.set(j, tmp3);
@@ -166,20 +157,17 @@ public:
         S1.add(&_t);
         //std::cout << "S1="; S1.dump();
       }
-      std::cout << "S1="; S1.dump();
+//      std::cout << "S1="; S1.dump();
       S2.add(&S1);
-      std::cout << "S2="; S2.dump();
+//      std::cout << "S2="; S2.dump();
     }
     S2.neg();
     S2.mul(&A);
+//    std::cout << "xA => S2="; S2.dump();
     Poly<T> X(this->gf);
     X.set(N, 1);
-    std::cout << "X="; X.dump();
+//    std::cout << "X="; X.dump();
     S2.mod(&X);
-    if (offset == 0) {
-      std::cout << "S2="; S2.dump();
-      exit(0);
-    }
 
     //output is n_data length
     for (int i = 0;i < this->n_data;i++)

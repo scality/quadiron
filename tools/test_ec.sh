@@ -5,7 +5,7 @@
 #valgrind=valgrind
 #valgrind="gdb --args"
 
-bs=100K
+bs=50K
 #bs=1M
 
 checkfail()
@@ -98,7 +98,7 @@ do_test()
     done
 }
 
-#do_test ./ec 65537 3 3 "" "" $*
+do_test ./ec 65537 3 3 "" "" $*
 do_test ./ec 8 3 3 "" "" $*
 do_test ./ec 16 3 3 "" "" $*
 
