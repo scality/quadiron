@@ -54,6 +54,14 @@ public:
     return this->N;
   }
 
+  /** 
+   * Encode vector
+   * 
+   * @param output must be N
+   * @param props must be exactly N
+   * @param offset used to locate special values
+   * @param words must be n_data
+   */
   void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *words)
   {
     VVec<T> vwords(words, N);
@@ -65,6 +73,7 @@ public:
         snprintf(buf, sizeof (buf), "%lu:%d", offset, i);
         assert(nullptr != props[i]);
         props[i]->insert(std::make_pair(buf, "65536"));
+        output->set(i, 0);
       }
     }
   }
@@ -91,7 +100,7 @@ public:
    * @note If all fragments are available ifft(words) is enough
    * 
    * @param output must be exactly n_data
-   * @param props special values dictionary
+   * @param props special values dictionary must be exactly n_data
    * @param offset used to locate special values
    * @param fragments_ids unused
    * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
@@ -105,18 +114,22 @@ public:
       vx.set(i, this->gf->exp(r, fragments_ids->get(i)));
     }
 
+    for (int i = 0;i < k;i++) {
+      int j = fragments_ids->get(i);
+      char buf[256];
+      snprintf(buf, sizeof (buf), "%lu:%d", offset, j);
+      if (nullptr != props[j]) {
+        if (props[j]->is_key(buf))
+          words->set(i, 65536);
+      }
+    }
+
     //Lagrange interpolation
     Poly<T> A(this->gf), _A(this->gf);
 
     //compute A(x) = prod_j(x-x_j)
     A.set(0, 1);
     for (int i = 0;i < k;i++) {
-      char buf[256];
-      snprintf(buf, sizeof (buf), "%lu:%d", offset, i);
-      if (nullptr != props[i]) {
-        if (props[i]->is_key(buf))
-          words->set(i, 65536);
-      }
       Poly<T> _t(this->gf);
       _t.set(1, 1);
       _t.set(0, this->gf->sub(0, vx.get(i)));

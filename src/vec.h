@@ -15,6 +15,9 @@ class Vec
   void set(int i, T val);
   virtual T get(int i);
   void mul_scalar(T scalar);
+  void copy(Vec<T> *v);
+  void copy(Vec<T> *v, int n);
+  bool eq(Vec<T> *v);
   void dump(void);
 };
 
@@ -67,6 +70,36 @@ void Vec<T>::mul_scalar(T scalar)
 {
   for (int i = 0; i < n;i++)
     set(i, gf->mul(get(i), scalar));
+}
+
+template <typename T>
+void Vec<T>::copy(Vec<T> *v)
+{
+  assert(v->n == this->n);
+
+  std::copy_n(v->mem, v->n, this->mem);
+}
+
+template <typename T>
+void Vec<T>::copy(Vec<T> *v, int n)
+{
+  assert(n == this->n);
+
+  std::copy_n(v->mem, n, this->mem);
+}
+
+template <typename T>
+bool Vec<T>::eq(Vec<T> *v)
+{
+  if (v->n != this->n)
+    return false;
+
+  for (int i = 0;i < v->n;i++) {
+    if (get(i) != v->get(i))
+      return false;
+  }
+
+  return true;
 }
 
 template <typename T>

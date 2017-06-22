@@ -102,30 +102,38 @@ do_test ./ec 65537 3 3 "" "" $*
 do_test ./ec 8 3 3 "" "" $*
 do_test ./ec 16 3 3 "" "" $*
 
-#do_test ./ec 65537 3 3 "0 1" "0" $*
+do_test ./ec 65537 3 3 "0 1" "0" $*
 do_test ./ec 8 3 3 "0 1" "0" $*
 do_test ./ec 16 3 3 "0 1" "0" $*
 
+do_test ./ec 65537 3 5 "0 1" "0" $*
 do_test ./ec 8 3 5 "0 1" "0" $*
 do_test ./ec 16 3 5 "0 1" "0" $*
  
+do_test ./ec 65537 3 3 "1 2" "2" $*
 do_test ./ec 8 3 3 "1 2" "2" $*
 do_test ./ec 16 3 3 "1 2" "2" $*
 
+do_test ./ec 65537 9 3 "1 2" "2" $*
 do_test ./ec 8 9 3 "1 2" "2" $*
 do_test ./ec 16 9 3 "1 2" "2" $*
 
+do_test ./ec 65537 9 3 "2 3" "2" $*
 do_test ./ec 8 9 3 "2 3" "2" $*
 do_test ./ec 16 9 3 "2 3" "2" $*
 
+do_test ./ec 65537 9 5 "2 3 4" "2 3" $*
 do_test ./ec 8 9 5 "2 3 4" "2 3" $*
 do_test ./ec 16 9 5 "2 3 4" "2 3" $*
 
+do_test ./ec 65537 9 5 "1 3 5" "1 3" $*
 do_test ./ec 8 9 5 "1 3 5" "1 3" $*
 do_test ./ec 16 9 5 "1 3 5" "1 3" $*
 
+do_test ./ec 65537 9 5 "1 3 5 7 8" "" $*
 do_test ./ec 8 9 5 "1 3 5 7 8" "" $*
 do_test ./ec 16 9 5 "1 3 5 7 8" "" $*
 
+do_test ./ec 65537 9 5 "" "0 1 2 3 4" $*
 do_test ./ec 8 9 5 "" "0 1 2 3 4" $*
 do_test ./ec 16 9 5 "" "0 1 2 3 4" $*
