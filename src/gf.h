@@ -45,7 +45,8 @@ protected:
   T _exp(T base, T exponent);
   T _exp_mod(T base, T exponent, T modulus);
   T log_naive(T base, T exponent);
-  T _log2(T exponent);
+  T _log2(T x);
+  T _exp2(int x);
   SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
   T _chinese_remainder(int n_mod, T a[], T n[]);
   bool is_quadratic_residue(T q);
@@ -206,29 +207,43 @@ T GF<T>::log_naive(T base, T exponent)
 }
 
 /** 
- * T based log2
+ * Compute log2(x)
  * 
  * @param exponent 
  * 
  * @return 
  */
 template <typename T>
-T GF<T>::_log2(T exponent)
+T GF<T>::_log2(T x)
 {
   T result = 0;
 
-  if (exponent == 0) 
+  if (x == 0) 
     throw NTL_EX_INVAL;
 
-  if (exponent == 1) 
+  if (x == 1) 
     return 0;
 
-  while (exponent > 1) {
-    exponent >>= 1;
+  while (x > 1) {
+    x >>= 1;
     result++;
   }
 
   return result;
+}
+
+/** 
+ * Compute 2^x
+ * 
+ * @param x 
+ * 
+ * @return 
+ */
+template <typename T>
+T GF<T>::_exp2(int x)
+{
+  T one = 1;
+  return one << x;
 }
 
 /** 

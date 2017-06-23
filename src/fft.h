@@ -16,10 +16,15 @@ private:
   T inv_w;
   Vec<T> *W;
   Vec<T> *inv_W;
+  Mat<T> *tmp2;
+  Mat<T> *tmp3;
+  Mat<T> *tmp4;
+  Vec<T> *tmp5;
   void compute_W(Vec<T> *_W, T _w);
   int _get_p(int i, int j);
   int _get_p0(int i, int j, int s);
   int _get_p1(int i, int j, int s);
+  void _pre_compute_consts();
   void _fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W);
  public:
   FFT(GF<T> *gf, int n, T w);
@@ -33,7 +38,7 @@ FFT<T>::FFT(GF<T> *gf, int n, T w)
 {
   this->gf = gf;
   this->n = n;
-  this->N = __gf64._exp(2, n);
+  this->N = __gf64._exp2(n);
   this->inv_N = gf->inv(N);
   this->w = w;
   this->inv_w = gf->inv(w);
@@ -42,6 +47,7 @@ FFT<T>::FFT(GF<T> *gf, int n, T w)
 
   compute_W(W, w);
   compute_W(inv_W, inv_w);
+  _pre_compute_consts();
 }
 
 template <typename T>
@@ -49,6 +55,10 @@ FFT<T>::~FFT()
 {
   delete this->inv_W;
   delete this->W;
+  delete this->tmp2;
+  delete this->tmp3;
+  delete this->tmp4;
+  delete this->tmp5;
 }
 
 template <typename T>
@@ -141,6 +151,43 @@ int FFT<T>::_get_p1(int i, int j, int s)
 }
 
 template <typename T>
+void FFT<T>::_pre_compute_consts()
+{
+  tmp2 = new Mat<T>(gf, n+1, N);
+  tmp3 = new Mat<T>(gf, n+1, N);
+  tmp4 = new Mat<T>(gf, n+1, N);
+  tmp5 = new Vec<T>(gf, N);
+
+  for (int i = 1; i <= n;i++) {
+    for (int j = 0;j <= N-1;j++) {
+      T _tmp1 = 0;
+      for (int k = 1;k <= i;k++)
+        _tmp1 += _get_p(j, n-i+k) * __gf64._exp2(i-k);
+
+      T _tmp2 = 0;
+      for (int k = 1;k <= n;k++)
+        _tmp2 += _get_p0(j, k, n-i+1) * __gf64._exp2(k-1);
+      tmp2->set(i, j, _tmp2);
+
+      T _tmp3 = 0;
+      for (int k = 1;k <= n;k++)
+        _tmp3 += _get_p1(j, k, n-i+1) * __gf64._exp2(k-1);
+      tmp3->set(i, j, _tmp3);
+
+      T _tmp4 = _tmp1 * __gf64._exp2(n-i);
+      tmp4->set(i, j, _tmp4);
+    }
+  }
+
+  for (int i = 0;i <= N-1;i++) {
+    T _tmp5 = 0;
+    for (int k = 1;k <= n;k++)
+      _tmp5 += _get_p(i, n-k+1) * __gf64._exp2(k-1);
+    tmp5->set(i, _tmp5);
+  }
+}
+
+template <typename T>
 void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
 {
   Mat<T> *phi = new Mat<T>(gf, n+1, N);
@@ -149,60 +196,21 @@ void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
   for (int i = 0;i <= N-1;i++)
     phi->set(0, i, input->get(i));
   
-  //compute phi[1][i]
-  for (int i = 0;i <= N-1;i++) {
-
-    T tmp1 = 0;
-    for (int k = 1;k <= n;k++)
-      tmp1 += _get_p0(i, k, n) * __gf64._exp(2, k-1);
-
-    T tmp2 = 0;
-    for (int k = 1;k <= n;k++)
-      tmp2 += _get_p1(i, k, n) * __gf64._exp(2, k-1);
-
-    DoubleT<T> val = 
-      DoubleT<T>(_W->get(__gf64._exp(2, n-1) * _get_p(i, n))) *
-      phi->get(0, tmp2) +
-      phi->get(0, tmp1);
-
-    phi->set(1, i, val % gf->card());
-  }
-
-  //compute phi[2,3] to phi[n,N-1]
-  for (int mm = 2; mm <= n;mm++) {
-
-    for (int i = 0;i <= N-1;i++) {
-      
-      T tmp1 = 0;
-      for (int k = 1;k <= mm;k++)
-        tmp1 += _get_p(i, n-mm+k) * __gf64._exp(2, mm-k);
-
-      T tmp2 = 0;
-      for (int k = 1;k <= n;k++)
-        tmp2 += _get_p0(i, k, n-mm+1) * __gf64._exp(2, k-1);
-
-      T tmp3 = 0;
-      for (int k = 1;k <= n;k++)
-        tmp3 += _get_p1(i, k, n-mm+1) * __gf64._exp(2, k-1);
-
+  for (int i = 1; i <= n;i++) {
+    for (int j = 0;j <= N-1;j++) {
+         
       DoubleT<T>val = 
-        DoubleT<T>(_W->get(__gf64._exp(2, n-mm) * tmp1)) *
-        phi->get(mm-1, tmp3) +
-        phi->get(mm-1, tmp2);
+        DoubleT<T>(_W->get(tmp4->get(i, j))) *
+        phi->get(i-1, tmp3->get(i, j)) +
+        phi->get(i-1, tmp2->get(i, j));
 
-      phi->set(mm, i, val % gf->card());
+      phi->set(i, j, val % gf->card());
     }
   }
 
   //compute FFT
-  for (int i = 0;i <= N-1;i++) {
-    
-    T tmp = 0;
-    for (int k = 1;k <= n;k++)
-      tmp += _get_p(i, n-k+1) * __gf64._exp(2, k-1);
-    
-    output->set(i, phi->get(n, tmp));
-  }
+  for (int i = 0;i <= N-1;i++)
+    output->set(i, phi->get(n, tmp5->get(i)));
 
   delete phi;
 }

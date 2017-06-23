@@ -283,6 +283,58 @@ public:
     }
   }
 
+  void test_fft2()
+  {
+    u_int n;
+    u_int N;
+    u_int r;
+    u_int q = 65537;
+    GFP<T> gf = GFP<T>(q);
+    u_int R = 3; //primitive root
+    u_int n_data = 3;
+    u_int n_parities = 3;
+
+    std::cout << "test_fft\n";
+
+    assert(gf._jacobi(R, q) == -1);
+
+    //with this encoder we cannot exactly satisfy users request, we need to pad
+    n = __gf64._log2(n_data + n_parities) + 1;
+    N = __gf64._exp(2, n);
+
+    //compute root of order N-1 such as r^(N-1) mod q == 1
+    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-n)) % gf.p;
+    r = _r.get_ui();
+
+    //std::cerr << "n=" << n << "\n";
+    //std::cerr << "N=" << N << "\n";
+    //std::cerr << "r=" << r << "\n";
+
+    FFT<T> fft = FFT<T>(&gf, n, r);
+    
+    Vec<T> v(&gf, N), _v(&gf, N), v2(&gf, N);
+    v.zero_fill();
+    for (int i = 0;i < n_data;i++)
+      v.set(i, gf.weak_rand());
+    v.set(0, 27746);
+    v.set(1, 871);
+    v.set(2, 49520);
+    //v.dump();
+    fft.fft(&_v, &v);
+    //_v.dump();
+    assert(_v.get(0) == 12600);
+    assert(_v.get(1) == 27885);
+    assert(_v.get(2) == 17398);
+    assert(_v.get(3) == 4624);
+    assert(_v.get(4) == 10858);
+    assert(_v.get(5) == 36186);
+    assert(_v.get(6) == 4591);
+    assert(_v.get(7) == 42289);
+    fft.ifft(&v2, &_v);
+    //v2.dump();
+    assert(v.eq(&v2));
+  }
+
   void fft_utest_no_mul_bignum()
   {
     std::cout << "fft_utest\n";
@@ -302,6 +354,7 @@ public:
     test_quadratic_residues();
     test_jacobi();
     test_fft();
+    test_fft2();
     test_mul_bignum();
   }
 };

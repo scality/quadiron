@@ -179,6 +179,13 @@ bool repair_data_files(FEC<T> *fec)
   return 0;
 }
 
+template <typename T>
+void print_stats(FEC<T> *fec)
+{
+  std::cerr << "enc," << (fec->n_encode_ops != 0 ? fec->total_encode_cycles / fec->n_encode_ops : 0) << ",";
+  std::cerr << "dec," << (fec->n_decode_ops != 0 ? fec->total_decode_cycles / fec->n_decode_ops : 0) << ",";
+}
+
 enum ec_type
   {
     EC_TYPE_UNDEF = 0,
@@ -272,6 +279,7 @@ int main(int argc, char **argv)
       }
     }
     create_coding_files<uint32_t>(fec);
+    print_stats<uint32_t>(fec);
     delete fec;
     delete gf;
   } else if (eflag == EC_TYPE_GF2NRS) {
@@ -285,6 +293,7 @@ int main(int argc, char **argv)
       }
     }
     create_coding_files<uint32_t>(fec);
+    print_stats<uint32_t>(fec);
     delete fec;
     delete gf;
   }

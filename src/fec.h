@@ -20,6 +20,11 @@ class FEC
   u_int n_data;
   u_int n_parities;
 
+  uint64_t total_encode_cycles = 0;
+  uint64_t n_encode_ops = 0;
+  uint64_t total_decode_cycles = 0;
+  uint64_t n_decode_ops = 0;
+
 protected:
   GF<T> *gf;
 
@@ -153,7 +158,13 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
     }
     if (!cont)
       break ;
+
+    uint64_t start = rdtsc();
     encode(&output, output_parities_props, offset, &words);
+    uint64_t end = rdtsc();
+    total_encode_cycles += end - start;
+    n_encode_ops++;
+
     for (int i = 0;i < get_n_outputs();i++) {
       T tmp = output.get(i);
       writew(tmp, output_parities_bufs[i]);
@@ -271,8 +282,12 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     if (!cont)
       break ;
 
+    uint64_t start = rdtsc();
     decode(&output, input_parities_props, offset, &fragments_ids, &words);
-      
+    uint64_t end = rdtsc();
+    total_decode_cycles += end - start;
+    n_decode_ops++;
+
     for (int i = 0;i < n_data;i++) {
       if (output_data_bufs[i] != nullptr) {
         T tmp = output.get(i);
