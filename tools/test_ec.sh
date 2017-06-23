@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #vflag=-v
 #valgrind="valgrind --leak-check=full"
@@ -27,7 +27,8 @@ do_test()
     data_loss=$6
     coding_loss=$7
     extraopts=$8
-    echo ${bin} e=${fec_type} w=${word_size} n=${n_data} m=${n_coding} data_loss=\"${data_loss}\" coding_loss=\"${coding_loss}\" ${extraopts}
+
+    echo -n ${fec_type}_W${word_size}_N${n_data}_M${n_coding}_D${data_loss// /-}_C${coding_loss// /-},
 
     rm -f foo.*
     
@@ -37,7 +38,7 @@ do_test()
         md5sum foo.d${i} > foo.d${i}.md5sum.1
     done
 
-    echo "coding generation"
+    echo -n "GEN,"
     ${valgrind} ${bin} -e ${fec_type} -w ${word_size} -n ${n_data} -m ${n_coding} -p foo -c ${extraopts} ${vflag}
     checkfail "coding generation"
 
@@ -81,7 +82,7 @@ do_test()
         j=`expr ${j} + 1`
     done
 
-    echo "repairing"
+    echo -n "REP,"
     ${valgrind} ${bin} -e ${fec_type} -w ${word_size} -n ${n_data} -m ${n_coding} -p foo -r ${extraopts} ${vflag}
     checkfail "repairing"
 
@@ -97,64 +98,23 @@ do_test()
         diff foo.c${i}.md5sum.1 foo.c${i}.md5sum.2
         checkfail "coding files mismatch"
     done
+
+    echo
 }
 
-do_test ./ec fntrs 2 3 3 "" "" $*
-do_test ./ec gf2nrsv 1 3 3 "" "" $*
-do_test ./ec gf2nrsv 2 3 3 "" "" $*
-do_test ./ec gf2nrsc 1 3 3 "" "" $*
-do_test ./ec gf2nrsc 2 3 3 "" "" $*
+for i in fntrs_2 gf2nrsv_1 gf2nrsv_2 gf2nrsc_1 gf2nrsc_2
+do
+    fec_type=$(echo $i|cut -d_ -f1)
+    word_size=$(echo $i|cut -d_ -f2)
 
-do_test ./ec fntrs 2 3 3 "0 1" "0" $*
-do_test ./ec gf2nrsv 1 3 3 "0 1" "0" $*
-do_test ./ec gf2nrsv 2 3 3 "0 1" "0" $*
-do_test ./ec gf2nrsc 1 3 3 "0 1" "0" $*
-do_test ./ec gf2nrsc 2 3 3 "0 1" "0" $*
-
-do_test ./ec fntrs 2 3 5 "0 1" "0" $*
-do_test ./ec gf2nrsv 1 3 5 "0 1" "0" $*
-do_test ./ec gf2nrsv 2 3 5 "0 1" "0" $*
-do_test ./ec gf2nrsc 1 3 5 "0 1" "0" $*
-do_test ./ec gf2nrsc 2 3 5 "0 1" "0" $*
- 
-do_test ./ec fntrs 2 3 3 "1 2" "2" $*
-do_test ./ec gf2nrsv 1 3 3 "1 2" "2" $*
-do_test ./ec gf2nrsv 2 3 3 "1 2" "2" $*
-do_test ./ec gf2nrsc 1 3 3 "1 2" "2" $*
-do_test ./ec gf2nrsc 2 3 3 "1 2" "2" $*
-
-do_test ./ec fntrs 2 9 3 "1 2" "2" $*
-do_test ./ec gf2nrsv 1 9 3 "1 2" "2" $*
-do_test ./ec gf2nrsv 2 9 3 "1 2" "2" $*
-do_test ./ec gf2nrsc 1 9 3 "1 2" "2" $*
-do_test ./ec gf2nrsc 2 9 3 "1 2" "2" $*
-
-do_test ./ec fntrs 2 9 3 "2 3" "2" $*
-do_test ./ec gf2nrsv 1 9 3 "2 3" "2" $*
-do_test ./ec gf2nrsv 2 9 3 "2 3" "2" $*
-do_test ./ec gf2nrsc 1 9 3 "2 3" "2" $*
-do_test ./ec gf2nrsc 2 9 3 "2 3" "2" $*
-
-do_test ./ec fntrs 2 9 5 "2 3 4" "2 3" $*
-do_test ./ec gf2nrsv 1 9 5 "2 3 4" "2 3" $*
-do_test ./ec gf2nrsv 2 9 5 "2 3 4" "2 3" $*
-do_test ./ec gf2nrsc 1 9 5 "2 3 4" "2 3" $*
-do_test ./ec gf2nrsc 2 9 5 "2 3 4" "2 3" $*
-
-do_test ./ec fntrs 2 9 5 "1 3 5" "1 3" $*
-do_test ./ec gf2nrsv 1 9 5 "1 3 5" "1 3" $*
-do_test ./ec gf2nrsv 2 9 5 "1 3 5" "1 3" $*
-do_test ./ec gf2nrsc 1 9 5 "1 3 5" "1 3" $*
-do_test ./ec gf2nrsc 2 9 5 "1 3 5" "1 3" $*
-
-do_test ./ec fntrs 2 9 5 "1 3 5 7 8" "" $*
-do_test ./ec gf2nrsv 1 9 5 "1 3 5 7 8" "" $*
-do_test ./ec gf2nrsv 2 9 5 "1 3 5 7 8" "" $*
-do_test ./ec gf2nrsc 1 9 5 "1 3 5 7 8" "" $*
-do_test ./ec gf2nrsc 2 9 5 "1 3 5 7 8" "" $*
-
-do_test ./ec fntrs 2 9 5 "" "0 1 2 3 4" $*
-do_test ./ec gf2nrsv 1 9 5 "" "0 1 2 3 4" $*
-do_test ./ec gf2nrsv 2 9 5 "" "0 1 2 3 4" $*
-do_test ./ec gf2nrsc 1 9 5 "" "0 1 2 3 4" $*
-do_test ./ec gf2nrsc 2 9 5 "" "0 1 2 3 4" $*
+    do_test ./ec ${fec_type} ${word_size} 3 3 "" ""
+    do_test ./ec ${fec_type} ${word_size} 3 3 "0 1" "0"
+    do_test ./ec ${fec_type} ${word_size} 3 5 "0 1" "0"
+    do_test ./ec ${fec_type} ${word_size} 3 3 "1 2" "2"
+    do_test ./ec ${fec_type} ${word_size} 9 3 "1 2" "2"
+    do_test ./ec ${fec_type} ${word_size} 9 3 "2 3" "2"
+    do_test ./ec ${fec_type} ${word_size} 9 5 "2 3 4" "2 3"
+    do_test ./ec ${fec_type} ${word_size} 9 5 "1 3 5" "1 3"
+    do_test ./ec ${fec_type} ${word_size} 9 5 "1 3 5 7 8" ""
+    do_test ./ec ${fec_type} ${word_size} 9 5 "" "0 1 2 3 4"
+done
