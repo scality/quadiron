@@ -20,13 +20,14 @@ checkfail()
 do_test() 
 {
     bin=$1
-    gf_type=$2
-    n_data=$3
-    n_coding=$4
-    data_loss=$5
-    coding_loss=$6
-    extraopts=$7
-    echo ${bin} e=${gf_type} n=${n_data} m=${n_coding} data_loss=\"${data_loss}\" coding_loss=\"${coding_loss}\" ${extraopts}
+    fec_type=$2
+    word_size=$3
+    n_data=$4
+    n_coding=$5
+    data_loss=$6
+    coding_loss=$7
+    extraopts=$8
+    echo ${bin} e=${fec_type} w=${word_size} n=${n_data} m=${n_coding} data_loss=\"${data_loss}\" coding_loss=\"${coding_loss}\" ${extraopts}
 
     rm -f foo.*
     
@@ -37,7 +38,7 @@ do_test()
     done
 
     echo "coding generation"
-    ${valgrind} ${bin} -e ${gf_type} -n ${n_data} -m ${n_coding} -p foo -c ${extraopts} ${vflag}
+    ${valgrind} ${bin} -e ${fec_type} -w ${word_size} -n ${n_data} -m ${n_coding} -p foo -c ${extraopts} ${vflag}
     checkfail "coding generation"
 
     for i in `seq 0 $(expr ${n_coding} - 1)`
@@ -45,7 +46,7 @@ do_test()
         md5sum foo.c${i} > foo.c${i}.md5sum.1
     done
 
-    if [ "${gf_type}" = 65537 ]
+    if [ "${fec_type}" = 65537 ]
     then
         #remove all data
         for i in foo.d[0-9]
@@ -57,7 +58,7 @@ do_test()
     j=0
     for i in $data_loss
     do
-        if [ "${gf_type}" = 65537 ]
+        if [ "${fec_type}" = 65537 ]
         then
             mv foo.c${j} foo.c${j}.1
             mv foo.c${j}.props foo.c${j}.props.1
@@ -69,7 +70,7 @@ do_test()
     
     for i in $coding_loss
     do
-        if [ "${gf_type}" = 65537 ]
+        if [ "${fec_type}" = 65537 ]
         then
             mv foo.c${j} foo.c${j}.1
             mv foo.c${j}.props foo.c${j}.props.1
@@ -81,7 +82,7 @@ do_test()
     done
 
     echo "repairing"
-    ${valgrind} ${bin} -e ${gf_type} -n ${n_data} -m ${n_coding} -p foo -r ${extraopts} ${vflag}
+    ${valgrind} ${bin} -e ${fec_type} -w ${word_size} -n ${n_data} -m ${n_coding} -p foo -r ${extraopts} ${vflag}
     checkfail "repairing"
 
     for i in `seq 0 $(expr ${n_data} - 1)`
@@ -98,42 +99,62 @@ do_test()
     done
 }
 
-do_test ./ec 65537 3 3 "" "" $*
-do_test ./ec 8 3 3 "" "" $*
-do_test ./ec 16 3 3 "" "" $*
+do_test ./ec fntrs 2 3 3 "" "" $*
+do_test ./ec gf2nrsv 1 3 3 "" "" $*
+do_test ./ec gf2nrsv 2 3 3 "" "" $*
+do_test ./ec gf2nrsc 1 3 3 "" "" $*
+do_test ./ec gf2nrsc 2 3 3 "" "" $*
 
-do_test ./ec 65537 3 3 "0 1" "0" $*
-do_test ./ec 8 3 3 "0 1" "0" $*
-do_test ./ec 16 3 3 "0 1" "0" $*
+do_test ./ec fntrs 2 3 3 "0 1" "0" $*
+do_test ./ec gf2nrsv 1 3 3 "0 1" "0" $*
+do_test ./ec gf2nrsv 2 3 3 "0 1" "0" $*
+do_test ./ec gf2nrsc 1 3 3 "0 1" "0" $*
+do_test ./ec gf2nrsc 2 3 3 "0 1" "0" $*
 
-do_test ./ec 65537 3 5 "0 1" "0" $*
-do_test ./ec 8 3 5 "0 1" "0" $*
-do_test ./ec 16 3 5 "0 1" "0" $*
+do_test ./ec fntrs 2 3 5 "0 1" "0" $*
+do_test ./ec gf2nrsv 1 3 5 "0 1" "0" $*
+do_test ./ec gf2nrsv 2 3 5 "0 1" "0" $*
+do_test ./ec gf2nrsc 1 3 5 "0 1" "0" $*
+do_test ./ec gf2nrsc 2 3 5 "0 1" "0" $*
  
-do_test ./ec 65537 3 3 "1 2" "2" $*
-do_test ./ec 8 3 3 "1 2" "2" $*
-do_test ./ec 16 3 3 "1 2" "2" $*
+do_test ./ec fntrs 2 3 3 "1 2" "2" $*
+do_test ./ec gf2nrsv 1 3 3 "1 2" "2" $*
+do_test ./ec gf2nrsv 2 3 3 "1 2" "2" $*
+do_test ./ec gf2nrsc 1 3 3 "1 2" "2" $*
+do_test ./ec gf2nrsc 2 3 3 "1 2" "2" $*
 
-do_test ./ec 65537 9 3 "1 2" "2" $*
-do_test ./ec 8 9 3 "1 2" "2" $*
-do_test ./ec 16 9 3 "1 2" "2" $*
+do_test ./ec fntrs 2 9 3 "1 2" "2" $*
+do_test ./ec gf2nrsv 1 9 3 "1 2" "2" $*
+do_test ./ec gf2nrsv 2 9 3 "1 2" "2" $*
+do_test ./ec gf2nrsc 1 9 3 "1 2" "2" $*
+do_test ./ec gf2nrsc 2 9 3 "1 2" "2" $*
 
-do_test ./ec 65537 9 3 "2 3" "2" $*
-do_test ./ec 8 9 3 "2 3" "2" $*
-do_test ./ec 16 9 3 "2 3" "2" $*
+do_test ./ec fntrs 2 9 3 "2 3" "2" $*
+do_test ./ec gf2nrsv 1 9 3 "2 3" "2" $*
+do_test ./ec gf2nrsv 2 9 3 "2 3" "2" $*
+do_test ./ec gf2nrsc 1 9 3 "2 3" "2" $*
+do_test ./ec gf2nrsc 2 9 3 "2 3" "2" $*
 
-do_test ./ec 65537 9 5 "2 3 4" "2 3" $*
-do_test ./ec 8 9 5 "2 3 4" "2 3" $*
-do_test ./ec 16 9 5 "2 3 4" "2 3" $*
+do_test ./ec fntrs 2 9 5 "2 3 4" "2 3" $*
+do_test ./ec gf2nrsv 1 9 5 "2 3 4" "2 3" $*
+do_test ./ec gf2nrsv 2 9 5 "2 3 4" "2 3" $*
+do_test ./ec gf2nrsc 1 9 5 "2 3 4" "2 3" $*
+do_test ./ec gf2nrsc 2 9 5 "2 3 4" "2 3" $*
 
-do_test ./ec 65537 9 5 "1 3 5" "1 3" $*
-do_test ./ec 8 9 5 "1 3 5" "1 3" $*
-do_test ./ec 16 9 5 "1 3 5" "1 3" $*
+do_test ./ec fntrs 2 9 5 "1 3 5" "1 3" $*
+do_test ./ec gf2nrsv 1 9 5 "1 3 5" "1 3" $*
+do_test ./ec gf2nrsv 2 9 5 "1 3 5" "1 3" $*
+do_test ./ec gf2nrsc 1 9 5 "1 3 5" "1 3" $*
+do_test ./ec gf2nrsc 2 9 5 "1 3 5" "1 3" $*
 
-do_test ./ec 65537 9 5 "1 3 5 7 8" "" $*
-do_test ./ec 8 9 5 "1 3 5 7 8" "" $*
-do_test ./ec 16 9 5 "1 3 5 7 8" "" $*
+do_test ./ec fntrs 2 9 5 "1 3 5 7 8" "" $*
+do_test ./ec gf2nrsv 1 9 5 "1 3 5 7 8" "" $*
+do_test ./ec gf2nrsv 2 9 5 "1 3 5 7 8" "" $*
+do_test ./ec gf2nrsc 1 9 5 "1 3 5 7 8" "" $*
+do_test ./ec gf2nrsc 2 9 5 "1 3 5 7 8" "" $*
 
-do_test ./ec 65537 9 5 "" "0 1 2 3 4" $*
-do_test ./ec 8 9 5 "" "0 1 2 3 4" $*
-do_test ./ec 16 9 5 "" "0 1 2 3 4" $*
+do_test ./ec fntrs 2 9 5 "" "0 1 2 3 4" $*
+do_test ./ec gf2nrsv 1 9 5 "" "0 1 2 3 4" $*
+do_test ./ec gf2nrsv 2 9 5 "" "0 1 2 3 4" $*
+do_test ./ec gf2nrsc 1 9 5 "" "0 1 2 3 4" $*
+do_test ./ec gf2nrsc 2 9 5 "" "0 1 2 3 4" $*
