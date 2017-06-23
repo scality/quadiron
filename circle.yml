@@ -8,4 +8,3 @@ test:
   override:
     - cd test; ./tests
     - cd tools; ./test_ec.sh
-    - cd tools; ./test_ec.sh -s

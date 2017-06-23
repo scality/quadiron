@@ -19,7 +19,7 @@ char *prefix = NULL;
 
 void xusage()
 {
-  std::cerr << "Usage: ec [-e 8|16|65537 (fermat fields)][-n n_data][-m n_parities][-s (use cauchy instead of vandermonde)][-p prefix][-v (verbose)] -c (encode) | -r (repair)\n";
+  std::cerr << "Usage: ec [-e gf2nrsv|gf2nrsc|fntrs][-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)] -c (encode) | -r (repair)\n";
   exit(1);
 }
 
@@ -179,6 +179,12 @@ bool repair_data_files(FEC<T> *fec)
   return 0;
 }
 
+enum ec_type
+  {
+    EC_TYPE_UNDEF = 0,
+    EC_TYPE_GF2NRS,
+    EC_TYPE_FNTRS,
+  };
 
 int main(int argc, char **argv)
 {
@@ -186,21 +192,27 @@ int main(int argc, char **argv)
   int cflag = 0;
   int rflag = 0;
   int uflag = 0;
-  int sflag = 0;
-  int eflag = 0;
+  ec_type eflag = EC_TYPE_UNDEF;
+  FECGF2NRS<uint32_t>::FECGF2NRSType gf2nrs_type;
+  int word_size = 0;
 
   n_data = n_parities = -1;
-  while ((opt = getopt(argc, argv, "n:m:p:scruve:")) != -1) {
+  while ((opt = getopt(argc, argv, "n:m:p:cruve:w:")) != -1) {
     switch (opt) {
     case 'e':
-      if (!strcmp(optarg, "8"))
-        eflag = 8;
-      else if (!strcmp(optarg, "16"))
-        eflag = 16;
-      else if (!strcmp(optarg, "65537"))
-        eflag = 65537;
+      if (!strcmp(optarg, "gf2nrsv")) {
+        eflag = EC_TYPE_GF2NRS;
+        gf2nrs_type = FECGF2NRS<uint32_t>::VANDERMONDE;
+      } else if (!strcmp(optarg, "gf2nrsc")) {
+        eflag = EC_TYPE_GF2NRS;
+        gf2nrs_type = FECGF2NRS<uint32_t>::CAUCHY;
+      } else if (!strcmp(optarg, "fntrs"))
+        eflag = EC_TYPE_FNTRS;
       else
         xusage();
+      break ;
+    case 'w':
+      word_size = atoi(optarg);
       break ;
     case 'v':
       vflag = 1;
@@ -213,9 +225,6 @@ int main(int argc, char **argv)
       break ;
     case 'r':
       rflag = 1;
-      break ;
-    case 's':
-      sflag = 1;
       break ;
     case 'n':
       n_data = atoi(optarg);
@@ -248,10 +257,14 @@ int main(int argc, char **argv)
   if (-1 == n_data || -1 == n_parities || NULL == prefix)
     xusage();
 
-  if (eflag == 65537) {
+  if (eflag == EC_TYPE_FNTRS) {
     FECFNTRS<uint32_t> *fec;
-    GFP<uint32_t> *gf = new GFP<uint32_t>(65537); //2^2^4+1
-    fec = new FECFNTRS<uint32_t>(gf, 2, n_data, n_parities);
+    if (word_size != 2) {
+      std::cerr << "only supports -w 2 for now\n";
+      exit(1);
+    }
+    GFP<uint32_t> *gf = new GFP<uint32_t>(__gf32._exp(2, word_size * 8)+1); //2^2^4+1
+    fec = new FECFNTRS<uint32_t>(gf, word_size, n_data, n_parities);
     
     if (rflag) {
       if (0 != repair_data_files<uint32_t>(fec)) {
@@ -261,10 +274,10 @@ int main(int argc, char **argv)
     create_coding_files<uint32_t>(fec);
     delete fec;
     delete gf;
-  } else {
+  } else if (eflag == EC_TYPE_GF2NRS) {
     FECGF2NRS<uint32_t> *fec;
-    GF2N<uint32_t> *gf = new GF2N<uint32_t>(eflag);
-    fec = new FECGF2NRS<uint32_t>(gf, eflag / 8, n_data, n_parities, sflag ? FECGF2NRS<uint32_t>::CAUCHY : FECGF2NRS<uint32_t>::VANDERMONDE);
+    GF2N<uint32_t> *gf = new GF2N<uint32_t>(word_size * 8);
+    fec = new FECGF2NRS<uint32_t>(gf, word_size, n_data, n_parities, gf2nrs_type);
     
     if (rflag) {
       if (0 != repair_data_files<uint32_t>(fec)) {
