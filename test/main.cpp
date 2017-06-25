@@ -11,6 +11,7 @@ extern void fec_utest();
 int main(int argc, char **argv)
 {
   srand(0);
+
   gf_utest();
   mat_utest();
   rs_utest();

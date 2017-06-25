@@ -7,6 +7,8 @@ class FFT
 {
 public:
   GF<T> *gf;
+  Vec<T> *W; //useful for FEC decoding
+  Vec<T> *inv_W;
   
 private:
   int n;
@@ -14,8 +16,6 @@ private:
   T inv_N;
   T w;
   T inv_w;
-  Vec<T> *W;
-  Vec<T> *inv_W;
   Mat<T> *tmp2;
   Mat<T> *tmp3;
   Mat<T> *tmp4;
@@ -61,6 +61,13 @@ FFT<T>::~FFT()
   delete this->tmp5;
 }
 
+/** 
+ * Representing powers of root as a vector is more practical than a
+ * matrix (e.g. (n+k=2^15) => would be 1 billion entries !)
+ * 
+ * @param _W vector of powers of roots
+ * @param _w Nth root of unity
+ */
 template <typename T>
 void FFT<T>::compute_W(Vec<T> *_W, T _w)
 {
@@ -157,6 +164,11 @@ void FFT<T>::_pre_compute_consts()
   tmp3 = new Mat<T>(gf, n+1, N);
   tmp4 = new Mat<T>(gf, n+1, N);
   tmp5 = new Vec<T>(gf, N);
+
+  tmp2->zero_fill();
+  tmp3->zero_fill();
+  tmp4->zero_fill();
+  tmp5->zero_fill();
 
   for (int i = 1; i <= n;i++) {
     for (int j = 0;j <= N-1;j++) {

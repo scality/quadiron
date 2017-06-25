@@ -30,7 +30,9 @@ public:
       fec.decode(&v2, props, 0, &f, &_v2);
       //v2.dump();
       assert(v.eq(&v2));
-    }
+      for (int i = 0;i < fec.N;i++)
+        delete props[i];
+     }
   }
 
   void fec_utest()
