@@ -11,7 +11,7 @@ template<typename T>
 class FECFNTRS : public FEC<T>
 {
 private:
-  FFTLN<T> *fft = NULL;
+  FFTN<T> *fft = NULL;
 
 public:
   u_int l;
@@ -41,7 +41,7 @@ public:
     //std::cerr << "n=" << n << "\n";
     //std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFTLN<T>(gf, l, r);
+    this->fft = new FFTN<T>(gf, n, r);
   }
 
   ~FECFNTRS()

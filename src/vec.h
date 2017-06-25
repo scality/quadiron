@@ -11,6 +11,7 @@ class Vec
   int n;
   Vec(GF<T> *gf, int n);
   ~Vec();
+  virtual int get_n(void);
   void zero_fill(void);
   void set(int i, T val);
   virtual T get(int i);
@@ -33,6 +34,12 @@ template <typename T>
 Vec<T>::~Vec()
 {
   delete[] this->mem;
+}
+
+template <typename T>
+int Vec<T>::get_n(void)
+{
+  return n;
 }
 
 template <typename T>
@@ -83,7 +90,7 @@ void Vec<T>::copy(Vec<T> *v)
 template <typename T>
 void Vec<T>::copy(Vec<T> *v, int n)
 {
-  assert(n == this->n);
+  assert(n <= this->n);
 
   std::copy_n(v->mem, n, this->mem);
 }
