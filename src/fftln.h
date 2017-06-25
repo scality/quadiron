@@ -30,15 +30,6 @@ private:
   void ifft(Vec<T> *output, Vec<T> *input);
 };
 
-/** 
- * Initialize FFT for large N=2^n
- * 
- * @param gf 
- * @param l n=2^l
- * @param w n-th root
- * 
- * @return 
- */
 template <typename T>
 FFTLN<T>::FFTLN(GF<T> *gf, int l, T w) : FFT<T>(gf, __gf64._exp2(l), w)
 {

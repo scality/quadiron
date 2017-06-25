@@ -336,7 +336,7 @@ void Mat<T>::mul(Vec<T> *output, Vec<T> *v)
 {
   int i, j;
 
-  assert(n_cols == v->n);
+  assert(n_cols == v->get_n());
   assert(n_rows == output->n);
 
   for (i = 0;i < n_rows;i++) {

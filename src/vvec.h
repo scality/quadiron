@@ -12,6 +12,7 @@ class VVec : public Vec<T>
  public:
   int n;
   VVec(Vec<T> *vec, int n);
+  int get_n(void);
   T get(int i);
 };
 
@@ -20,6 +21,12 @@ VVec<T>::VVec(Vec<T> *vec, int n) : Vec<T>(NULL, 0)
 {
   this->vec = vec;
   this->n = n;
+}
+
+template <typename T>
+int VVec<T>::get_n(void)
+{
+  return n;
 }
 
 template <typename T>

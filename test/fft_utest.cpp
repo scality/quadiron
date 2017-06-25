@@ -242,6 +242,7 @@ public:
   void test_fft()
   {
     u_int l;
+    u_int n;
     u_int r;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
@@ -255,15 +256,17 @@ public:
 
     //with this encoder we cannot exactly satisfy users request, we need to pad
     l = __gf64._log2(n_data + n_parities) + 1;
+    n = __gf64._exp2(l);
 
     //compute root of order n-1 such as r^(n-1) mod q == 1
     mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf.p;
     r = _r.get_ui();
 
     //std::cerr << "l=" << l << "\n";
+    //std::cerr << "n=" << n << "\n";
     //std::cerr << "r=" << r << "\n";
 
-    FFTLN<T> fft = FFTLN<T>(&gf, l, r);
+    FFTN<T> fft = FFTN<T>(&gf, n, r);
     
     for (int j = 0;j < 100000;j++) {
       Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
@@ -282,6 +285,7 @@ public:
   void test_fft2()
   {
     u_int l;
+    u_int n;
     u_int r;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
@@ -295,6 +299,7 @@ public:
 
     //with this encoder we cannot exactly satisfy users request, we need to pad
     l = __gf64._log2(n_data + n_parities) + 1;
+    n = __gf64._exp2(l);
 
     //compute root of order n-1 such as r^(n-1) mod q == 1
     mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf.p;
@@ -303,7 +308,7 @@ public:
     //std::cerr << "l=" << l << "\n";
     //std::cerr << "r=" << r << "\n";
 
-    FFTLN<T> fft = FFTLN<T>(&gf, l, r);
+    FFTN<T> fft = FFTN<T>(&gf, n, r);
     
     Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     v.zero_fill();
