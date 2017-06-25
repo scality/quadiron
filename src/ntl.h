@@ -45,6 +45,8 @@ typedef enum
 #include "vvec.h"
 #include "mat.h"
 #include "fft.h"
+#include "fftln.h"
+#include "fft2k.h"
 #include "poly.h"
 #include "fec.h"
 #include "fecgf2nrs.h"

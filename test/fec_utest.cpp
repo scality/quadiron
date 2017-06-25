@@ -15,9 +15,9 @@ public:
     FECFNTRS<T> fec = FECFNTRS<T>(&gf, 2, n_data, n_parities);
 
     for (int j = 0;j < 10000;j++) {
-      Vec<T> v(&gf, n_data), _v(&gf, fec.N), _v2(&gf, n_data), f(&gf, n_data), v2(&gf, n_data);
-      std::vector<KeyValue*>props(fec.N, nullptr);
-      for (int i = 0;i < fec.N;i++)
+      Vec<T> v(&gf, n_data), _v(&gf, fec.n), _v2(&gf, n_data), f(&gf, n_data), v2(&gf, n_data);
+      std::vector<KeyValue*>props(fec.n, nullptr);
+      for (int i = 0;i < fec.n;i++)
         props[i] = new KeyValue();
       for (int i = 0;i < n_data;i++)
         v.set(i, gf.weak_rand());
@@ -30,7 +30,7 @@ public:
       fec.decode(&v2, props, 0, &f, &_v2);
       //v2.dump();
       assert(v.eq(&v2));
-      for (int i = 0;i < fec.N;i++)
+      for (int i = 0;i < fec.n;i++)
         delete props[i];
      }
   }

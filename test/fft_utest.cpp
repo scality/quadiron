@@ -114,16 +114,16 @@ public:
    * 
    * @return 
    */
-  Vec<T> *_convert_string2vec(GF<T> *gf, int N, char num[])
+  Vec<T> *_convert_string2vec(GF<T> *gf, int n, char num[])
   {
     int i;
-    Vec<T> *vec = new Vec<T>(gf, N);
+    Vec<T> *vec = new Vec<T>(gf, n);
     int len = strlen(num);
     
     for (i = 0;i < len;i++) {
       vec->set(i, num[len - i - 1] - '0');
     }
-    for (;i < N;i++) {  
+    for (;i < n;i++) {  
       vec->set(i, 0);
     }
     
@@ -145,9 +145,8 @@ public:
     int max_digits = __gf64._exp(2, p);
     //std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
-    uint64_t n = p + 1;
-    uint64_t N = __gf64._exp(2, n);
-    //std::cerr << "n=" << n << " N=" << N << "\n";
+    uint64_t l = p + 1;
+    //std::cerr << "l=" << l << "\n";
 
     //choose 2 prime numbers of the form p=a.2^n+1
     //because if x is not a quadratic residue then w=x^a is
@@ -194,26 +193,26 @@ public:
     assert(w == 25559439);
 
     GFP<T> gf_m(m);
-    FFT<T> fft(&gf_m, n, 25559439);
+    FFTLN<T> fft(&gf_m, l, 25559439);
 
     //parse the big numbers
     char X[] = "1236548787985654354598651354984132468";
     char Y[] = "745211515185321545554545854598651354984132468";
 
-    Vec<T> *_X = _convert_string2vec(&gf_m, N, X);
+    Vec<T> *_X = _convert_string2vec(&gf_m, fft.n, X);
     //_X->dump();
-    Vec<T> *_Y = _convert_string2vec(&gf_m, N, Y);
+    Vec<T> *_Y = _convert_string2vec(&gf_m, fft.n, Y);
     //_Y->dump();
 
-    Vec<T> *sfX = new Vec<T>(&gf_m, N);
-    Vec<T> *sfY = new Vec<T>(&gf_m, N);
-    Vec<T> *_XY = new Vec<T>(&gf_m, N);
-    Vec<T> *sfXY = new Vec<T>(&gf_m, N);
+    Vec<T> *sfX = new Vec<T>(&gf_m, fft.n);
+    Vec<T> *sfY = new Vec<T>(&gf_m, fft.n);
+    Vec<T> *_XY = new Vec<T>(&gf_m, fft.n);
+    Vec<T> *sfXY = new Vec<T>(&gf_m, fft.n);
 
     fft.fft(sfX, _X);
     fft.fft(sfY, _Y);
 
-    for (int i = 0;i <= N-1;i++) {
+    for (int i = 0;i <= fft.n-1;i++) {
       DoubleT<T> val = DoubleT<T>(sfX->get(i)) * sfY->get(i);
       _XY->set(i, val % m);
     }
@@ -222,7 +221,7 @@ public:
 
     //carry propagation
     mpz_class z = 0;
-    for (int i = 0;i <= N-1;i++) {
+    for (int i = 0;i <= fft.n-1;i++) {
       mpz_class t, b;
       b = 10;
       mpz_pow_ui(t.get_mpz_t(), b.get_mpz_t(), i);
@@ -242,8 +241,7 @@ public:
 
   void test_fft()
   {
-    u_int n;
-    u_int N;
+    u_int l;
     u_int r;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
@@ -256,21 +254,19 @@ public:
     assert(gf._jacobi(R, q) == -1);
 
     //with this encoder we cannot exactly satisfy users request, we need to pad
-    n = __gf64._log2(n_data + n_parities) + 1;
-    N = __gf64._exp(2, n);
+    l = __gf64._log2(n_data + n_parities) + 1;
 
-    //compute root of order N-1 such as r^(N-1) mod q == 1
-    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-n)) % gf.p;
+    //compute root of order n-1 such as r^(n-1) mod q == 1
+    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf.p;
     r = _r.get_ui();
 
-    //std::cerr << "n=" << n << "\n";
-    //std::cerr << "N=" << N << "\n";
+    //std::cerr << "l=" << l << "\n";
     //std::cerr << "r=" << r << "\n";
 
-    FFT<T> fft = FFT<T>(&gf, n, r);
+    FFTLN<T> fft = FFTLN<T>(&gf, l, r);
     
     for (int j = 0;j < 100000;j++) {
-      Vec<T> v(&gf, N), _v(&gf, N), v2(&gf, N);
+      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
       for (int i = 0;i < n_data;i++)
         v.set(i, gf.weak_rand());
@@ -285,8 +281,7 @@ public:
 
   void test_fft2()
   {
-    u_int n;
-    u_int N;
+    u_int l;
     u_int r;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
@@ -299,20 +294,18 @@ public:
     assert(gf._jacobi(R, q) == -1);
 
     //with this encoder we cannot exactly satisfy users request, we need to pad
-    n = __gf64._log2(n_data + n_parities) + 1;
-    N = __gf64._exp(2, n);
+    l = __gf64._log2(n_data + n_parities) + 1;
 
-    //compute root of order N-1 such as r^(N-1) mod q == 1
-    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-n)) % gf.p;
+    //compute root of order n-1 such as r^(n-1) mod q == 1
+    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf.p;
     r = _r.get_ui();
 
-    //std::cerr << "n=" << n << "\n";
-    //std::cerr << "N=" << N << "\n";
+    //std::cerr << "l=" << l << "\n";
     //std::cerr << "r=" << r << "\n";
 
-    FFT<T> fft = FFT<T>(&gf, n, r);
+    FFTLN<T> fft = FFTLN<T>(&gf, l, r);
     
-    Vec<T> v(&gf, N), _v(&gf, N), v2(&gf, N);
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     v.zero_fill();
     for (int i = 0;i < n_data;i++)
       v.set(i, gf.weak_rand());
@@ -362,6 +355,7 @@ public:
 template class Mat<uint32_t>;
 template class Vec<uint32_t>;
 template class FFT<uint32_t>;
+template class FFTLN<uint32_t>;
 
 template class Mat<uint64_t>;
 template class Vec<uint64_t>;

@@ -2,35 +2,24 @@
 
 #pragma once
 
+/*
+ * FFT over the field gf and over vectors of size n with w as n-th
+ * root of unity
+ */
 template<typename T>
 class FFT
 {
 public:
   GF<T> *gf;
-  Vec<T> *W; //useful for FEC decoding
-  Vec<T> *inv_W;
-  
-private:
   int n;
-  int N;
-  T inv_N;
+  T inv_n;
   T w;
   T inv_w;
-  Mat<T> *tmp2;
-  Mat<T> *tmp3;
-  Mat<T> *tmp4;
-  Vec<T> *tmp5;
-  void compute_W(Vec<T> *_W, T _w);
-  int _get_p(int i, int j);
-  int _get_p0(int i, int j, int s);
-  int _get_p1(int i, int j, int s);
-  void _pre_compute_consts();
-  void _fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W);
- public:
+protected:
   FFT(GF<T> *gf, int n, T w);
-  ~FFT();
-  void fft(Vec<T> *output, Vec<T> *input);
-  void ifft(Vec<T> *output, Vec<T> *input);
+public:
+  virtual void fft(Vec<T> *output, Vec<T> *input) = 0;
+  virtual void ifft(Vec<T> *output, Vec<T> *input) = 0;
 };
 
 template <typename T>
@@ -38,204 +27,7 @@ FFT<T>::FFT(GF<T> *gf, int n, T w)
 {
   this->gf = gf;
   this->n = n;
-  this->N = __gf64._exp2(n);
-  this->inv_N = gf->inv(N);
+  this->inv_n = gf->inv(n);
   this->w = w;
   this->inv_w = gf->inv(w);
-  this->W = new Vec<T>(gf, this->N + 1);
-  this->inv_W = new Vec<T>(gf, this->N + 1);
-
-  compute_W(W, w);
-  compute_W(inv_W, inv_w);
-  _pre_compute_consts();
-}
-
-template <typename T>
-FFT<T>::~FFT()
-{
-  delete this->inv_W;
-  delete this->W;
-  delete this->tmp2;
-  delete this->tmp3;
-  delete this->tmp4;
-  delete this->tmp5;
-}
-
-/** 
- * Representing powers of root as a vector is more practical than a
- * matrix (e.g. (n+k=2^15) => would be 1 billion entries !)
- * 
- * @param _W vector of powers of roots
- * @param _w Nth root of unity
- */
-template <typename T>
-void FFT<T>::compute_W(Vec<T> *_W, T _w)
-{
-  std::ostringstream filename;  
-
-  filename << "W" << _w << ".cache";
-
-  if (-1 == access(filename.str().c_str(), F_OK)) {
-    std::ofstream file;
-    file.open(filename.str().c_str(), std::ios::out);
-    for (int i = 0;i <= N;i++) {
-      _W->set(i, gf->exp(_w, i));
-      file << _W->get(i) << "\n";
-    }
-  } else {
-    std::ifstream file;
-    int i = 0;
-    file.open(filename.str().c_str(), std::ios::in);
-    T tmp;
-    while (file >> tmp) {
-      _W->set(i, tmp);
-      i++;
-    }
-    assert(i == N + 1);
-  }
-}
-
-/** 
- * Simulate the bit matrix
- *
- * [0][0]=undef   [0][1]=0   [0][2]=0   ... [0][n]=0    <= 0
- * [1][0]=undef   [1][1]=1   [1][2]=0   ... [1][n]=0    <= 1
- * [2][0]=undef   [2][1]=0   [2][2]=1   ... [2][n]=0    <= 2
- * ...
- * [N-1][0]=undef [N-1][1]=1 [N-1][2]=1 ... [N-1][n]=1  <= N-1
- *
- * where the numbers from 0 .. N-1 are encoded in reverse order
- * 
- * @param i 0 <= i <= N-1
- * @param j 1 <= j <= n
- * 
- * @return
- */
-template <typename T>
-int FFT<T>::_get_p(int i, int j)
-{
-  assert(i >= 0 && i <= N-1);
-  assert(j >= 1 && j <= n);
-  
-  int x = i;
-  int y = 1;
-  
-  do {
-    if (y == j) {
-      if (x & 1)
-        return 1;
-      else
-        return 0;
-    }
-    y++;
-  } while (x >>= 1);
-  
-  return 0;
-}
-
-/** 
- * @return _get_p(i, j) except when j==s it returns 0
- */
-template <typename T>
-int FFT<T>::_get_p0(int i, int j, int s)
-{
-  assert(i >=0 && i <= N-1);
-  assert(j >=1 && j <= n);
-  
-  return (j == s) ? 0 : _get_p(i, j);
-}
-
-/** 
- * @return _get_p(i, j) except when j==s it returns 1
- */
-template <typename T>
-int FFT<T>::_get_p1(int i, int j, int s)
-{
-  assert(i >=0 && i <= N-1);
-  assert(j >=1 && j <= n);
-  
-  return (j == s) ? 1 : _get_p(i, j);
-}
-
-template <typename T>
-void FFT<T>::_pre_compute_consts()
-{
-  tmp2 = new Mat<T>(gf, n+1, N);
-  tmp3 = new Mat<T>(gf, n+1, N);
-  tmp4 = new Mat<T>(gf, n+1, N);
-  tmp5 = new Vec<T>(gf, N);
-
-  tmp2->zero_fill();
-  tmp3->zero_fill();
-  tmp4->zero_fill();
-  tmp5->zero_fill();
-
-  for (int i = 1; i <= n;i++) {
-    for (int j = 0;j <= N-1;j++) {
-      T _tmp1 = 0;
-      for (int k = 1;k <= i;k++)
-        _tmp1 += _get_p(j, n-i+k) * __gf64._exp2(i-k);
-
-      T _tmp2 = 0;
-      for (int k = 1;k <= n;k++)
-        _tmp2 += _get_p0(j, k, n-i+1) * __gf64._exp2(k-1);
-      tmp2->set(i, j, _tmp2);
-
-      T _tmp3 = 0;
-      for (int k = 1;k <= n;k++)
-        _tmp3 += _get_p1(j, k, n-i+1) * __gf64._exp2(k-1);
-      tmp3->set(i, j, _tmp3);
-
-      T _tmp4 = _tmp1 * __gf64._exp2(n-i);
-      tmp4->set(i, j, _tmp4);
-    }
-  }
-
-  for (int i = 0;i <= N-1;i++) {
-    T _tmp5 = 0;
-    for (int k = 1;k <= n;k++)
-      _tmp5 += _get_p(i, n-k+1) * __gf64._exp2(k-1);
-    tmp5->set(i, _tmp5);
-  }
-}
-
-template <typename T>
-void FFT<T>::_fft(Vec<T> *output, Vec<T> *input, Vec<T> *_W)
-{
-  Mat<T> *phi = new Mat<T>(gf, n+1, N);
-
-  //compute phi[0][i]
-  for (int i = 0;i <= N-1;i++)
-    phi->set(0, i, input->get(i));
-  
-  for (int i = 1; i <= n;i++) {
-    for (int j = 0;j <= N-1;j++) {
-         
-      DoubleT<T>val = 
-        DoubleT<T>(_W->get(tmp4->get(i, j))) *
-        phi->get(i-1, tmp3->get(i, j)) +
-        phi->get(i-1, tmp2->get(i, j));
-
-      phi->set(i, j, val % gf->card());
-    }
-  }
-
-  //compute FFT
-  for (int i = 0;i <= N-1;i++)
-    output->set(i, phi->get(n, tmp5->get(i)));
-
-  delete phi;
-}
-
-template <typename T>
-void FFT<T>::fft(Vec<T> *output, Vec<T> *input)
-{
-  _fft(output, input, W);
-}
-
-template <typename T>
-void FFT<T>::ifft(Vec<T> *output, Vec<T> *input)
-{
-  _fft(output, input, inv_W);
-  output->mul_scalar(inv_N);
 }
