@@ -9,6 +9,8 @@ template<typename T>
 class FFTN : public FFT<T>
 {
 private:
+  T w;
+  T inv_w;
   Mat<T> *W;
   Mat<T> *inv_W;
   void compute_W(Mat<T> *_W, T _w);
@@ -21,8 +23,10 @@ private:
 };
 
 template <typename T>
-FFTN<T>::FFTN(GF<T> *gf, int n, T w) : FFT<T>(gf, n, w)
+FFTN<T>::FFTN(GF<T> *gf, int n, T w) : FFT<T>(gf, n)
 {
+  this->w = w;
+  this->inv_w = gf->inv(w);
   this->W = new Mat<T>(gf, this->n, this->n);
   this->inv_W = new Mat<T>(gf, this->n, this->n);
 

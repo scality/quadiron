@@ -16,9 +16,11 @@ class Mat
   int n_cols;
   Mat(GF<T> *gf, int n_rows, int n_cols);
   ~Mat();
+  virtual int get_n_rows();
+  virtual int get_n_cols();
   void zero_fill(void);
   void set(int i, int j, T val);
-  T get(int i, int j);
+  virtual T get(int i, int j);
   void inv(void);
   void mul(Vec<T> *output, Vec<T> *v);
   void vandermonde(void);
@@ -50,6 +52,18 @@ template <typename T>
 Mat<T>::~Mat()
 {
   delete[] this->mem;
+}
+
+template <typename T>
+int Mat<T>::get_n_rows(void)
+{
+  return n_rows;
+}
+
+template <typename T>
+int Mat<T>::get_n_cols(void)
+{
+  return n_cols;
 }
 
 template <typename T>
@@ -336,8 +350,8 @@ void Mat<T>::mul(Vec<T> *output, Vec<T> *v)
 {
   int i, j;
 
-  assert(n_cols == v->get_n());
-  assert(n_rows == output->n);
+  assert(get_n_cols() == v->get_n());
+  assert(get_n_rows() == output->n);
 
   for (i = 0;i < n_rows;i++) {
     for (j = 0;j < n_cols;j++) {
