@@ -11,13 +11,14 @@ class FFTLN : public FFT<T>
 public:
   int l;
 private:
+  T w;
+  T inv_w;
   Vec<T> *W;
   Vec<T> *inv_W;
   Mat<T> *tmp2;
   Mat<T> *tmp3;
   Mat<T> *tmp4;
   Vec<T> *tmp5;
-  void compute_W(Vec<T> *_W, T _w);
   int _get_p(int i, int j);
   int _get_p0(int i, int j, int s);
   int _get_p1(int i, int j, int s);
@@ -31,14 +32,17 @@ private:
 };
 
 template <typename T>
-FFTLN<T>::FFTLN(GF<T> *gf, int l, T w) : FFT<T>(gf, __gf64._exp2(l), w)
+FFTLN<T>::FFTLN(GF<T> *gf, int l, T w) : FFT<T>(gf, __gf64._exp2(l))
 {
   this->l = l;
+  this->w = w;
+  this->inv_w = gf->inv(w);
+
   this->W = new Vec<T>(gf, this->n + 1);
   this->inv_W = new Vec<T>(gf, this->n + 1);
+  gf->compute_omegas(W, this->n, w);
+  gf->compute_omegas(inv_W, this->n, inv_w);
 
-  compute_W(W, w);
-  compute_W(inv_W, this->inv_w);
   _pre_compute_consts();
 }
 
@@ -60,33 +64,6 @@ FFTLN<T>::~FFTLN()
  * @param _W vector of powers of roots
  * @param _w Nth root of unity
  */
-template <typename T>
-void FFTLN<T>::compute_W(Vec<T> *_W, T _w)
-{
-  std::ostringstream filename;  
-
-  filename << "W" << _w << ".cache";
-
-  if (-1 == access(filename.str().c_str(), F_OK)) {
-    std::ofstream file;
-    file.open(filename.str().c_str(), std::ios::out);
-    for (int i = 0;i <= this->n;i++) {
-      _W->set(i, this->gf->exp(_w, i));
-      file << _W->get(i) << "\n";
-    }
-  } else {
-    std::ifstream file;
-    int i = 0;
-    file.open(filename.str().c_str(), std::ios::in);
-    T tmp;
-    while (file >> tmp) {
-      _W->set(i, tmp);
-      i++;
-    }
-    assert(i == this->n + 1);
-  }
-}
-
 /** 
  * Simulate the bit matrix
  *

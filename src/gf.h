@@ -7,8 +7,11 @@ using DoubleT = typename Double<T>::T;
 template<typename T>
 using SignedDoubleT = typename SignedDouble<T>::T;
 
+template<typename T>
+class Vec;
+
 /** 
- * Generic class for Galois Fields of p^n
+ * Generic class for Galois Fields of q=p^n
  * 
  * @note Functions starting with _ are convenience function that does
  *       not call GF specific operations
@@ -45,8 +48,9 @@ protected:
   T _exp(T base, T exponent);
   T _exp_mod(T base, T exponent, T modulus);
   T log_naive(T base, T exponent);
-  T _log2(T x);
-  T _exp2(int x);
+  bool _is_power_of_2(int x);
+  int _log2(int x);
+  int _exp2(int x);
   SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b, SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
   T _chinese_remainder(int n_mod, T a[], T n[]);
   bool is_quadratic_residue(T q);
@@ -54,6 +58,8 @@ protected:
   bool _solovay_strassen1(T a, T n);
   bool _solovay_strassen(T n);
   bool _is_prime(T n);
+  T get_nth_root(int n, int R);
+  void compute_omegas(Vec<T> *W, int n, T w);
   T _weak_rand(T max);
   T weak_rand(void);
 };
@@ -207,6 +213,19 @@ T GF<T>::log_naive(T base, T exponent)
 }
 
 /** 
+ * check if x is a power of 2
+ * 
+ * @param x 
+ * 
+ * @return 
+ */
+template <typename T>
+bool GF<T>::_is_power_of_2(int x) 
+{
+  return x > 0 && !(x & (x-1));
+}
+
+/** 
  * Compute log2(x)
  * 
  * @param exponent 
@@ -214,9 +233,9 @@ T GF<T>::log_naive(T base, T exponent)
  * @return 
  */
 template <typename T>
-T GF<T>::_log2(T x)
+int GF<T>::_log2(int x)
 {
-  T result = 0;
+  int result = 0;
 
   if (x == 0) 
     throw NTL_EX_INVAL;
@@ -240,10 +259,9 @@ T GF<T>::_log2(T x)
  * @return 
  */
 template <typename T>
-T GF<T>::_exp2(int x)
+int GF<T>::_exp2(int x)
 {
-  T one = 1;
-  return one << x;
+  return 1 << x;
 }
 
 /** 
@@ -489,6 +507,71 @@ bool GF<T>::_is_prime(T n)
   }
   return true;
 }
+
+/** 
+ * compute root of order n-1 such as r^(n-1) mod q == 1
+ * As suggested by the paper:
+ * FNT-based Reed-Solomon Erasure Codes
+ * by Alexandre Soro and Jerome Lacan
+ * 
+ * @param R primitive root
+ * @param n must be a power of 2
+ *
+ * @return root
+ */
+template <typename T>
+T GF<T>::get_nth_root(int n, int R)
+{
+  assert(_is_power_of_2(n));
+  u_int l = _log2(n);
+  assert(l <= 16);
+  mpz_class _R = R;
+  mpz_class _q = card();
+  mpz_class _r;
+  mpz_powm_ui(_r.get_mpz_t(), _R.get_mpz_t(), _exp2(16-l), _q.get_mpz_t());
+  //std::cout << "n=" << n << " l=" << l << " r=" << _r << " q=" << _q << "\n";
+  return _r.get_ui();
+}
+
+/** 
+ * Compute the different powers of the root of unity into a vector
+ *
+ * @note cache the result in a file called W<w>.cache
+ * 
+ * @note XXX not reentrant
+ * 
+ * @param W output vector (must be of length n+1)
+ * @param n
+ * @param w n-th root of unity
+ */
+template <typename T>
+void GF<T>::compute_omegas(Vec<T> *W, int n, T w)
+{
+  std::ostringstream filename;  
+
+  filename << "W" << w << ".cache";
+
+  if (-1 == access(filename.str().c_str(), F_OK)) {
+    std::ofstream file;
+    file.open(filename.str().c_str(), std::ios::out);
+    for (int i = 0;i <= n;i++) {
+      W->set(i, exp(w, i));
+      file << W->get(i) << "\n";
+    }
+  } else {
+    std::ifstream file;
+    int i = 0;
+    file.open(filename.str().c_str(), std::ios::in);
+    T tmp;
+    while (file >> tmp) {
+      W->set(i, tmp);
+      i++;
+    }
+    assert(i == n + 1);
+  }
+}
+
+
 
 /** 
  * Returns a number n such as 0 < n < max

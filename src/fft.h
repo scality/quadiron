@@ -13,21 +13,17 @@ public:
   GF<T> *gf;
   int n;
   T inv_n;
-  T w;
-  T inv_w;
 protected:
-  FFT(GF<T> *gf, int n, T w);
+  FFT(GF<T> *gf, int n);
 public:
   virtual void fft(Vec<T> *output, Vec<T> *input) = 0;
   virtual void ifft(Vec<T> *output, Vec<T> *input) = 0;
 };
 
 template <typename T>
-FFT<T>::FFT(GF<T> *gf, int n, T w)
+FFT<T>::FFT(GF<T> *gf, int n)
 {
   this->gf = gf;
   this->n = n;
   this->inv_n = gf->inv(n);
-  this->w = w;
-  this->inv_w = gf->inv(w);
 }

@@ -282,6 +282,43 @@ public:
     }
   }
 
+  void test_fft_bis()
+  {
+    u_int l;
+    u_int n;
+    u_int q = 65537;
+    GFP<T> gf = GFP<T>(q);
+    u_int R = 3; //primitive root
+    u_int n_data = 3;
+    u_int n_parities = 3;
+
+    std::cout << "test_fft\n";
+
+    assert(gf._jacobi(R, q) == -1);
+
+    //with this encoder we cannot exactly satisfy users request, we need to pad
+    l = __gf64._log2(n_data + n_parities) + 1;
+    n = __gf64._exp2(l);
+
+    //std::cerr << "l=" << l << "\n";
+    //std::cerr << "n=" << n << "\n";
+
+    FFT2K<T> fft = FFT2K<T>(&gf, n, R);
+    
+    for (int j = 0;j < 100000;j++) {
+      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+      v.zero_fill();
+      for (int i = 0;i < n_data;i++)
+        v.set(i, gf.weak_rand());
+      //v.dump();
+      fft.fft(&_v, &v);
+      //_v.dump();
+      fft.ifft(&v2, &_v);
+      //v2.dump();
+      assert(v.eq(&v2));
+    }
+  }
+
   void test_fft2()
   {
     u_int l;
@@ -352,6 +389,7 @@ public:
     test_quadratic_residues();
     test_jacobi();
     test_fft();
+    //test_fft_bis();
     test_fft2();
     test_mul_bignum();
   }

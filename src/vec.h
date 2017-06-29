@@ -16,6 +16,8 @@ class Vec
   void set(int i, T val);
   virtual T get(int i);
   void mul_scalar(T scalar);
+  void hadamard_mul(Vec<T> *v);
+  void add(Vec<T> *v);
   void copy(Vec<T> *v);
   void copy(Vec<T> *v, int n);
   bool eq(Vec<T> *v);
@@ -77,6 +79,29 @@ void Vec<T>::mul_scalar(T scalar)
 {
   for (int i = 0; i < n;i++)
     set(i, gf->mul(get(i), scalar));
+}
+
+/** 
+ * entrywise product
+ * 
+ * @param v 
+ */
+template <typename T>
+void Vec<T>::hadamard_mul(Vec<T> *v)
+{
+  assert(n == v->get_n());
+
+  for (int i = 0;i < n;i++)
+    set(i, gf->mul(get(i), v->get(i)));
+}
+
+template <typename T>
+void Vec<T>::add(Vec<T> *v)
+{
+  assert(n == v->get_n());
+
+  for (int i = 0;i < n;i++)
+    set(i, gf->add(get(i), v->get(i)));
 }
 
 template <typename T>
