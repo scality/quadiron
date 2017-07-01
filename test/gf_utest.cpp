@@ -136,7 +136,31 @@ public:
     
     assert(gf29.add(28, 1) == 0);
   }
-  
+
+  void test_negation_gf2_32()
+  {
+    std::cout << "test_negation_gf(2^32)\n";
+
+    GF2N<T> gf2_32(32);
+    test_negation(&gf2_32);
+  }
+
+  void test_reciprocal_gf2_32()
+  {
+    std::cout << "test_reciprocal_gf(2^32\n";
+
+    GF2N<T> gf2_32(32);
+    test_reciprocal(&gf2_32);
+  }
+
+  void test_log_gf2_32()
+  {
+    std::cout << "test_log_gf(2^32\n";
+
+    GF2N<T> gf2_32(32);
+    test_log(&gf2_32);
+  }
+
   void gf_utest()
   {
     std::cout << "gf_utest\n";
@@ -151,6 +175,17 @@ public:
     test_reciprocal_gf256();
     test_log_gf256();
     test_misc_gf29();
+  }
+
+  void gf_utest_2_32()
+  {
+    std::cout << "gf_utest\n";
+
+    srand(time(0));
+
+    test_negation_gf2_32();
+    test_reciprocal_gf2_32();
+    // test_log_gf2_32();
   }
 
   void gf_utest_nogf2n()
@@ -185,6 +220,7 @@ void gf_utest()
   gfutest_uint32.gf_utest();
   GFUtest<uint64_t> gfutest_uint64;
   gfutest_uint64.gf_utest();
+  gfutest_uint64.gf_utest_2_32();
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n(); //XXX gf2n broken for now
 }
