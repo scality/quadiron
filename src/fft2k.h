@@ -3,7 +3,7 @@
 
 #pragma once
 
-/** 
+/**
  * Cooley-Tukey Algorithm
  *
  * if n = 2k, then
@@ -14,8 +14,8 @@
  *                             |    ...   |
  *                             | w^(2k-1) |
  *
- * @param output 
- * @param input 
+ * @param output
+ * @param input
  */
 template<typename T>
 class FFT2K : public FFT<T>
@@ -24,13 +24,14 @@ class FFT2K : public FFT<T>
   FFTN<T> *fftn;
   bool bypass;
   int k;
+  int N;
   T w;
   T inv_w;
   Vec<T> *W;
   Vec<T> *inv_W;
   FFT2K<T> *fftk;
  public:
-  FFT2K(GF<T> *gf, int n, int R);
+  FFT2K(GF<T> *gf, int n, int R, int N=0);
   ~FFT2K();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
@@ -38,20 +39,24 @@ private:
   void _fft(Vec<T> *output, Vec<T> *input, bool inv);
 };
 
-/** 
+/**
  * n-th root will be constructed with primitive root
- * 
- * @param gf 
+ *
+ * @param gf
  * @param n for now must be a power of 2
  * @param R primitive root
- * 
- * @return 
+ * @param N original length
+ *
+ * @return
  */
 template <typename T>
-FFT2K<T>::FFT2K(GF<T> *gf, int n, int R) : FFT<T>(gf, n)
+FFT2K<T>::FFT2K(GF<T> *gf, int n, int R, int N) : FFT<T>(gf, n)
 {
   w = gf->get_nth_root(n, R);
   inv_w = gf->inv(w);
+  this->N = N;
+  if (this->N == 0)
+    this->N = n;
 
   if (n != 2 && n % 2 == 0) {
     bypass = false;
@@ -62,13 +67,13 @@ FFT2K<T>::FFT2K(GF<T> *gf, int n, int R) : FFT<T>(gf, n)
     gf->compute_omegas(inv_W, n, inv_w);
 
     k = n / 2;
-    this->fftk = new FFT2K<T>(gf, k, R);
+    this->fftk = new FFT2K<T>(gf, k, R, this->N);
   } else {
     bypass = true;
 
     W = nullptr;
     inv_W = nullptr;
-    
+
     this->fftn = new FFTN<T>(gf, n, w);
   }
 }
@@ -82,7 +87,7 @@ FFT2K<T>::~FFT2K()
     delete fftk;
 }
 
-/** 
+/**
  * Virtual (v->get_n()*2) x 1 vertical vector for the need of
  * Cooley-Tukey algorithm
  *
@@ -137,27 +142,36 @@ void FFT2K<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
   for (int i = 0; i < this->n; i++) {
     if (i % 2 == 0)
       even.set(i/2, input->get(i));
-    else 
+    else
       odd.set(i/2, input->get(i));
   }
   //even.dump();
   //odd.dump();
   Vec<T> _even(this->gf, k);
   Vec<T> _odd(this->gf, k);
-  fftk->fft(&_even, &even);
-  fftk->fft(&_odd, &odd);
-  
+  if (inv) {
+    fftk->ifft(&_even, &even);
+    fftk->ifft(&_odd, &odd);
+  } else {
+    fftk->fft(&_even, &even);
+    fftk->fft(&_odd, &odd);
+  }
+
   V2Vec<T> veven(&_even);
   V2Vec<T> vodd(&_odd);
-  
+
   if (inv)
     output->copy(inv_W, this->n);
   else
     output->copy(W, this->n);
   output->hadamard_mul(&vodd);
   output->add(&veven);
-  if (inv)
-    output->mul_scalar(this->inv_n);
+  /*
+   * We need to divide output to `N` for the inverse formular
+   * We need to multiply output to `2` since they are computed by fftn for n=2
+   */
+  if (inv && this->k == this->N / 2)
+    output->mul_scalar(this->gf->div(2, this->N));
 }
 
 template <typename T>
@@ -166,7 +180,7 @@ void FFT2K<T>::fft(Vec<T> *output, Vec<T> *input)
   //input->dump();
 
   if (bypass)
-    return fftn->fft(output, input); 
+    return fftn->fft(output, input);
   else
     return _fft(output, input, false);
 }

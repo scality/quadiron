@@ -40,11 +40,11 @@ public:
     test_gcd1(&gf);
   }
 
-  /** 
+  /**
    * http://www.math.unm.edu/~loring/links/discrete_f05/remainder.pdf
    * http://gauss.math.luc.edu/greicius/Math201/Fall2012/Lectures/ChineseRemainderThm.article.pdf
-   * 
-   * @param gf 
+   *
+   * @param gf
    */
   void test_chinese_remainder()
   {
@@ -106,35 +106,35 @@ public:
     assert(__gf64._jacobi(47, 221) == -1);
     assert(__gf64._jacobi(2, 221) == -1);
   }
-  
-  /** 
+
+  /**
    * convert a number into a vector of digits padded with zeros
-   * 
-   * @param num 
-   * 
-   * @return 
+   *
+   * @param num
+   *
+   * @return
    */
   Vec<T> *_convert_string2vec(GF<T> *gf, int n, char num[])
   {
     int i;
     Vec<T> *vec = new Vec<T>(gf, n);
     int len = strlen(num);
-    
+
     for (i = 0;i < len;i++) {
       vec->set(i, num[len - i - 1] - '0');
     }
-    for (;i < n;i++) {  
+    for (;i < n;i++) {
       vec->set(i, 0);
     }
-    
+
     return vec;
   }
 
-  /** 
+  /**
    * Schönhage-Strassen algorithm
    * Example taken from Pierre Meunier's book
-   * 
-   * @param gf 
+   *
+   * @param gf
    */
   void test_mul_bignum()
   {
@@ -158,7 +158,7 @@ public:
     //std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
     assert(__gf64._is_prime(p1));
     assert(__gf64._is_prime(p2));
-    
+
     //ensure their product is bounded (b-1)^2*2^(n-1) < m
     uint64_t m = p1 * p2;
     //check overflow
@@ -267,7 +267,7 @@ public:
     //std::cerr << "r=" << r << "\n";
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
-    
+
     for (int j = 0;j < 100000;j++) {
       Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
@@ -304,7 +304,7 @@ public:
     //std::cerr << "n=" << n << "\n";
 
     FFT2K<T> fft = FFT2K<T>(&gf, n, R);
-    
+
     for (int j = 0;j < 100000;j++) {
       Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
@@ -346,7 +346,7 @@ public:
     //std::cerr << "r=" << r << "\n";
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
-    
+
     Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     v.zero_fill();
     for (int i = 0;i < n_data;i++)
@@ -389,7 +389,7 @@ public:
     test_quadratic_residues();
     test_jacobi();
     test_fft();
-    //test_fft_bis();
+    test_fft_bis();
     test_fft2();
     test_mul_bignum();
   }
