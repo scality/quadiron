@@ -8,10 +8,12 @@
 template class GF<uint32_t>;
 template class GFP<uint32_t>;
 template class GF2N<uint32_t>;
+template class GF2N<uint64_t>;
 template class Mat<uint32_t>;
 template class Vec<uint32_t>;
 template class FEC<uint32_t>;
 template class FECGF2NRS<uint32_t>;
+template class FECGF2NRS<uint64_t>;
 template class FECFNTRS<uint32_t>;
 
 int vflag = 0;
@@ -19,7 +21,7 @@ char *prefix = NULL;
 
 void xusage()
 {
-  std::cerr << "Usage: ec [-e gf2nrsv|gf2nrsc|fntrs][-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)] -c (encode) | -r (repair)\n";
+  std::cerr << "Usage: ec [-e gf2nrsv|gf2nrsc|gf2nrsv-bign|gf2nrsc-bign|fntrs][-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)] -c (encode) | -r (repair)\n";
   exit(1);
 }
 
@@ -38,7 +40,7 @@ char *xstrdup(const char *str)
   return n;
 }
 
-/** 
+/**
  * (re-)create missing prefix.c1 ... cm files
  *
  */
@@ -50,14 +52,14 @@ void create_coding_files(FEC<T> *fec)
   std::vector<std::ostream*> c_files(fec->get_n_outputs(), nullptr);
   std::vector<std::ostream*> c_props_files(fec->get_n_outputs(), nullptr);
   std::vector<KeyValue*> c_props(fec->get_n_outputs(), nullptr);
-  
+
   for (int i = 0;i < fec->n_data;i++) {
     snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
     if (vflag)
       std::cerr << "create: opening data " << filename << "\n";
     d_files[i] = new std::ifstream(filename);
   }
-  
+
   for (int i = 0;i < fec->get_n_outputs();i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
@@ -90,9 +92,9 @@ void create_coding_files(FEC<T> *fec)
   }
 }
 
-/** 
+/**
  * repair data files
- * 
+ *
  */
 template <typename T>
 bool repair_data_files(FEC<T> *fec)
@@ -119,7 +121,7 @@ bool repair_data_files(FEC<T> *fec)
       d_files[i] = new std::ifstream(filename);
     }
   }
-  
+
   for (int i = 0;i < fec->get_n_outputs();i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
@@ -147,14 +149,14 @@ bool repair_data_files(FEC<T> *fec)
 
   fec->decode_bufs(d_files, c_files, c_props, r_files);
 
-  for (int i = 0;i < fec->n_data;i++) { 
+  for (int i = 0;i < fec->n_data;i++) {
     if (nullptr != d_files[i]) {
       (static_cast<std::ifstream*>(d_files[i]))->close();
       delete d_files[i];
     }
   }
 
-  for (int i = 0;i < fec->get_n_outputs();i++) {       
+  for (int i = 0;i < fec->get_n_outputs();i++) {
     if (nullptr != c_props_files[i]) {
       (static_cast<std::ifstream*>(c_props_files[i]))->close();
       delete c_props_files[i];
@@ -169,13 +171,13 @@ bool repair_data_files(FEC<T> *fec)
     }
   }
 
-  for (int i = 0;i < fec->n_data;i++) {                
+  for (int i = 0;i < fec->n_data;i++) {
     if (nullptr != r_files[i]) {
       (static_cast<std::ofstream*>(r_files[i]))->close();
       delete r_files[i];
     }
-  }                       
-  
+  }
+
   return 0;
 }
 
@@ -190,6 +192,7 @@ enum ec_type
   {
     EC_TYPE_UNDEF = 0,
     EC_TYPE_GF2NRS,
+    EC_TYPE_GF2NRS_BIGN,
     EC_TYPE_FNTRS,
   };
 
@@ -201,6 +204,7 @@ int main(int argc, char **argv)
   int uflag = 0;
   ec_type eflag = EC_TYPE_UNDEF;
   FECGF2NRS<uint32_t>::FECGF2NRSType gf2nrs_type;
+  FECGF2NRS<uint64_t>::FECGF2NRSType gf2nrs_bign_type;
   int word_size = 0;
 
   n_data = n_parities = -1;
@@ -213,6 +217,12 @@ int main(int argc, char **argv)
       } else if (!strcmp(optarg, "gf2nrsc")) {
         eflag = EC_TYPE_GF2NRS;
         gf2nrs_type = FECGF2NRS<uint32_t>::CAUCHY;
+      } else if (!strcmp(optarg, "gf2nrsv-bign")) {
+        eflag = EC_TYPE_GF2NRS_BIGN;
+        gf2nrs_bign_type = FECGF2NRS<uint64_t>::VANDERMONDE;
+      } else if (!strcmp(optarg, "gf2nrsc-bign")) {
+        eflag = EC_TYPE_GF2NRS_BIGN;
+        gf2nrs_bign_type = FECGF2NRS<uint64_t>::CAUCHY;
       } else if (!strcmp(optarg, "fntrs"))
         eflag = EC_TYPE_FNTRS;
       else
@@ -272,7 +282,7 @@ int main(int argc, char **argv)
     }
     GFP<uint32_t> *gf = new GFP<uint32_t>(__gf32._exp(2, word_size * 8)+1); //2^2^4+1
     fec = new FECFNTRS<uint32_t>(gf, word_size, n_data, n_parities);
-    
+
     if (rflag) {
       if (0 != repair_data_files<uint32_t>(fec)) {
         exit(1);
@@ -286,7 +296,7 @@ int main(int argc, char **argv)
     FECGF2NRS<uint32_t> *fec;
     GF2N<uint32_t> *gf = new GF2N<uint32_t>(word_size * 8);
     fec = new FECGF2NRS<uint32_t>(gf, word_size, n_data, n_parities, gf2nrs_type);
-    
+
     if (rflag) {
       if (0 != repair_data_files<uint32_t>(fec)) {
         exit(1);
@@ -294,6 +304,21 @@ int main(int argc, char **argv)
     }
     create_coding_files<uint32_t>(fec);
     print_stats<uint32_t>(fec);
+    delete fec;
+    delete gf;
+  } else if (eflag == EC_TYPE_GF2NRS_BIGN) {
+    FECGF2NRS<uint64_t> *fec;
+    GF2N<uint64_t> *gf = new GF2N<uint64_t>(word_size * 8);
+    fec = new FECGF2NRS<uint64_t>(gf, word_size, n_data, n_parities,
+      gf2nrs_bign_type);
+
+    if (rflag) {
+      if (0 != repair_data_files<uint64_t>(fec)) {
+        exit(1);
+      }
+    }
+    create_coding_files<uint64_t>(fec);
+    print_stats<uint64_t>(fec);
     delete fec;
     delete gf;
   }

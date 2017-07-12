@@ -3,10 +3,6 @@
 
 #include "gf.h"
 
-enum MulType { mul_log_tab, split_8_8 };
-enum DivType { div_log_tab, div_by_inv };
-enum InvType { inv_by_div, inv_ext_gcd };
-
 template<typename T>
 class GF2N : public GF<T>
 {
@@ -54,6 +50,10 @@ class GF2N : public GF<T>
   T log(T a, T b);
 };
 
+enum MulType { MUL_LOG_TAB, SPLIT_8_8 };
+enum DivType { DIV_LOG_TAB, DIV_BY_INV };
+enum InvType { INV_BY_DIV, INV_EXT_GCD };
+
 template <typename T>
 GF2N<T>::GF2N(T n) : GF<T>(2, n)
 {
@@ -89,14 +89,14 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
   this->my_card = this->mask[n];
   if (n <= 16) {
     setup_tables();
-    this->mul_type = mul_log_tab;
-    this->div_type = div_log_tab;
-    this->inv_type = inv_by_div;
+    this->mul_type = MUL_LOG_TAB;
+    this->div_type = DIV_LOG_TAB;
+    this->inv_type = INV_BY_DIV;
   } else {
     // currently only for (8, 8) split
-    this->mul_type = split_8_8;
-    this->div_type = div_by_inv;
-    this->inv_type = inv_ext_gcd;
+    this->mul_type = SPLIT_8_8;
+    this->div_type = DIV_BY_INV;
+    this->inv_type = INV_EXT_GCD;
     this->sgroup_nb = n/8;
     setup_split_tables();
   }
@@ -292,8 +292,8 @@ T GF2N<T>::mul(T a, T b)
   assert(check(b));
 
   switch (mul_type) {
-    case split_8_8: return _mul_split(a, b);
-    case mul_log_tab:
+    case SPLIT_8_8: return _mul_split(a, b);
+    case MUL_LOG_TAB:
     default: return _mul_log(a, b);
   }
 }
@@ -345,8 +345,8 @@ T GF2N<T>::div(T a, T b)
   assert(check(b));
 
   switch (div_type) {
-    case div_by_inv: return _div_by_inv(a, b);
-    case div_log_tab:
+    case DIV_BY_INV: return _div_by_inv(a, b);
+    case DIV_LOG_TAB:
     default: return _div_log(a, b);
   }
 }
@@ -386,8 +386,8 @@ T GF2N<T>::inv(T a)
   assert(check(a));
 
   switch (inv_type) {
-    case inv_ext_gcd: return _inv_ext_gcd(a);
-    case inv_by_div:
+    case INV_EXT_GCD: return _inv_ext_gcd(a);
+    case INV_BY_DIV:
     default: return _inv_by_div(a);
   }
 }

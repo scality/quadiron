@@ -17,7 +17,7 @@ checkfail()
     fi
 }
 
-do_test() 
+do_test()
 {
     bin=$1
     fec_type=$2
@@ -31,7 +31,7 @@ do_test()
     echo -n ${fec_type}_W${word_size}_N${n_data}_M${n_coding}_D${data_loss// /-}_C${coding_loss// /-},
 
     rm -f foo.*
-    
+
     for i in `seq 0 $(expr ${n_data} - 1)`
     do
         dd if=/dev/urandom of=foo.d${i} bs=${bs} count=1 > /dev/null 2>&1
@@ -68,7 +68,7 @@ do_test()
         fi
         j=`expr ${j} + 1`
     done
-    
+
     for i in $coding_loss
     do
         if [ "${fec_type}" = 65537 ]
@@ -102,7 +102,7 @@ do_test()
     echo
 }
 
-for i in fntrs_2 gf2nrsv_1 gf2nrsv_2 gf2nrsc_1 gf2nrsc_2
+for i in fntrs_2 gf2nrsv_1 gf2nrsv_2 gf2nrsc_1 gf2nrsc_2 gf2nrsv-bign_4 gf2nrsc-bign_4
 do
     fec_type=$(echo $i|cut -d_ -f1)
     word_size=$(echo $i|cut -d_ -f2)
