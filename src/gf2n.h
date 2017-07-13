@@ -1,6 +1,7 @@
 /* -*- mode: c++ -*- */
 #pragma once
 
+#include <climits>
 #include "gf.h"
 
 template<typename T>
@@ -17,6 +18,7 @@ class GF2N : public GF<T>
   T *gfilog = NULL;
   T ***gfsplit = NULL; // (n/4-1)*256*256 elements
   T *mask = NULL;
+  bool restricted = false;
   T _mul_log(T a, T b);
   T _mul_split(T a, T b);
   T _mul_by_two(T x);
@@ -68,16 +70,27 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
   else if (n == 16)
     // an alternative: 0x1002b
     this->prim_poly = 0x1100b;
-  else if (n == 32 && sizeof(T) > 4)
+  else if (n == 32 && sizeof(T) >= 4)
     // pentanomial x^32 + x^7 + x^3 + x^2 + 1
     // got from Gadiel Seroussi's paper:
     //  "Table of Low-Weight Binary Irreducible Polynomials"
-    this->prim_poly = 0x10000008d;
-  else if (n == 64 && sizeof(T) > 8)
+    if (sizeof(T) == 4) {
+      this->prim_poly = 0x8d;
+      // restricted case: GF(2^32) works on uint32_t
+      this->restricted = true;
+    } else
+      this->prim_poly = 0x10000008d;
+  else if (n == 64 && sizeof(T) >= 8)
     // pentanomial x^64 + x^4 + x^3 + x + 1
     // got from Gadiel Seroussi's paper:
     //  "Table of Low-Weight Binary Irreducible Polynomials"
-    this->prim_poly = 0x10000000000001003ULL;
+    if (sizeof(T) == 8) {
+      this->prim_poly = 0x1b;
+      // restricted case: GF(2^64) works on uint64_t
+      this->restricted = true;
+    } else
+    //   this->prim_poly = 0x1000000000000001b;
+      this->prim_poly = 0x1;
   else
     assert(false); //XXX generate polynomial
 
@@ -86,7 +99,15 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
 
   this->tab_nb = n/4 - 1;
   this->first_bit = this->mask[n - 1];
-  this->my_card = this->mask[n];
+  if (this->restricted) {
+    switch (n) {
+      case 32: this->my_card = ULONG_MAX; break;
+      case 64:
+      default: this->my_card = ULLONG_MAX; break;
+    }
+  } else
+    this->my_card = this->mask[n];
+
   if (n <= 16) {
     setup_tables();
     this->mul_type = MUL_LOG_TAB;
@@ -125,9 +146,13 @@ void GF2N<T>::init_mask(void)
 
   mask = new T[n];
   v = 1;
-  for (i = 0; i <= n; i++, v *= 2) {
+  for (i = 0; i < n; i++, v *= 2) {
     mask[i] = v;
   }
+  if (this->restricted)
+    mask[n] = my_card;
+  else
+    mask[n] = mask[n - 1] * 2;
 }
 
 
@@ -151,8 +176,9 @@ void GF2N<T>::setup_tables(void)
 template <typename T>
 inline T GF2N<T>::_mul_by_two(T x)
 {
-  if (x & first_bit)
-    return (x * 2) ^ prim_poly;
+  if (x & first_bit) {
+    return ((x ^ first_bit) * 2) ^ prim_poly;
+  }
   return x * 2;
 }
 
@@ -470,7 +496,6 @@ T GF2N<T>::_inv_ext_gcd(T x)
     g[a] ^= _shift_left(g[b], j);
     deg[a] = _deg_of(uv[a], n - 1);
     deg[b] = _deg_of(uv[b], n - 1);
-    // std::cout << "u " << uv[a] << " deg " << deg[a] << " " << deg[b] << std::endl;
   }
   return g[a];
 }

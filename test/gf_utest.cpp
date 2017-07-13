@@ -137,28 +137,28 @@ public:
     assert(gf29.add(28, 1) == 0);
   }
 
-  void test_negation_gf2_32()
+  void test_negation_gf2_bign(T n)
   {
-    std::cout << "test_negation_gf(2^32)\n";
+    std::cout << "test_negation_gf(2^" << n << ")\n";
 
-    GF2N<T> gf2_32(32);
-    test_negation(&gf2_32);
+    GF2N<T> gf2n(n);
+    test_negation(&gf2n);
   }
 
-  void test_reciprocal_gf2_32()
+  void test_reciprocal_gf2_bign(T n)
   {
-    std::cout << "test_reciprocal_gf(2^32\n";
+    std::cout << "test_reciprocal_gf(2^" << n << ")\n";
 
-    GF2N<T> gf2_32(32);
-    test_reciprocal(&gf2_32);
+    GF2N<T> gf2n(n);
+    test_reciprocal(&gf2n);
   }
 
-  void test_log_gf2_32()
+  void test_log_gf2_bign(T n)
   {
-    std::cout << "test_log_gf(2^32\n";
+    std::cout << "test_log_gf(2^" << n << ")\n";
 
-    GF2N<T> gf2_32(32);
-    test_log(&gf2_32);
+    GF2N<T> gf2n(n);
+    test_log(&gf2n);
   }
 
   void gf_utest()
@@ -177,15 +177,15 @@ public:
     test_misc_gf29();
   }
 
-  void gf_utest_2_32()
+  void gf_utest_2_bign(T n)
   {
-    std::cout << "gf_utest\n";
+    std::cout << "gf_utest 2^" << n << ")\n";
 
     srand(time(0));
 
-    test_negation_gf2_32();
-    test_reciprocal_gf2_32();
-    // test_log_gf2_32();
+    test_negation_gf2_bign(n);
+    test_reciprocal_gf2_bign(n);
+    // test_log_gf2_bign(n);
   }
 
   void gf_utest_nogf2n()
@@ -218,9 +218,11 @@ void gf_utest()
 {
   GFUtest<uint32_t> gfutest_uint32;
   gfutest_uint32.gf_utest();
+  gfutest_uint32.gf_utest_2_bign(32);
   GFUtest<uint64_t> gfutest_uint64;
   gfutest_uint64.gf_utest();
-  gfutest_uint64.gf_utest_2_32();
+  gfutest_uint64.gf_utest_2_bign(32);
+  gfutest_uint64.gf_utest_2_bign(64);
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n(); //XXX gf2n broken for now
 }
