@@ -1,7 +1,7 @@
 /* -*- mode: c++ -*- */
 #pragma once
 
-/** 
+/**
  * Generic class for Forward-Encoding-Codes
  */
 template<typename T>
@@ -30,19 +30,19 @@ protected:
 
  public:
   FEC(GF<T> *gf, FECType type, u_int word_size, u_int n_data, u_int n_parities);
-  /** 
+  /**
    * Return the number actual parities for TYPE_1 it is exactly n_parities, for
    * TYPE_2 it maybe at least n_data+n_parities (but sometimes more).
-   * @return 
+   * @return
    */
   virtual int get_n_outputs() = 0;
   virtual void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *words) = 0;
   virtual void decode_add_data(int fragment_index, int row) = 0;
   virtual void decode_add_parities(int fragment_index, int row) = 0;
   virtual void decode_build(void) = 0;
-  /** 
+  /**
    * Decode a vector of words
-   * 
+   *
    * @param props properties bound to parity fragments
    * @param offset offset in the data fragments
    * @param output original data (must be of n_data length)
@@ -51,32 +51,32 @@ protected:
    */
   virtual void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *fragments_ids, Vec<T> *words) = 0;
 
-  bool readw(T *ptr, std::istream *stream);  
-  bool writew(T val, std::ostream *stream);  
+  bool readw(T *ptr, std::istream *stream);
+  bool writew(T val, std::ostream *stream);
 
   void encode_bufs(std::vector<std::istream*> input_data_bufs,
                    std::vector<std::ostream*> output_parities_bufs,
                    std::vector<KeyValue*> output_parities_props);
-  
+
   bool decode_bufs(std::vector<std::istream*> input_data_bufs,
                    std::vector<std::istream*> input_parities_bufs,
                    std::vector<KeyValue*> input_parities_props,
                    std::vector<std::ostream*> output_data_bufs);
 };
 
-/** 
+/**
  * Create an encoder
- * 
- * @param gf 
+ *
+ * @param gf
  * @param word_size in bytes
- * @param n_data 
- * @param n_parities 
+ * @param n_data
+ * @param n_parities
  */
 template <typename T>
 FEC<T>::FEC(GF<T> *gf, FECType type, u_int word_size, u_int n_data, u_int n_parities)
 {
   assert(type == TYPE_1 || type == TYPE_2);
-  
+
   this->gf = gf;
   this->type = type;
   this->word_size = word_size;
@@ -99,6 +99,12 @@ bool FEC<T>::readw(T *ptr, std::istream *stream)
       *ptr = s;
       return true;
     }
+  } else if (word_size == 4) {
+    u_int s;
+    if (stream->read((char *) &s, 4)) {
+      *ptr = s;
+      return true;
+    }
   } else {
     assert(false && "no such size");
   }
@@ -116,15 +122,19 @@ bool FEC<T>::writew(T val, std::ostream *stream)
     u_short s = val;
     if (stream->write((char *) &s, 2))
       return true;
+  } else if (word_size == 4) {
+    u_int s = val;
+    if (stream->write((char *) &s, 4))
+      return true;
   } else {
     assert(false && "no such size");
   }
   return false;
 }
 
-/** 
+/**
  * Encode buffers
- * 
+ *
  * @param input_data_bufs must be exactly n_data
  * @param output_parities_bufs must be exactly get_n_outputs() (set nullptr when not missing/wanted)
  * @param output_parities_props must be exactly get_n_outputs() specific properties that the called is supposed to store along with parities
@@ -145,7 +155,7 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
 
   Vec<T> words = Vec<T>(gf, n_data);
   Vec<T> output = Vec<T>(gf, get_n_outputs());
-  
+
   while (true) {
     words.zero_fill();
     for (int i = 0;i < n_data;i++) {
@@ -170,12 +180,12 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
       writew(tmp, output_parities_bufs[i]);
     }
     offset += word_size;
-  } 
+  }
 }
 
-/** 
+/**
  * Decode buffers
- * 
+ *
  * @param input_data_bufs if TYPE_1 must be exactly n_data otherwise it is unused (use nullptr when missing)
  * @param input_parities_bufs if TYPE_1 must be exactly n_parities otherwise get_n_outputs() (use nullptr when missing)
  * @param input_parities_props if TYPE_1 must be exactly n_parities otherwise get_n_outputs() caller is supposed to provide specific information bound to parities
@@ -213,7 +223,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     if (fragment_index == n_data)
       return true;
   }
-  
+
   if (fragment_index < n_data) {
     //finish with parities available
     for (int i = 0;i < get_n_outputs();i++) {
@@ -229,7 +239,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     if (fragment_index < n_data)
       return false;
   }
-    
+
   decode_build();
 
   int n_words;
@@ -237,11 +247,11 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     n_words = n_data;
   else if (type == TYPE_2)
     n_words = get_n_outputs();
-    
+
   Vec<T> words(gf, n_words);
   Vec<T> fragments_ids(gf, n_words);
   Vec<T> output(gf, n_data);
-    
+
   while (true) {
     words.zero_fill();
     fragment_index = 0;
@@ -296,7 +306,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     }
 
     offset += word_size;
-  } 
+  }
 
   return true;
 }

@@ -19,12 +19,12 @@ public:
   void test_negation(GF<T> *gf)
   {
     int i;
-    
+
     for (i = 0; i < 100;i++) {
       T x, y;
-      
+
       //std::cout << "i=" << i << "\n";
-      
+
       x = gf->weak_rand();
       //std::cout << "x=" << x << "\n";
       y = gf->neg(x);
@@ -36,12 +36,12 @@ public:
   void test_reciprocal(GF<T> *gf)
   {
     int i;
-    
+
     for (i = 0; i < 100;i++) {
       T x, y;
-      
+
       //std::cout << "i=" << i << "\n";
-      
+
       x = gf->weak_rand();
       //std::cout << "x=" << x << "\n";
       y = gf->inv(x);
@@ -53,10 +53,10 @@ public:
   void test_log(GF<T> *gf)
   {
     int i;
-    
+
     for (i = 0; i < 1000;i++) {
       T x, y, z, t;
-      
+
       //std::cout << "i=" << i << "\n";
       //std::cout << gf->card() << "\n";
       x = gf->weak_rand();
@@ -75,11 +75,11 @@ public:
       assert(t == y);
     }
   }
-  
+
   void test_negation_gf5()
   {
     std::cout << "test_negation_gf5\n";
-    
+
     GFP<T> gf5(5);
     test_negation(&gf5);
   }
@@ -103,7 +103,7 @@ public:
   void test_negation_gf256()
   {
     std::cout << "test_negation_gf256\n";
-    
+
     GF2N<T> gf256(8);
     test_negation(&gf256);
   }
@@ -127,20 +127,44 @@ public:
   void test_misc_gf29()
   {
     GFP<T> gf29(29);
-    
+
     std::cout << "test_misc_gf29\n";
-    
+
     assert(gf29.neg(28) == 1);
     assert(gf29.neg(18) == 11);
     assert(gf29.neg(4) == 25);
-    
+
     assert(gf29.add(28, 1) == 0);
   }
-  
+
+  void test_negation_gf2_32()
+  {
+    std::cout << "test_negation_gf(2^32)\n";
+
+    GF2N<T> gf2_32(32);
+    test_negation(&gf2_32);
+  }
+
+  void test_reciprocal_gf2_32()
+  {
+    std::cout << "test_reciprocal_gf(2^32\n";
+
+    GF2N<T> gf2_32(32);
+    test_reciprocal(&gf2_32);
+  }
+
+  void test_log_gf2_32()
+  {
+    std::cout << "test_log_gf(2^32\n";
+
+    GF2N<T> gf2_32(32);
+    test_log(&gf2_32);
+  }
+
   void gf_utest()
   {
     std::cout << "gf_utest\n";
-    
+
     srand(time(0));
 
     test_basic_ops();
@@ -153,10 +177,21 @@ public:
     test_misc_gf29();
   }
 
+  void gf_utest_2_32()
+  {
+    std::cout << "gf_utest\n";
+
+    srand(time(0));
+
+    test_negation_gf2_32();
+    test_reciprocal_gf2_32();
+    // test_log_gf2_32();
+  }
+
   void gf_utest_nogf2n()
   {
     std::cout << "gf_utest\n";
-    
+
     srand(time(0));
 
     test_basic_ops();
@@ -185,6 +220,7 @@ void gf_utest()
   gfutest_uint32.gf_utest();
   GFUtest<uint64_t> gfutest_uint64;
   gfutest_uint64.gf_utest();
+  gfutest_uint64.gf_utest_2_32();
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n(); //XXX gf2n broken for now
 }

@@ -526,7 +526,9 @@ T GF<T>::get_nth_root(int n, int R)
   u_int l = _log2(n);
   assert(l <= 16);
   mpz_class _R = R;
-  mpz_class _q = card();
+  std::stringstream my_card;
+  my_card << card();
+  mpz_class _q(my_card.str());
   mpz_class _r;
   mpz_powm_ui(_r.get_mpz_t(), _R.get_mpz_t(), _exp2(16-l), _q.get_mpz_t());
   //std::cout << "n=" << n << " l=" << l << " r=" << _r << " q=" << _q << "\n";
