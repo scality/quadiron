@@ -105,6 +105,12 @@ bool FEC<T>::readw(T *ptr, std::istream *stream)
       *ptr = s;
       return true;
     }
+  } else if (word_size == 8) {
+    u_long s;
+    if (stream->read((char *) &s, 8)) {
+      *ptr = s;
+      return true;
+    }
   } else {
     assert(false && "no such size");
   }
@@ -125,6 +131,10 @@ bool FEC<T>::writew(T val, std::ostream *stream)
   } else if (word_size == 4) {
     u_int s = val;
     if (stream->write((char *) &s, 4))
+      return true;
+  } else if (word_size == 8) {
+    u_long s = val;
+    if (stream->write((char *) &s, 8))
       return true;
   } else {
     assert(false && "no such size");
