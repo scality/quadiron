@@ -4,13 +4,12 @@
 template<typename T>
 class FFTUtest
 {
-public:
-
+ public:
   void test_gcd1(GF<T> *gf)
   {
     SignedDoubleT<T> bezout[2];
 
-    //not explicitely related to GF(97)
+    // not explicitely related to GF(97)
     assert(2 == gf->_extended_gcd(240, 46, NULL, NULL));
     assert(6 == gf->_extended_gcd(54, 24, NULL, NULL));
     assert(15 == gf->_extended_gcd(210, 45, NULL, NULL));
@@ -20,12 +19,13 @@ public:
     assert(gf->inv(20) == 34);
     //
     int i;
-    for (i = 0;i < 100;i++) {
+    for (i = 0; i < 100; i++) {
       T x = gf->weak_rand();
       assert(1 == gf->_extended_gcd(97, x, bezout, NULL));
-      //std::cerr << bezout[0] << "*" << 97 << " " << bezout[1] << "*" << x << "=1\n";
+      // std::cerr << bezout[0] << "*" << 97 << " " << bezout[1] << "*";
+      // stdd:cerr << x << "=1\n";
       T y = gf->inv(x);
-      //std::cerr << "inv(x)=" << y << "\n";
+      // std::cerr << "inv(x)=" << y << "\n";
       if (bezout[1] < 0)
         bezout[1] = bezout[1] + gf->card();
       assert(bezout[1] == y);
@@ -75,7 +75,7 @@ public:
     a[1] = 0;
     n[1] = 6;
     omega = gf5._chinese_remainder(2, a, n);
-    //no solution XXX detect it
+    // no solution XXX detect it
   }
 
   void test_quadratic_residues()
@@ -84,7 +84,7 @@ public:
 
     GFP<T> gf32(32);
     int i;
-    for (i = 0;i < 32;i++) {
+    for (i = 0; i < 32; i++) {
       assert(gf32.is_quadratic_residue(gf32.exp(i, 2)));
     }
 
@@ -120,10 +120,10 @@ public:
     Vec<T> *vec = new Vec<T>(gf, n);
     int len = strlen(num);
 
-    for (i = 0;i < len;i++) {
+    for (i = 0; i < len; i++) {
       vec->set(i, num[len - i - 1] - '0');
     }
-    for (;i < n;i++) {
+    for (; i < n; i++) {
       vec->set(i, 0);
     }
 
@@ -140,48 +140,48 @@ public:
   {
     std::cout << "test_mul_bignum\n";
 
-    int b = 10; //base
-    int p = 14; //we could multiply integers of 2^p digits
+    int b = 10;  // base
+    int p = 14;  // we could multiply integers of 2^p digits
     int max_digits = __gf64._exp(2, p);
-    //std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
+    // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
     uint64_t l = p + 1;
-    //std::cerr << "l=" << l << "\n";
+    // std::cerr << "l=" << l << "\n";
 
-    //choose 2 prime numbers of the form p=a.2^n+1
-    //because if x is not a quadratic residue then w=x^a is
-    //a 2^n-th principal root of unity in GF_p
+    // choose 2 prime numbers of the form p=a.2^n+1
+    // because if x is not a quadratic residue then w=x^a is
+    // a 2^n-th principal root of unity in GF_p
     uint64_t a1 = 2;
     uint64_t a2 = 5;
     uint64_t p1 = a1 * __gf64._exp(2, 15) + 1;
     uint64_t p2 = a2 * __gf64._exp(2, 15) + 1;
-    //std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
+    // std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
     assert(__gf64._is_prime(p1));
     assert(__gf64._is_prime(p2));
 
-    //ensure their product is bounded (b-1)^2*2^(n-1) < m
+    // ensure their product is bounded (b-1)^2*2^(n-1) < m
     uint64_t m = p1 * p2;
-    //check overflow
+    // check overflow
     assert(m/p1 == p2);
-    //std::cerr << " m=" << m << "\n";
+    // std::cerr << " m=" << m << "\n";
     assert(__gf64._exp((b - 1), 2) * __gf64._exp(p, 2) < m);
 
-    //find x so it is not a quadratic residue in GF_p1 and GF_p2
+    // find x so it is not a quadratic residue in GF_p1 and GF_p2
     assert(__gf64._jacobi(3, p1) == __gf64._jacobi(p1, 3));
     assert(__gf64._jacobi(p1, 3) == __gf64._jacobi(2, 3));
     assert(__gf64._jacobi(3, p2) == __gf64._jacobi(p2, 3));
     assert(__gf64._jacobi(p2, 3) == __gf64._jacobi(2, 3));
     assert(__gf64._jacobi(2, 3) == -1);
-    //which means x=3 is not a quadratic residue in GF_p1 and GF_p2
+    // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
 
-    //therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
+    // therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
     uint64_t w1 = __gf64._exp(3, a1);
     uint64_t w2 = __gf64._exp(3, a2);
-    //std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
+    // std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
     assert(w1 == 9);
     assert(w2 == 243);
 
-    //find root of unity in GF_p1p2
+    // find root of unity in GF_p1p2
     uint64_t _a[2];
     uint64_t _n[2];
     _a[0] = w1;
@@ -189,20 +189,20 @@ public:
     _a[1] = w2;
     _n[1] = p2;
     uint64_t w = __gf64._chinese_remainder(2, _a, _n);
-    //std::cerr << " w=" << w << "\n";
+    // std::cerr << " w=" << w << "\n";
     assert(w == 25559439);
 
     GFP<T> gf_m(m);
     FFTLN<T> fft(&gf_m, l, 25559439);
 
-    //parse the big numbers
+    // parse the big numbers
     char X[] = "1236548787985654354598651354984132468";
     char Y[] = "745211515185321545554545854598651354984132468";
 
     Vec<T> *_X = _convert_string2vec(&gf_m, fft.n, X);
-    //_X->dump();
+    // _X->dump();
     Vec<T> *_Y = _convert_string2vec(&gf_m, fft.n, Y);
-    //_Y->dump();
+    // _Y->dump();
 
     Vec<T> *sfX = new Vec<T>(&gf_m, fft.n);
     Vec<T> *sfY = new Vec<T>(&gf_m, fft.n);
@@ -212,24 +212,25 @@ public:
     fft.fft(sfX, _X);
     fft.fft(sfY, _Y);
 
-    for (int i = 0;i <= fft.n-1;i++) {
+    for (int i = 0; i <= fft.n-1; i++) {
       DoubleT<T> val = DoubleT<T>(sfX->get(i)) * sfY->get(i);
       _XY->set(i, val % m);
     }
 
     fft.ifft(sfXY, _XY);
 
-    //carry propagation
+    // carry propagation
     mpz_class z = 0;
-    for (int i = 0;i <= fft.n-1;i++) {
+    for (int i = 0; i <= fft.n-1; i++) {
       mpz_class t, b;
       b = 10;
       mpz_pow_ui(t.get_mpz_t(), b.get_mpz_t(), i);
       z += sfXY->get(i) * t;
     }
 
-    //std::cout << z << "\n";
-    assert(z.get_str() == "921490395895362412399910100421159322712298564831565484737491129935640058571771024");
+    // std::cout << z << "\n";
+    assert(z.get_str() == std::string("921490395895362412399910100421159322") +
+      "712298564831565484737491129935640058571771024");
 
     delete sfXY;
     delete _XY;
@@ -246,7 +247,7 @@ public:
     u_int r;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = 3; //primitive root
+    u_int R = 3;  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
@@ -254,30 +255,30 @@ public:
 
     assert(gf._jacobi(R, q) == -1);
 
-    //with this encoder we cannot exactly satisfy users request, we need to pad
+    // with this encoder we cannot exactly satisfy users request, we need to pad
     l = __gf64._log2(n_data + n_parities) + 1;
     n = __gf64._exp2(l);
 
-    //compute root of order n-1 such as r^(n-1) mod q == 1
+    // compute root of order n-1 such as r^(n-1) mod q == 1
     mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf.p;
     r = _r.get_ui();
 
-    //std::cerr << "l=" << l << "\n";
-    //std::cerr << "n=" << n << "\n";
-    //std::cerr << "r=" << r << "\n";
+    // std::cerr << "l=" << l << "\n";
+    // std::cerr << "n=" << n << "\n";
+    // std::cerr << "r=" << r << "\n";
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
 
-    for (int j = 0;j < 100000;j++) {
+    for (int j = 0; j < 100000; j++) {
       Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
-      for (int i = 0;i < n_data;i++)
+      for (int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
-      //v.dump();
+      // v.dump();
       fft.fft(&_v, &v);
-      //_v.dump();
+      // _v.dump();
       fft.ifft(&v2, &_v);
-      //v2.dump();
+      // v2.dump();
       assert(v.eq(&v2));
     }
   }
@@ -288,7 +289,7 @@ public:
     u_int n;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = 3; //primitive root
+    u_int R = 3;  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
@@ -296,25 +297,25 @@ public:
 
     assert(gf._jacobi(R, q) == -1);
 
-    //with this encoder we cannot exactly satisfy users request, we need to pad
+    // with this encoder we cannot exactly satisfy users request, we need to pad
     l = __gf64._log2(n_data + n_parities) + 1;
     n = __gf64._exp2(l);
 
-    //std::cerr << "l=" << l << "\n";
-    //std::cerr << "n=" << n << "\n";
+    // std::cerr << "l=" << l << "\n";
+    // std::cerr << "n=" << n << "\n";
 
     FFT2K<T> fft = FFT2K<T>(&gf, n, R);
 
-    for (int j = 0;j < 100000;j++) {
+    for (int j = 0; j < 100000; j++) {
       Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
-      for (int i = 0;i < n_data;i++)
+      for (int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
-      //v.dump();
+      // v.dump();
       fft.fft(&_v, &v);
-      //_v.dump();
+      // _v.dump();
       fft.ifft(&v2, &_v);
-      //v2.dump();
+      // v2.dump();
       assert(v.eq(&v2));
     }
   }
@@ -326,7 +327,7 @@ public:
     u_int r;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = 3; //primitive root
+    u_int R = 3;  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
@@ -334,29 +335,29 @@ public:
 
     assert(gf._jacobi(R, q) == -1);
 
-    //with this encoder we cannot exactly satisfy users request, we need to pad
+    // with this encoder we cannot exactly satisfy users request, we need to pad
     l = __gf64._log2(n_data + n_parities) + 1;
     n = __gf64._exp2(l);
 
-    //compute root of order n-1 such as r^(n-1) mod q == 1
+    // compute root of order n-1 such as r^(n-1) mod q == 1
     mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf.p;
     r = _r.get_ui();
 
-    //std::cerr << "l=" << l << "\n";
-    //std::cerr << "r=" << r << "\n";
+    // std::cerr << "l=" << l << "\n";
+    // std::cerr << "r=" << r << "\n";
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
 
     Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     v.zero_fill();
-    for (int i = 0;i < n_data;i++)
+    for (int i = 0; i < n_data; i++)
       v.set(i, gf.weak_rand());
     v.set(0, 27746);
     v.set(1, 871);
     v.set(2, 49520);
-    //v.dump();
+    // v.dump();
     fft.fft(&_v, &v);
-    //_v.dump();
+    // _v.dump();
     assert(_v.get(0) == 12600);
     assert(_v.get(1) == 27885);
     assert(_v.get(2) == 17398);
@@ -366,7 +367,7 @@ public:
     assert(_v.get(6) == 4591);
     assert(_v.get(7) == 42289);
     fft.ifft(&v2, &_v);
-    //v2.dump();
+    // v2.dump();
     assert(v.eq(&v2));
   }
 
@@ -425,5 +426,5 @@ void fft_utest()
   FFTUtest<uint64_t> fftutest_uint64;
   fftutest_uint64.fft_utest();
   FFTUtest<mpz_class> fftutest_mpz;
-  fftutest_mpz.fft_utest_no_mul_bignum(); //too slow
+  fftutest_mpz.fft_utest_no_mul_bignum();  // too slow
 }

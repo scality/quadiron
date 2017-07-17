@@ -49,7 +49,7 @@ void Vec<T>::zero_fill(void)
 {
   int i;
 
-  for (i = 0;i < n;i++)
+  for (i = 0; i < n; i++)
     set(i, 0);
 }
 
@@ -57,7 +57,7 @@ template <typename T>
 void Vec<T>::set(int i, T val)
 {
   assert(i >= 0 && i < n);
-  
+
   mem[i] = val;
 }
 
@@ -65,33 +65,33 @@ template <typename T>
 T Vec<T>::get(int i)
 {
   assert(i >= 0 && i < n);
-  
+
   return mem[i];
 }
 
-/** 
+/**
  * Multiplication of a vector by a scalar
- * 
- * @param scalar 
+ *
+ * @param scalar
  */
 template <typename T>
 void Vec<T>::mul_scalar(T scalar)
 {
-  for (int i = 0; i < n;i++)
+  for (int i = 0; i < n; i++)
     set(i, gf->mul(get(i), scalar));
 }
 
-/** 
+/**
  * entrywise product
- * 
- * @param v 
+ *
+ * @param v
  */
 template <typename T>
 void Vec<T>::hadamard_mul(Vec<T> *v)
 {
   assert(n == v->get_n());
 
-  for (int i = 0;i < n;i++)
+  for (int i = 0; i < n; i++)
     set(i, gf->mul(get(i), v->get(i)));
 }
 
@@ -100,7 +100,7 @@ void Vec<T>::add(Vec<T> *v)
 {
   assert(n == v->get_n());
 
-  for (int i = 0;i < n;i++)
+  for (int i = 0; i < n; i++)
     set(i, gf->add(get(i), v->get(i)));
 }
 
@@ -126,7 +126,7 @@ bool Vec<T>::eq(Vec<T> *v)
   if (v->n != this->n)
     return false;
 
-  for (int i = 0;i < v->n;i++) {
+  for (int i = 0; i < v->n; i++) {
     if (get(i) != v->get(i))
       return false;
   }
@@ -138,7 +138,7 @@ template <typename T>
 void Vec<T>::dump(void)
 {
   std::cout << "( ";
-  for (int i = 0;i < n;i++)
+  for (int i = 0; i < n; i++)
     std::cout << get(i) << " ";
   std::cout << ")\n";
 }

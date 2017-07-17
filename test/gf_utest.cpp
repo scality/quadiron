@@ -4,8 +4,7 @@
 template<typename T>
 class GFUtest
 {
-public:
-
+ public:
   void test_basic_ops()
   {
     assert(__gf64._sqrt(2025) == 45);
@@ -20,15 +19,15 @@ public:
   {
     int i;
 
-    for (i = 0; i < 100;i++) {
+    for (i = 0; i < 100; i++) {
       T x, y;
 
-      //std::cout << "i=" << i << "\n";
+      // std::cout << "i=" << i << "\n";
 
       x = gf->weak_rand();
-      //std::cout << "x=" << x << "\n";
+      // std::cout << "x=" << x << "\n";
       y = gf->neg(x);
-      //std::cout << "inv(x)=" << y << "\n";
+      // std::cout << "inv(x)=" << y << "\n";
       assert(gf->add(x, y) == 0);
     }
   }
@@ -37,15 +36,15 @@ public:
   {
     int i;
 
-    for (i = 0; i < 100;i++) {
+    for (i = 0; i < 100; i++) {
       T x, y;
 
-      //std::cout << "i=" << i << "\n";
+      // std::cout << "i=" << i << "\n";
 
       x = gf->weak_rand();
-      //std::cout << "x=" << x << "\n";
+      // std::cout << "x=" << x << "\n";
       y = gf->inv(x);
-      //std::cout << "inv(x)=" << y << "\n";
+      // std::cout << "inv(x)=" << y << "\n";
       assert(gf->mul(x, y) == 1);
     }
   }
@@ -54,24 +53,24 @@ public:
   {
     int i;
 
-    for (i = 0; i < 1000;i++) {
+    for (i = 0; i < 1000; i++) {
       T x, y, z, t;
 
-      //std::cout << "i=" << i << "\n";
-      //std::cout << gf->card() << "\n";
+      // std::cout << "i=" << i << "\n";
+      // std::cout << gf->card() << "\n";
       x = gf->weak_rand();
       y = gf->weak_rand();
-      //std::cout << "x=" << x << "\n";
-      //std::cout << "y=" << y << "\n";
+      // std::cout << "x=" << x << "\n";
+      // std::cout << "y=" << y << "\n";
       try {
         z = gf->log(x, y);
-        //std::cout << "z=" << z << "\n";
+        // std::cout << "z=" << z << "\n";
       } catch (...) {
-        //std::cout << "not found\n";
-        continue ;
+        // std::cout << "not found\n";
+        continue;
       }
       t = gf->exp(x, z);
-      //std::cout << "t=" << t << "\n";
+      // std::cout << "t=" << t << "\n";
       assert(t == y);
     }
   }
@@ -200,7 +199,6 @@ public:
     test_log_gf();
     test_misc_gf29();
   }
-
 };
 
 template class GF<uint32_t>;
@@ -224,5 +222,5 @@ void gf_utest()
   gfutest_uint64.gf_utest_2_bign(32);
   gfutest_uint64.gf_utest_2_bign(64);
   GFUtest<mpz_class> gfutest_mpz;
-  gfutest_mpz.gf_utest_nogf2n(); //XXX gf2n broken for now
+  gfutest_mpz.gf_utest_nogf2n();  // XXX gf2n broken for now
 }

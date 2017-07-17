@@ -71,8 +71,8 @@ void Mat<T>::zero_fill(void)
 {
   int i, j;
 
-  for (i = 0;i < n_rows;i++) {
-    for (j = 0;j < n_cols;j++) {
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
       set(i, j, 0);
     }
   }
@@ -101,11 +101,11 @@ void Mat<T>::swap_rows(int row0, int row1)
 {
   int j;
   T tmp;
-  
+
   assert(row0 >= 0 && row0 < n_rows);
   assert(row1 >= 0 && row1 < n_rows);
 
-  for (j = 0;j < n_cols;j++) {
+  for (j = 0; j < n_cols; j++) {
     tmp = get(row0, j);
     set(row0, j, get(row1, j));
     set(row1, j, tmp);
@@ -146,10 +146,10 @@ void Mat<T>::reduced_row_echelon_form(void)
 
   // Compute row echelon form (REF)
   int num_pivots = 0;
-  for (j = 0; j < n_cols && num_pivots < n_rows; j++) { // For each column
+  for (j = 0; j < n_cols && num_pivots < n_rows; j++) {  // For each column
     // Find a pivot row for this column
     int pivot_row = num_pivots;
-    while (pivot_row < n_rows && 
+    while (pivot_row < n_rows &&
            get(pivot_row, j) == 0)
       pivot_row++;
     if (pivot_row == n_rows)
@@ -157,10 +157,10 @@ void Mat<T>::reduced_row_echelon_form(void)
     swap_rows(num_pivots, pivot_row);
     pivot_row = num_pivots;
     num_pivots++;
-    
+
     // Simplify the pivot row
     mul_row(pivot_row, gf->div(1, get(pivot_row, j)));
-    
+
     // Eliminate rows below
     for (i = pivot_row + 1; i < n_rows; i++)
       add_rows(pivot_row, i, gf->neg(get(i, j)));
@@ -170,20 +170,20 @@ void Mat<T>::reduced_row_echelon_form(void)
   for (int i = num_pivots - 1; i >= 0; i--) {
     // Find pivot
     int pivot_col = 0;
-    while (pivot_col < n_cols && 
+    while (pivot_col < n_cols &&
            get(i, pivot_col) == 0)
       pivot_col++;
     if (pivot_col == n_cols)
       continue;  // Skip this all-zero row
-    
+
     // Eliminate rows above
     for (int j = i - 1; j >= 0; j--)
       add_rows(i, j, gf->neg(get(j, pivot_col)));
   }
 }
 
-/** 
- * taken from 
+/**
+ * taken from
  * https://www.nayuki.io/res/gauss-jordan-elimination-over-any-field/Matrix.java
  */
 template <typename T>
@@ -204,7 +204,7 @@ void Mat<T>::inv(void)
 
   // Do the main calculation
   tmp.reduced_row_echelon_form();
-  
+
   // Check that the left half is the identity matrix
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
@@ -212,7 +212,7 @@ void Mat<T>::inv(void)
         throw NTL_EX_MAT_NOT_INVERTIBLE;
     }
   }
-  
+
   // Extract inverse matrix from: [identity | inverse]
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++)
@@ -227,7 +227,7 @@ bool Mat<T>::row_is_identity(int row)
 
   assert(row >= 0 && row < n_rows);
 
-  for (j = 0;j < n_cols;j++) {
+  for (j = 0; j < n_cols; j++) {
     if (get(row, j) != ((j == row) ? 1 : 0))
       return false;
   }
@@ -240,15 +240,15 @@ void Mat<T>::vandermonde(void)
 {
   int i, j;
 
-  for (i = 0;i < n_rows;i++) {
-    for (j = 0;j < n_cols;j++) {
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
       set(i, j, gf->exp(i, j));
     }
   }
 }
 
 /**
- * transform c_i into f_i_i_minus_1 * c_i 
+ * transform c_i into f_i_i_minus_1 * c_i
  */
 template <typename T>
 void Mat<T>::ec_transform1(int i)
@@ -260,15 +260,15 @@ void Mat<T>::ec_transform1(int i)
 
   T f_minus_1 = gf->inv(get(i, i));
 
-  for (k = 0;k < n_rows;k++) {
+  for (k = 0; k < n_rows; k++) {
     set(k, i,
-        gf->mul(f_minus_1, 
+        gf->mul(f_minus_1,
                 get(k, i)));
   }
 }
 
 /**
- * transform c_j into c_j - f_i_j * c_i 
+ * transform c_j into c_j - f_i_j * c_i
  */
 template <typename T>
 void Mat<T>::ec_transform2(int i, int j)
@@ -280,21 +280,21 @@ void Mat<T>::ec_transform2(int i, int j)
 
   T f_i_j = get(i, j);
 
-  for (k = 0;k < n_rows;k++) {
+  for (k = 0; k < n_rows; k++) {
     set(k, j,
         gf->sub(get(k, j),
                 gf->mul(f_i_j, get(k, i))));
   }
 }
 
-/** 
+/**
  * see http://web.eecs.utk.edu/~plank/plank/papers/CS-03-504.html
  */
 template <typename T>
 void Mat<T>::vandermonde_suitable_for_ec(void)
 {
   int i, j, dim;
-  
+
   dim = n_rows + n_cols;
 
   Mat<T> tmp(gf, dim, n_cols);
@@ -304,29 +304,28 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
   /* perform transformations to get the identity matrix on the top rows */
   i = 0;
   while (i < n_cols) {
-    
     if (tmp.row_is_identity(i)) {
       i++;
-      continue ;
+      continue;
     }
 
-    //this case is mentionned in the paper but cannot happen
+    // this case is mentionned in the paper but cannot happen
     /* if (0 == tmp.get(i, i)) {
-       for (j = i + 1;j < &tmp->n_cols;j++) {
+       for (j = i + 1; j < &tmp->n_cols; j++) {
        if (0 != tmp.get(i, j)) {
        tmp.swap_cols(i, j);
        continue ;
        }
        } */
 
-    //check if f_i_i == 1
+    // check if f_i_i == 1
     if (1 != tmp.get(i, i)) {
-      //check for inverse since f_i_i != 0
+      // check for inverse since f_i_i != 0
       tmp.ec_transform1(i);
     }
 
-    //now f_i_i == 1
-    for (j = 0;j < tmp.n_cols;j++) {
+    // now f_i_i == 1
+    for (j = 0; j < tmp.n_cols; j++) {
       if (i != j) {
         if (0 != tmp.get(i, j)) {
           tmp.ec_transform2(i, j);
@@ -337,9 +336,9 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
     i++;
   }
 
-  //copy last n_rows rows of tmp into mat
-  for (i = 0;i < n_rows;i++) {
-    for (j = 0;j < n_cols;j++) {
+  // copy last n_rows rows of tmp into mat
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
       set(i, j, tmp.get(n_cols + i, j));
     }
   }
@@ -353,8 +352,8 @@ void Mat<T>::mul(Vec<T> *output, Vec<T> *v)
   assert(get_n_cols() == v->get_n());
   assert(get_n_rows() == output->n);
 
-  for (i = 0;i < n_rows;i++) {
-    for (j = 0;j < n_cols;j++) {
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
       T x = gf->mul(get(i, j), v->get(j));
       if (0 == j)
         output->set(i, x);
@@ -369,22 +368,22 @@ void Mat<T>::cauchy()
 {
   int i, j;
 
-  for (i = 0;i < n_rows;i++) {
-    for (j = 0;j < n_cols;j++) {
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
       set(i, j, gf->inv(gf->add(i, (j + n_rows))));
     }
   }
 
   /* do optimise */
   // convert 1st row to all 1s
-  for (j = 0;j < n_cols;j++) {
-    for (i = 0;i < n_rows;i++) {
+  for (j = 0; j < n_cols; j++) {
+    for (i = 0; i < n_rows; i++) {
       set(i, j, gf->div(get(i, j), get(0, j)));
     }
   }
   // convert 1st element of each row to 1
-  for (i = 1;i < n_rows;i++) {
-    for (j = 0;j < n_cols;j++) {
+  for (i = 1; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
       set(i, j, gf->div(get(i, j), get(i, 0)));
     }
   }
@@ -395,7 +394,7 @@ void Mat<T>::dump_row(int row)
 {
   assert(row >= 0 && row < n_rows);
 
-  for (int j = 0;j < n_cols;j++) {
+  for (int j = 0; j < n_cols; j++) {
     std::cout << " " << get(row, j);
   }
   std::cout << "\n";
@@ -405,10 +404,10 @@ template <typename T>
 void Mat<T>::dump(void)
 {
   int i, j;
-  
+
   std::cout << "--\n";
-  for (i = 0;i < n_rows;i++) {
-    for (j = 0;j < n_cols;j++) {
+  for (i = 0; i < n_rows; i++) {
+    for (j = 0; j < n_cols; j++) {
       std::cout << " " << get(i, j);
     }
     std::cout << "\n";

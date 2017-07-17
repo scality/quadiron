@@ -7,7 +7,7 @@ template class GF2N<uint32_t>;
 template class Mat<uint32_t>;
 template class Vec<uint32_t>;
 
-/** 
+/**
  * see http://web.eecs.utk.edu/~plank/plank/papers/CS-03-504.html
  */
 void rs_utest1()
@@ -18,7 +18,7 @@ void rs_utest1()
   Mat<uint32_t> mat(&gf16, 3, 3);
 
   mat.vandermonde_suitable_for_ec();
-  //mat.dump();
+  // mat.dump();
 
   assert(mat.get(0, 0) == 1);
   assert(mat.get(0, 1) == 1);
@@ -31,11 +31,11 @@ void rs_utest1()
   assert(mat.get(2, 2) == 6);
 }
 
-/** 
+/**
  * Example taken from
  * An Introduction to Galois Fields and Reed-Solomon Coding
  * James Westall James Martin
- * 
+ *
  * Note: the Vandermonde matrix is not generated the same way as we do
  */
 void rs_utest2()
@@ -62,13 +62,13 @@ void rs_utest2()
   mat.set(4, 0, 4);
   mat.set(4, 1, 2);
   mat.set(4, 2, 4);
-  //mat.dump();
+  // mat.dump();
   vec.set(0, 4);
   vec.set(1, 5);
   vec.set(2, 6);
-  //vec.dump();
+  // vec.dump();
   mat.mul(&output, &vec);
-  //output.dump();
+  // output.dump();
   assert(output.get(0) == 3);
   assert(output.get(1) == 5);
   assert(output.get(2) == 4);

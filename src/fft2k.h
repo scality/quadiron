@@ -31,11 +31,11 @@ class FFT2K : public FFT<T>
   Vec<T> *inv_W;
   FFT2K<T> *fftk;
  public:
-  FFT2K(GF<T> *gf, int n, int R, int N=0);
+  FFT2K(GF<T> *gf, int n, int R, int N = 0);
   ~FFT2K();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
-private:
+ private:
   void _fft(Vec<T> *output, Vec<T> *input, bool inv);
 };
 
@@ -106,7 +106,7 @@ class V2Vec : public Vec<T>
  private:
   Vec<T> *vec;
  public:
-  V2Vec(Vec<T> *vec);
+  explicit V2Vec(Vec<T> *vec);
   int get_n(void);
   T get(int i);
 };
@@ -145,8 +145,8 @@ void FFT2K<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
     else
       odd.set(i/2, input->get(i));
   }
-  //even.dump();
-  //odd.dump();
+  // even.dump();
+  // odd.dump();
   Vec<T> _even(this->gf, k);
   Vec<T> _odd(this->gf, k);
   if (inv) {
@@ -177,7 +177,7 @@ void FFT2K<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
 template <typename T>
 void FFT2K<T>::fft(Vec<T> *output, Vec<T> *input)
 {
-  //input->dump();
+  // input->dump();
 
   if (bypass)
     return fftn->fft(output, input);

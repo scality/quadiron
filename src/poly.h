@@ -5,14 +5,13 @@
 template<typename T>
 class Poly
 {
-public:
+ public:
+  struct Term: std::map <T, T> {};
 
-  struct Term: std::map <T, T> {}; 
- 
   GF<T> *gf;
   Term terms;
-  
-  Poly(GF<T> *gf);
+
+  explicit Poly(GF<T> *gf);
   void clear();
   void copy(Poly<T> *src);
   T degree();
@@ -80,7 +79,7 @@ template <typename T>
 T Poly<T>::get(T exponent)
 {
   typename Term::const_iterator it = terms.find(exponent);
-  
+
   return (it == terms.end()) ? 0 : it->second;
 }
 
@@ -92,7 +91,7 @@ void Poly<T>::set(T exponent, T coef)
   typename Term::const_iterator it = terms.find(exponent);
 
   if (it == terms.end() && coef == 0)
-    return ;
+    return;
   terms[exponent] = coef;
 }
 
@@ -113,7 +112,7 @@ void Poly<T>::_add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
   T max = gf->max(a->degree(), b->degree());
 
   for (int i = max; i >= 0; i--)
-    result->set(i, 
+    result->set(i,
                 gf->add(a->get(i), b->get(i)));
 }
 
@@ -125,7 +124,7 @@ void Poly<T>::_sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
   T max = gf->max(a->degree(), b->degree());
 
   for (int i = max; i >= 0; i--)
-    result->set(i, 
+    result->set(i,
                 gf->sub(a->get(i), b->get(i)));
 }
 
@@ -141,9 +140,9 @@ void Poly<T>::_mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
                           gf->mul(a->get(i), b->get(j))));
 }
 
-/** 
+/**
  * long division algorithm (source Wikipedia)
- * 
+ *
  * @param q quotient
  * @param r remainder
  * @param n dividend
@@ -161,13 +160,13 @@ void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
   _r.copy(n);
   while (!_r.is_zero() && (_r.degree() >= d->degree())) {
     Poly<T> _t(gf);
-    _t.set(_r.degree() - d->degree(), 
+    _t.set(_r.degree() - d->degree(),
            gf->div(_r.lead(), d->lead()));
     _q.add(&_t);
     _t.mul(d);
     _r.sub(&_t);
   }
-  
+
   if (q != nullptr)
     q->copy(&_q);
 
@@ -246,9 +245,9 @@ T Poly<T>::eval(T x)
   T result = 0;
 
   for (int i = degree(); i >= 0; i--)
-    result = gf->add(result, 
+    result = gf->add(result,
                      gf->mul(get(i), gf->exp(x, i)));
-  
+
   return result;
 }
 
@@ -256,8 +255,8 @@ template <typename T>
 void Poly<T>::dump()
 {
   typename Term::const_reverse_iterator it = terms.rbegin();
-  
-  for (;it != terms.rend(); it++)
+
+  for (; it != terms.rend(); it++)
     std::cout << " " << it->second << "x^" << it->first;
   std::cout << "\n";
 }

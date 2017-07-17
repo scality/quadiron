@@ -17,9 +17,9 @@ static __inline__ unsigned long long rdtsc(void)
 {
   unsigned hi, lo;
   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-  return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
+  return ( (unsigned long long)lo)|(((unsigned long long)hi) << 32);
 }
 #endif
 
-std::ostream& operator<<( std::ostream& dest, __uint128_t value );
-std::ostream& operator<<( std::ostream& dest, __int128_t value );
+std::ostream& operator<<(std::ostream& dest, __uint128_t value);
+std::ostream& operator<<(std::ostream& dest, __int128_t value);

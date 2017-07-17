@@ -10,7 +10,8 @@ double ok = 0;
 
 void sigint(int foo)
 {
-  std::cerr << "total=" << tot << " ok=" << ok << " succ_rate=" << ok / tot * 100 << "%\n";
+  std::cerr << "total=" << tot << " ok=" << ok << " succ_rate=" <<
+    ok / tot * 100 << "%\n";
   exit(1);
 }
 
@@ -28,10 +29,10 @@ int main(int argc, char **argv)
 
   signal(SIGINT, sigint);
 
-  for (int i = 0;i < 100000;i++) {
+  for (int i = 0; i < 100000; i++) {
     mpz_class n = r.get_z_bits(n_bits);
     if (n % 2 == 0)
-      continue ;
+      continue;
     bool result = gfp._solovay_strassen(n);
     tot++;
     if (result) {
