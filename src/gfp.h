@@ -5,8 +5,8 @@
 template<typename T>
 class GFP : public GF<T>
 {
-public:
-  GFP(T p);
+ public:
+  explicit GFP(T p);
   T card(void);
   bool check(T a);
   T max(T a, T b);
@@ -26,7 +26,7 @@ public:
 template <typename T>
 GFP<T>::GFP(T p) : GF<T>(p, 1)
 {
-  //XXX shall check that p is prime
+  // XXX shall check that p is prime
   assert(p != 2);
 }
 
@@ -109,12 +109,12 @@ T GFP<T>::div(T a, T b)
   return mul(a, inv_b);
 }
 
-/** 
+/**
  * Inverse by exponentiation
- * 
- * @param a 
- * 
- * @return 
+ *
+ * @param a
+ *
+ * @return
  */
 template <typename T>
 T GFP<T>::inv_exp(T a)
@@ -124,12 +124,12 @@ T GFP<T>::inv_exp(T a)
   return exp(a, this->p - 2);
 }
 
-/** 
+/**
  * Inverse by Bezout
- * 
- * @param a 
- * 
- * @return 
+ *
+ * @param a
+ *
+ * @return
  */
 template <typename T>
 T GFP<T>::inv_bezout(T a)

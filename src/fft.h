@@ -9,13 +9,13 @@
 template<typename T>
 class FFT
 {
-public:
+ public:
   GF<T> *gf;
   int n;
   T inv_n;
-protected:
+ protected:
   FFT(GF<T> *gf, int n);
-public:
+ public:
   virtual void fft(Vec<T> *output, Vec<T> *input) = 0;
   virtual void ifft(Vec<T> *output, Vec<T> *input) = 0;
 };

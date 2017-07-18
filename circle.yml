@@ -1,3 +1,7 @@
+machine:
+  pre:
+    - pip install cpplint
+
 compile:
   override:
     - cd src; make
@@ -6,5 +10,6 @@ compile:
 
 test:
   override:
+    - ./lint.sh
     - cd test; ./tests
     - cd tools; ./test_ec.sh

@@ -16,7 +16,7 @@ class GF2N : public GF<T>
   T tab_nb;
   T *gflog = NULL;
   T *gfilog = NULL;
-  T ***gfsplit = NULL; // (n/4-1)*256*256 elements
+  T ***gfsplit = NULL;  // (n/4-1)*256*256 elements
   T *mask = NULL;
   bool restricted = false;
   T _mul_log(T a, T b);
@@ -36,7 +36,7 @@ class GF2N : public GF<T>
   void setup_split_tables(void);
 
  public:
-  GF2N(T n);
+  explicit GF2N(T n);
   ~GF2N();
   T card(void);
   bool check(T a);
@@ -89,7 +89,7 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
       this->restricted = true;
     }
   } else
-    assert(false); //XXX generate polynomial
+    assert(false);  // XXX generate polynomial
 
   init_mask();
 
@@ -209,7 +209,7 @@ void GF2N<T>::setup_split_tables(void)
     }
   }
 
-  base = 1; // x^0
+  base = 1;  // x^0
   for (t = 0; t < tab_nb; t++) {
     // setup for a = 0 and b = 0
     for (j = 0; j < 256; j++) {
@@ -432,20 +432,20 @@ T GF2N<T>::log(T a, T b)
   T tmp = a;
   if (b == 1)
     return 0;
-  for (result = 1;result < my_card;result++) {
+  for (result = 1; result < my_card; result++) {
     if (tmp == b)
       return result;
     tmp = mul(tmp, a);
   }
 
-  //not found
+  // not found
   throw NTL_EX_NOT_FOUND;
 }
 
 template <typename T>
 inline T GF2N<T>::_deg_of(T a, T max_deg) {
   T deg = max_deg;
-  while((mask[deg] & a) == 0) deg--;
+  while ((mask[deg] & a) == 0) deg--;
   return deg;
 }
 
@@ -471,9 +471,7 @@ T GF2N<T>::_inv_ext_gcd(T x)
 
   deg[a] = _deg_of(uv[a], n-1);
   deg[b] = n;
-  // std::cout << "inv " << x << " deg " << deg[0] << " " << deg[1] << std::endl;
   while (uv[a] != 1) {
-    // std::cout << " j " << j << " uv: " << uv[a] << " " << uv[b] << " deg " << deg[a] << " " << deg[b] << std::endl;
     j = deg[a] - deg[b];
     if (j < 0) {
       a ^= 1;

@@ -1,14 +1,13 @@
 /* -*- mode: c++ -*- */
 #pragma once
 
-/** 
+/**
  * GF_2^n based RS (Cauchy or Vandermonde)
  */
 template<typename T>
 class FECGF2NRS : public FEC<T>
 {
-public:
-
+ public:
   enum FECGF2NRSType
   {
     VANDERMONDE,
@@ -17,13 +16,13 @@ public:
 
   FECGF2NRSType type;
 
-private:
+ private:
   Mat<T> *mat = NULL;
   Mat<T> *decode_mat = NULL;
 
-public:
-
-  FECGF2NRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities, FECGF2NRSType type) : 
+ public:
+  FECGF2NRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities,
+    FECGF2NRSType type) :
     FEC<T>(gf, FEC<T>::TYPE_1, word_size, n_data, n_parities)
   {
     assert(type == VANDERMONDE || type == CAUCHY);
@@ -36,7 +35,7 @@ public:
       mat->vandermonde_suitable_for_ec();
     }
 
-    //has to be a n_data*n_data invertible square matrix
+    // has to be a n_data*n_data invertible square matrix
     decode_mat = new Mat<T>(this->gf, mat->n_cols, mat->n_cols);
   }
 
@@ -51,15 +50,16 @@ public:
     return this->n_parities;
   }
 
-  void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *words)
+  void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset,
+    Vec<T> *words)
   {
     mat->mul(output, words);
   }
 
   void decode_add_data(int fragment_index, int row)
   {
-    //for each data available generate the corresponding identity
-    for (int j = 0;j < mat->n_cols;j++) {
+    // for each data available generate the corresponding identity
+    for (int j = 0; j < mat->n_cols; j++) {
       if (row == j)
         decode_mat->set(fragment_index, j, 1);
       else
@@ -69,8 +69,8 @@ public:
 
   void decode_add_parities(int fragment_index, int row)
   {
-    //copy corresponding row in vandermonde matrix
-    for (int j = 0;j < mat->n_cols;j++) {
+    // copy corresponding row in vandermonde matrix
+    for (int j = 0; j < mat->n_cols; j++) {
       decode_mat->set(fragment_index, j, mat->get(row, j));
     }
   }
@@ -80,7 +80,8 @@ public:
     decode_mat->inv();
   }
 
-  void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset, Vec<T> *fragments_ids, Vec<T> *words)
+  void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset,
+    Vec<T> *fragments_ids, Vec<T> *words)
   {
     decode_mat->mul(output, words);
   }

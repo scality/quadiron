@@ -1,20 +1,20 @@
-#include "ntl.h"
+#include "./ntl.h"
 
 std::istream& operator >>(std::istream& ins, KeyValue& d)
 {
   std::string s, key, value;
-  
+
   // For each (key, value) pair in the file
   while (std::getline(ins, s))
     {
       std::string::size_type begin = s.find_first_not_of(" \f\t\v");
 
       // Skip blank lines
-      if (begin == std::string::npos) 
+      if (begin == std::string::npos)
         continue;
 
       // Skip commentary
-      if (std::string("#;").find(s[ begin ]) != std::string::npos) 
+      if (std::string("#;").find(s[ begin ]) != std::string::npos)
         continue;
 
       // Extract the key value
@@ -25,12 +25,12 @@ std::istream& operator >>(std::istream& ins, KeyValue& d)
       key.erase(key.find_last_not_of(" \f\t\v") + 1);
 
       // No blank keys allowed
-      if (key.empty()) 
+      if (key.empty())
         continue;
 
       // Extract the value (no leading or trailing whitespace allowed)
       begin = s.find_first_not_of(" \f\n\r\t\v", end + 1);
-      end = s.find_last_not_of( " \f\n\r\t\v") + 1;
+      end = s.find_last_not_of(" \f\n\r\t\v") + 1;
 
       value = s.substr(begin, end - begin);
 

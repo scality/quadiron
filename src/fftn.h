@@ -2,13 +2,13 @@
 
 #pragma once
 
-/** 
+/**
  * Algorithm for very small n
  */
 template<typename T>
 class FFTN : public FFT<T>
 {
-private:
+ private:
   T w;
   T inv_w;
   Mat<T> *W;
@@ -41,21 +41,21 @@ FFTN<T>::~FFTN()
   delete this->W;
 }
 
-/** 
- * Compute matrix 
- * 
+/**
+ * Compute matrix
+ *
  * @param _W matrix of powers of roots
  * @param _w nth root of unity
  */
 template <typename T>
 void FFTN<T>::compute_W(Mat<T> *_W, T _w)
 {
-  for (int i = 0;i <= this->n-1;i++) {
-    for (int j = 0;j <= this->n-1;j++) {
+  for (int i = 0; i <= this->n-1; i++) {
+    for (int j = 0; j <= this->n-1; j++) {
       _W->set(i, j, this->gf->exp(_w, i*j));
     }
   }
-  //_W->dump();
+  // _W->dump();
 }
 
 template <typename T>

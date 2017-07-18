@@ -21,7 +21,10 @@ char *prefix = NULL;
 
 void xusage()
 {
-  std::cerr << "Usage: ec [-e gf2nrsv|gf2nrsc|gf2nrsv-bign|gf2nrsc-bign|fntrs][-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)] -c (encode) | -r (repair)\n";
+  std::cerr << std::string("Usage: ") +
+    "ec [-e gf2nrsv|gf2nrsc|gf2nrsv-bign|gf2nrsc-bign|" +
+    "fntrs][-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
+    " -c (encode) | -r (repair)\n";
   exit(1);
 }
 
@@ -53,34 +56,34 @@ void create_coding_files(FEC<T> *fec)
   std::vector<std::ostream*> c_props_files(fec->get_n_outputs(), nullptr);
   std::vector<KeyValue*> c_props(fec->get_n_outputs(), nullptr);
 
-  for (int i = 0;i < fec->n_data;i++) {
+  for (int i = 0; i < fec->n_data; i++) {
     snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
     if (vflag)
       std::cerr << "create: opening data " << filename << "\n";
     d_files[i] = new std::ifstream(filename);
   }
 
-  for (int i = 0;i < fec->get_n_outputs();i++) {
+  for (int i = 0; i < fec->get_n_outputs(); i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
       std::cerr<< "create: opening coding for writing " << filename << "\n";
     c_files[i] = new std::ofstream(filename);
     snprintf(filename, sizeof (filename), "%s.c%d.props", prefix, i);
     if (vflag)
-      std::cerr<< "create: opening coding props for writing " << filename << "\n";
+      std::cerr<< "create: opening coding props for writing " <<
+        filename << "\n";
     c_props_files[i] = new std::ofstream(filename);
     c_props[i] = new KeyValue();
   }
 
   fec->encode_bufs(d_files, c_files, c_props);
 
-  for (int i = 0;i < fec->n_data;i++) {
+  for (int i = 0; i < fec->n_data; i++) {
     (static_cast<std::ifstream*>(d_files[i]))->close();
     delete d_files[i];
   }
 
-  for (int i = 0;i < fec->get_n_outputs();i++) {
-
+  for (int i = 0; i < fec->get_n_outputs(); i++) {
     *(c_props_files[i]) << *(c_props[i]);
 
     (static_cast<std::ofstream*>(c_props_files[i]))->close();
@@ -106,8 +109,8 @@ bool repair_data_files(FEC<T> *fec)
   std::vector<KeyValue*> c_props(fec->get_n_outputs(), nullptr);
   std::vector<std::ostream*> r_files(fec->n_data, nullptr);
 
-  //re-read data
-  for (int i = 0;i < fec->n_data;i++) {
+  // re-read data
+  for (int i = 0; i < fec->n_data; i++) {
     snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
     if (vflag)
       std::cerr << "repair: checking data " << filename << "\n";
@@ -122,7 +125,7 @@ bool repair_data_files(FEC<T> *fec)
     }
   }
 
-  for (int i = 0;i < fec->get_n_outputs();i++) {
+  for (int i = 0; i < fec->get_n_outputs(); i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
       std::cerr << "repair: checking coding " << filename << "\n";
@@ -149,14 +152,14 @@ bool repair_data_files(FEC<T> *fec)
 
   fec->decode_bufs(d_files, c_files, c_props, r_files);
 
-  for (int i = 0;i < fec->n_data;i++) {
+  for (int i = 0; i < fec->n_data; i++) {
     if (nullptr != d_files[i]) {
       (static_cast<std::ifstream*>(d_files[i]))->close();
       delete d_files[i];
     }
   }
 
-  for (int i = 0;i < fec->get_n_outputs();i++) {
+  for (int i = 0; i < fec->get_n_outputs(); i++) {
     if (nullptr != c_props_files[i]) {
       (static_cast<std::ifstream*>(c_props_files[i]))->close();
       delete c_props_files[i];
@@ -171,7 +174,7 @@ bool repair_data_files(FEC<T> *fec)
     }
   }
 
-  for (int i = 0;i < fec->n_data;i++) {
+  for (int i = 0; i < fec->n_data; i++) {
     if (nullptr != r_files[i]) {
       (static_cast<std::ofstream*>(r_files[i]))->close();
       delete r_files[i];
@@ -184,8 +187,12 @@ bool repair_data_files(FEC<T> *fec)
 template <typename T>
 void print_stats(FEC<T> *fec)
 {
-  std::cerr << "enc," << (fec->n_encode_ops != 0 ? fec->total_encode_cycles / fec->n_encode_ops : 0) << ",";
-  std::cerr << "dec," << (fec->n_decode_ops != 0 ? fec->total_decode_cycles / fec->n_decode_ops : 0) << ",";
+  std::cerr << "enc," <<
+    (fec->n_encode_ops != 0 ? fec->total_encode_cycles / fec->n_encode_ops : 0)
+    << ",";
+  std::cerr << "dec," <<
+    (fec->n_decode_ops != 0 ? fec->total_decode_cycles / fec->n_decode_ops : 0)
+    << ",";
 }
 
 enum ec_type
@@ -227,22 +234,22 @@ int main(int argc, char **argv)
         eflag = EC_TYPE_FNTRS;
       else
         xusage();
-      break ;
+      break;
     case 'w':
       word_size = atoi(optarg);
-      break ;
+      break;
     case 'v':
       vflag = 1;
-      break ;
+      break;
     case 'u':
       uflag = 1;
-      break ;
+      break;
     case 'c':
       cflag = 1;
-      break ;
+      break;
     case 'r':
       rflag = 1;
-      break ;
+      break;
     case 'n':
       n_data = atoi(optarg);
       break;
@@ -264,9 +271,10 @@ int main(int argc, char **argv)
     xusage();
 
 #if 0
-  //XXX TODO
+  // XXX TODO
   if (0 != check(n_data + n_parities)) {
-    std::cerr << "Number of fragments is too big compared to Galois field size\n";
+    std::cerr <<
+      "Number of fragments is too big compared to Galois field size\n";
     exit(1);
   }
 #endif
@@ -280,7 +288,8 @@ int main(int argc, char **argv)
       std::cerr << "only supports -w 2 for now\n";
       exit(1);
     }
-    GFP<uint32_t> *gf = new GFP<uint32_t>(__gf32._exp(2, word_size * 8)+1); //2^2^4+1
+    // 2^2^4+1
+    GFP<uint32_t> *gf = new GFP<uint32_t>(__gf32._exp(2, word_size * 8)+1);
     fec = new FECFNTRS<uint32_t>(gf, word_size, n_data, n_parities);
 
     if (rflag) {
@@ -295,7 +304,8 @@ int main(int argc, char **argv)
   } else if (eflag == EC_TYPE_GF2NRS) {
     FECGF2NRS<uint32_t> *fec;
     GF2N<uint32_t> *gf = new GF2N<uint32_t>(word_size * 8);
-    fec = new FECGF2NRS<uint32_t>(gf, word_size, n_data, n_parities, gf2nrs_type);
+    fec = new FECGF2NRS<uint32_t>(gf, word_size, n_data, n_parities,
+      gf2nrs_type);
 
     if (rflag) {
       if (0 != repair_data_files<uint32_t>(fec)) {

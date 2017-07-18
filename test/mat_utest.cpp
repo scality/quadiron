@@ -23,7 +23,7 @@ void mat_utest1()
   mat.set(2, 0, 1);
   mat.set(2, 1, 2);
   mat.set(2, 2, 7);
-  
+
   mat.inv();
 
   assert(mat.get(0, 0) == 8);
@@ -53,7 +53,7 @@ void mat_utest2()
   mat.set(2, 0, 4);
   mat.set(2, 1, 17);
   mat.set(2, 2, 1);
-  
+
   mat.inv();
 
   assert(mat.get(0, 0) == 1);
