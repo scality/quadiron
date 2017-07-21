@@ -34,7 +34,8 @@ class FECFNTRS : public FEC<T>
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
     // formula given in the paper (very large numbers):
-    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf->p;
+    mpz_class p = mpz_class(std::to_string(gf->p));
+    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % p;
     r = _r.get_ui();
 
     // std::cerr << "l=" << l << "\n";
