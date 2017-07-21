@@ -60,6 +60,9 @@ template <typename T>
 GF2N<T>::GF2N(T n) : GF<T>(2, n)
 {
   this->n = n;
+  if (n/8 > sizeof(T)) {
+    assert(false);
+  }
   if (n == 3)
     this->prim_poly = 0xb;
   else if (n == 4)
@@ -70,34 +73,37 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
   else if (n == 16)
     // an alternative: 0x1002b
     this->prim_poly = 0x1100b;
-  else if (n == 32 && sizeof(T) >= 4) {
+  // Following irreducible polynomials are from Gadiel Seroussi's paper:
+  //  "Table of Low-Weight Binary Irreducible Polynomials"
+  else if (n == 32)
     // pentanomial x^32 + x^7 + x^3 + x^2 + 1
-    // got from Gadiel Seroussi's paper:
-    //  "Table of Low-Weight Binary Irreducible Polynomials"
     this->prim_poly = 0x8d;
-    if (sizeof(T) == 4) {
-      // restricted case: GF(2^32) works on uint32_t
-      this->restricted = true;
-    }
-  } else if (n == 64 && sizeof(T) >= 8) {
+  else if (n == 64)
     // pentanomial x^64 + x^4 + x^3 + x + 1
-    // got from Gadiel Seroussi's paper:
-    //  "Table of Low-Weight Binary Irreducible Polynomials"
     this->prim_poly = 0x1b;
-    if (sizeof(T) == 8) {
-      // restricted case: GF(2^64) works on uint64_t
-      this->restricted = true;
-    }
-  } else
-    assert(false);  // XXX generate polynomial
+  else if (n == 128)
+    // pentanomial x^128 + x^7 + x^2 + x + 1
+    this->prim_poly = 0x87;
+  else
+    assert(false); // not supported
+
+  if (n/8 == sizeof(T)) {
+    // restricted case
+    this->restricted = true;
+  }
 
   init_mask();
 
   this->tab_nb = n/4 - 1;
   this->first_bit = this->mask[n - 1];
-  if (this->restricted)
-    this->my_card = std::numeric_limits<T>::max();
-  else
+  if (this->restricted) {
+    if (n <= 64)
+      this->my_card = std::numeric_limits<T>::max();
+    else
+      this->my_card = 0;
+      for (int i = 0; i < n; i++)
+        this->my_card += this->mask[i];
+  } else
     this->my_card = 2 * this->mask[n - 1];
 
   if (n <= 16) {

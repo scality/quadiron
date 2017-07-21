@@ -588,7 +588,6 @@ template <typename T>
 T GF<T>::_weak_rand(T max)
 {
   T r;
-
  retry:
   r = rand() % max;
   if (0 == r)

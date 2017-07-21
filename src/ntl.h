@@ -16,14 +16,18 @@
 #include <map>
 #include <utility>
 
+#include "int256t.h"
+
 template<typename Type> struct Double {};
 template<>           struct Double<uint32_t> {typedef uint64_t T;};
 template<>           struct Double<uint64_t> {typedef __uint128_t T;};
+template<>           struct Double<__uint128_t> {typedef uint256_t T;};
 template<>           struct Double<mpz_class> {typedef mpz_class T;};
 
 template<typename Type> struct SignedDouble {};
 template<>           struct SignedDouble<uint32_t> {typedef int64_t T;};
 template<>           struct SignedDouble<uint64_t> {typedef __int128_t T;};
+template<>           struct SignedDouble<__uint128_t> {typedef int256_t T;};
 template<>           struct SignedDouble<mpz_class> {typedef mpz_class T;};
 
 typedef enum
