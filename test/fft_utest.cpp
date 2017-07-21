@@ -221,11 +221,13 @@ class FFTUtest
 
     // carry propagation
     mpz_class z = 0;
+    mpz_class u;
     for (int i = 0; i <= fft.n-1; i++) {
       mpz_class t, b;
       b = 10;
       mpz_pow_ui(t.get_mpz_t(), b.get_mpz_t(), i);
-      z += sfXY->get(i) * t;
+      u = mpz_class(std::to_string(sfXY->get(i)));
+      z += u * t;
     }
 
     // std::cout << z << "\n";
@@ -260,7 +262,8 @@ class FFTUtest
     n = __gf64._exp2(l);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
-    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf.p;
+    mpz_class p = mpz_class(std::to_string(gf.p));
+    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % p;
     r = _r.get_ui();
 
     // std::cerr << "l=" << l << "\n";
@@ -340,7 +343,8 @@ class FFTUtest
     n = __gf64._exp2(l);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
-    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % gf.p;
+    mpz_class p = mpz_class(std::to_string(gf.p));
+    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % p;
     r = _r.get_ui();
 
     // std::cerr << "l=" << l << "\n";
