@@ -22,7 +22,7 @@ char *prefix = NULL;
 void xusage()
 {
   std::cerr << std::string("Usage: ") +
-    "ec [-e gf2nrsv|gf2nrsc|gf2nrsv-bign|gf2nrsc-bign|" +
+    "ec [-e gf2nrsv|gf2nrsc|gf2nrsv-bign|gf2nrsc-bign|gf2nrsc-verybign|" +
     "fntrs][-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
   exit(1);
@@ -200,6 +200,7 @@ enum ec_type
     EC_TYPE_UNDEF = 0,
     EC_TYPE_GF2NRS,
     EC_TYPE_GF2NRS_BIGN,
+    EC_TYPE_GF2NRS_VERYBIGN,
     EC_TYPE_FNTRS,
   };
 
@@ -212,6 +213,7 @@ int main(int argc, char **argv)
   ec_type eflag = EC_TYPE_UNDEF;
   FECGF2NRS<uint32_t>::FECGF2NRSType gf2nrs_type;
   FECGF2NRS<uint64_t>::FECGF2NRSType gf2nrs_bign_type;
+  FECGF2NRS<__uint128_t>::FECGF2NRSType gf2nrs_verybign_type;
   int word_size = 0;
 
   n_data = n_parities = -1;
@@ -230,6 +232,12 @@ int main(int argc, char **argv)
       } else if (!strcmp(optarg, "gf2nrsc-bign")) {
         eflag = EC_TYPE_GF2NRS_BIGN;
         gf2nrs_bign_type = FECGF2NRS<uint64_t>::CAUCHY;
+      } else if (!strcmp(optarg, "gf2nrsv-verybign")) {
+        eflag = EC_TYPE_GF2NRS_VERYBIGN;
+        gf2nrs_verybign_type = FECGF2NRS<__uint128_t>::VANDERMONDE;
+      } else if (!strcmp(optarg, "gf2nrsc-verybign")) {
+        eflag = EC_TYPE_GF2NRS_VERYBIGN;
+        gf2nrs_verybign_type = FECGF2NRS<__uint128_t>::CAUCHY;
       } else if (!strcmp(optarg, "fntrs"))
         eflag = EC_TYPE_FNTRS;
       else
@@ -329,6 +337,21 @@ int main(int argc, char **argv)
     }
     create_coding_files<uint64_t>(fec);
     print_stats<uint64_t>(fec);
+    delete fec;
+    delete gf;
+  } else if (eflag == EC_TYPE_GF2NRS_VERYBIGN) {
+    FECGF2NRS<__uint128_t> *fec;
+    GF2N<__uint128_t> *gf = new GF2N<__uint128_t>(word_size * 8);
+    fec = new FECGF2NRS<__uint128_t>(gf, word_size, n_data, n_parities,
+      gf2nrs_verybign_type);
+
+    if (rflag) {
+      if (0 != repair_data_files<__uint128_t>(fec)) {
+        exit(1);
+      }
+    }
+    create_coding_files<__uint128_t>(fec);
+    print_stats<__uint128_t>(fec);
     delete fec;
     delete gf;
   }

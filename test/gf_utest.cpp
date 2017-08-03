@@ -221,6 +221,11 @@ void gf_utest()
   gfutest_uint64.gf_utest();
   gfutest_uint64.gf_utest_2_bign(32);
   gfutest_uint64.gf_utest_2_bign(64);
+  GFUtest<__uint128_t> gfutest_uint128;
+  // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
+  gfutest_uint128.gf_utest_2_bign(32);
+  gfutest_uint128.gf_utest_2_bign(64);
+  gfutest_uint128.gf_utest_2_bign(128);
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n();  // XXX gf2n broken for now
 }
