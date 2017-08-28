@@ -45,6 +45,7 @@ class GF
   virtual T log(T a, T b) = 0;
   T _card();
   T exp_naive(T base, T exponent);
+  T exp_quick(T base, T exponent);
   T _sqrt(T n);
   T _exp(T base, T exponent);
   T _exp_mod(T base, T exponent, T modulus);
@@ -108,6 +109,34 @@ T GF<T>::exp_naive(T base, T exponent)
   for (i = 1; i < exponent; i++)
     result = this->mul(result, base);
 
+  return result;
+}
+
+/**
+ * Quick exponentiation in the field
+ *
+ * @param gf
+ * @param base
+ * @param exponent
+ *
+ * @return
+ */
+template <typename T>
+T GF<T>::exp_quick(T base, T exponent)
+{
+  T result;
+  T i;
+
+  if (0 == exponent)
+    return 1;
+
+  if (1 == exponent)
+    return base;
+
+  T tmp = this->exp_quick(base, exponent / 2);
+  result = this->mul(tmp, tmp);
+  if (exponent % 2 == 1)
+    result = this->mul(result, base);
   return result;
 }
 

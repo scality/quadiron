@@ -261,11 +261,15 @@ void gf_utest()
   GFUtest<uint32_t> gfutest_uint32;
   gfutest_uint32.gf_utest();
   gfutest_uint32.test_prime_root_gf2(8);
+  gfutest_uint32.test_prime_root_gf2(16);
   gfutest_uint32.gf_utest_2_bign(32);
   GFUtest<uint64_t> gfutest_uint64;
   gfutest_uint64.gf_utest();
   gfutest_uint64.gf_utest_2_bign(32);
   gfutest_uint64.gf_utest_2_bign(64);
+  gfutest_uint64.test_prime_root_gf2(8);
+  gfutest_uint64.test_prime_root_gf2(16);
+  gfutest_uint64.test_prime_root_gf2(32);
   GFUtest<__uint128_t> gfutest_uint128;
   // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
   gfutest_uint128.gf_utest_2_bign(32);

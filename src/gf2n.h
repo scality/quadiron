@@ -426,7 +426,7 @@ T GF2N<T>::exp(T a, T b)
   assert(check(a));
   assert(check(b));
 
-  return GF<T>::exp_naive(a, b);
+  return GF<T>::exp_quick(a, b);
 }
 
 template <typename T>
