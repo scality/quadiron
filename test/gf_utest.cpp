@@ -75,6 +75,13 @@ class GFUtest
     }
   }
 
+  void test_find_prime_root(GF<T> *gf)
+  {
+    gf->find_prime_root();
+    // std::cout << "root " << gf->root << std::endl;
+    assert(gf->check_prime_root(gf->root));
+  }
+
   void test_negation_gf5()
   {
     std::cout << "test_negation_gf5\n";
@@ -91,12 +98,28 @@ class GFUtest
     test_reciprocal(&gf5);
   }
 
+  void test_prime_root_gf5()
+  {
+    std::cout << "test_prime_root_gf5\n";
+
+    GFP<T> gf5(5);
+    test_find_prime_root(&gf5);
+  }
+
   void test_log_gf()
   {
     std::cout << "test_log_gf\n";
 
     GFP<T> gf(32);
     test_log(&gf);
+  }
+
+  void test_prime_root_gf32()
+  {
+    std::cout << "test_prime_root_gf32\n";
+
+    GFP<T> gf(32);
+    test_find_prime_root(&gf);
   }
 
   void test_negation_gf256()
@@ -121,6 +144,14 @@ class GFUtest
 
     GF2N<T> gf256(8);
     test_log(&gf256);
+  }
+
+  void test_prime_root_gf256()
+  {
+    std::cout << "test_prime_root_gf256\n";
+
+    GF2N<T> gf256(8);
+    test_find_prime_root(&gf256);
   }
 
   void test_misc_gf29()
@@ -160,6 +191,14 @@ class GFUtest
     test_log(&gf2n);
   }
 
+  void test_prime_root_gf2(T n)
+  {
+    std::cout << "test_prime_root_gf(2^" << n << ")\n";
+
+    GF2N<T> gf2n(n);
+    test_find_prime_root(&gf2n);
+  }
+
   void gf_utest()
   {
     std::cout << "gf_utest\n";
@@ -169,11 +208,15 @@ class GFUtest
     test_basic_ops();
     test_negation_gf5();
     test_reciprocal_gf5();
+    test_prime_root_gf5();
     test_log_gf();
+    // test_prime_root_gf32();
     test_negation_gf256();
     test_reciprocal_gf256();
     test_log_gf256();
     test_misc_gf29();
+    test_negation_gf256();
+    test_prime_root_gf256();
   }
 
   void gf_utest_2_bign(T n)
@@ -184,6 +227,7 @@ class GFUtest
 
     test_negation_gf2_bign(n);
     test_reciprocal_gf2_bign(n);
+    // test_prime_root_gf2(n);
     // test_log_gf2_bign(n);
   }
 
@@ -216,6 +260,7 @@ void gf_utest()
 {
   GFUtest<uint32_t> gfutest_uint32;
   gfutest_uint32.gf_utest();
+  gfutest_uint32.test_prime_root_gf2(8);
   gfutest_uint32.gf_utest_2_bign(32);
   GFUtest<uint64_t> gfutest_uint64;
   gfutest_uint64.gf_utest();

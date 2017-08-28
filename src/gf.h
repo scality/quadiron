@@ -25,6 +25,7 @@ class GF
  public:
   T p;
   T n;
+  T root;
 
  protected:
   GF(T p, T n);
@@ -63,6 +64,10 @@ class GF
   void compute_omegas(Vec<T> *W, int n, T w);
   T _weak_rand(T max);
   T weak_rand(void);
+  void factor_distinc_prime(T n, std::vector<T> *output);
+  void get_divisors(T n, std::vector<T> *output);
+  void find_prime_root();
+  bool check_prime_root(T nb);
 };
 
 template <typename T>
@@ -575,8 +580,6 @@ void GF<T>::compute_omegas(Vec<T> *W, int n, T w)
   }
 }
 
-
-
 /**
  * Returns a number n such as 0 < n < max
  *
@@ -599,4 +602,95 @@ template <typename T>
 T GF<T>::weak_rand(void)
 {
   return _weak_rand(card());
+}
+
+/*
+ * A given number `n` is factored into primes. Only primes are stored, their
+ *  exponent is ignored.
+ */
+template<typename T>
+void GF<T>::factor_distinc_prime(T nb, std::vector<T> *output)
+{
+  T last_found = 1;
+  while (nb % 2 == 0) {
+    if (last_found != 2) {
+      output->push_back(2);
+      last_found = 2;
+    }
+    nb = nb/2;
+  }
+  // n must be odd at this point.  So we can skip one element
+  for (T i = 3; i <= sqrt(nb); i = i + 2) {
+    // While i divides n, get i and divide n
+    while (nb % i == 0) {
+      if (last_found != i) {
+        output->push_back(i);
+        last_found = i;
+      }
+      nb = nb/i;
+    }
+  }
+  // This condition is to handle the case when n
+  // is a prime number greater than 2
+  if (nb > 2) {
+    output->push_back(nb);
+  }
+}
+
+/*
+ * Get divisors of a given number from its factored distince primes
+ */
+template<typename T>
+void GF<T>::get_divisors(T nb, std::vector<T> *output)
+{
+  std::vector<T> *input = new std::vector<T>();
+  typename std::vector<T>::iterator it;
+  factor_distinc_prime(nb, input);
+  // std::cout << "nb: " << nb << std::endl;
+  for (it = input->begin(); it != input->end(); ++it) {
+    if (*it < nb)
+      output->push_back(nb / (*it));
+    else
+      output->push_back(nb);
+    // std::cout << *it << std::endl;
+  }
+}
+
+template <typename T>
+void GF<T>::find_prime_root()
+{
+  std::vector<T>* divisors = new std::vector<T>();
+  typename std::vector<T>::iterator divisor;
+  T h = _card() - 1;
+  // get all divisors of h
+  get_divisors(h, divisors);
+  T nb = 2;
+  while (nb <= h) {
+    bool ok = true;
+    // check nb^divisor == 1
+    // std::cout << "checking.." << nb << std::endl;
+    for (divisor = divisors->begin(); divisor != divisors->end(); ++divisor) {
+      // std::cout << nb << "^" << *divisor << "=" << exp(nb, *divisor) << std::endl;
+      if (exp(nb, *divisor) == 1) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) {
+      this->root = nb;
+      return;
+    }
+    nb++;
+  }
+}
+
+template <typename T>
+bool GF<T>::check_prime_root(T nb)
+{
+  T card = this->card();
+  for (T i = 1; i < card - 1; i++) {
+    // std::cout << nb << "^" << i << "=" << exp(nb, i) << std::endl;
+    if (exp(nb, i) == 1) return false;
+  }
+  return true;
 }
