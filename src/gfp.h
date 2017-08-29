@@ -8,6 +8,7 @@ class GFP : public GF<T>
  public:
   explicit GFP(T p);
   T card(void);
+  T card_minus_one(void);
   bool check(T a);
   T max(T a, T b);
   T min(T a, T b);
@@ -34,6 +35,12 @@ template <typename T>
 T GFP<T>::card(void)
 {
   return this->p;
+}
+
+template <typename T>
+T GFP<T>::card_minus_one(void)
+{
+  return this->p - 1;
 }
 
 template <typename T>
@@ -158,7 +165,7 @@ T GFP<T>::exp(T a, T b)
   assert(check(a));
   assert(check(b));
 
-  return GF<T>::exp_naive(a, b);
+  return GF<T>::exp_quick(a, b);
 }
 
 template <typename T>

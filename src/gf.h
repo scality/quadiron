@@ -25,12 +25,14 @@ class GF
  public:
   T p;
   T n;
+  T root;
 
  protected:
   GF(T p, T n);
 
  public:
   virtual T card(void) = 0;
+  virtual T card_minus_one(void) = 0;
   virtual bool check(T a) = 0;
   virtual T max(T a, T b) = 0;
   virtual T min(T a, T b) = 0;
@@ -44,6 +46,7 @@ class GF
   virtual T log(T a, T b) = 0;
   T _card();
   T exp_naive(T base, T exponent);
+  T exp_quick(T base, T exponent);
   T _sqrt(T n);
   T _exp(T base, T exponent);
   T _exp_mod(T base, T exponent, T modulus);
@@ -63,6 +66,16 @@ class GF
   void compute_omegas(Vec<T> *W, int n, T w);
   T _weak_rand(T max);
   T weak_rand(void);
+  void _factor_distinct_prime(T n, std::vector<T> *output);
+  void _factor_prime(T nb, std::vector<T> *primes, std::vector<T> *exponent);
+  void _get_proper_divisors(T n, std::vector<T> *output);
+  bool is_prime_root(T nb);
+  void find_prime_root();
+  bool check_prime_root(T nb);
+  bool check_prime_root_naive(T nb);
+  T do_step_get_order(T x, T h, std::vector<T> *primes,
+    std::vector<T> *exponent);
+  T get_order(T x);
 };
 
 template <typename T>
@@ -103,6 +116,34 @@ T GF<T>::exp_naive(T base, T exponent)
   for (i = 1; i < exponent; i++)
     result = this->mul(result, base);
 
+  return result;
+}
+
+/**
+ * Quick exponentiation in the field
+ *
+ * @param gf
+ * @param base
+ * @param exponent
+ *
+ * @return
+ */
+template <typename T>
+T GF<T>::exp_quick(T base, T exponent)
+{
+  T result;
+  T i;
+
+  if (0 == exponent)
+    return 1;
+
+  if (1 == exponent)
+    return base;
+
+  T tmp = this->exp_quick(base, exponent / 2);
+  result = this->mul(tmp, tmp);
+  if (exponent % 2 == 1)
+    result = this->mul(result, base);
   return result;
 }
 
@@ -575,8 +616,6 @@ void GF<T>::compute_omegas(Vec<T> *W, int n, T w)
   }
 }
 
-
-
 /**
  * Returns a number n such as 0 < n < max
  *
@@ -599,4 +638,276 @@ template <typename T>
 T GF<T>::weak_rand(void)
 {
   return _weak_rand(card());
+}
+
+/*
+ * A given number `n` is factored into primes-> Only primes are stored, their
+ *  exponent is ignored.
+ */
+template<typename T>
+void GF<T>::_factor_distinct_prime(T nb, std::vector<T> *output)
+{
+  T last_found = 1;
+  while (nb % 2 == 0) {
+    if (last_found != 2) {
+      output->push_back(2);
+      last_found = 2;
+    }
+    nb = nb/2;
+  }
+  // n must be odd at this point.  So we can skip one element
+  for (T i = 3; i <= sqrt(nb); i = i + 2) {
+    // While i divides n, get i and divide n
+    while (nb % i == 0) {
+      if (last_found != i) {
+        output->push_back(i);
+        last_found = i;
+      }
+      nb = nb/i;
+    }
+  }
+  // This condition is to handle the case when n
+  // is a prime number greater than 2
+  if (nb > 2) {
+    output->push_back(nb);
+  }
+}
+
+/*
+ * Get proper divisors of a given number from its factored distince primes
+ */
+template<typename T>
+void GF<T>::_get_proper_divisors(T nb, std::vector<T> *output)
+{
+  std::vector<T> *input = new std::vector<T>();
+  typename std::vector<T>::iterator it;
+  _factor_distinct_prime(nb, input);
+  // std::cout << "nb: " << nb << std::endl;
+  for (it = input->begin(); it != input->end(); ++it) {
+    if (*it < nb) {
+      output->push_back(nb / (*it));
+      // std::cout << *it << std::endl;
+    }
+  }
+}
+
+/*
+ * Check if a number is primitive root or not, i.e. check its
+ *  order y = q - 1, i.e. x^i != 1 for every i < q-1
+ *
+ * Note, order of a number must be a divisor of (q-1)
+ *
+ * Algorithm to checking whether x is primitive root or not
+ *  Methodology: checking its order is not a proper divisor of (q-1)
+ * 1. Prime factorization (q - 1) = p1^r1 * p2^r2 * ... pm^rm
+ * 2. Get "necessary" proper divisors of (q - 1):
+ *      D = {(q-1)/p1, (q-1)/p2, .., (q-1)/pm }
+ * 3. x is a primitive root if for every divisor d of D:
+ *                          x^d != 1
+ * Proof:
+ *  Suppose that x satisfies the algorithm but its order is a proper divisor y
+ *  of (q-1). This order can be expressed as (q-1)/y where
+ *              y = (p1^s1 * p2^s2 * ... * pm^sm)
+ *  and, x^((q-1)/y) = 1
+ *  Withouth loss of generality, we suppose s1 >= 1. We have
+ *      x^((q-1)/y) = 1 => (x^((q-1)/y))^(y/p1) = 1 <=> x^((q-1)/p1) = 1.
+ *  Contradict to Step 3 of the algorith.
+ */
+template <typename T>
+bool GF<T>::is_prime_root(T nb)
+{
+  std::vector<T>* divisors = new std::vector<T>();
+  typename std::vector<T>::iterator divisor;
+  T h = card_minus_one();
+  // get necessary proper divisors of h
+  _get_proper_divisors(h, divisors);
+  // check nb^divisor == 1
+  // std::cout << "checking.." << nb << std::endl;
+  for (divisor = divisors->begin(); divisor != divisors->end(); ++divisor) {
+    // std::cout << nb << "^" << *divisor << "=" << exp(nb, *divisor) << std::endl;
+    if (exp(nb, *divisor) == 1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/*
+ * Find primitive root of finite field. A number x is a primitive root if its
+ *  order y = q - 1, i.e. x^i != 1 for every i < q-1
+ *
+ * Use the algorithm of checking if a number is primitive root or not
+ */
+template <typename T>
+void GF<T>::find_prime_root()
+{
+  std::vector<T>* divisors = new std::vector<T>();
+  typename std::vector<T>::iterator divisor;
+  T h = card_minus_one();
+  // get all divisors of h
+  _get_proper_divisors(h, divisors);
+  T nb = 2;
+  bool ok;
+  while (nb <= h) {
+    ok = true;
+    // check nb^divisor == 1
+    // std::cout << "checking.." << nb << std::endl;
+    for (divisor = divisors->begin(); divisor != divisors->end(); ++divisor) {
+      // std::cout << nb << "^" << *divisor << "=" << exp(nb, *divisor) << std::endl;
+      if (exp(nb, *divisor) == 1) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) {
+      this->root = nb;
+      return;
+    }
+    nb++;
+  }
+  if (!this->root)
+    assert(false);  // not found root
+}
+
+/*
+ * A given number `n` is factored into primes->
+ */
+template<typename T>
+void GF<T>::_factor_prime(T nb, std::vector<T> *primes,
+  std::vector<T> *exponent)
+{
+  // std::cout << nb << ": ";
+  T occurence = 0;
+  while (nb % 2 == 0) {
+    occurence++;
+    if (occurence == 1) {
+      primes->push_back(2);
+    }
+    nb = nb/2;
+  }
+  if (occurence > 0) {
+    exponent->push_back(occurence);
+    occurence = 0;
+  }
+  // n must be odd at this point.  So we can skip one element
+  for (T i = 3; i <= sqrt(nb); i = i + 2) {
+    // While i divides n, get i and divide n
+    while (nb % i == 0) {
+      occurence++;
+      if (occurence == 1) {
+        primes->push_back(i);
+      }
+      nb = nb/i;
+    }
+    if (occurence > 0) {
+      exponent->push_back(occurence);
+      occurence = 0;
+    }
+  }
+  // This condition is to handle the case when n
+  // is a prime number greater than 2
+  if (nb > 2) {
+    primes->push_back(nb);
+    exponent->push_back(1);
+  }
+  // typename std::vector<int>::size_type i;
+  // for (i = 0; i != primes->size(); i++) {
+  //   std::cout << primes->at(i) << "^" << exponent->at(i) << " ";
+  // }
+  // std::cout << std::endl;
+}
+
+template <typename T>
+T GF<T>::do_step_get_order(T x, T h, std::vector<T> *primes,
+  std::vector<T> *exponent)
+{
+  T y, p, r;
+  while (!primes->empty()) {
+    p = primes->back();
+    r = exponent->back();
+    primes->pop_back();
+    exponent->pop_back();
+    y = h/p;
+    if (exp(x, y) != 1) {
+      // remove (p, r)
+      while (r > 1) {
+        y /= p;
+        r--;
+      }
+      continue;
+    }
+    // exp(x, y) == 1
+    if (r > 1) {
+      primes->push_back(p);
+      exponent->push_back(r - 1);
+    }
+    // do next
+    return do_step_get_order(x, y, primes, exponent);
+  }
+  return h;
+}
+
+/*
+ * Get order of an element x of GF(q)
+ *  The order d is the smallest divisor of (q-1) such that x^d = 1
+ * Pseudocode:
+ *  Prime factorisation of (q-1) = p1^r1 * p2^r2 * ... * pm^rm
+ *  D = { (p1, r1), (p2, r2), .. , (pm, rm) }
+ *  h = q - 1
+ *   function do_step_get_order(x, h, D) {
+ *     for (pi, ri) in D {
+ *       y = h/pi
+ *       newD = D \ (pi, ri)
+ *       if (x^y != 1) {
+ *           y /= pi^(ri - 1)
+ *           continue;
+ *       }
+ *       // x^y == 1
+ *       if (ri > 1)
+ *         newD = newD + (pi, ri - 1)
+ *       return do_step_get_order(x, y, newD)
+ *     }
+ *     return h;
+ *   }
+ */
+template <typename T>
+T GF<T>::get_order(T x)
+{
+  std::vector<T> *primes = new std::vector<T>();
+  std::vector<T> *exponent = new std::vector<T>();
+  T h = card_minus_one();
+  _factor_prime(h, primes, exponent);
+  T order = do_step_get_order(x, h, primes, exponent);
+  if (order == 1) return h;
+  return order;
+}
+
+/*
+ * Check whether a number is a primitive root
+ */
+template <typename T>
+bool GF<T>::check_prime_root(T nb)
+{
+  T h = card_minus_one();
+  return (get_order(nb) == h);
+}
+
+/*
+ * Check naively whether a number is a primitive root
+ */
+template <typename T>
+bool GF<T>::check_prime_root_naive(T nb)
+{
+  T h = card_minus_one();
+  T i = 1;
+  T tmp = nb;
+  while (i < h) {
+    // std::cout << i << ":" << tmp << std::endl;
+    if (tmp == 1) return false;
+    tmp = mul(tmp, nb);
+    i++;
+  }
+  // std::cout << "last one" << tmp << std::endl;
+  if (tmp == 1) return true;
+  return false;
 }
