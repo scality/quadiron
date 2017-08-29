@@ -16,7 +16,7 @@
 #include <map>
 #include <utility>
 
-#include "int256t.h"
+#include "big_int.h"
 
 template<typename Type> struct Double {};
 template<>           struct Double<uint32_t> {typedef uint64_t T;};
