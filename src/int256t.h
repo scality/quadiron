@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <cstdint>
 
+std::ostream& operator<<(std::ostream& dest, __uint128_t value);
+std::ostream& operator<<(std::ostream& dest, __int128_t value);
+
 struct uint256_t
 {
   __uint128_t lo;
