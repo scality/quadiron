@@ -62,7 +62,6 @@ class GF
   bool _solovay_strassen1(T a, T n);
   bool _solovay_strassen(T n);
   bool _is_prime(T n);
-  T get_nth_root(int n, int R);
   void compute_omegas(Vec<T> *W, int n, T w);
   T _weak_rand(T max);
   T weak_rand(void);
@@ -76,6 +75,8 @@ class GF
   T do_step_get_order(T x, T h, std::vector<T> *primes,
     std::vector<T> *exponent);
   T get_order(T x);
+  T _gcd(T u, T v);
+  T get_nth_root(T n);
 };
 
 template <typename T>
@@ -553,33 +554,6 @@ bool GF<T>::_is_prime(T n)
 }
 
 /**
- * compute root of order n-1 such as r^(n-1) mod q == 1
- * As suggested by the paper:
- * FNT-based Reed-Solomon Erasure Codes
- * by Alexandre Soro and Jerome Lacan
- *
- * @param R primitive root
- * @param n must be a power of 2
- *
- * @return root
- */
-template <typename T>
-T GF<T>::get_nth_root(int n, int R)
-{
-  assert(_is_power_of_2(n));
-  u_int l = _log2(n);
-  assert(l <= 16);
-  mpz_class _R = R;
-  std::stringstream my_card;
-  my_card << card();
-  mpz_class _q(my_card.str());
-  mpz_class _r;
-  mpz_powm_ui(_r.get_mpz_t(), _R.get_mpz_t(), _exp2(16-l), _q.get_mpz_t());
-  // std::cout << "n=" << n << " l=" << l << " r=" << _r << " q=" << _q << "\n";
-  return _r.get_ui();
-}
-
-/**
  * Compute the different powers of the root of unity into a vector
  *
  * @note cache the result in a file called W<w>.cache
@@ -911,4 +885,43 @@ bool GF<T>::check_prime_root_naive(T nb)
   // std::cout << "last one" << tmp << std::endl;
   if (tmp == 1) return true;
   return false;
+}
+
+/**
+ * Modern Euclidean algorithm
+ * Implementation of Algorithm A in "The Art of Computing", p.322, Donald Knuth
+ * @param u
+ * @param v
+ * @return the GCD(u, v)
+ */
+template <typename T>
+T GF<T>::_gcd(T u, T v)
+{
+  T r;
+  if (v == 0) return u;
+  if (u == 0) return v;
+  while (1) {
+    r = u % v;
+    if (r == 0) return v;
+    u = v;
+    v = r;
+  }
+}
+
+/**
+ * compute root of order n: g^((q-1)/d) where d = gcd(n, q-1)
+ *
+ * @param n
+ *
+ * @return root
+ */
+template <typename T>
+T GF<T>::get_nth_root(T n)
+{
+  T q_minus_one = this->card_minus_one();
+  T d = this->_gcd(n, q_minus_one);
+  if (!this->root)
+    this->find_prime_root();
+  T nth_root = this->exp(this->root, q_minus_one/d);
+  return nth_root;
 }

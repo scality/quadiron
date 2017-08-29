@@ -52,7 +52,7 @@ class FFT2K : public FFT<T>
 template <typename T>
 FFT2K<T>::FFT2K(GF<T> *gf, int n, int R, int N) : FFT<T>(gf, n)
 {
-  w = gf->get_nth_root(n, R);
+  w = gf->get_nth_root(n);
   inv_w = gf->inv(w);
   this->N = N;
   if (this->N == 0)
