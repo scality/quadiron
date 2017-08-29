@@ -39,6 +39,7 @@ class GF2N : public GF<T>
   explicit GF2N(T n);
   ~GF2N();
   T card(void);
+  T card_minus_one(void);
   bool check(T a);
   T max(T a, T b);
   T min(T a, T b);
@@ -99,10 +100,11 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
   if (this->restricted) {
     if (n <= 64)
       this->my_card = std::numeric_limits<T>::max();
-    else
+    else {
       this->my_card = 0;
       for (int i = 0; i < n; i++)
         this->my_card += this->mask[i];
+    }
   } else
     this->my_card = 2 * this->mask[n - 1];
 
@@ -256,8 +258,18 @@ T GF2N<T>::card(void)
 }
 
 template <typename T>
+T GF2N<T>::card_minus_one(void)
+{
+  if (this->restricted)
+    return this->my_card;
+  return (this->my_card - 1);
+}
+
+template <typename T>
 bool GF2N<T>::check(T a)
 {
+  if (this->restricted)
+    return (a >=0 && a <= my_card);
   return (a >=0 && a < my_card);
 }
 

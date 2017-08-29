@@ -82,6 +82,23 @@ class GFUtest
     assert(gf->check_prime_root(gf->root));
   }
 
+  void test_get_order(GF<T> *gf)
+  {
+    int i;
+    T x;
+    T order;
+    T h = gf->card_minus_one();
+    for (i = 0; i < 1000; i++) {
+      // std::cout << "i=" << i << "\n";
+      // std::cout << gf->card() << "\n";
+      x = gf->weak_rand();
+      order = gf->get_order(x);
+      // std::cout << "x=" << x << " " << order << std::endl;
+      assert(gf->exp(x, order) == 1);
+      assert(h % order == 0);
+    }
+  }
+
   void test_negation_gf5()
   {
     std::cout << "test_negation_gf5\n";
@@ -104,6 +121,7 @@ class GFUtest
 
     GFP<T> gf5(5);
     test_find_prime_root(&gf5);
+    test_get_order(&gf5);
   }
 
   void test_log_gf()
@@ -120,6 +138,7 @@ class GFUtest
 
     GFP<T> gf(32);
     test_find_prime_root(&gf);
+    test_get_order(&gf);
   }
 
   void test_negation_gf256()
@@ -152,6 +171,7 @@ class GFUtest
 
     GF2N<T> gf256(8);
     test_find_prime_root(&gf256);
+    test_get_order(&gf256);
   }
 
   void test_misc_gf29()
@@ -197,6 +217,7 @@ class GFUtest
 
     GF2N<T> gf2n(n);
     test_find_prime_root(&gf2n);
+    test_get_order(&gf2n);
   }
 
   void gf_utest()
@@ -221,13 +242,13 @@ class GFUtest
 
   void gf_utest_2_bign(T n)
   {
-    std::cout << "gf_utest 2^" << n << ")\n";
+    std::cout << "gf_utest 2^" << n << "\n";
 
     srand(time(0));
 
     test_negation_gf2_bign(n);
     test_reciprocal_gf2_bign(n);
-    // test_prime_root_gf2(n);
+    test_prime_root_gf2(n);
     // test_log_gf2_bign(n);
   }
 
@@ -242,6 +263,13 @@ class GFUtest
     test_reciprocal_gf5();
     test_log_gf();
     test_misc_gf29();
+  }
+
+  void gf_utest_2_n(T n)
+  {
+    std::cout << "gf_utest_2_n for n=" << n << "\n";
+    for (int i = 8; i <=n; i *= 2)
+      gf_utest_2_bign(i);
   }
 };
 
@@ -260,21 +288,13 @@ void gf_utest()
 {
   GFUtest<uint32_t> gfutest_uint32;
   gfutest_uint32.gf_utest();
-  gfutest_uint32.test_prime_root_gf2(8);
-  gfutest_uint32.test_prime_root_gf2(16);
-  gfutest_uint32.gf_utest_2_bign(32);
+  gfutest_uint32.gf_utest_2_n(32);
   GFUtest<uint64_t> gfutest_uint64;
   gfutest_uint64.gf_utest();
-  gfutest_uint64.gf_utest_2_bign(32);
-  gfutest_uint64.gf_utest_2_bign(64);
-  gfutest_uint64.test_prime_root_gf2(8);
-  gfutest_uint64.test_prime_root_gf2(16);
-  gfutest_uint64.test_prime_root_gf2(32);
+  gfutest_uint64.gf_utest_2_n(64);
   GFUtest<__uint128_t> gfutest_uint128;
-  // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
-  gfutest_uint128.gf_utest_2_bign(32);
-  gfutest_uint128.gf_utest_2_bign(64);
-  gfutest_uint128.gf_utest_2_bign(128);
+  // // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
+  gfutest_uint128.gf_utest_2_n(128);
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n();  // XXX gf2n broken for now
 }
