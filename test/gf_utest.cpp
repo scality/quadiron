@@ -132,11 +132,11 @@ class GFUtest
     test_log(&gf);
   }
 
-  void test_prime_root_gf32()
+  void test_prime_root_gf31()
   {
-    std::cout << "test_prime_root_gf32\n";
+    std::cout << "test_prime_root_gf31\n";
 
-    GFP<T> gf(32);
+    GFP<T> gf(31);
     test_find_prime_root(&gf);
     test_get_order(&gf);
   }
@@ -231,7 +231,7 @@ class GFUtest
     test_reciprocal_gf5();
     test_prime_root_gf5();
     test_log_gf();
-    // test_prime_root_gf32();
+    test_prime_root_gf31();
     test_negation_gf256();
     test_reciprocal_gf256();
     test_log_gf256();
