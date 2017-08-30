@@ -83,6 +83,7 @@ GF<T>::GF(T p, T n)
 {
   this->p = p;
   this->n = n;
+  this->root = 0;
 }
 
 template <typename T>
