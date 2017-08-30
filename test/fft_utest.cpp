@@ -375,6 +375,49 @@ class FFTUtest
     assert(v.eq(&v2));
   }
 
+  void test_fft_gf2n()
+  {
+    for (int n = 4; n <= 128 && n <= 8 * sizeof(T); n *= 2)
+      test_fft_gf2n_with_n(n);
+  }
+
+  void test_fft_gf2n_with_n(int n)
+  {
+    T r;
+    GF2N<T> gf = GF2N<T>(n);
+    T R = gf._get_prime_root();
+    T n_data = 3;
+    T n_parities = 3;
+
+    std::cout << "test_fft_gf2n_with_n=" << n << "\n";
+
+    assert(gf.exp(R, gf.card_minus_one()) == 1);
+
+    // with this encoder we cannot exactly satisfy users request, we need to pad
+    n = gf._get_code_len(n_data + n_parities);
+
+    r = gf.get_nth_root(n);
+    assert(gf.exp(r, n) == 1);
+
+    // std::cerr << "n=" << n << "\n";
+    // std::cerr << "r=" << r << "\n";
+
+    FFTN<T> fft = FFTN<T>(&gf, n, r);
+
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    for (T i = 0; i < 100000; i++) {
+      v.zero_fill();
+      for (int i = 0; i < n_data; i++)
+        v.set(i, gf.weak_rand());
+      // v.dump();
+      fft.fft(&_v, &v);
+      // _v.dump();
+      fft.ifft(&v2, &_v);
+      // v2.dump();
+      assert(v.eq(&v2));
+    }
+  }
+
   void fft_utest_no_mul_bignum()
   {
     std::cout << "fft_utest_no_mul_bignum\n";
@@ -396,6 +439,7 @@ class FFTUtest
     test_fft();
     test_fft_bis();
     test_fft2();
+    test_fft_gf2n();
     test_mul_bignum();
   }
 };

@@ -29,6 +29,7 @@ class GF
 
  protected:
   GF(T p, T n);
+  ~GF();
 
  public:
   virtual T card(void) = 0;
@@ -70,13 +71,24 @@ class GF
   void _get_proper_divisors(T n, std::vector<T> *output);
   bool is_prime_root(T nb);
   void find_prime_root();
+  T _get_prime_root();
   bool check_prime_root(T nb);
-  bool check_prime_root_naive(T nb);
+  bool check_order_naive(T nb, T order);
   T do_step_get_order(T x, T h, std::vector<T> *primes,
     std::vector<T> *exponent);
   T get_order(T x);
   T _gcd(T u, T v);
   T get_nth_root(T n);
+  void _compute_all_divisors_h();
+  T _get_code_len(T n);
+  inline mpz_class _to_mpz_class(T nb) {
+    std::stringstream _nb;
+    _nb << nb;
+    mpz_class res(_nb.str());
+    return res;
+  }
+ private:
+  std::vector<T>* _all_divisors_h = NULL;
 };
 
 template <typename T>
@@ -85,6 +97,12 @@ GF<T>::GF(T p, T n)
   this->p = p;
   this->n = n;
   this->root = 0;
+}
+
+template <typename T>
+GF<T>::~GF()
+{
+  delete this->_all_divisors_h;
 }
 
 template <typename T>
@@ -664,6 +682,8 @@ void GF<T>::_get_proper_divisors(T nb, std::vector<T> *output)
       // std::cout << *it << std::endl;
     }
   }
+
+  delete input;
 }
 
 /*
@@ -691,6 +711,7 @@ void GF<T>::_get_proper_divisors(T nb, std::vector<T> *output)
 template <typename T>
 bool GF<T>::is_prime_root(T nb)
 {
+  bool ok = true;
   std::vector<T>* divisors = new std::vector<T>();
   typename std::vector<T>::iterator divisor;
   T h = card_minus_one();
@@ -701,10 +722,13 @@ bool GF<T>::is_prime_root(T nb)
   for (divisor = divisors->begin(); divisor != divisors->end(); ++divisor) {
     // std::cout << nb << "^" << *divisor << "=" << exp(nb, *divisor) << std::endl;
     if (exp(nb, *divisor) == 1) {
-      return false;
+      ok = false;
+      break;
     }
   }
-  return true;
+
+  delete divisors;
+  return ok;
 }
 
 /*
@@ -716,6 +740,7 @@ bool GF<T>::is_prime_root(T nb)
 template <typename T>
 void GF<T>::find_prime_root()
 {
+  if (this->root) return;
   std::vector<T>* divisors = new std::vector<T>();
   typename std::vector<T>::iterator divisor;
   T h = card_minus_one();
@@ -736,16 +761,19 @@ void GF<T>::find_prime_root()
     }
     if (ok) {
       this->root = nb;
-      return;
+      break;
     }
     nb++;
   }
+
+  delete divisors;
+
   if (!this->root)
     assert(false);  // not found root
 }
 
 /*
- * A given number `n` is factored into primes->
+ * A given number `n` is factored into primes
  */
 template<typename T>
 void GF<T>::_factor_prime(T nb, std::vector<T> *primes,
@@ -848,11 +876,16 @@ T GF<T>::do_step_get_order(T x, T h, std::vector<T> *primes,
 template <typename T>
 T GF<T>::get_order(T x)
 {
+  if (x == 0 || x == 1) return 1;
   std::vector<T> *primes = new std::vector<T>();
   std::vector<T> *exponent = new std::vector<T>();
   T h = card_minus_one();
   _factor_prime(h, primes, exponent);
   T order = do_step_get_order(x, h, primes, exponent);
+
+  delete primes;
+  delete exponent;
+
   if (order == 1) return h;
   return order;
 }
@@ -868,23 +901,22 @@ bool GF<T>::check_prime_root(T nb)
 }
 
 /*
- * Check naively whether a number is a primitive root
+ * Check naively order of a number
  */
 template <typename T>
-bool GF<T>::check_prime_root_naive(T nb)
+bool GF<T>::check_order_naive(T nb, T order)
 {
-  T h = card_minus_one();
+  if (exp(nb, order) != 1) return false;
+
   T i = 1;
   T tmp = nb;
-  while (i < h) {
+  while (i < order - 1) {
     // std::cout << i << ":" << tmp << std::endl;
     if (tmp == 1) return false;
     tmp = mul(tmp, nb);
     i++;
   }
-  // std::cout << "last one" << tmp << std::endl;
-  if (tmp == 1) return true;
-  return false;
+  return true;
 }
 
 /**
@@ -924,4 +956,71 @@ T GF<T>::get_nth_root(T n)
     this->find_prime_root();
   T nth_root = this->exp(this->root, q_minus_one/d);
   return nth_root;
+}
+
+/**
+ * return prime root
+
+ * @return root
+ */
+template <typename T>
+T GF<T>::_get_prime_root()
+{
+  if (!this->root)
+    this->find_prime_root();
+  return this->root;
+}
+/**
+ * compute all divisors of q-1
+ *
+ */
+template <typename T>
+void GF<T>::_compute_all_divisors_h()
+{
+  if (_all_divisors_h) return;
+  _all_divisors_h = new std::vector<T>();
+  typename std::vector<T>* tmp = new std::vector<T>();
+
+  T nb = this->card_minus_one();
+
+  T _sqrt = sqrt(nb);
+  for (T i = 1; i <= _sqrt; i++) {
+    // While i divides n, get i and n/i
+    if (nb % i == 0) {
+      // std::cout << nb << ":" << i << " " << nb/i << std::endl;
+      _all_divisors_h->push_back(i);
+      tmp->push_back(nb / i);
+    }
+  }
+  _all_divisors_h->insert(_all_divisors_h->end(), tmp->rbegin(), tmp->rend());
+
+  delete tmp;
+}
+
+/**
+ * find smallest number is
+ *  - at least n
+ *  - divisible by (q-1)
+ *
+ * @param n
+ *
+ * @return root
+ */
+template <typename T>
+T GF<T>::_get_code_len(T n)
+{
+  T q_minus_one = card_minus_one();
+  if (q_minus_one % n == 0) return n;
+  if (q_minus_one < n) assert(false);
+
+  if (!_all_divisors_h) {
+    _compute_all_divisors_h();
+  }
+
+  typename std::vector<T>::size_type i;
+  for (i = 0; i != _all_divisors_h->size(); i++) {
+    if (n <= _all_divisors_h->at(i))
+      return _all_divisors_h->at(i);
+  }
+  return 0;
 }

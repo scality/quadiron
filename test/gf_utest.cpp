@@ -287,10 +287,11 @@ class GFUtest
     test_prime_root_gf31();
   }
 
-  void gf_utest_2_n(T n)
+  void gf_utest_2_n()
   {
-    std::cout << "gf_utest_2_n for n=" << n << "\n";
-    for (int i = 8; i <=n; i *= 2)
+    T max_n = 8 * sizeof(T);
+    std::cout << "gf_utest_2_n for max_n=" << max_n << "\n";
+    for (int i = 8; i <=max_n; i *= 2)
       gf_utest_2_bign(i);
   }
 };
@@ -310,13 +311,13 @@ void gf_utest()
 {
   GFUtest<uint32_t> gfutest_uint32;
   gfutest_uint32.gf_utest();
-  gfutest_uint32.gf_utest_2_n(32);
+  gfutest_uint32.gf_utest_2_n();
   GFUtest<uint64_t> gfutest_uint64;
   gfutest_uint64.gf_utest();
-  gfutest_uint64.gf_utest_2_n(64);
+  gfutest_uint64.gf_utest_2_n();
   GFUtest<__uint128_t> gfutest_uint128;
   // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
-  gfutest_uint128.gf_utest_2_n(128);
+  gfutest_uint128.gf_utest_2_n();
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n();  // XXX gf2n broken for now
 }
