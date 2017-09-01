@@ -296,7 +296,7 @@ class FFTUtest
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    std::cout << "test_fft\n";
+    std::cout << "test_fft_bis\n";
 
     assert(gf._jacobi(R, q) == -1);
 
@@ -334,7 +334,7 @@ class FFTUtest
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    std::cout << "test_fft\n";
+    std::cout << "test_fft2\n";
 
     assert(gf._jacobi(R, q) == -1);
 
@@ -377,7 +377,7 @@ class FFTUtest
 
   void fft_utest_no_mul_bignum()
   {
-    std::cout << "fft_utest\n";
+    std::cout << "fft_utest_no_mul_bignum\n";
 
     test_gcd();
     test_chinese_remainder();

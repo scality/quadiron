@@ -2,6 +2,7 @@
 #pragma once
 #include "gf.h"
 
+
 template<typename T>
 class GFP : public GF<T>
 {
@@ -22,8 +23,14 @@ class GFP : public GF<T>
   T inv_bezout(T a);
   T exp(T a, T b);
   T log(T a, T b);
+ private:
+  inline mpz_class to_mpz_class(T nb) {
+    std::stringstream _nb;
+    _nb << nb;
+    mpz_class res(_nb.str());
+    return res;
+  }
 };
-
 template <typename T>
 GFP<T>::GFP(T p) : GF<T>(p, 1)
 {

@@ -99,6 +99,22 @@ class GFUtest
     }
   }
 
+  void test_get_nth_root(GF<T> *gf)
+  {
+    int i;
+    T x;
+    T nth_root;
+    T h = gf->card_minus_one();
+    for (i = 0; i < 1000; i++) {
+      // std::cout << "i=" << i << "\n";
+      // std::cout << gf->card() << "\n";
+      x = gf->weak_rand();
+      nth_root = gf->get_nth_root(x);
+      // std::cout << "x=" << x << " " << nth_root << std::endl;
+      assert(gf->exp(nth_root, x) == 1);
+    }
+  }
+
   void test_negation_gf5()
   {
     std::cout << "test_negation_gf5\n";
@@ -122,6 +138,7 @@ class GFUtest
     GFP<T> gf5(5);
     test_find_prime_root(&gf5);
     test_get_order(&gf5);
+    test_get_nth_root(&gf5);
   }
 
   void test_log_gf()
@@ -139,6 +156,7 @@ class GFUtest
     GFP<T> gf(31);
     test_find_prime_root(&gf);
     test_get_order(&gf);
+    test_get_nth_root(&gf);
   }
 
   void test_negation_gf256()
@@ -172,6 +190,7 @@ class GFUtest
     GF2N<T> gf256(8);
     test_find_prime_root(&gf256);
     test_get_order(&gf256);
+    test_get_nth_root(&gf256);
   }
 
   void test_misc_gf29()
@@ -218,6 +237,7 @@ class GFUtest
     GF2N<T> gf2n(n);
     test_find_prime_root(&gf2n);
     test_get_order(&gf2n);
+    test_get_nth_root(&gf2n);
   }
 
   void gf_utest()
@@ -254,15 +274,17 @@ class GFUtest
 
   void gf_utest_nogf2n()
   {
-    std::cout << "gf_utest\n";
+    std::cout << "gf_utest_nogf2n\n";
 
     srand(time(0));
 
     test_basic_ops();
     test_negation_gf5();
     test_reciprocal_gf5();
+    test_prime_root_gf5();
     test_log_gf();
     test_misc_gf29();
+    test_prime_root_gf31();
   }
 
   void gf_utest_2_n(T n)
@@ -293,7 +315,7 @@ void gf_utest()
   gfutest_uint64.gf_utest();
   gfutest_uint64.gf_utest_2_n(64);
   GFUtest<__uint128_t> gfutest_uint128;
-  // // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
+  // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
   gfutest_uint128.gf_utest_2_n(128);
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n();  // XXX gf2n broken for now
