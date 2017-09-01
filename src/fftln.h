@@ -203,5 +203,5 @@ template <typename T>
 void FFTLN<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
   _fft(output, input, inv_W);
-  output->mul_scalar(this->inv_n);
+  output->mul_scalar(this->inv_n_mod_p);
 }

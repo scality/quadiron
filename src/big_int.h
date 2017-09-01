@@ -68,6 +68,10 @@ struct int256_t
   {
     return lo / x.lo;
   }
+  int256_t operator/(int x)
+  {
+    return lo / x;
+  }
   operator __uint128_t()
   {
     return lo;

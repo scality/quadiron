@@ -12,7 +12,7 @@ class FFT
  public:
   GF<T> *gf;
   int n;
-  T inv_n;
+  T inv_n_mod_p;
  protected:
   FFT(GF<T> *gf, int n);
  public:
@@ -25,5 +25,5 @@ FFT<T>::FFT(GF<T> *gf, int n)
 {
   this->gf = gf;
   this->n = n;
-  this->inv_n = gf->inv(n);
+  this->inv_n_mod_p = (gf->inv(n) % gf->p);
 }

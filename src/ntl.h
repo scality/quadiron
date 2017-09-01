@@ -56,3 +56,4 @@ typedef enum
 #include "fec.h"
 #include "fecgf2nrs.h"
 #include "fecfntrs.h"
+#include "fecgf2nfftrs.h"

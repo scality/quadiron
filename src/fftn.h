@@ -52,7 +52,7 @@ void FFTN<T>::compute_W(Mat<T> *_W, T _w)
 {
   for (int i = 0; i <= this->n-1; i++) {
     for (int j = 0; j <= this->n-1; j++) {
-      _W->set(i, j, this->gf->exp(_w, i*j));
+      _W->set(i, j, this->gf->exp(_w, (i*j) % this->n));
     }
   }
   // _W->dump();
@@ -74,5 +74,6 @@ template <typename T>
 void FFTN<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
   _fft(output, input, inv_W);
-  output->mul_scalar(this->inv_n);
+  if (this->inv_n_mod_p > 1)
+    output->mul_scalar(this->inv_n_mod_p);
 }

@@ -15,6 +15,8 @@ template class FEC<uint32_t>;
 template class FECGF2NRS<uint32_t>;
 template class FECGF2NRS<uint64_t>;
 template class FECFNTRS<uint32_t>;
+template class FECGF2NFFTRS<uint32_t>;
+template class FECGF2NFFTRS<uint64_t>;
 
 int vflag = 0;
 char *prefix = NULL;
@@ -23,7 +25,8 @@ void xusage()
 {
   std::cerr << std::string("Usage: ") +
     "ec [-e gf2nrsv|gf2nrsc|gf2nrsv-bign|gf2nrsc-bign|gf2nrsc-verybign|" +
-    "fntrs][-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
+    "gf2nfftrs|fntrs]" +
+    "[-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
   exit(1);
 }
@@ -195,14 +198,64 @@ void print_stats(FEC<T> *fec)
     << ",";
 }
 
+enum gf2nrs_type
+  {
+    VANDERMONDE = 0,
+    CAUCHY,
+  };
+
+template <typename T>
+void run_FECGF2NRS(int word_size, int n_data, int n_parities, gf2nrs_type mflag, int rflag)
+{
+  FECGF2NRS<T> *fec;
+  typename FECGF2NRS<T>::FECGF2NRSType gf2nrs_type;;
+  if (mflag == VANDERMONDE)
+    gf2nrs_type = FECGF2NRS<T>::VANDERMONDE;
+  else
+    gf2nrs_type = FECGF2NRS<T>::CAUCHY;
+  GF2N<T> *gf = new GF2N<T>(word_size * 8);
+  fec = new FECGF2NRS<T>(gf, word_size, n_data, n_parities,
+    gf2nrs_type);
+
+  if (rflag) {
+    if (0 != repair_data_files<T>(fec)) {
+      exit(1);
+    }
+  }
+  create_coding_files<T>(fec);
+  print_stats<T>(fec);
+  delete fec;
+  delete gf;
+}
+
+template <typename T>
+void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
+{
+  FECGF2NFFTRS<T> *fec;
+  GF2N<T> *gf = new GF2N<T>(word_size * 8);
+  fec = new FECGF2NFFTRS<T>(gf, word_size, n_data, n_parities);
+
+  if (rflag) {
+    if (0 != repair_data_files<T>(fec)) {
+      exit(1);
+    }
+  }
+  create_coding_files<T>(fec);
+  print_stats<T>(fec);
+  delete fec;
+  delete gf;
+}
+
 enum ec_type
   {
     EC_TYPE_UNDEF = 0,
     EC_TYPE_GF2NRS,
     EC_TYPE_GF2NRS_BIGN,
     EC_TYPE_GF2NRS_VERYBIGN,
+    EC_TYPE_GF2NFFTRS,
     EC_TYPE_FNTRS,
   };
+
 
 int main(int argc, char **argv)
 {
@@ -211,9 +264,7 @@ int main(int argc, char **argv)
   int rflag = 0;
   int uflag = 0;
   ec_type eflag = EC_TYPE_UNDEF;
-  FECGF2NRS<uint32_t>::FECGF2NRSType gf2nrs_type;
-  FECGF2NRS<uint64_t>::FECGF2NRSType gf2nrs_bign_type;
-  FECGF2NRS<__uint128_t>::FECGF2NRSType gf2nrs_verybign_type;
+  gf2nrs_type mflag = VANDERMONDE;
   int word_size = 0;
 
   n_data = n_parities = -1;
@@ -222,22 +273,12 @@ int main(int argc, char **argv)
     case 'e':
       if (!strcmp(optarg, "gf2nrsv")) {
         eflag = EC_TYPE_GF2NRS;
-        gf2nrs_type = FECGF2NRS<uint32_t>::VANDERMONDE;
+        mflag = VANDERMONDE;
       } else if (!strcmp(optarg, "gf2nrsc")) {
         eflag = EC_TYPE_GF2NRS;
-        gf2nrs_type = FECGF2NRS<uint32_t>::CAUCHY;
-      } else if (!strcmp(optarg, "gf2nrsv-bign")) {
-        eflag = EC_TYPE_GF2NRS_BIGN;
-        gf2nrs_bign_type = FECGF2NRS<uint64_t>::VANDERMONDE;
-      } else if (!strcmp(optarg, "gf2nrsc-bign")) {
-        eflag = EC_TYPE_GF2NRS_BIGN;
-        gf2nrs_bign_type = FECGF2NRS<uint64_t>::CAUCHY;
-      } else if (!strcmp(optarg, "gf2nrsv-verybign")) {
-        eflag = EC_TYPE_GF2NRS_VERYBIGN;
-        gf2nrs_verybign_type = FECGF2NRS<__uint128_t>::VANDERMONDE;
-      } else if (!strcmp(optarg, "gf2nrsc-verybign")) {
-        eflag = EC_TYPE_GF2NRS_VERYBIGN;
-        gf2nrs_verybign_type = FECGF2NRS<__uint128_t>::CAUCHY;
+        mflag = CAUCHY;
+      } else if (!strcmp(optarg, "gf2nfftrs")) {
+        eflag = EC_TYPE_GF2NFFTRS;
       } else if (!strcmp(optarg, "fntrs"))
         eflag = EC_TYPE_FNTRS;
       else
@@ -310,50 +351,19 @@ int main(int argc, char **argv)
     delete fec;
     delete gf;
   } else if (eflag == EC_TYPE_GF2NRS) {
-    FECGF2NRS<uint32_t> *fec;
-    GF2N<uint32_t> *gf = new GF2N<uint32_t>(word_size * 8);
-    fec = new FECGF2NRS<uint32_t>(gf, word_size, n_data, n_parities,
-      gf2nrs_type);
-
-    if (rflag) {
-      if (0 != repair_data_files<uint32_t>(fec)) {
-        exit(1);
-      }
-    }
-    create_coding_files<uint32_t>(fec);
-    print_stats<uint32_t>(fec);
-    delete fec;
-    delete gf;
-  } else if (eflag == EC_TYPE_GF2NRS_BIGN) {
-    FECGF2NRS<uint64_t> *fec;
-    GF2N<uint64_t> *gf = new GF2N<uint64_t>(word_size * 8);
-    fec = new FECGF2NRS<uint64_t>(gf, word_size, n_data, n_parities,
-      gf2nrs_bign_type);
-
-    if (rflag) {
-      if (0 != repair_data_files<uint64_t>(fec)) {
-        exit(1);
-      }
-    }
-    create_coding_files<uint64_t>(fec);
-    print_stats<uint64_t>(fec);
-    delete fec;
-    delete gf;
-  } else if (eflag == EC_TYPE_GF2NRS_VERYBIGN) {
-    FECGF2NRS<__uint128_t> *fec;
-    GF2N<__uint128_t> *gf = new GF2N<__uint128_t>(word_size * 8);
-    fec = new FECGF2NRS<__uint128_t>(gf, word_size, n_data, n_parities,
-      gf2nrs_verybign_type);
-
-    if (rflag) {
-      if (0 != repair_data_files<__uint128_t>(fec)) {
-        exit(1);
-      }
-    }
-    create_coding_files<__uint128_t>(fec);
-    print_stats<__uint128_t>(fec);
-    delete fec;
-    delete gf;
+    if (word_size <= 4)
+      run_FECGF2NRS<uint32_t>(word_size, n_data, n_parities, mflag, rflag);
+    else if (word_size <= 8)
+      run_FECGF2NRS<uint64_t>(word_size, n_data, n_parities, mflag, rflag);
+    else if (word_size <= 16)
+      run_FECGF2NRS<__uint128_t>(word_size, n_data, n_parities, mflag, rflag);
+  } else if (eflag == EC_TYPE_GF2NFFTRS) {
+    if (word_size <= 4)
+      run_FECGF2NFFTRS<uint32_t>(word_size, n_data, n_parities, rflag);
+    else if (word_size <= 8)
+      run_FECGF2NFFTRS<uint64_t>(word_size, n_data, n_parities, rflag);
+    else if (word_size <= 16)
+      run_FECGF2NFFTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
   }
 
  end:
