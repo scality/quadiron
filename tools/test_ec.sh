@@ -28,7 +28,8 @@ do_test()
     coding_loss=$7
     extraopts=$8
 
-    echo -n ${fec_type}_W${word_size}_N${n_data}_M${n_coding}_D${data_loss// /-}_C${coding_loss// /-},
+    type=`${bin} -e ${fec_type} -w ${word_size} -n ${n_data} -m ${n_coding} -p foo -c ${extraopts} -t`
+    echo -n ${fec_type}_W${word_size}_N${n_data}_M${n_coding}_D${data_loss// /-}_C${coding_loss// /-}_${type},
 
     rm -f foo.*
 
@@ -47,7 +48,7 @@ do_test()
         md5sum foo.c${i} > foo.c${i}.md5sum.1
     done
 
-    if [ "${fec_type}" = 65537 ]
+    if [ "${type}" = "type_2" ]
     then
         #remove all data
         for i in foo.d[0-9]
@@ -59,7 +60,7 @@ do_test()
     j=0
     for i in $data_loss
     do
-        if [ "${fec_type}" = 65537 ]
+        if [ "${type}" = "type_2" ]
         then
             mv foo.c${j} foo.c${j}.1
             mv foo.c${j}.props foo.c${j}.props.1
@@ -71,7 +72,7 @@ do_test()
 
     for i in $coding_loss
     do
-        if [ "${fec_type}" = 65537 ]
+        if [ "${type}" = "type_2" ]
         then
             mv foo.c${j} foo.c${j}.1
             mv foo.c${j}.props foo.c${j}.props.1
