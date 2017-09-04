@@ -24,8 +24,7 @@ char *prefix = NULL;
 void xusage()
 {
   std::cerr << std::string("Usage: ") +
-    "ec [-e gf2nrsv|gf2nrsc|gf2nrsv-bign|gf2nrsc-bign|gf2nrsc-verybign|" +
-    "gf2nfftrs|fntrs]" +
+    "ec [-e gf2nrsv|gf2nrsc|gf2nfftrs|fntrs]" +
     "[-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
   exit(1);
