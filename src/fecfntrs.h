@@ -14,31 +14,23 @@ class FECFNTRS : public FEC<T>
   FFTN<T> *fft = NULL;
 
  public:
-  u_int l;
-  u_int n;
-  u_int r;
+  T n;
+  T r;
 
   FECFNTRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities) :
     FEC<T>(gf, FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
-    u_int q = 65537;
-    u_int R = 3;  // primitive root
-    // order of a number is the lowest power of the number equals 1.
-    // if q=65537 in GF_q 3 is a primitive root because is order is q-1:
-    // 3^(q-1) = 1 mod q, and for each i such as 0 < i < q-1, 3^i mod q != 1
+    T q = 65537;
+    T R = gf->_get_prime_root();  // primitive root
     assert(gf->_jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
-    l = __gf64._log2(n_parities + n_data) + 1;
-    n = __gf64._exp(2, l);
+    // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
+    n = gf->_get_code_len(n_parities + n_data);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
-    // formula given in the paper (very large numbers):
-    mpz_class p = gf->_to_mpz_class(gf->p);
-    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % p;
-    r = _r.get_ui();
+    r = gf->get_nth_root(n);
 
-    // std::cerr << "l=" << l << "\n";
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
