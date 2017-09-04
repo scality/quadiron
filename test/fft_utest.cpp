@@ -244,12 +244,11 @@ class FFTUtest
 
   void test_fft()
   {
-    u_int l;
     u_int n;
     u_int r;
-    u_int q = 65537;
+    T q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = 3;  // primitive root
+    u_int R = gf._get_prime_root();  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
@@ -258,15 +257,12 @@ class FFTUtest
     assert(gf._jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
-    l = __gf64._log2(n_data + n_parities) + 1;
-    n = __gf64._exp2(l);
+    // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
+    n = gf._get_code_len(n_parities + n_data);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
-    mpz_class p = mpz_class(std::to_string(gf.p));
-    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % p;
-    r = _r.get_ui();
+    r = gf.get_nth_root(n);
 
-    // std::cerr << "l=" << l << "\n";
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
@@ -288,11 +284,10 @@ class FFTUtest
 
   void test_fft_bis()
   {
-    u_int l;
     u_int n;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = 3;  // primitive root
+    u_int R = gf._get_prime_root();  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
@@ -301,10 +296,9 @@ class FFTUtest
     assert(gf._jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
-    l = __gf64._log2(n_data + n_parities) + 1;
-    n = __gf64._exp2(l);
+    // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
+    n = gf._get_code_len(n_parities + n_data);
 
-    // std::cerr << "l=" << l << "\n";
     // std::cerr << "n=" << n << "\n";
 
     FFT2K<T> fft = FFT2K<T>(&gf, n, R);
@@ -325,12 +319,11 @@ class FFTUtest
 
   void test_fft2()
   {
-    u_int l;
     u_int n;
     u_int r;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = 3;  // primitive root
+    u_int R = gf._get_prime_root();  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
@@ -339,15 +332,12 @@ class FFTUtest
     assert(gf._jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
-    l = __gf64._log2(n_data + n_parities) + 1;
-    n = __gf64._exp2(l);
+    // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
+    n = gf._get_code_len(n_parities + n_data);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
-    mpz_class p = mpz_class(std::to_string(gf.p));
-    mpz_class _r = __gfmpz._exp(R, __gfmpz._exp(2, 16-l)) % p;
-    r = _r.get_ui();
+    r = gf.get_nth_root(n);
 
-    // std::cerr << "l=" << l << "\n";
     // std::cerr << "r=" << r << "\n";
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
