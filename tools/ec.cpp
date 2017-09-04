@@ -19,6 +19,7 @@ template class FECGF2NFFTRS<uint32_t>;
 template class FECGF2NFFTRS<uint64_t>;
 
 int vflag = 0;
+int tflag = 0;
 char *prefix = NULL;
 
 void xusage()
@@ -198,6 +199,22 @@ void print_stats(FEC<T> *fec)
     << ",";
 }
 
+template <typename T>
+void print_fec_type(FEC<T> *fec)
+{
+  switch (fec->type) {
+  case FEC<T>::TYPE_1:
+    std::cout << "type_1\n";
+    break ;
+  case FEC<T>::TYPE_2:
+    std::cout << "type_2\n";
+    break ;
+  default:
+    std::cout << "unknown\n";
+    break ;
+  }
+}
+
 enum gf2nrs_type
   {
     VANDERMONDE = 0,
@@ -217,6 +234,10 @@ void run_FECGF2NRS(int word_size, int n_data, int n_parities, gf2nrs_type mflag,
   fec = new FECGF2NRS<T>(gf, word_size, n_data, n_parities,
     gf2nrs_type);
 
+  if (tflag) {
+    print_fec_type<T>(fec);
+    exit(1);
+  }
   if (rflag) {
     if (0 != repair_data_files<T>(fec)) {
       exit(1);
@@ -235,6 +256,10 @@ void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
   GF2N<T> *gf = new GF2N<T>(word_size * 8);
   fec = new FECGF2NFFTRS<T>(gf, word_size, n_data, n_parities);
 
+  if (tflag) {
+    print_fec_type<T>(fec);
+    exit(1);
+  }
   if (rflag) {
     if (0 != repair_data_files<T>(fec)) {
       exit(1);
@@ -268,7 +293,7 @@ int main(int argc, char **argv)
   int word_size = 0;
 
   n_data = n_parities = -1;
-  while ((opt = getopt(argc, argv, "n:m:p:cruve:w:")) != -1) {
+  while ((opt = getopt(argc, argv, "n:m:p:cruve:w:t")) != -1) {
     switch (opt) {
     case 'e':
       if (!strcmp(optarg, "gf2nrsv")) {
@@ -308,6 +333,9 @@ int main(int argc, char **argv)
     case 'p':
       prefix = xstrdup(optarg);
       break;
+    case 't':
+      tflag = 1;
+      break ;
     default: /* '?' */
       xusage();
     }
@@ -341,6 +369,10 @@ int main(int argc, char **argv)
     GFP<uint32_t> *gf = new GFP<uint32_t>(__gf32._exp(2, word_size * 8)+1);
     fec = new FECFNTRS<uint32_t>(gf, word_size, n_data, n_parities);
 
+    if (tflag) {
+      print_fec_type<uint32_t>(fec);
+      exit(1);
+    }
     if (rflag) {
       if (0 != repair_data_files<uint32_t>(fec)) {
         exit(1);
