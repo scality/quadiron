@@ -96,23 +96,57 @@ class FECGF2NFFTRS : public FEC<T>
       vx.set(i, this->gf->exp(r, fragments_ids->get(i)));
     }
 
+    // Lagrange interpolation
+    Poly<T> A(this->gf), _A(this->gf);
+
+    // compute A(x) = prod_j(x-x_j)
+    A.set(0, 1);
+    for (int i = 0; i < k; i++) {
+      Poly<T> _t(this->gf);
+      _t.set(1, 1);
+      _t.set(0, vx.get(i));
+      // _t.dump();
+      A.mul(&_t);
+    }
+    // std::cout << "A(x)="; A.dump();
+
+    // compute A'(x) since A_i(x_i) = A'_i(x_i)
+    _A.copy(&A);
+    _A.derivative();
+    // std::cout << "A'(x)="; _A.dump();
+
+    // evaluate n_i=v_i/A'_i(x_i)
+    Vec<T> _n(this->gf, k);
+    for (int i = 0; i < k; i++) {
+      _n.set(i,
+             this->gf->div(words->get(i),
+                           _A.eval(vx.get(i))));
+    }
+
+    // We have to find the numerator of the following expression:
+    // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
+    // using Taylor series we rewrite the expression into
+    // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
+
     Poly<T> S2(this->gf);
     for (int i = 0; i <= k-1; i++) {
       Poly<T> S1(this->gf);
-      S1.set(0, words->get(i));
-      for (int j = 0; j <= k-1; j++) {
-        if (i == j) continue;
+      for (int j = 0; j <= n-1; j++) {
         Poly<T> _t(this->gf);
-        T coef1 = this->gf->inv(this->gf->add(vx.get(i), vx.get(j)));
-        T coef0 = this->gf->mul(vx.get(j), coef1);
-        _t.set(0, coef0);
-        _t.set(1, coef1);
-        S1.mul(&_t);
+        T tmp1 = this->gf->exp(vx.get(i), j+1);
+        T tmp2 = this->gf->inv(tmp1);
+        T tmp3 = this->gf->mul(_n.get(i), tmp2);
+        _t.set(j, tmp3);
+        // std::cout << "_t="; _t.dump();
+        S1.add(&_t);
         // std::cout << "S1="; S1.dump();
       }
+      // std::cout << "S1="; S1.dump();
       S2.add(&S1);
       // std::cout << "S2="; S2.dump();
     }
+    S2.mul(&A);
+
     // output is n_data length
     for (int i = 0; i < this->n_data; i++)
       output->set(i, S2.get(i));
