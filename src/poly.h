@@ -180,7 +180,7 @@ void Poly<T>::_derivative(Poly<T> *result, Poly<T> *a)
   result->clear();
 
   for (int i = a->degree(); i > 0; i--)
-    result->set(i - 1, gf->mul(a->get(i), i));
+    result->set(i - 1, gf->mul(a->get(i), i % gf->p));
 }
 
 template <typename T>
