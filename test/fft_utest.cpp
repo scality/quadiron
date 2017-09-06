@@ -301,7 +301,7 @@ class FFTUtest
 
     // std::cerr << "n=" << n << "\n";
 
-    FFT2K<T> fft = FFT2K<T>(&gf, n, R);
+    FFT2K<T> fft = FFT2K<T>(&gf, n);
 
     for (int j = 0; j < 100000; j++) {
       Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
