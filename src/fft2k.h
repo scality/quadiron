@@ -31,7 +31,7 @@ class FFT2K : public FFT<T>
   Vec<T> *inv_W;
   FFT2K<T> *fftk;
  public:
-  FFT2K(GF<T> *gf, int n, int R, int N = 0);
+  FFT2K(GF<T> *gf, int n, int N = 0);
   ~FFT2K();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
@@ -44,13 +44,12 @@ class FFT2K : public FFT<T>
  *
  * @param gf
  * @param n for now must be a power of 2
- * @param R primitive root
  * @param N original length
  *
  * @return
  */
 template <typename T>
-FFT2K<T>::FFT2K(GF<T> *gf, int n, int R, int N) : FFT<T>(gf, n)
+FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : FFT<T>(gf, n)
 {
   w = gf->get_nth_root(n);
   inv_w = gf->inv(w);
@@ -67,7 +66,7 @@ FFT2K<T>::FFT2K(GF<T> *gf, int n, int R, int N) : FFT<T>(gf, n)
     gf->compute_omegas(inv_W, n, inv_w);
 
     k = n / 2;
-    this->fftk = new FFT2K<T>(gf, k, R, this->N);
+    this->fftk = new FFT2K<T>(gf, k, this->N);
   } else {
     bypass = true;
 
