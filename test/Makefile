@@ -1,7 +1,7 @@
 
 #CXX = clang++
 
-CXXFLAGS = -std=c++11 -I../src -g
+CXXFLAGS = -std=c++11 -I../src -g -O2
 LDFLAGS = -L../src -lntl -lgmpxx -lgmp
 
 OBJS = gf_utest.o rs_utest.o mat_utest.o fft_utest.o poly_utest.o fec_utest.o main.o
