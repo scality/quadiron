@@ -242,12 +242,13 @@ void Poly<T>::derivative()
 template <typename T>
 T Poly<T>::eval(T x)
 {
-  T result = 0;
+  int i = degree();
+  T result = get(i);
 
-  for (int i = degree(); i >= 0; i--)
-    result = gf->add(result,
-                     gf->mul(get(i), gf->exp(x, i)));
-
+  while (i >= 1) {
+    result = gf->add(gf->mul(result, x), get(i - 1));
+    i--;
+  }
   return result;
 }
 
