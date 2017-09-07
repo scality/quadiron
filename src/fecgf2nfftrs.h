@@ -123,32 +123,26 @@ class FECGF2NFFTRS : public FEC<T>
                            _A.eval(vx.get(i))));
     }
 
+    // compute N'(x) = sum_i{n_i * x^z_i}
+    Poly<T> N_p(this->gf);
+    for (int i = 0; i <= k-1; i++) {
+      N_p.set(fragments_ids->get(i), _n.get(i));
+    }
+
     // We have to find the numerator of the following expression:
     // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
     // using Taylor series we rewrite the expression into
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
 
-    Poly<T> S2(this->gf);
-    for (int i = 0; i <= k-1; i++) {
-      Poly<T> S1(this->gf);
-      for (int j = 0; j <= n-1; j++) {
-        Poly<T> _t(this->gf);
-        T tmp1 = this->gf->exp(vx.get(i), j+1);
-        T tmp2 = this->gf->inv(tmp1);
-        T tmp3 = this->gf->mul(_n.get(i), tmp2);
-        _t.set(j, tmp3);
-        // std::cout << "_t="; _t.dump();
-        S1.add(&_t);
-        // std::cout << "S1="; S1.dump();
-      }
-      // std::cout << "S1="; S1.dump();
-      S2.add(&S1);
-      // std::cout << "S2="; S2.dump();
+    Poly<T> S(this->gf);
+    for (int i = 0; i <= n-1; i++) {
+      T val = this->gf->inv(this->gf->exp(r, i+1));
+      S.set(i, N_p.eval(val));
     }
-    S2.mul(&A);
+    S.mul(&A);
 
     // output is n_data length
     for (int i = 0; i < this->n_data; i++)
-      output->set(i, S2.get(i));
+      output->set(i, S.get(i));
   }
 };
