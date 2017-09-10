@@ -242,7 +242,7 @@ class FFTUtest
     delete _Y;
   }
 
-  void test_fft()
+  void test_fftn()
   {
     u_int n;
     u_int r;
@@ -252,7 +252,7 @@ class FFTUtest
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    std::cout << "test_fft\n";
+    std::cout << "test_fftn\n";
 
     assert(gf._jacobi(R, q) == -1);
 
@@ -282,7 +282,7 @@ class FFTUtest
     }
   }
 
-  void test_fft_bis()
+  void test_fft2k()
   {
     u_int n;
     u_int q = 65537;
@@ -291,7 +291,7 @@ class FFTUtest
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    std::cout << "test_fft_bis\n";
+    std::cout << "test_fft2k\n";
 
     assert(gf._jacobi(R, q) == -1);
 
@@ -426,8 +426,8 @@ class FFTUtest
     test_chinese_remainder();
     test_quadratic_residues();
     test_jacobi();
-    test_fft();
-    test_fft_bis();
+    test_fftn();
+    test_fft2k();
     test_fft2();
     test_fft_gf2n();
     test_mul_bignum();

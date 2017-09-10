@@ -11,7 +11,7 @@ template<typename T>
 class FECFNTRS : public FEC<T>
 {
  private:
-  FFTN<T> *fft = NULL;
+  FFT2K<T> *fft = NULL;
 
  public:
   T n;
@@ -30,11 +30,11 @@ class FECFNTRS : public FEC<T>
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
     r = gf->get_nth_root(n);
-
+    
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFTN<T>(gf, n, r);
+    this->fft = new FFT2K<T>(gf, n);
   }
 
   ~FECFNTRS()

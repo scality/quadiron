@@ -40,8 +40,8 @@ FFTLN<T>::FFTLN(GF<T> *gf, int l, T w) : FFT<T>(gf, __gf64._exp2(l))
 
   this->W = new Vec<T>(gf, this->n + 1);
   this->inv_W = new Vec<T>(gf, this->n + 1);
-  gf->compute_omegas(W, this->n, w);
-  gf->compute_omegas(inv_W, this->n, inv_w);
+  gf->compute_omegas_cached(W, this->n, w);
+  gf->compute_omegas_cached(inv_W, this->n, inv_w);
 
   _pre_compute_consts();
 }

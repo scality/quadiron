@@ -64,6 +64,7 @@ class GF
   bool _solovay_strassen(T n);
   bool _is_prime(T n);
   void compute_omegas(Vec<T> *W, int n, T w);
+  void compute_omegas_cached(Vec<T> *W, int n, T w);
   T _weak_rand(T max);
   T weak_rand(void);
   void _factor_distinct_prime(T n, std::vector<T> *output);
@@ -574,6 +575,21 @@ bool GF<T>::_is_prime(T n)
 /**
  * Compute the different powers of the root of unity into a vector
  *
+ * @param W output vector (must be of length n+1)
+ * @param n
+ * @param w n-th root of unity
+ */
+template <typename T>
+void GF<T>::compute_omegas(Vec<T> *W, int n, T w)
+{
+  for (int i = 0; i <= n; i++) {
+    W->set(i, exp(w, i));
+  }
+}
+
+/**
+ * Compute the different powers of the root of unity into a vector
+ *
  * @note cache the result in a file called W<w>.cache
  *
  * @note XXX not reentrant
@@ -583,7 +599,7 @@ bool GF<T>::_is_prime(T n)
  * @param w n-th root of unity
  */
 template <typename T>
-void GF<T>::compute_omegas(Vec<T> *W, int n, T w)
+void GF<T>::compute_omegas_cached(Vec<T> *W, int n, T w)
 {
   std::ostringstream filename;
 
