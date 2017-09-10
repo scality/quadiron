@@ -20,7 +20,7 @@ class FECFNTRS : public FEC<T>
   FECFNTRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities) :
     FEC<T>(gf, FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
-    T q = 65537;
+    T q = gf->p;
     T R = gf->_get_prime_root();  // primitive root
     assert(gf->_jacobi(R, q) == -1);
 
@@ -60,13 +60,13 @@ class FECFNTRS : public FEC<T>
   {
     VVec<T> vwords(words, n);
     fft->fft(output, &vwords);
-    // check for 65536 value in output
+    // check for out of range value in output
     for (int i = 0; i < n; i++) {
-      if (output->get(i) == 65536) {
+      if (output->get(i) == (fft->gf->p - 1)) {
         char buf[256];
         snprintf(buf, sizeof (buf), "%lu:%d", offset, i);
         assert(nullptr != props[i]);
-        props[i]->insert(std::make_pair(buf, "65536"));
+        props[i]->insert(std::make_pair(buf, "@"));
         output->set(i, 0);
       }
     }
@@ -115,7 +115,7 @@ class FECFNTRS : public FEC<T>
       snprintf(buf, sizeof (buf), "%lu:%d", offset, j);
       if (nullptr != props[j]) {
         if (props[j]->is_key(buf))
-          words->set(i, 65536);
+          words->set(i, fft->gf->p - 1);
       }
     }
 

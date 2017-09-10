@@ -270,6 +270,29 @@ void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
   delete gf;
 }
 
+template <typename T>
+void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
+{
+  FECFNTRS<T> *fec;
+  //warning all fermat numbers greater or equal to F_5 (2^32+1) are composite!!!
+  GFP<T> *gf = new GFP<T>(__gf32._exp(2, word_size * 8)+1); 
+  fec = new FECFNTRS<T>(gf, word_size, n_data, n_parities);
+
+  if (tflag) {
+    print_fec_type<T>(fec);
+    exit(1);
+  }
+  if (rflag) {
+    if (0 != repair_data_files<T>(fec)) {
+      exit(1);
+    }
+  }
+  create_coding_files<T>(fec);
+  print_stats<T>(fec);
+  delete fec;
+  delete gf;
+}
+
 enum ec_type
   {
     EC_TYPE_UNDEF = 0,
@@ -359,28 +382,12 @@ int main(int argc, char **argv)
     xusage();
 
   if (eflag == EC_TYPE_FNTRS) {
-    FECFNTRS<uint32_t> *fec;
-    if (word_size != 2) {
-      std::cerr << "only supports -w 2 for now\n";
-      exit(1);
-    }
-    // 2^2^4+1
-    GFP<uint32_t> *gf = new GFP<uint32_t>(__gf32._exp(2, word_size * 8)+1);
-    fec = new FECFNTRS<uint32_t>(gf, word_size, n_data, n_parities);
-
-    if (tflag) {
-      print_fec_type<uint32_t>(fec);
-      exit(1);
-    }
-    if (rflag) {
-      if (0 != repair_data_files<uint32_t>(fec)) {
-        exit(1);
-      }
-    }
-    create_coding_files<uint32_t>(fec);
-    print_stats<uint32_t>(fec);
-    delete fec;
-    delete gf;
+    if (word_size <= 4)
+      run_FECFNTRS<uint32_t>(word_size, n_data, n_parities, rflag);
+    else if (word_size <= 8)
+      run_FECFNTRS<uint64_t>(word_size, n_data, n_parities, rflag);
+    //else if (word_size <= 16)
+    //run_FECFNTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
   } else if (eflag == EC_TYPE_GF2NRS) {
     if (word_size <= 4)
       run_FECGF2NRS<uint32_t>(word_size, n_data, n_parities, mflag, rflag);
