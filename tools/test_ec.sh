@@ -5,6 +5,7 @@
 #valgrind=valgrind
 #valgrind="gdb --args"
 
+bin=./ec
 bs=50K
 #bs=1M
 
@@ -19,7 +20,7 @@ checkfail()
 
 do_test()
 {
-    bin=$1
+    directive=$1
     fec_type=$2
     word_size=$3
     n_data=$4
@@ -83,6 +84,12 @@ do_test()
         j=`expr ${j} + 1`
     done
 
+    if [ "${directive}" == "enconly" ]
+    then
+        echo
+        return
+    fi
+
     echo -n "REP,"
     ${valgrind} ${bin} -e ${fec_type} -w ${word_size} -n ${n_data} -m ${n_coding} -p foo -r ${extraopts} ${vflag}
     checkfail "repairing"
@@ -108,14 +115,15 @@ do
     fec_type=$(echo $i|cut -d_ -f1)
     word_size=$(echo $i|cut -d_ -f2)
 
-    do_test ./ec ${fec_type} ${word_size} 3 3 "" ""
-    do_test ./ec ${fec_type} ${word_size} 3 3 "0 1" "0"
-    do_test ./ec ${fec_type} ${word_size} 3 5 "0 1" "0"
-    do_test ./ec ${fec_type} ${word_size} 3 3 "1 2" "2"
-    do_test ./ec ${fec_type} ${word_size} 9 3 "1 2" "2"
-    do_test ./ec ${fec_type} ${word_size} 9 3 "2 3" "2"
-    do_test ./ec ${fec_type} ${word_size} 9 5 "2 3 4" "2 3"
-    do_test ./ec ${fec_type} ${word_size} 9 5 "1 3 5" "1 3"
-    do_test ./ec ${fec_type} ${word_size} 9 5 "1 3 5 7 8" ""
-    do_test ./ec ${fec_type} ${word_size} 9 5 "" "0 1 2 3 4"
+    do_test enconly ${fec_type} ${word_size} 50 50 "" ""
+    do_test all ${fec_type} ${word_size} 3 3 "" ""
+    do_test all ${fec_type} ${word_size} 3 3 "0 1" "0"
+    do_test all ${fec_type} ${word_size} 3 5 "0 1" "0"
+    do_test all ${fec_type} ${word_size} 3 3 "1 2" "2"
+    do_test all ${fec_type} ${word_size} 9 3 "1 2" "2"
+    do_test all ${fec_type} ${word_size} 9 3 "2 3" "2"
+    do_test all ${fec_type} ${word_size} 9 5 "2 3 4" "2 3"
+    do_test all ${fec_type} ${word_size} 9 5 "1 3 5" "1 3"
+    do_test all ${fec_type} ${word_size} 9 5 "1 3 5 7 8" ""
+    do_test all ${fec_type} ${word_size} 9 5 "" "0 1 2 3 4"
 done
