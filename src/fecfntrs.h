@@ -30,7 +30,7 @@ class FECFNTRS : public FEC<T>
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
     r = gf->get_nth_root(n);
-    
+
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
@@ -64,7 +64,7 @@ class FECFNTRS : public FEC<T>
     for (int i = 0; i < n; i++) {
       if (output->get(i) == (fft->gf->p - 1)) {
         char buf[256];
-        snprintf(buf, sizeof (buf), "%lu:%d", offset, i);
+        snprintf(buf, sizeof (buf), "%lld:%d", offset, i);
         assert(nullptr != props[i]);
         props[i]->insert(std::make_pair(buf, "@"));
         output->set(i, 0);
@@ -112,7 +112,7 @@ class FECFNTRS : public FEC<T>
     for (int i = 0; i < k; i++) {
       int j = fragments_ids->get(i);
       char buf[256];
-      snprintf(buf, sizeof (buf), "%lu:%d", offset, j);
+      snprintf(buf, sizeof (buf), "%lld:%d", offset, j);
       if (nullptr != props[j]) {
         if (props[j]->is_key(buf))
           words->set(i, fft->gf->p - 1);
