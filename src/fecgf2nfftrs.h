@@ -8,7 +8,7 @@ template<typename T>
 class FECGF2NFFTRS : public FEC<T>
 {
  private:
-  FFTN<T> *fft = NULL;
+  FFTPF<T> *fft = NULL;
   Poly<T> *prime_poly = NULL;
 
  public:
@@ -30,7 +30,7 @@ class FECGF2NFFTRS : public FEC<T>
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFTN<T>(gf, n, r);
+    this->fft = new FFTPF<T>(gf, n);
   }
 
   ~FECGF2NFFTRS()
