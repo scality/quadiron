@@ -20,6 +20,7 @@ class FFTN : public FFT<T>
   ~FFTN();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
+  void fft_inv(Vec<T> *output, Vec<T> *input);
 };
 
 template <typename T>
@@ -68,6 +69,17 @@ template <typename T>
 void FFTN<T>::fft(Vec<T> *output, Vec<T> *input)
 {
   _fft(output, input, W);
+}
+
+/*
+ * This function performs an inverse DFT formular without a multiplication to
+ * the coefficient (n^(-1) mod p)
+ *
+ */
+template <typename T>
+void FFTN<T>::fft_inv(Vec<T> *output, Vec<T> *input)
+{
+  _fft(output, input, inv_W);
 }
 
 template <typename T>
