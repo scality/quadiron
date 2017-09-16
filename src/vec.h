@@ -13,7 +13,7 @@ class Vec
   ~Vec();
   virtual int get_n(void);
   void zero_fill(void);
-  void set(int i, T val);
+  virtual void set(int i, T val);
   virtual T get(int i);
   void mul_scalar(T scalar);
   void hadamard_mul(Vec<T> *v);

@@ -167,10 +167,9 @@ void FFT2K<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
   output->add(&veven);
   /*
    * We need to divide output to `N` for the inverse formular
-   * We need to multiply output to `2` since they are computed by fftn for n=2
    */
   if (inv && this->k == this->N / 2)
-    output->mul_scalar(this->gf->div(2, this->N));
+    output->mul_scalar(this->gf->inv(this->N) % this->gf->p);
 }
 
 template <typename T>
@@ -188,7 +187,7 @@ template <typename T>
 void FFT2K<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
   if (bypass)
-    return fftn->ifft(output, input);
+    return fftn->fft_inv(output, input);
   else
     return _fft(output, input, true);
 }

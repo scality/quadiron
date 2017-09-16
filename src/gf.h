@@ -82,6 +82,7 @@ class GF
   T get_nth_root(T n);
   void _compute_all_divisors_h();
   T _get_code_len(T n);
+  std::vector<T>* _get_coprime_factors(T nb);
   inline mpz_class _to_mpz_class(T nb) {
     std::stringstream _nb;
     _nb << nb;
@@ -90,6 +91,7 @@ class GF
   }
  private:
   std::vector<T>* _all_divisors_h = NULL;
+  std::vector<T>* _prime_factors = NULL;
 };
 
 template <typename T>
@@ -104,6 +106,7 @@ template <typename T>
 GF<T>::~GF()
 {
   delete this->_all_divisors_h;
+  delete this->_prime_factors;
 }
 
 template <typename T>
@@ -1039,4 +1042,29 @@ T GF<T>::_get_code_len(T n)
       return _all_divisors_h->at(i);
   }
   return 0;
+}
+
+/**
+ * get all coprime factors of a number
+ *
+ * @param nb - a number to be refactored
+ * @return
+ */
+template <typename T>
+std::vector<T> * GF<T>::_get_coprime_factors(T nb)
+{
+  if (nb == this->card_minus_one() && _prime_factors)
+    return _prime_factors;
+  std::vector<T> *_prime_factors = new std::vector<T>();
+
+  std::vector<T> primes;
+  std::vector<T> exponent;
+  _factor_prime(nb, &primes, &exponent);
+
+  typename std::vector<T>::size_type i;
+  for (i = 0; i != primes.size(); ++i) {
+    _prime_factors->push_back(exp(primes[i], exponent[i]));
+  }
+
+  return _prime_factors;
 }
