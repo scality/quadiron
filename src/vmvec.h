@@ -23,7 +23,7 @@ class VmVec : public Vec<T>
 };
 
 template <typename T>
-VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(NULL, n)
+VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(vec->gf, n)
 {
   this->vec = vec;
   this->offset = offset;
