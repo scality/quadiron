@@ -349,6 +349,38 @@ class FFTUtest
     }
   }
 
+  void test_fft2_gfp()
+  {
+    T n;
+    GFP<T> gf = GFP<T>(3);
+    T R = gf._get_prime_root();  // primitive root
+    T n_data = 1;
+    T n_parities = 1;
+
+    std::cout << "test_fft2_gfp\n";
+
+    // with this encoder we cannot exactly satisfy users request, we need to pad
+    // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
+    n = gf._get_code_len(n_parities + n_data);
+
+    // std::cerr << "n=" << n << "\n";
+
+    FFT2<T> fft = FFT2<T>(&gf);
+
+    for (int j = 0; j < 100000; j++) {
+      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+      v.zero_fill();
+      for (int i = 0; i < n_data; i++)
+        v.set(i, gf.weak_rand());
+        // v.dump();
+      fft.fft(&_v, &v);
+        // _v.dump();
+      fft.ifft(&v2, &_v);
+        // v2.dump();
+      assert(v.eq(&v2));
+    }
+  }
+
   void test_fft2()
   {
     u_int n;
@@ -462,6 +494,7 @@ class FFTUtest
     test_fft2k();
     test_fftpf();
     test_fft2();
+    test_fft2_gfp();
     test_fft_gf2n();
     test_mul_bignum();
   }
