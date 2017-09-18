@@ -102,7 +102,6 @@ template <typename T>
 void FFTCT<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
 {
   Vec<T> G(this->gf, this->n);
-  G.zero_fill();
 
   for (T i1 = 0; i1 < n1; i1++) {
     VmVec<T> Gcol(&G, n2, i1, n1);
@@ -118,16 +117,20 @@ void FFTCT<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
 
   // multiply to twiddle factors
   T factor;
-  T loc;
+  T _w;
+  if (inv)
+    _w = inv_w;
+  else
+    _w = w;
+  T base = 1;
   for (T i1 = 1; i1 < n1; i1++) {
+    base = this->gf->mul(base, _w); // base = _w^i1
+    factor = base; // init factor = base^1
     for (T k2 = 1; k2 < n2; k2++) {
-        loc = i1+n1*k2;
-      if (inv)
-        factor = this->gf->exp(inv_w, i1*k2);
-      else
-        factor = this->gf->exp(w, i1*k2);
-
+      T loc = i1+n1*k2;;
       G.set(loc, this->gf->mul(G.get(loc), factor));
+      // next factor = base^(k2+1)
+      factor = this->gf->mul(factor, base);
     }
   }
 
