@@ -7,25 +7,28 @@
  * Prime-factor FFT algorithm
  *  https://en.wikipedia.org/wiki/Prime-factor_FFT_algorithm
  *
- * Suppose n = n1*n2 where n1 and n2 are relatively prime
- *  X[k] = sum_i x_i * w_n^ik is plit into two smaller ones
+ * Suppose n = n1*n2 where n1 and n2 are relatively prime, i.e. gcd(n1, n2) = 1
+ *  X[k] = sum_i x_i * w_n^ik is plit into two smaller DFTs
+ *  by using the index mapping
+ *    i = a*i1 + b*i2
+ *    k = c*k1 + d*k2
+ *    with a = n2, b = n1, c = n2*inv_mod(n2, n1), d = n1*inv_mod(n1, n2)
+ *      where 1 <= i1, k1 <= n1-1, 1 <= i2, k2 <= n2-1
+ *        and inv_mod(u, v) := multiplicative inverse of u reduced modulo v,
+ *          i.e. (u * inv_mod(u, v)) % v == 1
  *
- * 1. Calculate a, b, c, d as
- *    a = n2, b = n1, c = n1+1, d = n2+1
- * 2. Index mapping
- *  k = c*k1 + d*k2
- *  i = a*i1 + b*i2
- *  where 1 <= i1, k1 <= n1-1, 1 <= i2, k2 <= n2-1
- * 3. DFT formular
- *    Y = DFT(X, N), i.e.
- *  X, Y are length-N vector and
- *    Y[k] = sum_i X_i * w_N^ik,
- *  where w is of order N, i.e. w^N=1
- * 4. Hence,
- *    X[c*k1 + d*k2] = DFT(G(i2), n2),
- *  where G(i2) is a length-n1 vector:
- *    G(i2) = DFT(y, n1),
- *  where y[i1] = x[a*i1 + b*i2]
+ *  X[c*k1 + d*k2] =
+ *    sum_i1 [
+ *        sum_i2 x[a*i1 + b*i2] * w_2^(i2*k2)
+ *    ] w_1^(i1*k1)
+ *
+ *  where
+ *    w is nth root, w_1 = w^n2, w_2 = w^n1
+ *
+ *  Note, the index mapping leads to w^(i*k) = w_1^(i1*k1) * w_2^(i2*k2)
+ *
+ *  Step1: calculate DFT of the inner parenthese, i.e. sum_i2...
+ *  Step2: calculate DFT of the outer parenthese, i.e. sum_i1
  *
  * @param output
  * @param input
@@ -85,10 +88,9 @@ FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
   d = n1*(this->_inverse_mod(n1, n2));
 
   w1 = gf->exp(w, n2);  // order of w1 = n1
-  assert(gf->get_nth_root(n1) == w1);
   this->dft = new FFTN<T>(gf, n1, w1);
 
-  if (id < prime_factors->size() - 1) {
+  if (n2 > 1) {
     loop = true;
     w2 = gf->exp(w, n1);  // order of w2 = n2
     this->fftpf = new FFTPF<T>(gf, n/n1, id+1, prime_factors, w2);
@@ -147,16 +149,6 @@ void FFTPF<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
     // std::cout << "X:"; X.dump();
     // std::cout << "output:"; output->dump();
   }
-
-  /*
-   * We need to divide output to `N` for the inverse formular
-   * We need to multiply output to `2` since they are computed by fftn for n=2
-   */
-  if (inv && this->N == this->n) {
-    T coef = this->gf->inv(this->N) % this->gf->p;
-    if (coef > 0)
-      output->mul_scalar(coef);
-  }
 }
 
 template <typename T>
@@ -172,7 +164,16 @@ template <typename T>
 void FFTPF<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
   if (!loop)
-    return dft->ifft(output, input);
+    dft->fft_inv(output, input);
   else
-    return _fft(output, input, true);
+    _fft(output, input, true);
+
+  /*
+   * We need to divide output to `N` for the inverse formular
+   */
+  if (this->N == this->n) {
+    T coef = this->gf->inv(this->N) % this->gf->p;
+    if (coef > 0)
+      output->mul_scalar(coef);
+  }
 }
