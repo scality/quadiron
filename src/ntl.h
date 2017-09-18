@@ -51,6 +51,7 @@ typedef enum
 #include "vmvec.h"
 #include "mat.h"
 #include "fft.h"
+#include "fft2.h"
 #include "fftn.h"
 #include "fftln.h"
 #include "fft2k.h"

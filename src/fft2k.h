@@ -21,7 +21,7 @@ template<typename T>
 class FFT2K : public FFT<T>
 {
  private:
-  FFTN<T> *fftn;
+  FFT2<T> *fft2;
   bool bypass;
   int k;
   int N;
@@ -73,7 +73,7 @@ FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : FFT<T>(gf, n)
     W = nullptr;
     inv_W = nullptr;
 
-    this->fftn = new FFTN<T>(gf, n, w);
+    this->fft2 = new FFT2<T>(gf);
   }
 }
 
@@ -81,7 +81,7 @@ template <typename T>
 FFT2K<T>::~FFT2K()
 {
   if (bypass)
-    delete fftn;
+    delete fft2;
   else
     delete fftk;
 }
@@ -131,7 +131,7 @@ void FFT2K<T>::fft(Vec<T> *output, Vec<T> *input)
   // input->dump();
 
   if (bypass)
-    return fftn->fft(output, input);
+    return fft2->fft(output, input);
   else
     return _fft(output, input, false);
 }
@@ -140,7 +140,7 @@ template <typename T>
 void FFT2K<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
   if (bypass)
-    return fftn->fft_inv(output, input);
+    return fft2->fft_inv(output, input);
   else
     return _fft(output, input, true);
 }
