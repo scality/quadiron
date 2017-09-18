@@ -42,8 +42,12 @@ class FFTCT : public FFT<T>
   T n2;
   T w, w1, w2, inv_w;
   std::vector<T>* prime_factors;
+  Vec<T> *G = NULL;
+  VmVec<T> *Y = NULL;
+  VmVec<T> *X = NULL;
   FFTN<T> *dft;
   FFTCT<T> *fftct = NULL;
+  void mul_twiddle_factors(bool inv);
  public:
   FFTCT(GF<T> *gf, T n, int id = 0, std::vector<T>* prime_factors = NULL,
     T _w = 0);
@@ -87,6 +91,9 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
     loop = true;
     w2 = gf->exp(w, n1);  // order of w2 = n2
     this->fftct = new FFTCT<T>(gf, n/n1, id+1, prime_factors, w2);
+    this->G = new Vec<T>(this->gf, this->n);
+    this->Y = new VmVec<T>(this->G);
+    this->X = new VmVec<T>(this->G);
   } else
     loop = false;
 }
@@ -96,26 +103,14 @@ FFTCT<T>::~FFTCT()
 {
   delete dft;
   if (fftct) delete fftct;
+  if (X) delete X;
+  if (Y) delete Y;
+  if (G) delete G;
 }
 
 template <typename T>
-void FFTCT<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
+void FFTCT<T>::mul_twiddle_factors(bool inv)
 {
-  Vec<T> G(this->gf, this->n);
-
-  for (T i1 = 0; i1 < n1; i1++) {
-    VmVec<T> Gcol(&G, n2, i1, n1);
-    VmVec<T> x(input, n2, i1, n1);
-    if (inv)
-      this->fftct->ifft(&Gcol, &x);
-    else
-      this->fftct->fft(&Gcol, &x);
-    // std::cout << "x:"; x.dump();
-    // std::cout << "Gcol:"; Gcol.dump();
-    // std::cout << "G:"; G.dump();
-  }
-
-  // multiply to twiddle factors
   T factor;
   T _w;
   if (inv)
@@ -128,22 +123,45 @@ void FFTCT<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
     factor = base; // init factor = base^1
     for (T k2 = 1; k2 < n2; k2++) {
       T loc = i1+n1*k2;;
-      G.set(loc, this->gf->mul(G.get(loc), factor));
+      G->set(loc, this->gf->mul(G->get(loc), factor));
       // next factor = base^(k2+1)
       factor = this->gf->mul(factor, base);
     }
   }
+}
 
-  for (T k2 = 0; k2 < n2; k2++) {
-    VmVec<T> Grow(&G, n1, k2*n1, 1);
-    VmVec<T> X(output, n1, k2, n2);
+template <typename T>
+void FFTCT<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
+{
+  X->set_vec(input);
+  X->set_len(n2);
+  Y->set_len(n2);
+  for (T i1 = 0; i1 < n1; i1++) {
+    Y->set_map(i1, n1);
+    X->set_map(i1, n1);
     if (inv)
-      this->dft->fft_inv(&X, &Grow);
+      this->fftct->ifft(Y, X);
     else
-      this->dft->fft(&X, &Grow);
-    // std::cout << "Grow:"; Grow.dump();
-    // std::cout << "X:"; X.dump();
-    // std::cout << "output:"; output->dump();
+      this->fftct->fft(Y, X);
+    // std::cout << "X:"; X->dump();
+    // std::cout << "Y:"; Y->dump();
+  }
+
+  // multiply to twiddle factors
+  mul_twiddle_factors(inv);
+
+  X->set_vec(output);
+  X->set_len(n1);
+  Y->set_len(n1);
+  for (T k2 = 0; k2 < n2; k2++) {
+    Y->set_map(k2*n1, 1);
+    X->set_map(k2, n2);
+    if (inv)
+      this->dft->fft_inv(X, Y);
+    else
+      this->dft->fft(X, Y);
+    // std::cout << "Y:"; Y->dump();
+    // std::cout << "X:"; X->dump();
   }
 }
 

@@ -44,6 +44,9 @@ class FFTPF : public FFT<T>
   T w, w1, w2;
   T a, b, c, d;
   std::vector<T>* prime_factors;
+  Vec<T> *G = NULL;
+  VmVec<T> *Y = NULL;
+  VmVec<T> *X = NULL;
   FFTN<T> *dft;
   FFTPF<T> *fftpf = NULL;
  public:
@@ -94,6 +97,9 @@ FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
     loop = true;
     w2 = gf->exp(w, n1);  // order of w2 = n2
     this->fftpf = new FFTPF<T>(gf, n/n1, id+1, prime_factors, w2);
+    this->G = new Vec<T>(this->gf, this->n);
+    this->Y = new VmVec<T>(this->G);
+    this->X = new VmVec<T>(this->G);
   } else
     loop = false;
 }
@@ -103,6 +109,9 @@ FFTPF<T>::~FFTPF()
 {
   delete dft;
   if (fftpf) delete fftpf;
+  if (X) delete X;
+  if (Y) delete Y;
+  if (G) delete G;
 }
 
 /*
@@ -121,32 +130,32 @@ T FFTPF<T>::_inverse_mod(T nb, T mod)
 template <typename T>
 void FFTPF<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
 {
-  Vec<T> G(this->gf, this->n);
-
+  X->set_vec(input);
+  X->set_len(n2);
+  Y->set_len(n2);
   for (T i1 = 0; i1 < n1; i1++) {
-    T offset = (a*i1) % this->n;
-    VmVec<T> Gcol(&G, n2, i1, n1);
-    VmVec<T> x(input, n2, offset, b);
+    Y->set_map(i1, n1);
+    X->set_map((a*i1) % this->n, b);
     if (inv)
-      this->fftpf->ifft(&Gcol, &x);
+      this->fftpf->ifft(Y, X);
     else
-      this->fftpf->fft(&Gcol, &x);
-    // std::cout << "x:"; x.dump();
-    // std::cout << "Gcol:"; Gcol.dump();
-    // std::cout << "G:"; G.dump();
+      this->fftpf->fft(Y, X);
+      // std::cout << "X:"; X->dump();
+      // std::cout << "Y:"; Y->dump();
   }
 
+  X->set_vec(output);
+  X->set_len(n1);
+  Y->set_len(n1);
   for (T k2 = 0; k2 < n2; k2++) {
-    T offset = (d*k2) % this->n;
-    VmVec<T> Grow(&G, n1, k2*n1, 1);
-    VmVec<T> X(output, n1, offset, c);
+    Y->set_map(k2*n1, 1);
+    X->set_map((d*k2) % this->n, c);
     if (inv)
-      this->dft->fft_inv(&X, &Grow);
+      this->dft->fft_inv(X, Y);
     else
-      this->dft->fft(&X, &Grow);
-    // std::cout << "Grow:"; Grow.dump();
-    // std::cout << "X:"; X.dump();
-    // std::cout << "output:"; output->dump();
+      this->dft->fft(X, Y);
+      // std::cout << "Y:"; Y->dump();
+      // std::cout << "X:"; X->dump();
   }
 }
 
