@@ -122,7 +122,6 @@ template <typename T>
 void FFTPF<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
 {
   Vec<T> G(this->gf, this->n);
-  G.zero_fill();
 
   for (T i1 = 0; i1 < n1; i1++) {
     T offset = (a*i1) % this->n;
