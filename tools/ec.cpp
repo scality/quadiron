@@ -229,9 +229,7 @@ void run_FECGF2NRS(int word_size, int n_data, int n_parities, gf2nrs_type mflag,
     gf2nrs_type = FECGF2NRS<T>::VANDERMONDE;
   else
     gf2nrs_type = FECGF2NRS<T>::CAUCHY;
-  GF2N<T> *gf = new GF2N<T>(word_size * 8);
-  fec = new FECGF2NRS<T>(gf, word_size, n_data, n_parities,
-    gf2nrs_type);
+  fec = new FECGF2NRS<T>(word_size, n_data, n_parities, gf2nrs_type);
 
   if (tflag) {
     print_fec_type<T>(fec);
@@ -245,15 +243,13 @@ void run_FECGF2NRS(int word_size, int n_data, int n_parities, gf2nrs_type mflag,
   create_coding_files<T>(fec);
   print_stats<T>(fec);
   delete fec;
-  delete gf;
 }
 
 template <typename T>
 void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
 {
   FECGF2NFFTRS<T> *fec;
-  GF2N<T> *gf = new GF2N<T>(word_size * 8);
-  fec = new FECGF2NFFTRS<T>(gf, word_size, n_data, n_parities);
+  fec = new FECGF2NFFTRS<T>(word_size, n_data, n_parities);
 
   if (tflag) {
     print_fec_type<T>(fec);
@@ -267,16 +263,13 @@ void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
   create_coding_files<T>(fec);
   print_stats<T>(fec);
   delete fec;
-  delete gf;
 }
 
 template <typename T>
 void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
 {
   FECFNTRS<T> *fec;
-  //warning all fermat numbers greater or equal to F_5 (2^32+1) are composite!!!
-  GFP<T> *gf = new GFP<T>(__gf32._exp(2, word_size * 8)+1); 
-  fec = new FECFNTRS<T>(gf, word_size, n_data, n_parities);
+  fec = new FECFNTRS<T>(word_size, n_data, n_parities);
 
   if (tflag) {
     print_fec_type<T>(fec);
@@ -290,7 +283,6 @@ void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
   create_coding_files<T>(fec);
   print_stats<T>(fec);
   delete fec;
-  delete gf;
 }
 
 enum ec_type

@@ -27,9 +27,8 @@ class GF
   T n;
   T root;
 
- protected:
   GF(T p, T n);
-  ~GF();
+  virtual ~GF();
 
  public:
   virtual T card(void) = 0;
@@ -992,6 +991,7 @@ T GF<T>::_get_prime_root()
     this->find_prime_root();
   return this->root;
 }
+
 /**
  * compute all divisors of q-1
  *
@@ -1031,18 +1031,24 @@ void GF<T>::_compute_all_divisors_h()
 template <typename T>
 T GF<T>::_get_code_len(T n)
 {
-  T q_minus_one = card_minus_one();
-  if (q_minus_one % n == 0) return n;
-  if (q_minus_one < n) assert(false);
+  T nb = card_minus_one();
+  if (nb % n == 0) return n;
+  if (nb < n) assert(false);
 
-  if (!_all_divisors_h) {
-    _compute_all_divisors_h();
+  T _sqrt = sqrt(nb);
+  T i;
+  if (n > _sqrt) {
+    T max = nb/n;
+    for (i = 1; i <= max; i++) {
+      // if i divides n, return n/i
+      if (nb % i == 0)
+        return nb/i;
+    }
   }
-
-  typename std::vector<T>::size_type i;
-  for (i = 0; i != _all_divisors_h->size(); i++) {
-    if (n <= _all_divisors_h->at(i))
-      return _all_divisors_h->at(i);
+  for (i = n; i <= _sqrt; i++) {
+    // if i divides n, return i
+    if (nb % i == 0)
+      return i;
   }
   return 0;
 }

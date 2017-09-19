@@ -16,35 +16,44 @@ class FECFNTRS : public FEC<T>
  public:
   T n;
   T r;
-
-  FECFNTRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities) :
-    FEC<T>(gf, FEC<T>::TYPE_2, word_size, n_data, n_parities)
+  FECFNTRS(u_int word_size, u_int n_data, u_int n_parities) :
+    FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
-    T q = gf->p;
-    T R = gf->_get_prime_root();  // primitive root
-    assert(gf->_jacobi(R, q) == -1);
+    assert(word_size < 4);
+    //warning all fermat numbers greater or equal to F_5 (2^32+1) are composite!!!
+    T gf_p = (1ULL << (8*word_size)) + 1;
+    this->gf = new GFP<T>(gf_p);
+
+    T q = this->gf->p;
+    T R = this->gf->_get_prime_root();  // primitive root
+    assert(this->gf->_jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf->_get_code_len(n_parities + n_data);
+    n = this->gf->_get_code_len(n_parities + n_data);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
-    r = gf->get_nth_root(n);
+    r = this->gf->get_nth_root(n);
 
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFT2K<T>(gf, n);
+    this->fft = new FFT2K<T>(this->gf, n);
   }
 
   ~FECFNTRS()
   {
     delete fft;
+    delete this->gf;
   }
 
   int get_n_outputs()
   {
     return this->n;
+  }
+
+  GF<T>* get_gf() {
+    return this->gf;
   }
 
   /**
