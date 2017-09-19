@@ -27,9 +27,8 @@ class GF
   T n;
   T root;
 
- protected:
   GF(T p, T n);
-  ~GF();
+  virtual ~GF();
 
  public:
   virtual T card(void) = 0;

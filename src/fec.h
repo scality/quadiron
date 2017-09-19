@@ -29,7 +29,8 @@ class FEC
   GF<T> *gf;
 
  public:
-  FEC(GF<T> *gf, FECType type, u_int word_size, u_int n_data, u_int n_parities);
+  FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities);
+
   /**
    * Return the number actual parities for TYPE_1 it is exactly n_parities, for
    * TYPE_2 it maybe at least n_data+n_parities (but sometimes more).
@@ -70,18 +71,15 @@ class FEC
 /**
  * Create an encoder
  *
- * @param gf
  * @param word_size in bytes
  * @param n_data
  * @param n_parities
  */
 template <typename T>
-FEC<T>::FEC(GF<T> *gf, FECType type, u_int word_size, u_int n_data,
-  u_int n_parities)
+FEC<T>::FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities)
 {
   assert(type == TYPE_1 || type == TYPE_2);
 
-  this->gf = gf;
   this->type = type;
   this->word_size = word_size;
   this->n_data = n_data;

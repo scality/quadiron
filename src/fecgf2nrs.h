@@ -21,14 +21,19 @@ class FECGF2NRS : public FEC<T>
   Mat<T> *decode_mat = NULL;
 
  public:
-  FECGF2NRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities,
+  FECGF2NRS(u_int word_size, u_int n_data, u_int n_parities,
     FECGF2NRSType type) :
-    FEC<T>(gf, FEC<T>::TYPE_1, word_size, n_data, n_parities)
+    FEC<T>(FEC<T>::TYPE_1, word_size, n_data, n_parities)
   {
     assert(type == VANDERMONDE || type == CAUCHY);
     this->type = type;
 
-    this->mat = new Mat<T>(gf, n_parities, n_data);
+    if (word_size > 16)
+      assert(false); // not support yet
+    u_int gf_n = 8*word_size;
+    this->gf = new GF2N<T>(gf_n);
+
+    this->mat = new Mat<T>(this->gf, n_parities, n_data);
     if (type == CAUCHY) {
       mat->cauchy();
     } else if (type == VANDERMONDE) {
@@ -43,11 +48,16 @@ class FECGF2NRS : public FEC<T>
   {
     delete mat;
     delete decode_mat;
+    delete this->gf;
   }
 
   int get_n_outputs()
   {
     return this->n_parities;
+  }
+
+  GF<T>* get_gf() {
+    return this->gf;
   }
 
   void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset,

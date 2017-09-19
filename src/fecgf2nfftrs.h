@@ -15,32 +15,42 @@ class FECGF2NFFTRS : public FEC<T>
   T n;
   T r;
   // NOTE: only type2 is supported now
-  FECGF2NFFTRS(GF<T> *gf, u_int word_size, u_int n_data, u_int n_parities) :
-    FEC<T>(gf, FEC<T>::TYPE_2, word_size, n_data, n_parities)
+  FECGF2NFFTRS(u_int word_size, u_int n_data, u_int n_parities) :
+    FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
+    if (word_size > 16)
+      assert(false); // not support yet
+    u_int gf_n = 8*word_size;
+    this->gf = new GF2N<T>(gf_n);
+
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf->_get_code_len(n_parities + n_data);
+    n = this->gf->_get_code_len(n_parities + n_data);
 
     // compute root of order n such as r^n == 1
-    r = gf->get_nth_root(n);
+    this->r = this->gf->get_nth_root(n);
 
     // std::cerr << "n_parities=" << n_parities << "\n";
     // std::cerr << "n_data=" << n_data << "\n";
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFTCT<T>(gf, n);
+    this->fft = new FFTCT<T>(this->gf, n);
   }
 
   ~FECGF2NFFTRS()
   {
     delete fft;
+    delete this->gf;
   }
 
   int get_n_outputs()
   {
     return this->n;
+  }
+
+  GF<T>* get_gf() {
+    return this->gf;
   }
 
   /**

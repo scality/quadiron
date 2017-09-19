@@ -10,17 +10,17 @@ class FECUtest
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    GFP<T> gf = GFP<T>(65537);
-    FECFNTRS<T> fec = FECFNTRS<T>(&gf, 2, n_data, n_parities);
+    FECFNTRS<T> fec = FECFNTRS<T>(2, n_data, n_parities);
+    GF<T> *gf = fec.get_gf();
 
+    Vec<T> v(gf, n_data), _v(gf, fec.n), _v2(gf, n_data), f(gf, n_data),
+      v2(gf, n_data);
     for (int j = 0; j < 10000; j++) {
-      Vec<T> v(&gf, n_data), _v(&gf, fec.n), _v2(&gf, n_data), f(&gf, n_data),
-        v2(&gf, n_data);
       std::vector<KeyValue*>props(fec.n, nullptr);
       for (int i = 0; i < fec.n; i++)
         props[i] = new KeyValue();
       for (int i = 0; i < n_data; i++)
-        v.set(i, gf.weak_rand());
+        v.set(i, gf->weak_rand());
       // v.dump();
       fec.encode(&_v, props, 0, &v);
       // _v.dump();
@@ -36,25 +36,26 @@ class FECUtest
   }
 
   void test_fecgf2nfftrs() {
-    for (int n = 4; n < 128 && n <= 8 * sizeof(T); n *= 2)
-      test_fecgf2nfftrs_with_n(n);
+    std::cout << "test_fecgf2nfftrs with sizeof(T)=" << sizeof(T) << "\n";
+    for (int wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
+      test_fecgf2nfftrs_with_wordsize(wordsize);
   }
-  void test_fecgf2nfftrs_with_n(int n)
+  void test_fecgf2nfftrs_with_wordsize(int wordsize)
   {
-    std::cout << "test_fecgf2nfftrs_with_n=" << n << "\n";
+    std::cout << "test_fecgf2nfftrs_with_wordsize=" << wordsize << "\n";
 
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    GF2N<T> gf = GF2N<T>(n);
-    FECGF2NFFTRS<T> fec = FECGF2NFFTRS<T>(&gf, 2, n_data, n_parities);
+    FECGF2NFFTRS<T> fec = FECGF2NFFTRS<T>(wordsize, n_data, n_parities);
+    GF<T> *gf = fec.get_gf();
 
     std::vector<KeyValue*> props;
+    Vec<T> v(gf, n_data), _v(gf, fec.n), _v2(gf, n_data), f(gf, n_data),
+      v2(gf, n_data);
     for (int j = 0; j < 10000; j++) {
-      Vec<T> v(&gf, n_data), _v(&gf, fec.n), _v2(&gf, n_data), f(&gf, n_data),
-        v2(&gf, n_data);
       for (int i = 0; i < n_data; i++)
-        v.set(i, gf.weak_rand());
+        v.set(i, gf->weak_rand());
       // v.dump();
       fec.encode(&_v, props, 0, &v);
       // _v.dump();
