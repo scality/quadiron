@@ -335,7 +335,72 @@ class FFTUtest
 
     FFTPF<T> fft = FFTPF<T>(&gf, n);
 
-    for (int j = 0; j < 1000; j++) {
+    for (int j = 0; j < 10000; j++) {
+      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+      v.zero_fill();
+      for (int i = 0; i < n_data; i++)
+        v.set(i, gf.weak_rand());
+        // v.dump();
+      fft.fft(&_v, &v);
+        // _v.dump();
+      fft.ifft(&v2, &_v);
+      //   v2.dump();
+      assert(v.eq(&v2));
+    }
+  }
+
+  void test_fftct_gfp()
+  {
+    T n;
+    T q = 65537;
+    GFP<T> gf = GFP<T>(q);
+    T R = gf._get_prime_root();  // primitive root
+    T n_data = 3;
+    T n_parities = 3;
+
+    std::cout << "test_fftct_gfp\n";
+
+    // with this encoder we cannot exactly satisfy users request, we need to pad
+    // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
+    n = gf._get_code_len(n_parities + n_data);
+
+    // std::cerr << "n=" << n << "\n";
+
+    FFTCT<T> fft = FFTCT<T>(&gf, n);
+
+    for (int j = 0; j < 10000; j++) {
+      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+      v.zero_fill();
+      for (int i = 0; i < n_data; i++)
+        v.set(i, gf.weak_rand());
+        // v.dump();
+      fft.fft(&_v, &v);
+        // _v.dump();
+      fft.ifft(&v2, &_v);
+        // v2.dump();
+      assert(v.eq(&v2));
+    }
+  }
+
+  void test_fftct_gf2n()
+  {
+    T n;
+    GF2N<T> gf = GF2N<T>(4);
+    T R = gf._get_prime_root();  // primitive root
+    T n_data = 3;
+    T n_parities = 3;
+
+    std::cout << "test_fftct_gf2n\n";
+
+    // with this encoder we cannot exactly satisfy users request, we need to pad
+    // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
+    n = gf._get_code_len(n_parities + n_data);
+
+    // std::cerr << "n=" << n << "\n";
+
+    FFTCT<T> fft = FFTCT<T>(&gf, n);
+
+    for (int j = 0; j < 10000; j++) {
       Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
@@ -493,6 +558,8 @@ class FFTUtest
     test_fftn();
     test_fft2k();
     test_fftpf();
+    test_fftct_gfp();
+    test_fftct_gf2n();
     test_fft2();
     test_fft2_gfp();
     test_fft_gf2n();

@@ -26,7 +26,7 @@ class V2Vec : public Vec<T>
 };
 
 template <typename T>
-V2Vec<T>::V2Vec(Vec<T> *vec) : Vec<T>(NULL, 0)
+V2Vec<T>::V2Vec(Vec<T> *vec) : Vec<T>(vec->gf, vec->n)
 {
   this->vec = vec;
 }
@@ -47,4 +47,3 @@ T V2Vec<T>::get(int i)
   else
     return vec->get(i - vec->n);
 }
-

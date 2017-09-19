@@ -4,60 +4,58 @@
 #pragma once
 
 /**
- * Prime-factor FFT algorithm
- *  https://en.wikipedia.org/wiki/Prime-factor_FFT_algorithm
+ * Cooley-Tukey FFT algorithm
+ *  Implementation based on S.K. Matra's slides
+ *    http://sip.cua.edu/res/docs/courses/ee515/chapter08/ch8-2.pdf
  *
- * Suppose n = n1*n2 where n1 and n2 are relatively prime, i.e. gcd(n1, n2) = 1
+ * Suppose n = n1*n2
  *  X[k] = sum_i x_i * w_n^ik is plit into two smaller DFTs
- *  by using the index mapping
- *    i = a*i1 + b*i2
- *    k = c*k1 + d*k2
- *    with a = n2, b = n1, c = n2*inv_mod(n2, n1), d = n1*inv_mod(n1, n2)
- *      where 1 <= i1, k1 <= n1-1, 1 <= i2, k2 <= n2-1
- *        and inv_mod(u, v) := multiplicative inverse of u reduced modulo v,
- *          i.e. (u * inv_mod(u, v)) % v == 1
+ * by using the index mapping
+ *  i = i1 + n1*i2
+ *  k = n2*k1 + k2
+ *  where 1 <= i1, k1 <= n1-1, 1 <= i2, k2 <= n2-1
  *
- *  X[c*k1 + d*k2] =
+ *  X[n2*k1 + k2] =
  *    sum_i1 [
- *        sum_i2 x[a*i1 + b*i2] * w_2^(i2*k2)
+ *      (
+ *        sum_i2 x[i1 + n1*i2] * w_2^(i2*k2)
+ *      ) * w^(i1*k2)
  *    ] w_1^(i1*k1)
  *
  *  where
  *    w is nth root, w_1 = w^n2, w_2 = w^n1
  *
- *  Note, the index mapping leads to w^(i*k) = w_1^(i1*k1) * w_2^(i2*k2)
- *
  *  Step1: calculate DFT of the inner parenthese, i.e. sum_i2...
- *  Step2: calculate DFT of the outer parenthese, i.e. sum_i1
+ *  Step2: multiply to twiddle factors w^(i1*k2)
+ *  Step3: calculate DFT of the outer parenthese, i.e. sum_i1
  *
  * @param output
  * @param input
  */
 template<typename T>
-class FFTPF : public FFT<T>
+class FFTCT : public FFT<T>
 {
  private:
   bool loop;
   T N;
   T n1;
   T n2;
-  T w, w1, w2;
-  T a, b, c, d;
+  T w, w1, w2, inv_w;
   std::vector<T>* prime_factors;
   Vec<T> *G = NULL;
   VmVec<T> *Y = NULL;
   VmVec<T> *X = NULL;
   FFTN<T> *dft;
-  FFTPF<T> *fftpf = NULL;
+  FFTCT<T> *fftct = NULL;
+  void mul_twiddle_factors(bool inv);
  public:
-  FFTPF(GF<T> *gf, T n, int id = 0, std::vector<T>* prime_factors = NULL,
+  FFTCT(GF<T> *gf, T n, int id = 0, std::vector<T>* prime_factors = NULL,
     T _w = 0);
-  ~FFTPF();
+  ~FFTCT();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
  private:
   void _fft(Vec<T> *output, Vec<T> *input, bool inv);
-  T _inverse_mod(T nb, T mod);
 };
 
 /**
@@ -70,25 +68,21 @@ class FFTPF : public FFT<T>
  * @return
  */
 template <typename T>
-FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
+FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
   FFT<T>(gf, n)
 {
   if (id == 0) {
     this->N = n;
-    prime_factors = gf->_get_coprime_factors(n);
+    prime_factors = gf->_get_prime_factors(n);
     // w is of order-n
     w = gf->get_nth_root(n);
   } else {
     this->prime_factors = prime_factors;
     w = _w;
   }
+  inv_w = gf->inv(w);
   n1 = prime_factors->at(id);
   n2 = n/n1;
-
-  a = n2;
-  b = n1;
-  c = n2*(this->_inverse_mod(n2, n1));
-  d = n1*(this->_inverse_mod(n1, n2));
 
   w1 = gf->exp(w, n2);  // order of w1 = n1
   this->dft = new FFTN<T>(gf, n1, w1);
@@ -96,7 +90,7 @@ FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
   if (n2 > 1) {
     loop = true;
     w2 = gf->exp(w, n1);  // order of w2 = n2
-    this->fftpf = new FFTPF<T>(gf, n/n1, id+1, prime_factors, w2);
+    this->fftct = new FFTCT<T>(gf, n/n1, id+1, prime_factors, w2);
     this->G = new Vec<T>(this->gf, this->n);
     this->Y = new VmVec<T>(this->G);
     this->X = new VmVec<T>(this->G);
@@ -105,62 +99,74 @@ FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
 }
 
 template <typename T>
-FFTPF<T>::~FFTPF()
+FFTCT<T>::~FFTCT()
 {
   delete dft;
-  if (fftpf) delete fftpf;
+  if (fftct) delete fftct;
   if (X) delete X;
   if (Y) delete Y;
   if (G) delete G;
 }
 
-/*
- * It calculates multiplicative inverse of a number modulo mod
- *  NOTE: it should be optimized
- */
 template <typename T>
-T FFTPF<T>::_inverse_mod(T nb, T mod)
+void FFTCT<T>::mul_twiddle_factors(bool inv)
 {
-  for (T n = 1; n < mod; n++) {
-    if ((n * nb) % mod == 1) return n;
+  T factor;
+  T _w;
+  if (inv)
+    _w = inv_w;
+  else
+    _w = w;
+  T base = 1;
+  for (T i1 = 1; i1 < n1; i1++) {
+    base = this->gf->mul(base, _w); // base = _w^i1
+    factor = base; // init factor = base^1
+    for (T k2 = 1; k2 < n2; k2++) {
+      T loc = i1+n1*k2;;
+      G->set(loc, this->gf->mul(G->get(loc), factor));
+      // next factor = base^(k2+1)
+      factor = this->gf->mul(factor, base);
+    }
   }
-  return 0;
 }
 
 template <typename T>
-void FFTPF<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
+void FFTCT<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
 {
   X->set_vec(input);
   X->set_len(n2);
   Y->set_len(n2);
   for (T i1 = 0; i1 < n1; i1++) {
     Y->set_map(i1, n1);
-    X->set_map((a*i1) % this->n, b);
+    X->set_map(i1, n1);
     if (inv)
-      this->fftpf->ifft(Y, X);
+      this->fftct->ifft(Y, X);
     else
-      this->fftpf->fft(Y, X);
-      // std::cout << "X:"; X->dump();
-      // std::cout << "Y:"; Y->dump();
+      this->fftct->fft(Y, X);
+    // std::cout << "X:"; X->dump();
+    // std::cout << "Y:"; Y->dump();
   }
+
+  // multiply to twiddle factors
+  mul_twiddle_factors(inv);
 
   X->set_vec(output);
   X->set_len(n1);
   Y->set_len(n1);
   for (T k2 = 0; k2 < n2; k2++) {
     Y->set_map(k2*n1, 1);
-    X->set_map((d*k2) % this->n, c);
+    X->set_map(k2, n2);
     if (inv)
       this->dft->fft_inv(X, Y);
     else
       this->dft->fft(X, Y);
-      // std::cout << "Y:"; Y->dump();
-      // std::cout << "X:"; X->dump();
+    // std::cout << "Y:"; Y->dump();
+    // std::cout << "X:"; X->dump();
   }
 }
 
 template <typename T>
-void FFTPF<T>::fft(Vec<T> *output, Vec<T> *input)
+void FFTCT<T>::fft(Vec<T> *output, Vec<T> *input)
 {
   if (!loop)
     return dft->fft(output, input);
@@ -169,7 +175,7 @@ void FFTPF<T>::fft(Vec<T> *output, Vec<T> *input)
 }
 
 template <typename T>
-void FFTPF<T>::ifft(Vec<T> *output, Vec<T> *input)
+void FFTCT<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
   if (!loop)
     dft->fft_inv(output, input);

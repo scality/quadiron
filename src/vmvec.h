@@ -14,16 +14,17 @@ class VmVec : public Vec<T>
   int step;
   int N;
  public:
-  explicit VmVec(Vec<T> *vec, int n, int offset, int step);
+  explicit VmVec(Vec<T> *vec, int n = 0, int offset = 0, int step = 1);
   int get_n(void);
   T get(int i);
   void set(int i, T val);
-  Vec<T>* toVec();
-  void import(Vec<T>* v);
+  void set_map(int offset, int step);
+  void set_len(int n);
+  void set_vec(Vec<T> *vec);
 };
 
 template <typename T>
-VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(NULL, n)
+VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(vec->gf, n)
 {
   this->vec = vec;
   this->offset = offset;
@@ -46,6 +47,29 @@ T VmVec<T>::get(int i)
 
   T loc = (offset + step * i) % this->N;
   return vec->get(loc);
+}
+
+template <typename T>
+void VmVec<T>::set_map(int offset, int step)
+{
+  this->offset = offset;
+  this->step = step;
+}
+
+template <typename T>
+void VmVec<T>::set_len(int n)
+{
+  assert(this->n <= this->N);
+  this->n = n;
+}
+
+template <typename T>
+void VmVec<T>::set_vec(Vec<T> *vec)
+{
+  assert(this->n <= vec->n);
+  this->vec = vec;
+  this->gf = vec->gf;
+  this->N = vec->n;
 }
 
 template <typename T>
