@@ -2,28 +2,53 @@
 #pragma once
 
 /**
- * GF_2^2^k+1 based RS (Fermat Number Transform)
- * As suggested by the paper:
- * FNT-based Reed-Solomon Erasure Codes
- * by Alexandre Soro and Jerome Lacan
+ * GFP(p) based RS
+ *
+ * Necessary condition: p >= 2^(8*word_size) to cover all possible values of
+ *  symbols, as each symbol is of (8*word_size) bits.
+ *
+ * A length-k vector X is encoded into a length-n vector Y whose elements are
+ *  GFP elements. Hence, elements of Y could be greater than 2^(8*word_size).
+ *  We can deal with this as below.
+ *    Note: to facilitate our implementation, we CHOOSE p < 2 * 2^(8*word_size).
+ *  Supposing that an element Y[i] > 2^(8*word_size), we will store its value
+ *  modulo 2^(8*word_size), i.e.
+ *    Y_p[i] = Y[i] % 2^(8*word_size),
+ *  a flag will be marked for the position `i`.
+ *  To decode X, we read Y[i] from Y_p[i] as:
+ *    Y[i] = Y_p[i] + 2^(8*word_size)
+ *  Because p < 2 * 2^(8*word_size), the flag will be only a bool value.
  */
 template<typename T>
-class FECFNTRS : public FEC<T>
+class FECGFPFFTRS : public FEC<T>
 {
  private:
-  FFT2K<T> *fft = NULL;
+  FFTCT<T> *fft = NULL;
+  T limit_value;
 
  public:
   T n;
   T r;
-  FECFNTRS(u_int word_size, u_int n_data, u_int n_parities) :
+
+  FECGFPFFTRS(u_int word_size, u_int n_data, u_int n_parities) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
-    assert(word_size < 4);
     //warning all fermat numbers greater or equal to F_5 (2^32+1) are composite!!!
-    T gf_p = (1ULL << (8*word_size)) + 1;
-    this->gf = new GFP<T>(gf_p);
+    T gf_p;
+    if (word_size < 4)
+       gf_p = (1ULL << (8*word_size)) + 1;
+    else if (word_size == 4)
+      gf_p = 4294991873; // p-1=2^13 29^1 101^1 179^1
+    else
+      assert(false); // not support yet
 
+    this->limit_value = (1ULL << (8 * word_size));
+
+    assert(gf_p >= this->limit_value);
+    // we choose gf_p for a simple implementation
+    assert(gf_p / 2 < this->limit_value);
+
+    this->gf = new GFP<T>(gf_p);
     T q = this->gf->p;
     T R = this->gf->_get_prime_root();  // primitive root
     assert(this->gf->_jacobi(R, q) == -1);
@@ -35,13 +60,15 @@ class FECFNTRS : public FEC<T>
     // compute root of order n-1 such as r^(n-1) mod q == 1
     r = this->gf->get_nth_root(n);
 
+    // std::cerr << "limit_value=" << limit_value << "\n";
+    // std::cerr << "gf_p=" << gf_p << "\n";
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFT2K<T>(this->gf, n);
+    this->fft = new FFTCT<T>(this->gf, n);
   }
 
-  ~FECFNTRS()
+  ~FECGFPFFTRS()
   {
     delete fft;
     delete this->gf;
@@ -71,12 +98,12 @@ class FECFNTRS : public FEC<T>
     fft->fft(output, &vwords);
     // check for out of range value in output
     for (int i = 0; i < n; i++) {
-      if (output->get(i) == (fft->gf->p - 1)) {
+      if (output->get(i) >= this->limit_value) {
         char buf[256];
         snprintf(buf, sizeof (buf), "%lld:%d", offset, i);
         assert(nullptr != props[i]);
         props[i]->insert(std::make_pair(buf, "@"));
-        output->set(i, 0);
+        output->set(i, output->get(i) % this->limit_value);
       }
     }
   }
@@ -124,7 +151,7 @@ class FECFNTRS : public FEC<T>
       snprintf(buf, sizeof (buf), "%lld:%d", offset, j);
       if (nullptr != props[j]) {
         if (props[j]->is_key(buf) && props[j]->at(buf) == "@")
-          words->set(i, fft->gf->p - 1);
+          words->set(i, words->get(i) + this->limit_value);
       }
     }
 

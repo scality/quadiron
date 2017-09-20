@@ -1038,8 +1038,7 @@ T GF<T>::_get_code_len(T n)
   T _sqrt = sqrt(nb);
   T i;
   if (n > _sqrt) {
-    T max = nb/n;
-    for (i = 1; i <= max; i++) {
+    for (i = nb/n; i >= 1; i--) {
       // if i divides n, return n/i
       if (nb % i == 0)
         return nb/i;
