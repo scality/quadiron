@@ -21,15 +21,21 @@ template<typename T>
 class FFT2K : public FFT<T>
 {
  private:
-  FFT2<T> *fft2;
+  FFT2<T> *fft2 = NULL;
   bool bypass;
   int k;
   int N;
   T w;
   T inv_w;
-  Vec<T> *W;
-  Vec<T> *inv_W;
-  FFT2K<T> *fftk;
+  Vec<T> *W = NULL;
+  Vec<T> *inv_W = NULL;
+  FFT2K<T> *fftk = NULL;
+  Vec<T> *even = NULL;
+  Vec<T> *_even = NULL;
+  Vec<T> *odd = NULL;
+  Vec<T> *_odd = NULL;
+  V2Vec<T> *veven = NULL;
+  V2Vec<T> *vodd = NULL;
  public:
   FFT2K(GF<T> *gf, int n, int N = 0);
   ~FFT2K();
@@ -68,6 +74,13 @@ FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : FFT<T>(gf, n)
 
     k = n / 2;
     this->fftk = new FFT2K<T>(gf, k, this->N);
+
+    this->even = new Vec<T>(this->gf, k);
+    this->_even = new Vec<T>(this->gf, k);
+    this->veven = new V2Vec<T>(this->_even);
+    this->odd = new Vec<T>(this->gf, k);
+    this->_odd = new Vec<T>(this->gf, k);
+    this->vodd = new V2Vec<T>(this->_odd);
   } else {
     bypass = true;
 
@@ -82,43 +95,45 @@ template <typename T>
 FFT2K<T>::~FFT2K()
 {
   if (bypass)
-    delete fft2;
-  else
-    delete fftk;
+    if (fft2) delete fft2;
+  else {
+    if (fftk) delete fftk;
+    if (W) delete W;
+    if (inv_W) delete inv_W;
+    if (even) delete even;
+    if (_even) delete _even;
+    if (odd) delete odd;
+    if (_odd) delete _odd;
+    if (veven) delete veven;
+    if (vodd) delete vodd;
+  }
 }
 
 template <typename T>
 void FFT2K<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
 {
-  Vec<T> even(this->gf, k);
-  Vec<T> odd(this->gf, k);
   for (int i = 0; i < this->n; i++) {
     if (i % 2 == 0)
-      even.set(i/2, input->get(i));
+      this->even->set(i/2, input->get(i));
     else
-      odd.set(i/2, input->get(i));
+      this->odd->set(i/2, input->get(i));
   }
-  // even.dump();
-  // odd.dump();
-  Vec<T> _even(this->gf, k);
-  Vec<T> _odd(this->gf, k);
+  // this->even->dump();
+  // this->odd->dump();
   if (inv) {
-    fftk->ifft(&_even, &even);
-    fftk->ifft(&_odd, &odd);
+    fftk->fft_inv(this->_even, this->even);
+    fftk->fft_inv(this->_odd, this->odd);
   } else {
-    fftk->fft(&_even, &even);
-    fftk->fft(&_odd, &odd);
+    fftk->fft(this->_even, this->even);
+    fftk->fft(this->_odd, this->odd);
   }
-
-  V2Vec<T> veven(&_even);
-  V2Vec<T> vodd(&_odd);
 
   if (inv)
     output->copy(inv_W, this->n);
   else
     output->copy(W, this->n);
-  output->hadamard_mul(&vodd);
-  output->add(&veven);
+  output->hadamard_mul(this->vodd);
+  output->add(this->veven);
 }
 
 template <typename T>
