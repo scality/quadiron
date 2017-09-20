@@ -9,13 +9,6 @@ class FFTUtest
   {
     SignedDoubleT<T> bezout[2];
 
-    // not explicitely related to GF(97)
-    assert(2 == gf->arith->extended_gcd(240, 46, NULL, NULL));
-    assert(6 == gf->arith->extended_gcd(54, 24, NULL, NULL));
-    assert(15 == gf->arith->extended_gcd(210, 45, NULL, NULL));
-    //
-    assert(1 == gf->arith->extended_gcd(97, 20, bezout, NULL));
-    assert(bezout[0] == -7 && bezout[1] == 34);
     assert(gf->inv(20) == 34);
     //
     int i;
@@ -40,44 +33,6 @@ class FFTUtest
     test_gcd1(&gf);
   }
 
-  /**
-   * http://www.math.unm.edu/~loring/links/discrete_f05/remainder.pdf
-   * http://gauss.math.luc.edu/greicius/Math201/Fall2012/Lectures/ChineseRemainderThm.article.pdf
-   *
-   * @param gf
-   */
-  void test_chinese_remainder()
-  {
-    std::cout << "test_chinese_remainder\n";
-
-    GFP<T> gf5(5);
-
-    T a[4];
-    T n[4];
-    T omega;
-
-    a[0] = 4;
-    n[0] = 107;
-    a[1] = 2;
-    n[1] = 74;
-    omega = gf5.arith->chinese_remainder(2, a, n);
-    assert(omega == 5996);
-
-    a[0] = 6;
-    n[0] = 7;
-    a[1] = 4;
-    n[1] = 8;
-    omega = gf5.arith->chinese_remainder(2, a, n);
-    assert(omega == 20);
-
-    a[0] = 3;
-    n[0] = 4;
-    a[1] = 0;
-    n[1] = 6;
-    omega = gf5.arith->chinese_remainder(2, a, n);
-    // no solution XXX detect it
-  }
-
   void test_quadratic_residues()
   {
     std::cout << "test_quadratic_residues\n";
@@ -95,16 +50,6 @@ class FFTUtest
     GFP<T> gf8(8);
     assert(gf8.is_quadratic_residue(1));
     assert(!gf8.is_quadratic_residue(3));
-  }
-
-  void test_jacobi()
-  {
-    assert(__arith64.jacobi(1001, 9907) == -1);
-    assert(__arith64.jacobi(19, 45) == 1);
-    assert(__arith64.jacobi(8, 21) == -1);
-    assert(__arith64.jacobi(5, 21) == 1);
-    assert(__arith64.jacobi(47, 221) == -1);
-    assert(__arith64.jacobi(2, 221) == -1);
   }
 
   /**
@@ -542,9 +487,7 @@ class FFTUtest
     std::cout << "fft_utest_no_mul_bignum\n";
 
     test_gcd();
-    test_chinese_remainder();
     test_quadratic_residues();
-    test_jacobi();
   }
 
   void fft_utest()
@@ -552,9 +495,7 @@ class FFTUtest
     std::cout << "fft_utest\n";
 
     test_gcd();
-    test_chinese_remainder();
     test_quadratic_residues();
-    test_jacobi();
     test_fftn();
     test_fft2k();
     test_fftpf();

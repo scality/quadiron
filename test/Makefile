@@ -4,7 +4,7 @@
 CXXFLAGS = -std=c++11 -I../src -g -O2
 LDFLAGS = -L../src -lntl -lgmpxx -lgmp
 
-OBJS = gf_utest.o rs_utest.o mat_utest.o fft_utest.o poly_utest.o fec_utest.o main.o
+OBJS = arith_utest.o gf_utest.o rs_utest.o mat_utest.o fft_utest.o poly_utest.o fec_utest.o main.o
 
 all: tests
 
