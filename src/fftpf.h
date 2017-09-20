@@ -76,7 +76,8 @@ FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
 {
   if (id == 0) {
     this->N = n;
-    prime_factors = gf->_get_coprime_factors(n);
+    this->prime_factors = new std::vector<T>();
+    this->arith->get_coprime_factors(n, this->prime_factors);
     // w is of order-n
     w = gf->get_nth_root(n);
   } else {
@@ -101,7 +102,7 @@ FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
     loop = true;
     w2 = gf->exp(w, n1);  // order of w2 = n2
     T _n2 = n/n1;
-    if (gf->_is_power_of_2(_n2))
+    if (this->arith->is_power_of_2(_n2))
       this->dft_inner = new FFT2K<T>(gf, _n2);
     else
       this->dft_inner = new FFTCT<T>(gf, _n2, id+1, prime_factors, w2);

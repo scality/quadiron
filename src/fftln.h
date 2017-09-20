@@ -33,7 +33,7 @@ class FFTLN : public FFT<T>
 };
 
 template <typename T>
-FFTLN<T>::FFTLN(GF<T> *gf, int l, T w) : FFT<T>(gf, __gf64._exp2(l))
+FFTLN<T>::FFTLN(GF<T> *gf, int l, T w) : FFT<T>(gf, __arith64.exp2(l))
 {
   this->l = l;
   this->w = w;
@@ -144,19 +144,19 @@ void FFTLN<T>::_pre_compute_consts()
     for (int j = 0; j <= this->n-1; j++) {
       T _tmp1 = 0;
       for (int k = 1; k <= i; k++)
-        _tmp1 += _get_p(j, this->l-i+k) * __gf64._exp2(i-k);
+        _tmp1 += _get_p(j, this->l-i+k) * __arith64.exp2(i-k);
 
       T _tmp2 = 0;
       for (int k = 1; k <= this->l; k++)
-        _tmp2 += _get_p0(j, k, this->l-i+1) * __gf64._exp2(k-1);
+        _tmp2 += _get_p0(j, k, this->l-i+1) * __arith64.exp2(k-1);
       tmp2->set(i, j, _tmp2);
 
       T _tmp3 = 0;
       for (int k = 1; k <= this->l; k++)
-        _tmp3 += _get_p1(j, k, this->l-i+1) * __gf64._exp2(k-1);
+        _tmp3 += _get_p1(j, k, this->l-i+1) * __arith64.exp2(k-1);
       tmp3->set(i, j, _tmp3);
 
-      T _tmp4 = _tmp1 * __gf64._exp2(this->l-i);
+      T _tmp4 = _tmp1 * __arith64.exp2(this->l-i);
       tmp4->set(i, j, _tmp4);
     }
   }
@@ -164,7 +164,7 @@ void FFTLN<T>::_pre_compute_consts()
   for (int i = 0; i <= this->n-1; i++) {
     T _tmp5 = 0;
     for (int k = 1; k <= this->l; k++)
-      _tmp5 += _get_p(i, this->l-k+1) * __gf64._exp2(k-1);
+      _tmp5 += _get_p(i, this->l-k+1) * __arith64.exp2(k-1);
     tmp5->set(i, _tmp5);
   }
 }

@@ -7,12 +7,12 @@ class GFUtest
  public:
   void test_basic_ops()
   {
-    assert(__gf64._sqrt(2025) == 45);
-    assert(__gf64._is_prime(2));
-    assert(__gf64._is_prime(3));
-    assert(__gf64._is_prime(13));
-    assert(!__gf64._is_prime(4));
-    assert(!__gf64._is_prime(15));
+    assert(__arith64.sqrt(2025) == 45);
+    assert(__arith64.is_prime(2));
+    assert(__arith64.is_prime(3));
+    assert(__arith64.is_prime(13));
+    assert(!__arith64.is_prime(4));
+    assert(!__arith64.is_prime(15));
   }
 
   void test_negation(GF<T> *gf)

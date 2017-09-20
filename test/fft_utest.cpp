@@ -10,18 +10,18 @@ class FFTUtest
     SignedDoubleT<T> bezout[2];
 
     // not explicitely related to GF(97)
-    assert(2 == gf->_extended_gcd(240, 46, NULL, NULL));
-    assert(6 == gf->_extended_gcd(54, 24, NULL, NULL));
-    assert(15 == gf->_extended_gcd(210, 45, NULL, NULL));
+    assert(2 == gf->arith->extended_gcd(240, 46, NULL, NULL));
+    assert(6 == gf->arith->extended_gcd(54, 24, NULL, NULL));
+    assert(15 == gf->arith->extended_gcd(210, 45, NULL, NULL));
     //
-    assert(1 == gf->_extended_gcd(97, 20, bezout, NULL));
+    assert(1 == gf->arith->extended_gcd(97, 20, bezout, NULL));
     assert(bezout[0] == -7 && bezout[1] == 34);
     assert(gf->inv(20) == 34);
     //
     int i;
     for (i = 0; i < 100; i++) {
       T x = gf->weak_rand();
-      assert(1 == gf->_extended_gcd(97, x, bezout, NULL));
+      assert(1 == gf->arith->extended_gcd(97, x, bezout, NULL));
       // std::cerr << bezout[0] << "*" << 97 << " " << bezout[1] << "*";
       // stdd:cerr << x << "=1\n";
       T y = gf->inv(x);
@@ -60,21 +60,21 @@ class FFTUtest
     n[0] = 107;
     a[1] = 2;
     n[1] = 74;
-    omega = gf5._chinese_remainder(2, a, n);
+    omega = gf5.arith->chinese_remainder(2, a, n);
     assert(omega == 5996);
 
     a[0] = 6;
     n[0] = 7;
     a[1] = 4;
     n[1] = 8;
-    omega = gf5._chinese_remainder(2, a, n);
+    omega = gf5.arith->chinese_remainder(2, a, n);
     assert(omega == 20);
 
     a[0] = 3;
     n[0] = 4;
     a[1] = 0;
     n[1] = 6;
-    omega = gf5._chinese_remainder(2, a, n);
+    omega = gf5.arith->chinese_remainder(2, a, n);
     // no solution XXX detect it
   }
 
@@ -99,12 +99,12 @@ class FFTUtest
 
   void test_jacobi()
   {
-    assert(__gf64._jacobi(1001, 9907) == -1);
-    assert(__gf64._jacobi(19, 45) == 1);
-    assert(__gf64._jacobi(8, 21) == -1);
-    assert(__gf64._jacobi(5, 21) == 1);
-    assert(__gf64._jacobi(47, 221) == -1);
-    assert(__gf64._jacobi(2, 221) == -1);
+    assert(__arith64.jacobi(1001, 9907) == -1);
+    assert(__arith64.jacobi(19, 45) == 1);
+    assert(__arith64.jacobi(8, 21) == -1);
+    assert(__arith64.jacobi(5, 21) == 1);
+    assert(__arith64.jacobi(47, 221) == -1);
+    assert(__arith64.jacobi(2, 221) == -1);
   }
 
   /**
@@ -142,7 +142,7 @@ class FFTUtest
 
     int b = 10;  // base
     int p = 14;  // we could multiply integers of 2^p digits
-    int max_digits = __gf64._exp(2, p);
+    int max_digits = __arith64.exp(2, p);
     // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
     uint64_t l = p + 1;
@@ -153,30 +153,30 @@ class FFTUtest
     // a 2^n-th principal root of unity in GF_p
     uint64_t a1 = 2;
     uint64_t a2 = 5;
-    uint64_t p1 = a1 * __gf64._exp(2, 15) + 1;
-    uint64_t p2 = a2 * __gf64._exp(2, 15) + 1;
+    uint64_t p1 = a1 * __arith64.exp(2, 15) + 1;
+    uint64_t p2 = a2 * __arith64.exp(2, 15) + 1;
     // std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
-    assert(__gf64._is_prime(p1));
-    assert(__gf64._is_prime(p2));
+    assert(__arith64.is_prime(p1));
+    assert(__arith64.is_prime(p2));
 
     // ensure their product is bounded (b-1)^2*2^(n-1) < m
     uint64_t m = p1 * p2;
     // check overflow
     assert(m/p1 == p2);
     // std::cerr << " m=" << m << "\n";
-    assert(__gf64._exp((b - 1), 2) * __gf64._exp(p, 2) < m);
+    assert(__arith64.exp((b - 1), 2) * __arith64.exp(p, 2) < m);
 
     // find x so it is not a quadratic residue in GF_p1 and GF_p2
-    assert(__gf64._jacobi(3, p1) == __gf64._jacobi(p1, 3));
-    assert(__gf64._jacobi(p1, 3) == __gf64._jacobi(2, 3));
-    assert(__gf64._jacobi(3, p2) == __gf64._jacobi(p2, 3));
-    assert(__gf64._jacobi(p2, 3) == __gf64._jacobi(2, 3));
-    assert(__gf64._jacobi(2, 3) == -1);
+    assert(__arith64.jacobi(3, p1) == __arith64.jacobi(p1, 3));
+    assert(__arith64.jacobi(p1, 3) == __arith64.jacobi(2, 3));
+    assert(__arith64.jacobi(3, p2) == __arith64.jacobi(p2, 3));
+    assert(__arith64.jacobi(p2, 3) == __arith64.jacobi(2, 3));
+    assert(__arith64.jacobi(2, 3) == -1);
     // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
 
     // therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
-    uint64_t w1 = __gf64._exp(3, a1);
-    uint64_t w2 = __gf64._exp(3, a2);
+    uint64_t w1 = __arith64.exp(3, a1);
+    uint64_t w2 = __arith64.exp(3, a2);
     // std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
     assert(w1 == 9);
     assert(w2 == 243);
@@ -188,7 +188,7 @@ class FFTUtest
     _n[0] = p1;
     _a[1] = w2;
     _n[1] = p2;
-    uint64_t w = __gf64._chinese_remainder(2, _a, _n);
+    uint64_t w = __arith64.chinese_remainder(2, _a, _n);
     // std::cerr << " w=" << w << "\n";
     assert(w == 25559439);
 
@@ -248,17 +248,17 @@ class FFTUtest
     u_int r;
     T q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = gf._get_prime_root();  // primitive root
+    u_int R = gf.get_prime_root();  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
     std::cout << "test_fftn\n";
 
-    assert(gf._jacobi(R, q) == -1);
+    assert(gf.arith->jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf._get_code_len(n_parities + n_data);
+    n = gf.get_code_len(n_parities + n_data);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
     r = gf.get_nth_root(n);
@@ -287,17 +287,17 @@ class FFTUtest
     u_int n;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = gf._get_prime_root();  // primitive root
+    u_int R = gf.get_prime_root();  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
     std::cout << "test_fft2k\n";
 
-    assert(gf._jacobi(R, q) == -1);
+    assert(gf.arith->jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf._get_code_len(n_parities + n_data);
+    n = gf.get_code_len(n_parities + n_data);
 
     // std::cerr << "n=" << n << "\n";
 
@@ -321,7 +321,7 @@ class FFTUtest
   {
     T n;
     GF2N<T> gf = GF2N<T>(4);
-    T R = gf._get_prime_root();  // primitive root
+    T R = gf.get_prime_root();  // primitive root
     T n_data = 3;
     T n_parities = 3;
 
@@ -329,7 +329,7 @@ class FFTUtest
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf._get_code_len(n_parities + n_data);
+    n = gf.get_code_len(n_parities + n_data);
 
     // std::cerr << "n=" << n << "\n";
 
@@ -354,7 +354,7 @@ class FFTUtest
     T n;
     T q = 65537;
     GFP<T> gf = GFP<T>(q);
-    T R = gf._get_prime_root();  // primitive root
+    T R = gf.get_prime_root();  // primitive root
     T n_data = 3;
     T n_parities = 3;
 
@@ -362,7 +362,7 @@ class FFTUtest
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf._get_code_len(n_parities + n_data);
+    n = gf.get_code_len(n_parities + n_data);
 
     // std::cerr << "n=" << n << "\n";
 
@@ -386,7 +386,7 @@ class FFTUtest
   {
     T n;
     GF2N<T> gf = GF2N<T>(4);
-    T R = gf._get_prime_root();  // primitive root
+    T R = gf.get_prime_root();  // primitive root
     T n_data = 3;
     T n_parities = 3;
 
@@ -394,7 +394,7 @@ class FFTUtest
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf._get_code_len(n_parities + n_data);
+    n = gf.get_code_len(n_parities + n_data);
 
     // std::cerr << "n=" << n << "\n";
 
@@ -418,7 +418,7 @@ class FFTUtest
   {
     T n;
     GFP<T> gf = GFP<T>(3);
-    T R = gf._get_prime_root();  // primitive root
+    T R = gf.get_prime_root();  // primitive root
     T n_data = 1;
     T n_parities = 1;
 
@@ -426,7 +426,7 @@ class FFTUtest
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf._get_code_len(n_parities + n_data);
+    n = gf.get_code_len(n_parities + n_data);
 
     // std::cerr << "n=" << n << "\n";
 
@@ -452,17 +452,17 @@ class FFTUtest
     u_int r;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = gf._get_prime_root();  // primitive root
+    u_int R = gf.get_prime_root();  // primitive root
     u_int n_data = 3;
     u_int n_parities = 3;
 
     std::cout << "test_fft2\n";
 
-    assert(gf._jacobi(R, q) == -1);
+    assert(gf.arith->jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf._get_code_len(n_parities + n_data);
+    n = gf.get_code_len(n_parities + n_data);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
     r = gf.get_nth_root(n);
@@ -504,7 +504,7 @@ class FFTUtest
   {
     T r;
     GF2N<T> gf = GF2N<T>(n);
-    T R = gf._get_prime_root();
+    T R = gf.get_prime_root();
     T n_data = 3;
     T n_parities = 3;
 
@@ -513,7 +513,7 @@ class FFTUtest
     assert(gf.exp(R, gf.card_minus_one()) == 1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
-    n = gf._get_code_len(n_data + n_parities);
+    n = gf.get_code_len(n_data + n_parities);
 
     r = gf.get_nth_root(n);
     assert(gf.exp(r, n) == 1);
@@ -567,17 +567,20 @@ class FFTUtest
   }
 };
 
+template class Arith<uint32_t>;
 template class Mat<uint32_t>;
 template class Vec<uint32_t>;
 template class FFT<uint32_t>;
 template class FFTLN<uint32_t>;
 template class FFTPF<uint32_t>;
 
+template class Arith<uint64_t>;
 template class Mat<uint64_t>;
 template class Vec<uint64_t>;
 template class FFT<uint64_t>;
 template class FFTPF<uint64_t>;
 
+template class Arith<mpz_class>;
 template class Mat<mpz_class>;
 template class Vec<mpz_class>;
 
