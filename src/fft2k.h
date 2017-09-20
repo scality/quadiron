@@ -35,6 +35,7 @@ class FFT2K : public FFT<T>
   ~FFT2K();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
+  void fft_inv(Vec<T> *output, Vec<T> *input);
  private:
   void _fft(Vec<T> *output, Vec<T> *input, bool inv);
 };
@@ -118,11 +119,6 @@ void FFT2K<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
     output->copy(W, this->n);
   output->hadamard_mul(&vodd);
   output->add(&veven);
-  /*
-   * We need to divide output to `N` for the inverse formular
-   */
-  if (inv && this->k == this->N / 2)
-    output->mul_scalar(this->gf->inv(this->N) % this->gf->p);
 }
 
 template <typename T>
@@ -137,10 +133,22 @@ void FFT2K<T>::fft(Vec<T> *output, Vec<T> *input)
 }
 
 template <typename T>
-void FFT2K<T>::ifft(Vec<T> *output, Vec<T> *input)
+void FFT2K<T>::fft_inv(Vec<T> *output, Vec<T> *input)
 {
   if (bypass)
     return fft2->fft_inv(output, input);
   else
     return _fft(output, input, true);
+}
+
+template <typename T>
+void FFT2K<T>::ifft(Vec<T> *output, Vec<T> *input)
+{
+  fft_inv(output, input);
+
+  /*
+   * We need to divide output to `N` for the inverse formular
+   */
+  if ((this->k == this->N / 2) && (this->inv_n_mod_p > 1))
+      output->mul_scalar(this->inv_n_mod_p);
 }

@@ -45,8 +45,8 @@ class FFTCT : public FFT<T>
   Vec<T> *G = NULL;
   VmVec<T> *Y = NULL;
   VmVec<T> *X = NULL;
-  FFTN<T> *dft;
-  FFTCT<T> *fftct = NULL;
+  FFT<T> *dft_outer = NULL;
+  FFT<T> *dft_inner = NULL;
   void mul_twiddle_factors(bool inv);
  public:
   FFTCT(GF<T> *gf, T n, int id = 0, std::vector<T>* prime_factors = NULL,
@@ -54,6 +54,7 @@ class FFTCT : public FFT<T>
   ~FFTCT();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
+  void fft_inv(Vec<T> *output, Vec<T> *input);
  private:
   void _fft(Vec<T> *output, Vec<T> *input, bool inv);
 };
@@ -85,12 +86,19 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
   n2 = n/n1;
 
   w1 = gf->exp(w, n2);  // order of w1 = n1
-  this->dft = new FFTN<T>(gf, n1, w1);
+  if (n1 == 2)
+    this->dft_outer = new FFT2<T>(gf);
+  else
+    this->dft_outer = new FFTN<T>(gf, n1, w1);
 
   if (n2 > 1) {
     loop = true;
     w2 = gf->exp(w, n1);  // order of w2 = n2
-    this->fftct = new FFTCT<T>(gf, n/n1, id+1, prime_factors, w2);
+    T _n2 = n/n1;
+    if (gf->_is_power_of_2(_n2))
+      this->dft_inner = new FFTCT<T>(gf, _n2);
+    else
+      this->dft_inner = new FFTCT<T>(gf, _n2, id+1, prime_factors, w2);
     this->G = new Vec<T>(this->gf, this->n);
     this->Y = new VmVec<T>(this->G);
     this->X = new VmVec<T>(this->G);
@@ -101,8 +109,8 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
 template <typename T>
 FFTCT<T>::~FFTCT()
 {
-  delete dft;
-  if (fftct) delete fftct;
+  if (dft_outer) delete dft_outer;
+  if (dft_inner) delete dft_inner;
   if (X) delete X;
   if (Y) delete Y;
   if (G) delete G;
@@ -140,9 +148,9 @@ void FFTCT<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
     Y->set_map(i1, n1);
     X->set_map(i1, n1);
     if (inv)
-      this->fftct->ifft(Y, X);
+      this->dft_inner->fft_inv(Y, X);
     else
-      this->fftct->fft(Y, X);
+      this->dft_inner->fft(Y, X);
     // std::cout << "X:"; X->dump();
     // std::cout << "Y:"; Y->dump();
   }
@@ -157,9 +165,9 @@ void FFTCT<T>::_fft(Vec<T> *output, Vec<T> *input, bool inv)
     Y->set_map(k2*n1, 1);
     X->set_map(k2, n2);
     if (inv)
-      this->dft->fft_inv(X, Y);
+      this->dft_outer->fft_inv(X, Y);
     else
-      this->dft->fft(X, Y);
+      this->dft_outer->fft(X, Y);
     // std::cout << "Y:"; Y->dump();
     // std::cout << "X:"; X->dump();
   }
@@ -169,25 +177,30 @@ template <typename T>
 void FFTCT<T>::fft(Vec<T> *output, Vec<T> *input)
 {
   if (!loop)
-    return dft->fft(output, input);
+    return dft_outer->fft(output, input);
   else
     return _fft(output, input, false);
 }
 
 template <typename T>
-void FFTCT<T>::ifft(Vec<T> *output, Vec<T> *input)
+void FFTCT<T>::fft_inv(Vec<T> *output, Vec<T> *input)
 {
   if (!loop)
-    dft->fft_inv(output, input);
+    dft_outer->fft_inv(output, input);
   else
     _fft(output, input, true);
+}
+
+template <typename T>
+void FFTCT<T>::ifft(Vec<T> *output, Vec<T> *input)
+{
+  fft_inv(output, input);
 
   /*
    * We need to divide output to `N` for the inverse formular
    */
-  if (this->N == this->n) {
-    T coef = this->gf->inv(this->N) % this->gf->p;
-    if (coef > 0)
-      output->mul_scalar(coef);
+
+  if ((this->N == this->n) && (this->inv_n_mod_p > 1)) {
+      output->mul_scalar(this->inv_n_mod_p);
   }
 }

@@ -23,7 +23,7 @@ template<typename T>
 class FECGFPFFTRS : public FEC<T>
 {
  private:
-  FFTCT<T> *fft = NULL;
+  FFT<T> *fft = NULL;
   T limit_value;
 
  public:
@@ -65,7 +65,10 @@ class FECGFPFFTRS : public FEC<T>
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFTCT<T>(this->gf, n);
+    if (this->gf->_is_power_of_2(n))
+      this->fft = new FFT2K<T>(this->gf, n);
+    else
+      this->fft = new FFTCT<T>(this->gf, n);
   }
 
   ~FECGFPFFTRS()
