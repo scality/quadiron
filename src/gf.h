@@ -81,6 +81,7 @@ class GF
   T get_nth_root(T n);
   void _compute_all_divisors_h();
   T _get_code_len(T n);
+  T _get_code_len_high_compo(T n);
   std::vector<T>* _get_coprime_factors(T nb);
   std::vector<T>* _get_prime_factors(T nb);
   inline mpz_class _to_mpz_class(T nb) {
@@ -1048,6 +1049,40 @@ T GF<T>::_get_code_len(T n)
     // if i divides n, return i
     if (nb % i == 0)
       return i;
+  }
+  return 0;
+}
+
+/**
+ * find smallest number is
+ *  - highly composited
+ *  - at least n
+ *  - divisible by (q-1)
+ *
+ * @param n
+ *
+ * @return root
+ */
+template <typename T>
+T GF<T>::_get_code_len_high_compo(T n)
+{
+  T nb = card_minus_one();
+  if (nb < n) assert(false);
+
+  std::vector<T> *factors = this->_get_prime_factors(nb);
+  T x = 1;
+  typename std::vector<T>::size_type i, j;
+  // forward to get a divisor of (q-1) >= n and of highly composited
+  for (i = 0; i != factors->size(); ++i) {
+    x *= factors->at(i);
+    if (x >= n) {
+      // backward to get smaller number
+      for (int j = 0; j != i; j++) {
+        x /= factors->at(j);
+        if (x < n)
+          return x * factors->at(j);
+      }
+    }
   }
   return 0;
 }
