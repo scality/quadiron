@@ -16,8 +16,10 @@ class FFT
  protected:
   FFT(GF<T> *gf, int n);
  public:
+  virtual ~FFT() {};
   virtual void fft(Vec<T> *output, Vec<T> *input) = 0;
   virtual void ifft(Vec<T> *output, Vec<T> *input) = 0;
+  virtual void fft_inv(Vec<T> *output, Vec<T> *input) = 0;
 };
 
 template <typename T>

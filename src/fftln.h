@@ -29,6 +29,7 @@ class FFTLN : public FFT<T>
   ~FFTLN();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
+  void fft_inv(Vec<T> *output, Vec<T> *input);
 };
 
 template <typename T>
@@ -200,8 +201,15 @@ void FFTLN<T>::fft(Vec<T> *output, Vec<T> *input)
 }
 
 template <typename T>
-void FFTLN<T>::ifft(Vec<T> *output, Vec<T> *input)
+void FFTLN<T>::fft_inv(Vec<T> *output, Vec<T> *input)
 {
   _fft(output, input, inv_W);
-  output->mul_scalar(this->inv_n_mod_p);
+}
+
+template <typename T>
+void FFTLN<T>::ifft(Vec<T> *output, Vec<T> *input)
+{
+  fft_inv(output, input);
+  if (this->inv_n_mod_p > 1)
+    output->mul_scalar(this->inv_n_mod_p);
 }
