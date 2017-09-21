@@ -33,14 +33,14 @@ class FECGFPFFTRS : public FEC<T>
   FECGFPFFTRS(u_int word_size, u_int n_data, u_int n_parities) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
-    //warning all fermat numbers greater or equal to F_5 (2^32+1) are composite!!!
+    // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
     T gf_p;
     if (word_size < 4)
        gf_p = (1ULL << (8*word_size)) + 1;
     else if (word_size == 4)
-      gf_p = 4294991873; // p-1=2^13 29^1 101^1 179^1
+      gf_p = 4294991873;  // p-1=2^13 29^1 101^1 179^1
     else
-      assert(false); // not support yet
+      assert(false);  // not support yet
 
     this->limit_value = (1ULL << (8 * word_size));
 
@@ -50,12 +50,12 @@ class FECGFPFFTRS : public FEC<T>
 
     this->gf = new GFP<T>(gf_p);
     T q = this->gf->p;
-    T R = this->gf->_get_prime_root();  // primitive root
-    assert(this->gf->_jacobi(R, q) == -1);
+    T R = this->gf->get_prime_root();  // primitive root
+    assert(this->arith->jacobi(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = this->gf->_get_code_len_high_compo(n_parities + n_data);
+    n = this->gf->get_code_len_high_compo(n_parities + n_data);
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
     r = this->gf->get_nth_root(n);
@@ -65,7 +65,7 @@ class FECGFPFFTRS : public FEC<T>
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    if (this->gf->_is_power_of_2(n))
+    if (this->arith->is_power_of_2(n))
       this->fft = new FFT2K<T>(this->gf, n);
     else
       this->fft = new FFTCT<T>(this->gf, n);
@@ -103,7 +103,7 @@ class FECGFPFFTRS : public FEC<T>
     for (int i = 0; i < n; i++) {
       if (output->get(i) >= this->limit_value) {
         char buf[256];
-        snprintf(buf, sizeof (buf), "%lld:%d", offset, i);
+        snprintf(buf, sizeof (buf), "%zd:%d", offset, i);
         assert(nullptr != props[i]);
         props[i]->insert(std::make_pair(buf, "@"));
         output->set(i, output->get(i) % this->limit_value);
@@ -151,7 +151,7 @@ class FECGFPFFTRS : public FEC<T>
     for (int i = 0; i < k; i++) {
       int j = fragments_ids->get(i);
       char buf[256];
-      snprintf(buf, sizeof (buf), "%lld:%d", offset, j);
+      snprintf(buf, sizeof (buf), "%zd:%d", offset, j);
       if (nullptr != props[j]) {
         if (props[j]->is_key(buf) && props[j]->at(buf) == "@")
           words->set(i, words->get(i) + this->limit_value);

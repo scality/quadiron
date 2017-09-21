@@ -1,6 +1,7 @@
 
 #include "ntl.h"
 
+extern void arith_utest();
 extern void gf_utest();
 extern void rs_utest();
 extern void mat_utest();
@@ -12,6 +13,7 @@ int main(int argc, char **argv)
 {
   srand(0);
 
+  arith_utest();
   gf_utest();
   mat_utest();
   rs_utest();

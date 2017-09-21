@@ -70,7 +70,8 @@ class FECUtest
 
   void test_fecgfpfftrs() {
     std::cout << "test_fecgfpfftrs with sizeof(T)=" << sizeof(T) << "\n";
-    for (int word_size = 1; word_size <= 4 && word_size < sizeof(T); word_size *= 2)
+    for (int word_size = 1; word_size <= 4 && word_size < sizeof(T);
+      word_size *= 2)
       test_fecgfpfftrs_with_word_size(word_size);
   }
   void test_fecgfpfftrs_with_word_size(int word_size)

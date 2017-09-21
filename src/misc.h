@@ -1,9 +1,9 @@
 /* -*- mode: c++ -*- */
 #pragma once
 
-extern GFP<uint32_t> __gf32;
-extern GFP<uint64_t> __gf64;
-extern GFP<mpz_class> __gfmpz;
+extern Arith<uint32_t> __arith32;
+extern Arith<uint64_t> __arith64;
+extern Arith<mpz_class> __arithmpz;
 
 #if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)

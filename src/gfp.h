@@ -147,7 +147,7 @@ T GFP<T>::inv_bezout(T a)
   SignedDoubleT<T> n = this->p;
   SignedDoubleT<T> bezout[2];
 
-  GF<T>::_extended_gcd(x, n, bezout, NULL);
+  this->arith->extended_gcd(x, n, bezout, NULL);
   if (bezout[0] < 0)
     bezout[0] = this->p + bezout[0];
   return bezout[0];

@@ -94,9 +94,9 @@ FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : FFT<T>(gf, n)
 template <typename T>
 FFT2K<T>::~FFT2K()
 {
-  if (bypass)
+  if (bypass) {
     if (fft2) delete fft2;
-  else {
+  } else {
     if (fftk) delete fftk;
     if (W) delete W;
     if (inv_W) delete inv_W;

@@ -2,11 +2,11 @@
 #include "ntl.h"
 
 template class GF<mpz_class>;
-template class GFP<mpz_class>;
+template class Arith<mpz_class>;
 
 int main(int argc, char **argv)
 {
-  GFP<mpz_class> gfp(3);
+  Arith<mpz_class> arith;
 
   if (argc != 3) {
     std::cerr << "usage: find_pminus1_compo start_n min_n_factors\n";
@@ -19,14 +19,14 @@ int main(int argc, char **argv)
   while (true) {
     if (n % 2 == 0) {
       n++;
-      continue ;
+      continue;
     }
-    if (gfp._solovay_strassen(n)) {
-      //number is probably prime: double-check
-      if (gfp._is_prime(n)) {
+    if (arith.solovay_strassen(n)) {
+      // number is probably prime: double-check
+      if (arith.is_prime(n)) {
         std::vector<mpz_class> primes;
         std::vector<mpz_class> exponents;
-        gfp._factor_prime(n-1, &primes, &exponents);
+        arith.factor_prime(n-1, &primes, &exponents);
         typename std::vector<mpz_class>::size_type i;
         mpz_class n_factors = 0;
         for (i = 0; i != primes.size(); i++) {

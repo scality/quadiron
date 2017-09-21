@@ -19,13 +19,13 @@ class FECGF2NFFTRS : public FEC<T>
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     if (word_size > 16)
-      assert(false); // not support yet
+      assert(false);  // not support yet
     u_int gf_n = 8*word_size;
     this->gf = new GF2N<T>(gf_n);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = this->gf->_get_code_len_high_compo(n_parities + n_data);
+    n = this->gf->get_code_len_high_compo(n_parities + n_data);
 
     // compute root of order n such as r^n == 1
     this->r = this->gf->get_nth_root(n);

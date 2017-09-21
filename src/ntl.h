@@ -40,6 +40,7 @@ typedef enum
     NTL_EX_DIV_BY_ZERO
   } NtlException;
 
+#include "arith.h"
 #include "gf.h"
 #include "gfp.h"
 #include "gf2n.h"

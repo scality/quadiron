@@ -86,7 +86,7 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
     // pentanomial x^128 + x^7 + x^2 + x + 1
     this->prim_poly = 0x87;
   else
-    assert(false); // not supported
+    assert(false);  // not supported
 
   if (n/8 == sizeof(T)) {
     // restricted case
