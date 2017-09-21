@@ -11,7 +11,7 @@ template<typename T>
 class FFT2 : public FFT<T>
 {
  public:
-  FFT2(GF<T> *gf);
+  explicit FFT2(GF<T> *gf);
   ~FFT2();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);

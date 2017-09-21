@@ -213,8 +213,8 @@ class FFTUtest
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
 
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     for (int j = 0; j < 100000; j++) {
-      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
@@ -248,8 +248,8 @@ class FFTUtest
 
     FFT2K<T> fft = FFT2K<T>(&gf, n);
 
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     for (int j = 0; j < 100000; j++) {
-      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
@@ -280,8 +280,8 @@ class FFTUtest
 
     FFTPF<T> fft = FFTPF<T>(&gf, n);
 
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     for (int j = 0; j < 10000; j++) {
-      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
@@ -289,7 +289,7 @@ class FFTUtest
       fft.fft(&_v, &v);
         // _v.dump();
       fft.ifft(&v2, &_v);
-      //   v2.dump();
+        // v2.dump();
       assert(v.eq(&v2));
     }
   }
@@ -313,8 +313,8 @@ class FFTUtest
 
     FFTCT<T> fft = FFTCT<T>(&gf, n);
 
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     for (int j = 0; j < 10000; j++) {
-      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
@@ -345,8 +345,8 @@ class FFTUtest
 
     FFTCT<T> fft = FFTCT<T>(&gf, n);
 
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     for (int j = 0; j < 10000; j++) {
-      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
@@ -377,8 +377,8 @@ class FFTUtest
 
     FFT2<T> fft = FFT2<T>(&gf);
 
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
     for (int j = 0; j < 100000; j++) {
-      Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());

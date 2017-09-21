@@ -41,16 +41,15 @@ class FFTCT : public FFT<T>
   T n1;
   T n2;
   T w, w1, w2, inv_w;
-  std::vector<T>* prime_factors;
   Vec<T> *G = NULL;
   VmVec<T> *Y = NULL;
   VmVec<T> *X = NULL;
   FFT<T> *dft_outer = NULL;
   FFT<T> *dft_inner = NULL;
+  std::vector<T>* prime_factors = NULL;
   void mul_twiddle_factors(bool inv);
  public:
-  FFTCT(GF<T> *gf, T n, int id = 0, std::vector<T>* prime_factors = NULL,
-    T _w = 0);
+  FFTCT(GF<T> *gf, T n, int id = 0, std::vector<T>* factors = NULL, T _w = 0);
   ~FFTCT();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
@@ -69,7 +68,7 @@ class FFTCT : public FFT<T>
  * @return
  */
 template <typename T>
-FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
+FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
   FFT<T>(gf, n)
 {
   if (id == 0) {
@@ -79,7 +78,7 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
     // w is of order-n
     w = gf->get_nth_root(n);
   } else {
-    this->prime_factors = prime_factors;
+    this->prime_factors = factors;
     w = _w;
   }
   inv_w = gf->inv(w);
@@ -99,7 +98,7 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
     if (this->arith->is_power_of_2(_n2))
       this->dft_inner = new FFTCT<T>(gf, _n2);
     else
-      this->dft_inner = new FFTCT<T>(gf, _n2, id+1, prime_factors, w2);
+      this->dft_inner = new FFTCT<T>(gf, _n2, id+1, this->prime_factors, w2);
     this->G = new Vec<T>(this->gf, this->n);
     this->Y = new VmVec<T>(this->G);
     this->X = new VmVec<T>(this->G);
@@ -110,6 +109,7 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* prime_factors, T _w) :
 template <typename T>
 FFTCT<T>::~FFTCT()
 {
+  if (prime_factors && this->N == this->n) delete prime_factors;
   if (dft_outer) delete dft_outer;
   if (dft_inner) delete dft_inner;
   if (X) delete X;
@@ -128,8 +128,8 @@ void FFTCT<T>::mul_twiddle_factors(bool inv)
     _w = w;
   T base = 1;
   for (T i1 = 1; i1 < n1; i1++) {
-    base = this->gf->mul(base, _w); // base = _w^i1
-    factor = base; // init factor = base^1
+    base = this->gf->mul(base, _w);  // base = _w^i1
+    factor = base;  // init factor = base^1
     for (T k2 = 1; k2 < n2; k2++) {
       T loc = i1+n1*k2;;
       G->set(loc, this->gf->mul(G->get(loc), factor));

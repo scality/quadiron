@@ -19,10 +19,10 @@ int main(int argc, char **argv)
   while (true) {
     if (n % 2 == 0) {
       n++;
-      continue ;
+      continue;
     }
     if (arith.solovay_strassen(n)) {
-      //number is probably prime: double-check
+      // number is probably prime: double-check
       if (arith.is_prime(n)) {
         std::vector<mpz_class> primes;
         std::vector<mpz_class> exponents;

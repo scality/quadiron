@@ -268,7 +268,8 @@ class GFUtest
 
     test_negation_gf2_bign(n);
     test_reciprocal_gf2_bign(n);
-    test_prime_root_gf2(n);
+    if (n < 128)  // it works slowly in GF2N(128)
+      test_prime_root_gf2(n);
     // test_log_gf2_bign(n);
   }
 

@@ -206,13 +206,13 @@ void print_fec_type(FEC<T> *fec)
   switch (fec->type) {
   case FEC<T>::TYPE_1:
     std::cout << "type_1\n";
-    break ;
+    break;
   case FEC<T>::TYPE_2:
     std::cout << "type_2\n";
-    break ;
+    break;
   default:
     std::cout << "unknown\n";
-    break ;
+    break;
   }
 }
 
@@ -223,7 +223,8 @@ enum gf2nrs_type
   };
 
 template <typename T>
-void run_FECGF2NRS(int word_size, int n_data, int n_parities, gf2nrs_type mflag, int rflag)
+void run_FECGF2NRS(int word_size, int n_data, int n_parities, gf2nrs_type mflag,
+  int rflag)
 {
   FECGF2NRS<T> *fec;
   typename FECGF2NRS<T>::FECGF2NRSType gf2nrs_type;;
@@ -374,7 +375,7 @@ int main(int argc, char **argv)
       break;
     case 't':
       tflag = 1;
-      break ;
+      break;
     default: /* '?' */
       xusage();
     }
@@ -403,8 +404,8 @@ int main(int argc, char **argv)
       run_FECFNTRS<uint32_t>(word_size, n_data, n_parities, rflag);
     else if (word_size <= 8)
       run_FECFNTRS<uint64_t>(word_size, n_data, n_parities, rflag);
-    //else if (word_size <= 16)
-    //run_FECFNTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
+    // else if (word_size <= 16)
+    // run_FECFNTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
   } else if (eflag == EC_TYPE_GF2NRS) {
     if (word_size <= 4)
       run_FECGF2NRS<uint32_t>(word_size, n_data, n_parities, mflag, rflag);

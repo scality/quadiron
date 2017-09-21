@@ -23,7 +23,7 @@ class GF
   T p;
   T n;
   T root;
-  Arith<T> *arith;
+  Arith<T> *arith = NULL;
 
   GF(T p, T n);
   virtual ~GF();
@@ -43,6 +43,7 @@ class GF
   virtual T exp(T a, T b) = 0;
   virtual T log(T a, T b) = 0;
   T _card();
+  void compute_factors_of_order();
   T exp_naive(T base, T exponent);
   T exp_quick(T base, T exponent);
   T log_naive(T base, T exponent);
@@ -61,9 +62,12 @@ class GF
   T get_nth_root(T n);
   T get_code_len(T n);
   T get_code_len_high_compo(T n);
-  void compute_all_divisors_h();
  private:
-  std::vector<T>* _all_divisors_h = NULL;
+  bool compute_factors_of_order_done = false;
+  std::vector<T>* primes = NULL;
+  std::vector<T>* exponent = NULL;
+  std::vector<T>* all_primes_factors = NULL;
+  std::vector<T>* proper_divisors = NULL;
 };
 
 template <typename T>
@@ -78,14 +82,42 @@ GF<T>::GF(T p, T n)
 template <typename T>
 GF<T>::~GF()
 {
-  delete arith;
-  delete _all_divisors_h;
+  if (arith) delete arith;
+  if (primes) delete primes;
+  if (exponent) delete exponent;
+  if (all_primes_factors) delete all_primes_factors;
+  if (proper_divisors) delete proper_divisors;
 }
 
 template <typename T>
 T GF<T>::_card()
 {
   return arith->exp(p, n);
+}
+
+template <typename T>
+void GF<T>::compute_factors_of_order()
+{
+  if (this->compute_factors_of_order_done) return;
+
+  T h = card_minus_one();
+  this->primes = new std::vector<T>();
+  this->exponent = new std::vector<T>();
+  this->all_primes_factors = new std::vector<T>();
+  this->proper_divisors = new std::vector<T>();
+
+  // prime factorisation of order, i.e. order = p_i^e_i where
+  //  p_i, e_i are ith element of this->primes and this->exponent
+  arith->factor_prime(h, this->primes, this->exponent);
+  // store all primes in a vector. A prime is replicated according to its
+  //  exponent
+  arith->get_prime_factors_final(this->primes, this->exponent,
+    this->all_primes_factors);
+  // calculate all proper divisor of order. A proper divisor = order/p_i for
+  //  each prime divisor of order.
+  arith->get_proper_divisors(h, this->primes, this->proper_divisors);
+
+  this->compute_factors_of_order_done = true;
 }
 
 /**
@@ -276,22 +308,21 @@ template <typename T>
 bool GF<T>::is_prime_root(T nb)
 {
   bool ok = true;
-  std::vector<T>* divisors = new std::vector<T>();
-  typename std::vector<T>::iterator divisor;
+  typename std::vector<T>::size_type i;
   T h = card_minus_one();
-  // get necessary proper divisors of h
-  arith->get_proper_divisors(h, divisors);
+  if (!this->compute_factors_of_order_done) {
+    this->compute_factors_of_order();
+  }
   // check nb^divisor == 1
   // std::cout << "checking.." << nb << std::endl;
-  for (divisor = divisors->begin(); divisor != divisors->end(); ++divisor) {
-    // std::cout << nb << "^" << *divisor << "=" << exp(nb, *divisor) << std::endl;
-    if (exp(nb, *divisor) == 1) {
+  for (i = 0; i != this->proper_divisors->size(); ++i) {
+    // std::cout << nb << "^" << this->proper_divisors->at(i) << "=";
+    // std::cout << exp(nb, this->proper_divisors->at(i)) << std::endl;
+    if (exp(nb, this->proper_divisors->at(i)) == 1) {
       ok = false;
       break;
     }
   }
-
-  delete divisors;
   return ok;
 }
 
@@ -305,20 +336,21 @@ template <typename T>
 void GF<T>::find_prime_root()
 {
   if (this->root) return;
-  std::vector<T>* divisors = new std::vector<T>();
-  typename std::vector<T>::iterator divisor;
-  T h = card_minus_one();
-  // get all divisors of h
-  arith->get_proper_divisors(h, divisors);
   T nb = 2;
   bool ok;
+  typename std::vector<T>::size_type i;
+  T h = card_minus_one();
+  if (!this->compute_factors_of_order_done) {
+    this->compute_factors_of_order();
+  }
   while (nb <= h) {
     ok = true;
     // check nb^divisor == 1
     // std::cout << "checking.." << nb << std::endl;
-    for (divisor = divisors->begin(); divisor != divisors->end(); ++divisor) {
-      // std::cout << nb << "^" << *divisor << "=" << exp(nb, *divisor) << std::endl;
-      if (exp(nb, *divisor) == 1) {
+    for (i = 0; i != this->proper_divisors->size(); ++i) {
+      // std::cout << nb << "^" << divisors.at(i) << "=";
+      // std::cout << exp(nb, divisors.at(i)) << std::endl;
+      if (exp(nb, this->proper_divisors->at(i)) == 1) {
         ok = false;
         break;
       }
@@ -329,8 +361,6 @@ void GF<T>::find_prime_root()
     }
     nb++;
   }
-
-  delete divisors;
 
   if (!this->root)
     assert(false);  // not found root
@@ -393,14 +423,11 @@ template <typename T>
 T GF<T>::get_order(T x)
 {
   if (x == 0 || x == 1) return 1;
-  std::vector<T> *primes = new std::vector<T>();
-  std::vector<T> *exponent = new std::vector<T>();
+  std::vector<T> primes;
+  std::vector<T> exponent;
   T h = card_minus_one();
-  arith->factor_prime(h, primes, exponent);
-  T order = do_step_get_order(x, h, primes, exponent);
-
-  delete primes;
-  delete exponent;
+  arith->factor_prime(x, &primes, &exponent);
+  T order = do_step_get_order(x, h, &primes, &exponent);
 
   if (order == 1) return h;
   return order;
@@ -467,18 +494,6 @@ T GF<T>::get_prime_root()
 }
 
 /**
- * compute all divisors of q-1
- *
- */
-template <typename T>
-void GF<T>::compute_all_divisors_h()
-{
-  if (this->_all_divisors_h != NULL) return;
-  this->_all_divisors_h = new std::vector<T>();
-  arith->compute_all_divisors(this->card_minus_one(), this->_all_divisors_h);
-}
-
-/**
  * find smallest number is
  *  - at least n
  *  - divisible by (q-1)
@@ -512,5 +527,8 @@ T GF<T>::get_code_len_high_compo(T n)
   T nb = card_minus_one();
   if (nb < n) assert(false);
 
-  return arith->get_code_len_high_compo(nb, n);
+  if (!this->compute_factors_of_order_done) {
+    this->compute_factors_of_order();
+  }
+  return arith->get_code_len_high_compo(this->all_primes_factors, n);
 }

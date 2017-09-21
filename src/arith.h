@@ -15,7 +15,6 @@ template<typename T>
 class Arith
 {
  public:
-
   Arith() {};
   virtual ~Arith() {};
 
@@ -34,15 +33,19 @@ class Arith
   bool solovay_strassen(T n);
   bool is_prime(T n);
   T weak_rand(T max);
+  T gcd(T u, T v);
   void factor_distinct_prime(T n, std::vector<T> *output);
   void factor_prime(T nb, std::vector<T> *primes, std::vector<T> *exponent);
   void get_proper_divisors(T n, std::vector<T> *output);
-  T gcd(T u, T v);
+  void get_proper_divisors(T n, std::vector<T> *primes, std::vector<T> *output);
   void compute_all_divisors(T nb, std::vector<T> *output);
   T get_code_len(T order, T n);
   T get_code_len_high_compo(T order, T n);
+  T get_code_len_high_compo(std::vector<T> *factors, T n);
   void get_coprime_factors(T nb, std::vector<T> *output);
   void get_prime_factors(T nb, std::vector<T> *output);
+  void get_prime_factors_final(std::vector<T> *primes,
+    std::vector<T> *exponent, std::vector<T> *output);
 };
 
 /**
@@ -88,11 +91,15 @@ T Arith<T>::sqrt(T remainder)
 template <typename T>
 T Arith<T>::exp(T base, T exponent)
 {
+  if (exponent == 0)
+    return 1;
   T result = 1;
-  while (exponent > 0) {
+  while (true) {
     if (exponent % 2 == 1)
       result *= base;
     exponent >>= 1;
+    if (exponent == 0)
+      break;
     base *= base;
   }
 
@@ -394,7 +401,7 @@ bool Arith<T>::is_prime(T n)
   if (n == 2)
     return true;
 
-  T root = sqrt(n);
+  T root = this->sqrt(n);
   for (T i = 2; i <= root; i++) {
     if (n % i == 0)
       return false;
@@ -436,7 +443,7 @@ void Arith<T>::factor_distinct_prime(T nb, std::vector<T> *output)
     nb = nb/2;
   }
   // n must be odd at this point.  So we can skip one element
-  for (T i = 3; i <= sqrt(nb); i = i + 2) {
+  for (T i = 3; i <= this->sqrt(nb); i = i + 2) {
     // While i divides n, get i and divide n
     while (nb % i == 0) {
       if (last_found != i) {
@@ -459,18 +466,34 @@ void Arith<T>::factor_distinct_prime(T nb, std::vector<T> *output)
 template<typename T>
 void Arith<T>::get_proper_divisors(T nb, std::vector<T> *output)
 {
-  std::vector<T> *input = new std::vector<T>();
+  std::vector<T> input;
   typename std::vector<T>::iterator it;
-  factor_distinct_prime(nb, input);
+  factor_distinct_prime(nb, &input);
   // std::cout << "nb: " << nb << std::endl;
-  for (it = input->begin(); it != input->end(); ++it) {
+  for (it = input.begin(); it != input.end(); ++it) {
     if (*it < nb) {
       output->push_back(nb / (*it));
       // std::cout << *it << std::endl;
     }
   }
+}
 
-  delete input;
+/*
+ * Get proper divisors of a given number from its factored distince primes
+ */
+template<typename T>
+void Arith<T>::get_proper_divisors(T nb, std::vector<T> *primes,
+  std::vector<T> *output)
+{
+  assert(primes != NULL);
+  typename std::vector<T>::iterator it;
+  // std::cout << "nb: " << nb << std::endl;
+  for (it = primes->begin(); it != primes->end(); ++it) {
+    if (*it < nb) {
+      output->push_back(nb / (*it));
+      // std::cout << *it << std::endl;
+    }
+  }
 }
 
 /*
@@ -494,7 +517,7 @@ void Arith<T>::factor_prime(T nb, std::vector<T> *primes,
     occurence = 0;
   }
   // n must be odd at this point.  So we can skip one element
-  for (T i = 3; i <= sqrt(nb); i = i + 2) {
+  for (T i = 3; i <= this->sqrt(nb); i = i + 2) {
     // While i divides n, get i and divide n
     while (nb % i == 0) {
       occurence++;
@@ -549,20 +572,18 @@ T Arith<T>::gcd(T u, T v)
 template <typename T>
 void Arith<T>::compute_all_divisors(T nb, std::vector<T>* output)
 {
-  typename std::vector<T>* tmp = new std::vector<T>();
+  typename std::vector<T> tmp;
 
-  T nb_sqrt = sqrt(nb);
+  T nb_sqrt = this->sqrt(nb);
   for (T i = 1; i <= nb_sqrt; i++) {
     // While i divides n, get i and n/i
     if (nb % i == 0) {
       // std::cout << nb << ":" << i << " " << nb/i << std::endl;
       output->push_back(i);
-      tmp->push_back(nb / i);
+      tmp.push_back(nb / i);
     }
   }
-  output->insert(output->end(), tmp->rbegin(), tmp->rend());
-
-  delete tmp;
+  output->insert(output->end(), tmp.rbegin(), tmp.rend());
 }
 
 /**
@@ -580,8 +601,7 @@ T Arith<T>::get_code_len(T order, T n)
 {
   if (order % n == 0) return n;
   if (order < n) assert(false);
-
-  T nb_sqrt = sqrt(order);
+  T nb_sqrt = this->sqrt(order);
   T i;
   if (n > nb_sqrt) {
     for (i = order/n; i >= 1; i--) {
@@ -589,13 +609,15 @@ T Arith<T>::get_code_len(T order, T n)
       if (order % i == 0)
         return order/i;
     }
+    assert(false);
   }
   for (i = n; i <= nb_sqrt; i++) {
     // if i divides n, return i
     if (order % i == 0)
       return i;
   }
-  return 0;
+  // order is prime
+  return order;
 }
 
 /**
@@ -614,8 +636,43 @@ T Arith<T>::get_code_len_high_compo(T order, T n)
 {
   if (order < n) assert(false);
 
-  std::vector<T> *factors = new std::vector<T>();
-  get_prime_factors(order, factors);
+  std::vector<T> factors;
+  get_prime_factors(order, &factors);
+  T x = 1;
+  typename std::vector<T>::size_type i, j;
+  // forward to get a divisor of (q-1) >= n and of highly composited
+  for (i = 0; i != factors.size(); ++i) {
+    x *= factors.at(i);
+    if (x >= n) {
+      // backward to get smaller number
+      for (j = 0; j != i+1 && j != factors.size(); j++) {
+        x /= factors.at(j);
+        if (x < n)
+          return x * factors.at(j);
+      }
+    }
+  }
+  assert(false);
+  return 0;
+}
+
+/**
+ * find smallest number is
+ *  - highly composited
+ *  - at least n
+ *  - divisible by (order)
+ *
+ * @param factors - vector of all prime factors of order. Replication of each
+ * factor equals to its exponent
+ * @param n
+ *
+ * @return code length
+ */
+template <typename T>
+T Arith<T>::get_code_len_high_compo(std::vector<T> *factors, T n)
+{
+  assert(factors != NULL);
+
   T x = 1;
   typename std::vector<T>::size_type i, j;
   // forward to get a divisor of (q-1) >= n and of highly composited
@@ -623,16 +680,14 @@ T Arith<T>::get_code_len_high_compo(T order, T n)
     x *= factors->at(i);
     if (x >= n) {
       // backward to get smaller number
-      for (j = 0; j != i+1; j++) {
+      for (j = 0; j != i+1 && j != factors->size(); j++) {
         x /= factors->at(j);
         if (x < n)
           return x * factors->at(j);
       }
     }
   }
-
-  delete factors;
-
+  assert(false);
   return 0;
 }
 
@@ -669,10 +724,24 @@ void Arith<T>::get_prime_factors(T nb, std::vector<T> *output)
   std::vector<T> primes;
   std::vector<T> exponent;
   factor_prime(nb, &primes, &exponent);
+  get_prime_factors_final(&primes, &exponent, output);
+}
 
+/**
+ * get all prime factors of a number
+ *
+ * @param primes - vector of primes
+ * @param primes - vector of exponents each for prime
+ * @param output - vector of co-prime divisors of nb
+ * @return
+ */
+template <typename T>
+void Arith<T>::get_prime_factors_final(std::vector<T> *primes,
+  std::vector<T> *exponent, std::vector<T> *output)
+{
   typename std::vector<T>::size_type i, j;
-  for (i = 0; i != primes.size(); ++i)
-    for (j = 0; j != exponent.at(i); ++j) {
-      output->push_back(primes[i]);
+  for (i = 0; i != primes->size(); ++i)
+    for (j = 0; j != exponent->at(i); ++j) {
+      output->push_back(primes->at(i));
     }
 }

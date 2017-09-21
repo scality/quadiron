@@ -29,7 +29,7 @@ class FECGF2NRS : public FEC<T>
     this->type = type;
 
     if (word_size > 16)
-      assert(false); // not support yet
+      assert(false);  // not support yet
     u_int gf_n = 8*word_size;
     this->gf = new GF2N<T>(gf_n);
 

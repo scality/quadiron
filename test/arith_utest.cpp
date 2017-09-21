@@ -8,7 +8,13 @@ class ArithUtest
   T max;
   Arith<T> *arith;
   ArithUtest() {
-    max = std::numeric_limits<T>::max();
+    if (sizeof(T) < 16)
+      max = std::numeric_limits<T>::max();
+    else {
+      max = 0;
+      for (int i = 0; i < sizeof(T)*8; i++)
+        max += (T)1 << i;
+    }
     arith = new Arith<T>();
   }
 
@@ -94,6 +100,71 @@ class ArithUtest
     assert(arith->jacobi(2, 221) == -1);
   }
 
+  /**
+   * Schönhage-Strassen algorithm
+   * Example taken from Pierre Meunier's book
+   *
+   * @param gf
+   */
+  void test_mul_bignum()
+  {
+    // current test is only for uint64_t
+    if (sizeof(T) != 8) return;
+    std::cout << "test_mul_bignum\n";
+
+    int b = 10;  // base
+    int p = 14;  // we could multiply integers of 2^p digits
+    T max_digits = arith->exp(2, p);
+    // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
+
+    T l = p + 1;
+    // std::cerr << "l=" << l << "\n";
+
+    // choose 2 prime numbers of the form p=a.2^n+1
+    // because if x is not a quadratic residue then w=x^a is
+    // a 2^n-th principal root of unity in GF_p
+    T a1 = 2;
+    T a2 = 5;
+    T p1 = a1 * arith->exp(2, 15) + 1;
+    T p2 = a2 * arith->exp(2, 15) + 1;
+    // std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
+    assert(arith->is_prime(p1));
+    assert(arith->is_prime(p2));
+
+    // ensure their product is bounded (b-1)^2*2^(n-1) < m
+    T m = p1 * p2;
+    // check overflow
+    assert(m/p1 == p2);
+    // std::cerr << " m=" << m << "\n";
+    assert(arith->exp((b - 1), 2) * arith->exp(p, 2) < m);
+
+    // find x so it is not a quadratic residue in GF_p1 and GF_p2
+    assert(arith->jacobi(3, p1) == arith->jacobi(p1, 3));
+    assert(arith->jacobi(p1, 3) == arith->jacobi(2, 3));
+    assert(arith->jacobi(3, p2) == arith->jacobi(p2, 3));
+    assert(arith->jacobi(p2, 3) == arith->jacobi(2, 3));
+    assert(arith->jacobi(2, 3) == -1);
+    // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
+
+    // therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
+    T w1 = arith->exp(3, a1);
+    T w2 = arith->exp(3, a2);
+    // std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
+    assert(w1 == 9);
+    assert(w2 == 243);
+
+    // find root of unity in GF_p1p2
+    T _a[2];
+    T _n[2];
+    _a[0] = w1;
+    _n[0] = p1;
+    _a[1] = w2;
+    _n[1] = p2;
+    T w = arith->chinese_remainder(2, _a, _n);
+    // std::cerr << " w=" << w << "\n";
+    assert(w == 25559439);
+  }
+
   void test_ext_gcd()
   {
     std::cout << "test_ext_gcd\n";
@@ -158,22 +229,19 @@ class ArithUtest
     std::cout << "test_factor_prime\n";
 
     int i;
-    std::vector<T> *primes = new std::vector<T>();
-    std::vector<T> *exponent = new std::vector<T>();
+    std::vector<T> primes;
+    std::vector<T> exponent;
     for (i = 0; i < 1000; i++) {
       T x;
       // std::cout << "i=" << i << "\n";
       x = arith->weak_rand(max);
       // std::cout << "x=" << x << "\n";
-      arith->factor_prime(x, primes, exponent);
-      check_all_primes(primes, true);
-      check_primes_exponent(x, primes, exponent);
-      primes->clear();
-      exponent->clear();
+      arith->factor_prime(x, &primes, &exponent);
+      check_all_primes(&primes, true);
+      check_primes_exponent(x, &primes, &exponent);
+      primes.clear();
+      exponent.clear();
     }
-
-    delete primes;
-    delete exponent;
   }
 
   void check_divisors(T nb, std::vector<T> *divisors, bool proper) {
@@ -196,17 +264,35 @@ class ArithUtest
     std::cout << "test_get_proper_divisors\n";
 
     int i;
-    std::vector<T> *divisors = new std::vector<T>();
+    std::vector<T> divisors;
     for (i = 0; i < 1000; i++) {
       T x;
       // std::cout << "i=" << i << "\n";
       x = arith->weak_rand(max);
       // std::cout << "x=" << x << "\n";
-      arith->get_proper_divisors(x, divisors);
-      check_divisors(x, divisors, true);
-      divisors->clear();
+      arith->get_proper_divisors(x, &divisors);
+      check_divisors(x, &divisors, true);
+      divisors.clear();
     }
-    delete divisors;
+  }
+
+  void test_get_proper_divisors_2()
+  {
+    std::cout << "test_get_proper_divisors_2\n";
+
+    int i;
+    std::vector<T> divisors;
+    for (i = 0; i < 1000; i++) {
+      T x;
+      // std::cout << "i=" << i << "\n";
+      x = arith->weak_rand(max);
+      std::vector<T> factors;
+      arith->factor_distinct_prime(x, &factors);
+      // std::cout << "x=" << x << "\n";
+      arith->get_proper_divisors(x, &factors, &divisors);
+      check_divisors(x, &divisors, true);
+      divisors.clear();
+    }
   }
 
   void test_compute_all_divisors()
@@ -214,17 +300,16 @@ class ArithUtest
     std::cout << "test_compute_all_divisors\n";
 
     int i;
-    std::vector<T> *divisors = new std::vector<T>();
+    std::vector<T> divisors;
     for (i = 0; i < 1000; i++) {
       T x;
       // std::cout << "i=" << i << "\n";
       x = arith->weak_rand(max);
       // std::cout << "x=" << x << "\n";
-      arith->compute_all_divisors(x, divisors);
-      check_divisors(x, divisors, false);
-      divisors->clear();
+      arith->compute_all_divisors(x, &divisors);
+      check_divisors(x, &divisors, false);
+      divisors.clear();
     }
-    delete divisors;
   }
 
   void test_get_code_len()
@@ -265,6 +350,27 @@ class ArithUtest
     }
   }
 
+  void test_get_code_len_high_compo_2()
+  {
+    std::cout << "test_get_code_len_high_compo_2\n";
+
+    int i;
+    for (i = 0; i < 1000; i++) {
+      T order, n;
+      // std::cout << "i=" << i << "\n";
+      order = arith->weak_rand(max);
+      // std::cout << "order=" << order << "\n";
+      n = arith->weak_rand(order);
+      // std::cout << "n=" << n << "\n";
+      std::vector<T> factors;
+      arith->get_prime_factors(order, &factors);
+      T len = arith->get_code_len_high_compo(&factors, n);
+      // std::cout << "len=" << len << "\n";
+      assert(order % len == 0);
+      assert(len >= n);
+    }
+  }
+
   void check_prime_divisors(T nb, std::vector<T> *divisors, bool coprime) {
     assert(divisors->size() > 0);
 
@@ -286,41 +392,39 @@ class ArithUtest
   {
     std::cout << "test_get_coprime_factors\n";
 
-    std::vector<T> *divisors = new std::vector<T>();
+    std::vector<T> divisors;
     int i;
     for (i = 0; i < 1000; i++) {
       T n;
       // std::cout << "i=" << i << "\n";
       n = arith->weak_rand(max);
       // std::cout << "n=" << n << "\n";
-      arith->get_coprime_factors(n, divisors);
-      check_prime_divisors(n, divisors, true);
-      divisors->clear();
+      arith->get_coprime_factors(n, &divisors);
+      check_prime_divisors(n, &divisors, true);
+      divisors.clear();
     }
-    delete divisors;
   }
 
   void test_get_prime_factors()
   {
     std::cout << "test_get_prime_factors\n";
 
-    std::vector<T> *divisors = new std::vector<T>();
+    std::vector<T> divisors;
     int i;
     for (i = 0; i < 1000; i++) {
       T n;
       // std::cout << "i=" << i << "\n";
       n = arith->weak_rand(max);
       // std::cout << "n=" << n << "\n";
-      arith->get_prime_factors(n, divisors);
-      check_prime_divisors(n, divisors, false);
-      divisors->clear();
+      arith->get_prime_factors(n, &divisors);
+      check_prime_divisors(n, &divisors, false);
+      divisors.clear();
     }
-    delete divisors;
   }
 
   void arith_utest()
   {
-    std::cout << "arith_utest\n";
+    std::cout << "arith_utest with sizeof(T)=" << sizeof(T) << "\n";
 
     srand(time(0));
 
@@ -328,6 +432,7 @@ class ArithUtest
     test_reciprocal();
     test_chinese_remainder();
     test_jacobi();
+    test_mul_bignum();
     test_ext_gcd();
     test_factor_distinct_prime();
     test_factor_prime();
@@ -366,6 +471,7 @@ class ArithUtest
 
     test_basic_ops();
     test_chinese_remainder();
+    test_mul_bignum();
     test_jacobi();
     test_ext_gcd();
   }

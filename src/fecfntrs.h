@@ -20,7 +20,7 @@ class FECFNTRS : public FEC<T>
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     assert(word_size < 4);
-    //warning all fermat numbers greater or equal to F_5 (2^32+1) are composite!!!
+    // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
     T gf_p = (1ULL << (8*word_size)) + 1;
     this->gf = new GFP<T>(gf_p);
 
@@ -73,7 +73,7 @@ class FECFNTRS : public FEC<T>
     for (int i = 0; i < n; i++) {
       if (output->get(i) == (fft->gf->p - 1)) {
         char buf[256];
-        snprintf(buf, sizeof (buf), "%lld:%d", offset, i);
+        snprintf(buf, sizeof (buf), "%zd:%d", offset, i);
         assert(nullptr != props[i]);
         props[i]->insert(std::make_pair(buf, "@"));
         output->set(i, 0);
@@ -121,7 +121,7 @@ class FECFNTRS : public FEC<T>
     for (int i = 0; i < k; i++) {
       int j = fragments_ids->get(i);
       char buf[256];
-      snprintf(buf, sizeof (buf), "%lld:%d", offset, j);
+      snprintf(buf, sizeof (buf), "%zd:%d", offset, j);
       if (nullptr != props[j]) {
         if (props[j]->is_key(buf) && props[j]->at(buf) == "@")
           words->set(i, fft->gf->p - 1);
