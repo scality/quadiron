@@ -17,7 +17,6 @@ template class FECGF2NRS<uint64_t>;
 template class FECFNTRS<uint32_t>;
 template class FECGF2NFFTRS<uint32_t>;
 template class FECGF2NFFTRS<uint64_t>;
-template class FECGFPFFTRS<uint32_t>;
 template class FECGFPFFTRS<uint64_t>;
 
 int vflag = 0;
@@ -414,9 +413,7 @@ int main(int argc, char **argv)
     else if (word_size <= 16)
       run_FECGF2NRS<__uint128_t>(word_size, n_data, n_parities, mflag, rflag);
   } else if (eflag == EC_TYPE_GFPFFTRS) {
-    if (word_size <= 3)
-      run_FECGFPFFTRS<uint32_t>(word_size, n_data, n_parities, rflag);
-    else if (word_size <= 7)
+    if (word_size <= 7)
       run_FECGFPFFTRS<uint64_t>(word_size, n_data, n_parities, rflag);
     else if (word_size <= 15)
       run_FECGFPFFTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
