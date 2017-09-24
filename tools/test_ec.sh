@@ -52,7 +52,10 @@ do_test()
     if [ "${type}" = "type_2" ]
     then
         #remove all data
-        for i in foo.d[0-9]
+        shopt -s extglob
+        files=`ls foo'.'d+([0-9])`
+        shopt -u extglob
+        for i in $files
         do
             mv ${i} ${i}.1
         done
