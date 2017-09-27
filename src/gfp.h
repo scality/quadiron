@@ -81,7 +81,11 @@ T GFP<T>::add(T a, T b)
   assert(check(a));
   assert(check(b));
 
-  return (a + b) % this->p;
+  T c = a + b;
+  if (c >= this->p)
+    return c - this->p;
+  else
+    return c;
 }
 
 template <typename T>
