@@ -14,6 +14,7 @@ class Poly
   explicit Poly(GF<T> *gf);
   void clear();
   void copy(Poly<T> *src);
+  void copy(Poly<T> *src, T offset);
   T degree();
   T lead();
   bool is_zero();
@@ -32,7 +33,9 @@ class Poly
   void div(Poly<T> *d);
   void mod(Poly<T> *d);
   void derivative();
+  void taylor_expand(std::vector<Poly<T>> *result, T n, T t);
   T eval(T x);
+  bool equal(Poly<T> *f);
   void dump();
 };
 
@@ -55,6 +58,15 @@ void Poly<T>::copy(Poly<T> *src)
 
   for (int i = src->degree(); i >= 0; i--)
     set(i, src->get(i));
+}
+
+template <typename T>
+void Poly<T>::copy(Poly<T> *src, T offset)
+{
+  clear();
+
+  for (int i = src->degree(); i >= 0; i--)
+    set(i + offset, src->get(i));
 }
 
 template <typename T>
@@ -250,6 +262,85 @@ T Poly<T>::eval(T x)
     i--;
   }
   return result;
+}
+
+/**
+ * Taylor expansion at (x^t - x)
+ *  Algorithm 1 in the paper of Shuhong Gao and Todd Mateer:
+ *    "Additive Fast Fourier Transforms Over Finite Fields"
+ *
+ * @param result: vector of hi(x) polynomials
+ * @param n
+ * @param t
+ */
+
+template <typename T>
+void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
+{
+  // it supports only GF2N
+  assert(gf->p == 2);
+  assert(n >= 1);
+  assert(t > 1);
+
+  T deg = degree();
+  assert(deg < n);
+
+  if (n <= t) {
+    Poly<T> tmp(gf);
+    tmp.copy(this);
+    result->push_back(tmp);
+    return;
+  }
+
+  // find k s.t. t*2^k < n <= 2*t*2^k
+  T k = gf->arith->log2(n/t - 1);
+
+  T deg2 = gf->arith->exp2(k);
+  T deg0 = t*deg2;
+  T deg1 = deg0 - deg2;
+
+  // find f0, f1, f2 s.t.
+  // f = f0 + x^(t2^k)( f1 + x^( (t-1)2^k) f2 )
+  Poly<T> f0(gf), f1(gf), f2(gf);
+  T i, j;
+
+  for (i = 0; i < deg0; i++)
+    f0.set(i, get(i));
+  for (j = 0; j < deg1; j++, i++)
+    f1.set(j, get(i));
+  for (j = 0; j < deg2; j++, i++)
+    f2.set(j, get(i));
+
+  // std::cout << "f0:"; f0.dump();
+  // std::cout << "f1:"; f1.dump();
+  // std::cout << "f2:"; f2.dump();
+
+  Poly<T> h(gf), g0(gf), g1(gf);
+  h.copy(&f1);
+  h.add(&f2);
+  g0.copy(&h, deg2);
+  g0.add(&f0);
+  g1.copy(&f2, deg1);
+  g1.add(&h);
+
+  std::vector<Poly<T>> V1, V2;
+  g0.taylor_expand(&V1, deg0, t);
+  g1.taylor_expand(&V2, n - deg0, t);
+
+  result->reserve(V1.size() + V2.size() ); // preallocate memory
+  result->insert(result->end(), V1.begin(), V1.end() );
+  result->insert(result->end(), V2.begin(), V2.end());
+}
+
+template <typename T>
+bool Poly<T>::equal(Poly<T> *f) {
+  T deg = degree();
+  if (deg != f->degree())
+    return false;
+  for (T i = 0; i <= deg; i++)
+    if (get(i) != f->get(i))
+      return false;
+  return true;
 }
 
 template <typename T>
