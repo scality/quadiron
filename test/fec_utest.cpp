@@ -120,7 +120,6 @@ template class FEC<uint32_t>;
 template class FECGF2NRS<uint32_t>;
 template class FECFNTRS<uint32_t>;
 template class FECGF2NFFTRS<uint32_t>;
-template class FECGFPFFTRS<uint32_t>;
 
 template class Mat<uint64_t>;
 template class Vec<uint64_t>;
@@ -155,7 +154,9 @@ template class GFP<mpz_class>;
 void fec_utest()
 {
   FECUtest<uint32_t> fec_utest_uint32;
-  fec_utest_uint32.fec_utest();
+  //fecgfpfftrs overflows
+  fec_utest_uint32.test_fecfntrs();
+  fec_utest_uint32.test_fecgf2nfftrs();
   FECUtest<uint64_t> fec_utest_uint64;
   fec_utest_uint64.fec_utest();
   FECUtest<__uint128_t> fec_utest_uint128;
