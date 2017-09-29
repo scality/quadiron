@@ -23,7 +23,15 @@ class V2Vec : public Vec<T>
   explicit V2Vec(Vec<T> *vec);
   int get_n(void);
   T get(int i);
+  T *get_mem();
+  bool is_v2vec();
 };
+
+template <typename T>
+bool V2Vec<T>::is_v2vec()
+{
+  return true;
+}
 
 template <typename T>
 V2Vec<T>::V2Vec(Vec<T> *vec) : Vec<T>(vec->gf, vec->n)
@@ -46,4 +54,10 @@ T V2Vec<T>::get(int i)
     return vec->get(i);
   else
     return vec->get(i - vec->n);
+}
+
+template <typename T>
+T *V2Vec<T>::get_mem()
+{
+  return vec->get_mem();
 }
