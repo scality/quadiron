@@ -15,6 +15,8 @@ class Vec
   void zero_fill(void);
   virtual void set(int i, T val);
   virtual T get(int i);
+  virtual T *get_mem();
+  virtual bool is_v2vec();
   void mul_scalar(T scalar);
   void hadamard_mul(Vec<T> *v);
   void add(Vec<T> *v);
@@ -69,6 +71,18 @@ T Vec<T>::get(int i)
   return mem[i];
 }
 
+template <typename T>
+T *Vec<T>::get_mem()
+{
+  return mem;
+}
+
+template <typename T>
+bool Vec<T>::is_v2vec()
+{
+  return false;
+}
+
 /**
  * Multiplication of a vector by a scalar
  *
@@ -95,6 +109,11 @@ void Vec<T>::hadamard_mul(Vec<T> *v)
     set(i, gf->mul(get(i), v->get(i)));
 }
 
+template <>
+void Vec<uint32_t>::hadamard_mul(Vec<uint32_t> *v);
+template <>
+void Vec<uint64_t>::hadamard_mul(Vec<uint64_t> *v);
+
 template <typename T>
 void Vec<T>::add(Vec<T> *v)
 {
@@ -103,6 +122,11 @@ void Vec<T>::add(Vec<T> *v)
   for (int i = 0; i < n; i++)
     set(i, gf->add(get(i), v->get(i)));
 }
+
+template <>
+void Vec<uint32_t>::add(Vec<uint32_t> *v);
+template <>
+void Vec<uint64_t>::add(Vec<uint64_t> *v);
 
 template <typename T>
 void Vec<T>::copy(Vec<T> *v)
