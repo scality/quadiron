@@ -147,6 +147,48 @@ void poly_utest7()
   assert(result == 5);
 }
 
+template <typename T>
+bool check_taylor_expansion(Poly<T> *f, T n, T t, std::vector<Poly<T>> *res) {
+  Poly<T> y(f->gf), z(f->gf), g(f->gf);
+
+  y.set(1, 1);
+  y.set(t, 1);
+
+  z.copy(&y);
+  g.copy(&(res->at(0)));
+  for (std::vector<int>::size_type i = 1; i < res->size(); i++) {
+    Poly<T> tmp(f->gf);
+    tmp.copy(&(res->at(i)));
+    tmp.mul(&z);
+    g.add(&tmp);
+    z.mul(&y);
+  }
+  return f->equal(&g);
+}
+
+void poly_utest8()
+{
+  std::cout << "poly_utest8\n";
+  GF2N<uint32_t> gf(8);
+  Poly<uint32_t> p1(&gf);
+  std::vector<Poly<uint32_t>> p2;
+  uint32_t n = 8;
+  uint32_t t = 2;
+  p1.set(6, 2);
+  p1.set(4, 4);
+  p1.set(1, 1);
+  p1.set(0, 8);
+  // p1.dump();
+  p1.taylor_expand(&p2, n, t);
+  // std::cout << "taylor_expand done" << std::endl;
+  // for(std::vector<int>::size_type i = 0; i != p2.size(); i++) {
+  //   std::cout << i << ":";
+  //   p2.at(i).dump();
+  // }
+  bool ok = check_taylor_expansion(&p1, n, t, &p2);
+  assert(ok);
+}
+
 void poly_utest()
 {
   std::cout << "poly_utest\n";
@@ -158,4 +200,5 @@ void poly_utest()
   poly_utest5();
   poly_utest6();
   poly_utest7();
+  poly_utest8();
 }
