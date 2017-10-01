@@ -33,7 +33,9 @@ class Poly
   void div(Poly<T> *d);
   void mod(Poly<T> *d);
   void derivative();
+  void compute_g0_g1(T deg0, T deg2, Poly<T> *g0, Poly<T> *g1);
   void taylor_expand(std::vector<Poly<T>> *result, T n, T t);
+  void taylor_expand_t2(Poly<T> *g0, Poly<T> *g1, T n, T deg=0);
   T eval(T x);
   bool equal(Poly<T> *f);
   void dump();
@@ -273,7 +275,6 @@ T Poly<T>::eval(T x)
  * @param n
  * @param t
  */
-
 template <typename T>
 void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
 {
@@ -292,11 +293,24 @@ void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
     return;
   }
 
-  // find k s.t. t*2^k < n <= 2*t*2^k
   T k = gf->arith->log2(n/t - 1);
-
   T deg2 = gf->arith->exp2(k);
   T deg0 = t*deg2;
+  Poly<T> g0(gf), g1(gf);
+  compute_g0_g1(deg0, deg2, &g0, &g1);
+
+  std::vector<Poly<T>> V1, V2;
+  g0.taylor_expand(&V1, deg0, t);
+  g1.taylor_expand(&V2, n - deg0, t);
+
+  result->reserve(V1.size() + V2.size() ); // preallocate memory
+  result->insert(result->end(), V1.begin(), V1.end() );
+  result->insert(result->end(), V2.begin(), V2.end());
+}
+
+template <typename T>
+void Poly<T>::compute_g0_g1(T deg0, T deg2, Poly<T> *g0, Poly<T> *g1) {
+  // find k s.t. t*2^k < n <= 2*t*2^k
   T deg1 = deg0 - deg2;
 
   // find f0, f1, f2 s.t.
@@ -315,21 +329,50 @@ void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
   // std::cout << "f1:"; f1.dump();
   // std::cout << "f2:"; f2.dump();
 
-  Poly<T> h(gf), g0(gf), g1(gf);
+  Poly<T> h(gf);
   h.copy(&f1);
   h.add(&f2);
-  g0.copy(&h, deg2);
-  g0.add(&f0);
-  g1.copy(&f2, deg1);
-  g1.add(&h);
+  g0->copy(&h, deg2);
+  g0->add(&f0);
+  g1->copy(&f2, deg1);
+  g1->add(&h);
+}
 
-  std::vector<Poly<T>> V1, V2;
-  g0.taylor_expand(&V1, deg0, t);
-  g1.taylor_expand(&V2, n - deg0, t);
 
-  result->reserve(V1.size() + V2.size() ); // preallocate memory
-  result->insert(result->end(), V1.begin(), V1.end() );
-  result->insert(result->end(), V2.begin(), V2.end());
+/**
+ * Taylor expansion at (x^2 - x)
+ *  Algorithm 1 in the paper of Shuhong Gao and Todd Mateer:
+ *    "Additive Fast Fourier Transforms Over Finite Fields"
+ *
+ * @param G0: poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
+ * @param G1: poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
+ * @param n
+ * @param s_deg: start degree of G0 and G1
+ */
+template <typename T>
+void Poly<T>::taylor_expand_t2(Poly<T> *G0, Poly<T> *G1, T n, T s_deg)
+{
+  // it supports only GF2N
+  assert(gf->p == 2);
+  assert(n >= 1);
+
+  T deg = degree();
+  assert(deg < n);
+  if (n <= 2) {
+    G0->set(s_deg, this->get(0));
+    G1->set(s_deg, this->get(1));
+    return;
+  }
+
+  T k = gf->arith->log2(n/2 - 1);
+  T deg2 = gf->arith->exp2(k);
+  T deg0 = 2*deg2;
+
+  Poly<T> g0(gf), g1(gf);
+  compute_g0_g1(deg0, deg2, &g0, &g1);
+
+  g0.taylor_expand_t2(G0, G1, deg0, s_deg);
+  g1.taylor_expand_t2(G0, G1, n - deg0, s_deg + deg2);
 }
 
 template <typename T>

@@ -166,6 +166,7 @@ bool check_taylor_expansion(Poly<T> *f, T n, T t, std::vector<Poly<T>> *res) {
   return f->equal(&g);
 }
 
+// taylor expansion on (x^t - x)
 void poly_utest8()
 {
   std::cout << "poly_utest8\n";
@@ -189,6 +190,34 @@ void poly_utest8()
   assert(ok);
 }
 
+// taylor expansion on (x^2 - x)
+void poly_utest9()
+{
+  std::cout << "poly_utest9\n";
+  GF2N<uint32_t> gf(8);
+  Poly<uint32_t> p1(&gf);
+  Poly<uint32_t> G0(&gf);
+  Poly<uint32_t> G1(&gf);
+  uint32_t n = 8;
+  uint32_t t = 2;
+  p1.set(6, 2);
+  p1.set(4, 4);
+  p1.set(1, 1);
+  p1.set(0, 8);
+  // p1.dump();
+  p1.taylor_expand_t2(&G0, &G1, n);
+  std::vector<Poly<uint32_t>> p2;
+  int deg = G0.degree() > G1.degree() ? G0.degree() : G1.degree();
+  for (int i = 0; i <= deg; i++) {
+    Poly<uint32_t> tmp(&gf);
+    tmp.set(0, G0.get(i));
+    tmp.set(1, G1.get(i));
+    p2.push_back(tmp);
+  }
+  bool ok = check_taylor_expansion(&p1, n, t, &p2);
+  assert(ok);
+}
+
 void poly_utest()
 {
   std::cout << "poly_utest\n";
@@ -201,4 +230,5 @@ void poly_utest()
   poly_utest6();
   poly_utest7();
   poly_utest8();
+  poly_utest9();
 }
