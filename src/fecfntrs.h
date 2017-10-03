@@ -52,10 +52,6 @@ class FECFNTRS : public FEC<T>
     return this->n;
   }
 
-  GF<T>* get_gf() {
-    return this->gf;
-  }
-
   /**
    * Encode vector
    *
@@ -113,7 +109,7 @@ class FECFNTRS : public FEC<T>
   {
     int k = this->n_data;  // number of fragments received
     // vector x=(x_0, x_1, ..., x_k-1)
-    Vec<T> vx(this->gf, n);
+    Vec<T> vx(this->gf, k);
     for (int i = 0; i < k; i++) {
       vx.set(i, this->gf->exp(r, fragments_ids->get(i)));
     }

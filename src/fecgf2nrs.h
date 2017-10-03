@@ -56,10 +56,6 @@ class FECGF2NRS : public FEC<T>
     return this->n_parities;
   }
 
-  GF<T>* get_gf() {
-    return this->gf;
-  }
-
   void encode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset,
     Vec<T> *words)
   {

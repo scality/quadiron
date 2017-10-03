@@ -67,6 +67,10 @@ class FEC
                    std::vector<std::istream*> input_parities_bufs,
                    std::vector<KeyValue*> input_parities_props,
                    std::vector<std::ostream*> output_data_bufs);
+
+  GF<T>* get_gf() {
+    return this->gf;
+  }
 };
 
 /**
