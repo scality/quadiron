@@ -359,6 +359,42 @@ class FFTUtest
     }
   }
 
+  void test_fftadd_with_n(int gf_n)
+  {
+    int n, m;
+    GF2N<T> gf = GF2N<T>(gf_n);
+    int n_data = 3;
+    int n_parities = 3;
+
+    std::cout << "test_fftadd_with_n=" << gf_n << "\n";
+
+    // n is power of 2 and at least n_data + n_parities
+    n = gf.arith->get_smallest_power_of_2(n_data + n_parities);
+    m = gf.arith->log2(n);
+
+    // std::cerr << "n=" << n << "\n";
+    FFTADD<T> fft = FFTADD<T>(&gf, m);
+
+    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    for (int j = 0; j < 10000; j++) {
+      v.zero_fill();
+      for (int i = 0; i < n_data; i++)
+        v.set(i, gf.weak_rand());
+        // v.dump();
+      fft.fft(&_v, &v);
+        // _v.dump();
+      fft.ifft(&v2, &_v);
+        // v2.dump();
+      assert(v.eq(&v2));
+    }
+  }
+
+  void test_fftadd()
+  {
+    for (int n = 4; n <= 128 && n <= 8 * sizeof(T); n *= 2)
+      test_fftadd_with_n(n);
+  }
+
   void test_fft2_gfp()
   {
     T n;
@@ -501,6 +537,7 @@ class FFTUtest
     test_fftpf();
     test_fftct_gfp();
     test_fftct_gf2n();
+    test_fftadd();
     test_fft2();
     test_fft2_gfp();
     test_fft_gf2n();
@@ -514,12 +551,14 @@ template class Vec<uint32_t>;
 template class FFT<uint32_t>;
 template class FFTLN<uint32_t>;
 template class FFTPF<uint32_t>;
+template class FFTADD<uint32_t>;
 
 template class Arith<uint64_t>;
 template class Mat<uint64_t>;
 template class Vec<uint64_t>;
 template class FFT<uint64_t>;
 template class FFTPF<uint64_t>;
+template class FFTADD<uint64_t>;
 
 template class Arith<mpz_class>;
 template class Mat<mpz_class>;

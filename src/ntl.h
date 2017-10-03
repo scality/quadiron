@@ -58,6 +58,7 @@ typedef enum
 #include "fft2k.h"
 #include "fftct.h"
 #include "fftpf.h"
+#include "fftadd.h"
 #include "poly.h"
 #include "fec.h"
 #include "fecgf2nrs.h"
