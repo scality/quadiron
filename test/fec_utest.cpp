@@ -11,28 +11,7 @@ class FECUtest
     u_int n_parities = 3;
 
     FECFNTRS<T> fec = FECFNTRS<T>(2, n_data, n_parities);
-    GF<T> *gf = fec.get_gf();
-
-    Vec<T> v(gf, n_data), _v(gf, fec.n), _v2(gf, n_data), f(gf, n_data),
-      v2(gf, n_data);
-    std::vector<KeyValue*>props(fec.n, nullptr);
-    for (int j = 0; j < 10000; j++) {
-      for (int i = 0; i < fec.n; i++)
-        props[i] = new KeyValue();
-      for (int i = 0; i < n_data; i++)
-        v.set(i, gf->weak_rand());
-      // v.dump();
-      fec.encode(&_v, props, 0, &v);
-      // _v.dump();
-      _v2.copy(&_v, n_data);
-      for (int i = 0; i < n_data; i++)
-        f.set(i, i);
-      fec.decode(&v2, props, 0, &f, &_v2);
-      // v2.dump();
-      assert(v.eq(&v2));
-      for (int i = 0; i < fec.n; i++)
-        delete props[i];
-     }
+    run_test(&fec, fec.n, n_data, true);
   }
 
   void test_fecgf2nfftrs() {
@@ -48,24 +27,23 @@ class FECUtest
     u_int n_parities = 3;
 
     FECGF2NFFTRS<T> fec = FECGF2NFFTRS<T>(wordsize, n_data, n_parities);
-    GF<T> *gf = fec.get_gf();
+    run_test(&fec, fec.n, n_data);
+  }
 
-    std::vector<KeyValue*> props;
-    Vec<T> v(gf, n_data), _v(gf, fec.n), _v2(gf, n_data), f(gf, n_data),
-      v2(gf, n_data);
-    for (int j = 0; j < 10000; j++) {
-      for (int i = 0; i < n_data; i++)
-        v.set(i, gf->weak_rand());
-      // v.dump();
-      fec.encode(&_v, props, 0, &v);
-      // _v.dump();
-      _v2.copy(&_v, n_data);
-      for (int i = 0; i < n_data; i++)
-        f.set(i, i);
-      fec.decode(&v2, props, 0, &f, &_v2);
-      // v2.dump();
-      assert(v.eq(&v2));
-     }
+  void test_fecgf2nfftaddrs() {
+    std::cout << "test_fecgf2nfftaddrs with sizeof(T)=" << sizeof(T) << "\n";
+    for (int wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
+      test_fecgf2nfftaddrs_with_wordsize(wordsize);
+  }
+  void test_fecgf2nfftaddrs_with_wordsize(int wordsize)
+  {
+    std::cout << "test_fecgf2nfftaddrs_with_wordsize=" << wordsize << "\n";
+
+    u_int n_data = 3;
+    u_int n_parities = 3;
+
+    FECGF2NFFTADDRS<T> fec = FECGF2NFFTADDRS<T>(wordsize, n_data, n_parities);
+    run_test(&fec, fec.n, n_data);
   }
 
   void test_fecgfpfftrs() {
@@ -82,26 +60,38 @@ class FECUtest
     u_int n_parities = 3;
 
     FECGFPFFTRS<T> fec = FECGFPFFTRS<T>(word_size, n_data, n_parities);
-    GF<T> *gf = fec.get_gf();
+    run_test(&fec, fec.n, n_data);
+  }
 
-    Vec<T> v(gf, n_data), _v(gf, fec.n), _v2(gf, n_data), f(gf, n_data),
+  void run_test(FEC<T> *fec, int n, int n_data, bool propos_flag=false) {
+    GF<T> *gf = fec->get_gf();
+
+    Vec<T> v(gf, n_data), _v(gf, n), _v2(gf, n_data), f(gf, n_data),
       v2(gf, n_data);
-    std::vector<KeyValue*>props(fec.n, nullptr);
+    std::vector<KeyValue*>props(n, nullptr);
     for (int j = 0; j < 10000; j++) {
-      for (int i = 0; i < fec.n; i++)
+      if (propos_flag) {
+        for (int i = 0; i < n; i++)
+          props[i] = new KeyValue();
+      }
+      for (int i = 0; i < n; i++)
         props[i] = new KeyValue();
       for (int i = 0; i < n_data; i++)
         v.set(i, gf->weak_rand());
       // v.dump();
-      fec.encode(&_v, props, 0, &v);
+      fec->encode(&_v, props, 0, &v);
       // _v.dump();
       _v2.copy(&_v, n_data);
       for (int i = 0; i < n_data; i++)
         f.set(i, i);
-      fec.decode(&v2, props, 0, &f, &_v2);
+      fec->decode(&v2, props, 0, &f, &_v2);
       // v2.dump();
       assert(v.eq(&v2));
-     }
+      if (propos_flag) {
+        for (int i = 0; i < n; i++)
+          delete props[i];
+      }
+    }
   }
 
   void fec_utest()

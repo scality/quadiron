@@ -17,6 +17,9 @@ template class FECGF2NRS<uint64_t>;
 template class FECFNTRS<uint32_t>;
 template class FECGF2NFFTRS<uint32_t>;
 template class FECGF2NFFTRS<uint64_t>;
+template class FECGF2NFFTADDRS<uint32_t>;
+template class FECGF2NFFTADDRS<uint64_t>;
+template class FECGF2NFFTADDRS<__uint128_t>;
 template class FECGFPFFTRS<uint64_t>;
 
 int vflag = 0;
@@ -26,7 +29,7 @@ char *prefix = NULL;
 void xusage()
 {
   std::cerr << std::string("Usage: ") +
-    "ec [-e gf2nrsv|gf2nrsc|gf2nfftrs|gfpfftrs|fntrs]" +
+    "ec [-e gf2nrsv|gf2nrsc|gf2nfftrs|gf2nfftaddrs|gfpfftrs|fntrs]" +
     "[-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
   exit(1);
@@ -268,6 +271,26 @@ void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
 }
 
 template <typename T>
+void run_FECGF2NFFTADDRS(int word_size, int n_data, int n_parities, int rflag)
+{
+  FECGF2NFFTADDRS<T> *fec;
+  fec = new FECGF2NFFTADDRS<T>(word_size, n_data, n_parities);
+
+  if (tflag) {
+    print_fec_type<T>(fec);
+    exit(1);
+  }
+  if (rflag) {
+    if (0 != repair_data_files<T>(fec)) {
+      exit(1);
+    }
+  }
+  create_coding_files<T>(fec);
+  print_stats<T>(fec);
+  delete fec;
+}
+
+template <typename T>
 void run_FECGFPFFTRS(int word_size, int n_data, int n_parities, int rflag)
 {
   assert(sizeof(T) > word_size);
@@ -314,6 +337,7 @@ enum ec_type
     EC_TYPE_UNDEF = 0,
     EC_TYPE_GF2NRS,
     EC_TYPE_GF2NFFTRS,
+    EC_TYPE_GF2NFFTADDRS,
     EC_TYPE_GFPFFTRS,
     EC_TYPE_FNTRS,
   };
@@ -341,6 +365,8 @@ int main(int argc, char **argv)
         mflag = CAUCHY;
       } else if (!strcmp(optarg, "gf2nfftrs")) {
         eflag = EC_TYPE_GF2NFFTRS;
+      } else if (!strcmp(optarg, "gf2nfftaddrs")) {
+        eflag = EC_TYPE_GF2NFFTADDRS;
       } else if (!strcmp(optarg, "gfpfftrs")) {
         eflag = EC_TYPE_GFPFFTRS;
       } else if (!strcmp(optarg, "fntrs"))
@@ -424,6 +450,13 @@ int main(int argc, char **argv)
       run_FECGF2NFFTRS<uint64_t>(word_size, n_data, n_parities, rflag);
     else if (word_size <= 16)
       run_FECGF2NFFTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
+  } else if (eflag == EC_TYPE_GF2NFFTADDRS) {
+    if (word_size <= 4)
+      run_FECGF2NFFTADDRS<uint32_t>(word_size, n_data, n_parities, rflag);
+    else if (word_size <= 8)
+      run_FECGF2NFFTADDRS<uint64_t>(word_size, n_data, n_parities, rflag);
+    else if (word_size <= 16)
+      run_FECGF2NFFTADDRS<__uint128_t>(word_size, n_data, n_parities, rflag);
   }
 
  end:
