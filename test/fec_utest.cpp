@@ -7,6 +7,7 @@ class FECUtest
  public:
   void test_fecfntrs()
   {
+    std::cout << "test_fecfntrs\n";
     u_int n_data = 3;
     u_int n_parities = 3;
 
@@ -60,7 +61,7 @@ class FECUtest
     u_int n_parities = 3;
 
     FECGFPFFTRS<T> fec = FECGFPFFTRS<T>(word_size, n_data, n_parities);
-    run_test(&fec, fec.n, n_data);
+    run_test(&fec, fec.n, n_data, true);
   }
 
   void run_test(FEC<T> *fec, int n, int n_data, bool propos_flag=false) {
@@ -68,22 +69,25 @@ class FECUtest
 
     Vec<T> v(gf, n_data), _v(gf, n), _v2(gf, n_data), f(gf, n_data),
       v2(gf, n_data);
+    std::vector<int> ids;
+    for (int i = 0; i < n; i++)
+      ids.push_back(i);
     std::vector<KeyValue*>props(n, nullptr);
     for (int j = 0; j < 10000; j++) {
       if (propos_flag) {
         for (int i = 0; i < n; i++)
           props[i] = new KeyValue();
       }
-      for (int i = 0; i < n; i++)
-        props[i] = new KeyValue();
       for (int i = 0; i < n_data; i++)
         v.set(i, gf->weak_rand());
       // v.dump();
       fec->encode(&_v, props, 0, &v);
       // _v.dump();
-      _v2.copy(&_v, n_data);
-      for (int i = 0; i < n_data; i++)
-        f.set(i, i);
+      std::random_shuffle(ids.begin(), ids.end());
+      for (int i = 0; i < n_data; i++) {
+        f.set(i, ids.at(i));
+        _v2.set(i, _v.get(ids.at(i)));
+      }
       fec->decode(&v2, props, 0, &f, &_v2);
       // v2.dump();
       assert(v.eq(&v2));
@@ -100,6 +104,7 @@ class FECUtest
 
     test_fecfntrs();
     test_fecgf2nfftrs();
+    test_fecgf2nfftaddrs();
     test_fecgfpfftrs();
   }
 };
@@ -147,6 +152,7 @@ void fec_utest()
   //fecgfpfftrs overflows
   fec_utest_uint32.test_fecfntrs();
   fec_utest_uint32.test_fecgf2nfftrs();
+  fec_utest_uint32.test_fecgf2nfftaddrs();
   FECUtest<uint64_t> fec_utest_uint64;
   fec_utest_uint64.fec_utest();
   FECUtest<__uint128_t> fec_utest_uint128;

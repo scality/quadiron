@@ -83,6 +83,8 @@ class FFTUtest
    */
   void test_mul_bignum()
   {
+    if (sizeof(T) < 8)
+      return;
     std::cout << "test_mul_bignum\n";
 
     int b = 10;  // base
@@ -578,7 +580,7 @@ template class GFP<mpz_class>;
 void fft_utest()
 {
   FFTUtest<uint32_t> fftutest_uint32;
-  fftutest_uint32.fft_utest_no_mul_bignum();
+  fftutest_uint32.fft_utest();
   FFTUtest<uint64_t> fftutest_uint64;
   fftutest_uint64.fft_utest();
   FFTUtest<mpz_class> fftutest_mpz;
