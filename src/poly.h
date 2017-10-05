@@ -9,7 +9,7 @@ template<typename T>
 class Poly
 {
  public:
-  struct Term: std::map <T, T> {};
+  struct Term: std::map <int, T> {};
 
   GF<T> *gf;
   Term terms;
@@ -18,11 +18,11 @@ class Poly
   void clear();
   void copy(Poly<T> *src);
   void copy(Poly<T> *src, T offset);
-  T degree();
+  int degree();
   T lead();
   bool is_zero();
-  T get(T exponent);
-  void set(T exponent, T coef);
+  T get(int exponent);
+  void set(int exponent, T coef);
   void _neg(Poly<T> *result, Poly<T> *a);
   void _add(Poly<T> *result, Poly<T> *a, Poly<T> *b);
   void _sub(Poly<T> *result, Poly<T> *a, Poly<T> *b);
@@ -78,7 +78,7 @@ void Poly<T>::copy(Poly<T> *src, T offset)
 }
 
 template <typename T>
-T Poly<T>::degree()
+int Poly<T>::degree()
 {
   return (terms.rbegin() == terms.rend()) ? 0 : terms.rbegin()->first;
 }
@@ -96,7 +96,7 @@ bool Poly<T>::is_zero()
 }
 
 template <typename T>
-T Poly<T>::get(T exponent)
+T Poly<T>::get(int exponent)
 {
   typename Term::const_iterator it = terms.find(exponent);
 
@@ -104,7 +104,7 @@ T Poly<T>::get(T exponent)
 }
 
 template <typename T>
-void Poly<T>::set(T exponent, T coef)
+void Poly<T>::set(int exponent, T coef)
 {
   assert(gf->check(coef));
 
@@ -129,7 +129,7 @@ void Poly<T>::_add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 {
   result->clear();
 
-  T max = gf->max(a->degree(), b->degree());
+  int max = std::max(a->degree(), b->degree());
 
   for (int i = max; i >= 0; i--)
     result->set(i,
@@ -141,7 +141,7 @@ void Poly<T>::_sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 {
   result->clear();
 
-  T max = gf->max(a->degree(), b->degree());
+  int max = std::max(a->degree(), b->degree());
 
   for (int i = max; i >= 0; i--)
     result->set(i,

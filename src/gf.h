@@ -32,8 +32,6 @@ class GF
   virtual T card(void) = 0;
   virtual T card_minus_one(void) = 0;
   virtual bool check(T a) = 0;
-  virtual T max(T a, T b) = 0;
-  virtual T min(T a, T b) = 0;
   virtual T neg(T a) = 0;
   virtual T add(T a, T b) = 0;
   virtual T sub(T a, T b) = 0;
