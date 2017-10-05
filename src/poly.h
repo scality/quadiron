@@ -288,9 +288,7 @@ void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
   assert(gf->p == 2);
   assert(n >= 1);
   assert(t > 1);
-
-  T deg = degree();
-  assert(deg < n);
+  assert(degree() < n);
 
   if (n <= t) {
     Poly<T> tmp(gf);
@@ -298,10 +296,16 @@ void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
     result->push_back(tmp);
     return;
   }
-
-  T k = gf->arith->log2(n/t - 1);
-  T deg2 = gf->arith->exp2(k);
-  T deg0 = t*deg2;
+  // find k s.t. t2^k < n <= 2 *t2^k
+  int k;
+  int t2k;
+  for (k = 0; k < n; k++) {
+    t2k = t * gf->arith->exp2(k);
+    if (t2k < n && 2*t2k >= n)
+      break;
+  }
+  int deg2 = gf->arith->exp2(k);
+  int deg0 = t*deg2;
   Poly<T> g0(gf), g1(gf);
   compute_g0_g1(deg0, deg2, &g0, &g1);
 
@@ -371,10 +375,16 @@ void Poly<T>::taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, T n, T s_deg)
     return;
   }
 
-  T k = gf->arith->log2(n/2 - 1);
+  // find k s.t. t2^k < n <= 2 *t2^k
+  int k;
+  int t2k;
+  for (k = 0; k < n; k++) {
+    t2k = gf->arith->exp2(k+1);
+    if (t2k < n && 2*t2k >= n)
+      break;
+  }
   T deg2 = gf->arith->exp2(k);
   T deg0 = 2*deg2;
-
   Poly<T> g0(gf), g1(gf);
   compute_g0_g1(deg0, deg2, &g0, &g1);
 
