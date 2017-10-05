@@ -3,6 +3,9 @@
 #pragma once
 
 template<typename T>
+class Vec;
+
+template<typename T>
 class Poly
 {
  public:
@@ -35,9 +38,12 @@ class Poly
   void derivative();
   void compute_g0_g1(T deg0, T deg2, Poly<T> *g0, Poly<T> *g1);
   void taylor_expand(std::vector<Poly<T>> *result, T n, T t);
-  void taylor_expand_t2(Poly<T> *g0, Poly<T> *g1, T n, T deg=0);
+  void taylor_expand_t2(Vec<T> *g0, Vec<T> *g1, T n, T deg=0);
+  void inv_taylor_expand(std::vector<Poly<T>> *result, T t);
+  void inv_taylor_expand_t2(Vec<T> *g0, Vec<T> *g1);
   T eval(T x);
   bool equal(Poly<T> *f);
+  void to_vec(Vec<T> *vec);
   void dump();
 };
 
@@ -282,9 +288,7 @@ void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
   assert(gf->p == 2);
   assert(n >= 1);
   assert(t > 1);
-
-  T deg = degree();
-  assert(deg < n);
+  assert(degree() < n);
 
   if (n <= t) {
     Poly<T> tmp(gf);
@@ -292,10 +296,16 @@ void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
     result->push_back(tmp);
     return;
   }
-
-  T k = gf->arith->log2(n/t - 1);
-  T deg2 = gf->arith->exp2(k);
-  T deg0 = t*deg2;
+  // find k s.t. t2^k < n <= 2 *t2^k
+  int k;
+  int t2k;
+  for (k = 0; k < n; k++) {
+    t2k = t * gf->arith->exp2(k);
+    if (t2k < n && 2*t2k >= n)
+      break;
+  }
+  int deg2 = gf->arith->exp2(k);
+  int deg0 = t*deg2;
   Poly<T> g0(gf), g1(gf);
   compute_g0_g1(deg0, deg2, &g0, &g1);
 
@@ -338,19 +348,20 @@ void Poly<T>::compute_g0_g1(T deg0, T deg2, Poly<T> *g0, Poly<T> *g1) {
   g1->add(&h);
 }
 
-
 /**
  * Taylor expansion at (x^2 - x)
  *  Algorithm 1 in the paper of Shuhong Gao and Todd Mateer:
  *    "Additive Fast Fourier Transforms Over Finite Fields"
  *
- * @param G0: poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
- * @param G1: poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
+ * @param G0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
+ *            The polynomial is of degree at most t*2^k
+ * @param G1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
+ *            The polynomial is of degree at most (n-t*2^k)
  * @param n
  * @param s_deg: start degree of G0 and G1
  */
 template <typename T>
-void Poly<T>::taylor_expand_t2(Poly<T> *G0, Poly<T> *G1, T n, T s_deg)
+void Poly<T>::taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, T n, T s_deg)
 {
   // it supports only GF2N
   assert(gf->p == 2);
@@ -364,15 +375,85 @@ void Poly<T>::taylor_expand_t2(Poly<T> *G0, Poly<T> *G1, T n, T s_deg)
     return;
   }
 
-  T k = gf->arith->log2(n/2 - 1);
+  // find k s.t. t2^k < n <= 2 *t2^k
+  int k;
+  int t2k;
+  for (k = 0; k < n; k++) {
+    t2k = gf->arith->exp2(k+1);
+    if (t2k < n && 2*t2k >= n)
+      break;
+  }
   T deg2 = gf->arith->exp2(k);
   T deg0 = 2*deg2;
-
   Poly<T> g0(gf), g1(gf);
   compute_g0_g1(deg0, deg2, &g0, &g1);
 
   g0.taylor_expand_t2(G0, G1, deg0, s_deg);
   g1.taylor_expand_t2(G0, G1, n - deg0, s_deg + deg2);
+}
+
+/*
+ * This function compute f(x) from its taylor expansion
+ *
+ *  f(x) = sum_i res_i(x) * (x^t - x)^i
+ * We perform it in the following way
+ *  f(x) = (..(( h_k*y + h_{k-1} )*y + h_{k-2})*y ...)
+ *  where y = x^t - x
+ *        h_i := ith polynomial of taylor expansion output
+ *
+ * @param result: vector of hi(x) polynomials
+ * @param t
+ */
+template <typename T>
+void Poly<T>::inv_taylor_expand(std::vector<Poly<T>> *res, T t) {
+  // y(x) = x^t - x
+  Poly<T> y(gf);
+  y.set(1, 1);
+  y.set(t, 1);
+
+  clear();
+
+  int i = res->size() - 1;
+  copy(&(res->at(i)));
+  while(--i >= 0) {
+    mul(&y);
+    add(&(res->at(i)));
+  }
+}
+
+/*
+ * This function compute f(x) from its taylor expansion
+ *  f(x) = sum_i (gi0 + gi1 * x) * (x^2 - x)^i
+ *
+ * We perform it in the following way
+ *  f(x) = (..(( h_k*y + h_{k-1} )*y + h_{k-2})*y ...)
+ *  where y = x^2 - x
+ *        h_i = gi0 + gi1*x
+ *
+ * @param G0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
+ *            The polynomial is of degree at most t*2^k
+ * @param G1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
+ *            The polynomial is of degree at most (n-t*2^k)
+ */
+template <typename T>
+void Poly<T>::inv_taylor_expand_t2(Vec<T> *G0, Vec<T> *G1) {
+  assert(G0->n == G1->n);
+  // y(x) = x^2 - x
+  Poly<T> y(gf);
+  y.set(1, 1);
+  y.set(2, 1);
+
+  clear();
+
+  int i = G0->n - 1;
+  set(0, G0->get(i));
+  set(1, G1->get(i));
+  while(--i >= 0) {
+    mul(&y);
+    set(0, G0->get(i));
+    if (G1->get(i) > 0)
+      set(1, gf->add(get(1), G1->get(i)));
+  }
 }
 
 template <typename T>
@@ -384,6 +465,17 @@ bool Poly<T>::equal(Poly<T> *f) {
     if (get(i) != f->get(i))
       return false;
   return true;
+}
+
+template <typename T>
+void Poly<T>::to_vec(Vec<T> *vec) {
+  T deg = degree();
+  assert(vec->n > deg);
+  int i;
+  for (i = 0; i <= deg; i++)
+    vec->set(i, get(i));
+  for (; i < vec->n; i++)
+    vec->set(i, 0);
 }
 
 template <typename T>

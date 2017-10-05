@@ -23,6 +23,7 @@ class Arith
   T exp(T base, T exponent);
   T exp_mod(T base, T exponent, T modulus);
   bool is_power_of_2(int x);
+  T get_smallest_power_of_2(int x);
   int log2(int x);
   int exp2(int x);
   SignedDoubleT<T> extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b,
@@ -145,6 +146,21 @@ template <typename T>
 bool Arith<T>::is_power_of_2(int x)
 {
   return x > 0 && !(x & (x-1));
+}
+
+/**
+ * Get a smallest power of 2 and >= x
+ *
+ * @param x
+ *
+ * @return
+ */
+template <typename T>
+T Arith<T>::get_smallest_power_of_2(int x)
+{
+  if (is_power_of_2(x))
+    return x;
+  return exp2(log2(x) + 1);
 }
 
 /**

@@ -113,7 +113,7 @@ do_test()
     echo
 }
 
-for i in fntrs_1 fntrs_2 gfpfftrs_1 gfpfftrs_2 gfpfftrs_4 gf2nfftrs_1 gf2nfftrs_2 gf2nfftrs_4 gf2nfftrs_8 gf2nrsv_1 gf2nrsv_2 gf2nrsc_1 gf2nrsc_2 gf2nrsv_4 gf2nrsv_8 gf2nrsv_16 gf2nrsc_4 gf2nrsc_8 gf2nrsc_16
+for i in fntrs_1 fntrs_2 gfpfftrs_1 gfpfftrs_2 gfpfftrs_4 gf2nfftrs_1 gf2nfftrs_2 gf2nfftrs_4 gf2nfftrs_8 gf2nfftaddrs_1 gf2nfftaddrs_2 gf2nfftaddrs_4 gf2nfftaddrs_8 gf2nrsv_1 gf2nrsv_2 gf2nrsc_1 gf2nrsc_2 gf2nrsv_4 gf2nrsv_8 gf2nrsv_16 gf2nrsc_4 gf2nrsc_8 gf2nrsc_16
 do
     fec_type=$(echo $i|cut -d_ -f1)
     word_size=$(echo $i|cut -d_ -f2)

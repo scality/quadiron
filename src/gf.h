@@ -426,7 +426,7 @@ T GF<T>::get_order(T x)
   std::vector<T> primes;
   std::vector<T> exponent;
   T h = card_minus_one();
-  arith->factor_prime(x, &primes, &exponent);
+  arith->factor_prime(h, &primes, &exponent);
   T order = do_step_get_order(x, h, &primes, &exponent);
 
   if (order == 1) return h;

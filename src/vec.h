@@ -2,6 +2,9 @@
 #pragma once
 
 template<typename T>
+class Poly;
+
+template<typename T>
 class Vec
 {
  private:
@@ -20,9 +23,11 @@ class Vec
   void mul_scalar(T scalar);
   void hadamard_mul(Vec<T> *v);
   void add(Vec<T> *v);
+  void add(Vec<T> *v, int offset);
   void copy(Vec<T> *v);
   void copy(Vec<T> *v, int n);
   bool eq(Vec<T> *v);
+  void to_poly(Poly<T> *poly);
   void dump(void);
 };
 
@@ -123,6 +128,18 @@ void Vec<T>::add(Vec<T> *v)
     set(i, gf->add(get(i), v->get(i)));
 }
 
+template <typename T>
+void Vec<T>::add(Vec<T> *v, int offset)
+{
+  assert(n >= v->get_n() + offset);
+
+  int j;
+  for (int i = 0; i < v->get_n(); i++) {
+    j = i + offset;
+    set(j, gf->add(get(j), v->get(i)));
+  }
+}
+
 template <>
 void Vec<uint32_t>::add(Vec<uint32_t> *v);
 template <>
@@ -156,6 +173,15 @@ bool Vec<T>::eq(Vec<T> *v)
   }
 
   return true;
+}
+
+template <typename T>
+void Vec<T>::to_poly(Poly<T> *poly)
+{
+  poly->clear();
+  for (int i = 0; i < this->n; i++) {
+    poly->set(i, get(i));
+  }
 }
 
 template <typename T>
