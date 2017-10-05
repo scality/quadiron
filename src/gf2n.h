@@ -41,8 +41,6 @@ class GF2N : public GF<T>
   T card(void);
   T card_minus_one(void);
   bool check(T a);
-  T max(T a, T b);
-  T min(T a, T b);
   T neg(T a);
   T add(T a, T b);
   T sub(T a, T b);
@@ -271,24 +269,6 @@ bool GF2N<T>::check(T a)
   if (this->restricted)
     return (a >=0 && a <= my_card);
   return (a >=0 && a < my_card);
-}
-
-template <typename T>
-T GF2N<T>::max(T a, T b)
-{
-  assert(check(a));
-  assert(check(b));
-
-  return (a >= b) ? a : b;
-}
-
-template <typename T>
-T GF2N<T>::min(T a, T b)
-{
-  assert(check(a));
-  assert(check(b));
-
-  return (a < b) ? a : b;
 }
 
 template <typename T>

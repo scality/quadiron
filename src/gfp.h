@@ -11,8 +11,6 @@ class GFP : public GF<T>
   T card(void);
   T card_minus_one(void);
   bool check(T a);
-  T max(T a, T b);
-  T min(T a, T b);
   T neg(T a);
   T add(T a, T b);
   T sub(T a, T b);
@@ -47,24 +45,6 @@ template <typename T>
 bool GFP<T>::check(T a)
 {
   return (a >= 0 && a < this->p);
-}
-
-template <typename T>
-T GFP<T>::max(T a, T b)
-{
-  assert(check(a));
-  assert(check(b));
-
-  return (a >= b) ? a : b;
-}
-
-template <typename T>
-T GFP<T>::min(T a, T b)
-{
-  assert(check(a));
-  assert(check(b));
-
-  return (a < b) ? a : b;
 }
 
 template <typename T>
