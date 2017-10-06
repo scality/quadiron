@@ -5,6 +5,9 @@ template<typename T>
 class Poly;
 
 template<typename T>
+class VmVec;
+
+template<typename T>
 class Vec
 {
  private:
@@ -25,8 +28,13 @@ class Vec
   void hadamard_mul(Vec<T> *v);
   void add(Vec<T> *v);
   void add(Vec<T> *v, int offset);
+  void add_mutual(Vec<T> *v);
+  void add_mutual(Vec<T> *v, int offset);
+  void add_mutual(Vec<T> *v, int offset, int len);
   void copy(Vec<T> *v);
   void copy(Vec<T> *v, int n);
+  void copy_mutual(Vec<T> *v);
+  void copy_mutual(Vec<T> *v, int offset);
   bool eq(Vec<T> *v);
   void to_poly(Poly<T> *poly);
   void dump(void);
@@ -62,7 +70,7 @@ void Vec<T>::zero_fill(void)
 }
 
 template <typename T>
-void Vec<T>::set(int i, T val)
+inline void Vec<T>::set(int i, T val)
 {
   assert(i >= 0 && i < n);
 
@@ -70,7 +78,7 @@ void Vec<T>::set(int i, T val)
 }
 
 template <typename T>
-T Vec<T>::get(int i)
+inline T Vec<T>::get(int i)
 {
   assert(i >= 0 && i < n);
 
@@ -141,6 +149,37 @@ void Vec<T>::add(Vec<T> *v, int offset)
   }
 }
 
+template <typename T>
+void Vec<T>::add_mutual(Vec<T> *v)
+{
+  assert(n >= v->get_n());
+  for (int i = 0; i < v->get_n(); i++)
+    set(i, mg->add(get(i), v->get(i)));
+}
+
+template <typename T>
+void Vec<T>::add_mutual(Vec<T> *v, int offset)
+{
+  assert(v->get_n() == 0 || n - offset >= v->get_n());
+  int j;
+  for (int i = 0; i < v->get_n(); i++) {
+    j = i + offset;
+    set(j, mg->add(get(j), v->get(i)));
+  }
+}
+
+template <typename T>
+void Vec<T>::add_mutual(Vec<T> *v, int offset, int len)
+{
+  assert(len == 0 || n - offset >= len);
+  assert(v->get_n() >= len);
+  int j;
+  for (int i = 0; i < len; i++) {
+    j = i + offset;
+    set(j, mg->add(get(j), v->get(i)));
+  }
+}
+
 template <>
 void Vec<uint32_t>::add(Vec<uint32_t> *v);
 template <>
@@ -149,9 +188,9 @@ void Vec<uint64_t>::add(Vec<uint64_t> *v);
 template <typename T>
 void Vec<T>::copy(Vec<T> *v)
 {
-  assert(v->n == this->n);
+  assert(v->get_n() == this->n);
 
-  std::copy_n(v->mem, v->n, this->mem);
+  std::copy_n(v->mem, v->get_n(), this->mem);
 }
 
 template <typename T>
@@ -163,12 +202,26 @@ void Vec<T>::copy(Vec<T> *v, int n)
 }
 
 template <typename T>
+void Vec<T>::copy_mutual(Vec<T> *v)
+{
+  assert(n >= v->get_n());
+  std::copy_n(v->mem, v->get_n(), this->mem);
+}
+
+template <typename T>
+void Vec<T>::copy_mutual(Vec<T> *v, int offset)
+{
+  assert(n - offset >= v->get_n());
+  std::copy_n(v->mem, v->get_n(), this->mem + offset);
+}
+
+template <typename T>
 bool Vec<T>::eq(Vec<T> *v)
 {
-  if (v->n != this->n)
+  if (v->get_n() != this->n)
     return false;
 
-  for (int i = 0; i < v->n; i++) {
+  for (int i = 0; i < v->get_n(); i++) {
     if (get(i) != v->get(i))
       return false;
   }
