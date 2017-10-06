@@ -9,7 +9,6 @@ class FECGF2NFFTRS : public FEC<T>
 {
  private:
   FFTCT<T> *fft = NULL;
-  Poly<T> *prime_poly = NULL;
 
  public:
   T n;

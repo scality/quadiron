@@ -200,7 +200,7 @@ void Poly<T>::_derivative(Poly<T> *result, Poly<T> *a)
   result->clear();
 
   for (int i = a->degree(); i > 0; i--)
-    result->set(i - 1, gf->mul(a->get(i), i % gf->p));
+    result->set(i - 1, gf->mul(a->get(i), i % gf->get_sub_field()->card()));
 }
 
 template <typename T>
@@ -285,7 +285,7 @@ template <typename T>
 void Poly<T>::taylor_expand(std::vector<Poly<T>> *result, T n, T t)
 {
   // it supports only GF2N
-  assert(gf->p == 2);
+  assert(gf->get_sub_field()->card() == 2);
   assert(n >= 1);
   assert(t > 1);
   assert(degree() < n);
@@ -364,7 +364,7 @@ template <typename T>
 void Poly<T>::taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, T n, T s_deg)
 {
   // it supports only GF2N
-  assert(gf->p == 2);
+  assert(gf->get_sub_field()->card() == 2);
   assert(n >= 1);
 
   T deg = degree();

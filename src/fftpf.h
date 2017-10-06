@@ -49,6 +49,7 @@ class FFTPF : public FFT<T>
   FFT<T> *dft_outer = NULL;
   FFT<T> *dft_inner = NULL;
   std::vector<T>* prime_factors = NULL;
+
  public:
   FFTPF(GF<T> *gf, T n, int id = 0, std::vector<T>* factors = NULL, T _w = 0);
   ~FFTPF();

@@ -9,15 +9,16 @@
 template<typename T>
 class FFT
 {
- public:
+ protected:
   GF<T> *gf;
   Arith<T> *arith;
   int n;
   T inv_n_mod_p;
- protected:
   FFT(GF<T> *gf, int n);
  public:
   virtual ~FFT();
+  int get_n();
+  GF<T> *get_gf();
   virtual void fft(Vec<T> *output, Vec<T> *input) = 0;
   virtual void ifft(Vec<T> *output, Vec<T> *input) = 0;
   virtual void fft_inv(Vec<T> *output, Vec<T> *input) = 0;
@@ -28,7 +29,7 @@ FFT<T>::FFT(GF<T> *gf, int n)
 {
   this->gf = gf;
   this->n = n;
-  this->inv_n_mod_p = (gf->inv(n) % gf->p);
+  this->inv_n_mod_p = gf->inv(n) % gf->get_sub_field()->card();
   this->arith = new Arith<T>();
 }
 
@@ -37,3 +38,16 @@ FFT<T>::~FFT()
 {
   delete arith;
 }
+
+template <typename T>
+int FFT<T>::get_n()
+{
+  return n;
+}
+
+template <typename T>
+GF<T> *FFT<T>::get_gf()
+{
+  return gf;
+}
+

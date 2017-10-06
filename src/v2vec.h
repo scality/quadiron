@@ -34,7 +34,7 @@ bool V2Vec<T>::is_v2vec()
 }
 
 template <typename T>
-V2Vec<T>::V2Vec(Vec<T> *vec) : Vec<T>(vec->gf, vec->n)
+V2Vec<T>::V2Vec(Vec<T> *vec) : Vec<T>(vec->cg, vec->n)
 {
   this->vec = vec;
 }

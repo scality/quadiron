@@ -17,7 +17,7 @@ class VVec : public Vec<T>
 };
 
 template <typename T>
-VVec<T>::VVec(Vec<T> *vec, int n) : Vec<T>(vec->gf, n)
+VVec<T>::VVec(Vec<T> *vec, int n) : Vec<T>(vec->cg, n)
 {
   this->vec = vec;
   this->n = n;

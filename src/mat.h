@@ -11,10 +11,10 @@ template<typename T>
 class Mat
 {
  public:
-  GF<T> *gf;
+  CG<T> *cg;
   int n_rows;
   int n_cols;
-  Mat(GF<T> *gf, int n_rows, int n_cols);
+  Mat(CG<T> *cg, int n_rows, int n_cols);
   ~Mat();
   virtual int get_n_rows();
   virtual int get_n_cols();
@@ -40,9 +40,9 @@ class Mat
 };
 
 template <typename T>
-Mat<T>::Mat(GF<T> *gf, int n_rows, int n_cols)
+Mat<T>::Mat(CG<T> *cg, int n_rows, int n_cols)
 {
-  this->gf = gf;
+  this->cg = cg;
   this->n_rows = n_rows;
   this->n_cols = n_cols;
   this->mem = new T[n_rows * n_cols];
@@ -120,7 +120,7 @@ void Mat<T>::mul_row(int row, T factor)
   assert(row >= 0 && row < n_rows);
 
   for (j = 0; j < n_cols; j++) {
-    set(row, j, gf->mul(get(row, j), factor));
+    set(row, j, cg->mul(get(row, j), factor));
   }
 }
 
@@ -134,8 +134,8 @@ void Mat<T>::add_rows(int src_row, int dst_row, T factor)
 
   for (j = 0; j < n_cols; j++) {
     set(dst_row, j,
-        gf->add(get(dst_row, j),
-                gf->mul(get(src_row, j), factor)));
+        cg->add(get(dst_row, j),
+                cg->mul(get(src_row, j), factor)));
   }
 }
 
@@ -159,11 +159,11 @@ void Mat<T>::reduced_row_echelon_form(void)
     num_pivots++;
 
     // Simplify the pivot row
-    mul_row(pivot_row, gf->div(1, get(pivot_row, j)));
+    mul_row(pivot_row, cg->div(1, get(pivot_row, j)));
 
     // Eliminate rows below
     for (i = pivot_row + 1; i < n_rows; i++)
-      add_rows(pivot_row, i, gf->neg(get(i, j)));
+      add_rows(pivot_row, i, cg->neg(get(i, j)));
   }
 
   // Compute reduced row echelon form (RREF)
@@ -178,7 +178,7 @@ void Mat<T>::reduced_row_echelon_form(void)
 
     // Eliminate rows above
     for (int j = i - 1; j >= 0; j--)
-      add_rows(i, j, gf->neg(get(j, pivot_col)));
+      add_rows(i, j, cg->neg(get(j, pivot_col)));
   }
 }
 
@@ -194,7 +194,7 @@ void Mat<T>::inv(void)
   assert(n_rows == n_cols);
 
   // Build augmented matrix: [this | identity]
-  Mat<T> tmp(this->gf, n_rows, n_cols * 2);
+  Mat<T> tmp(this->cg, n_rows, n_cols * 2);
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
       tmp.set(i, j, get(i, j));
@@ -242,7 +242,7 @@ void Mat<T>::vandermonde(void)
 
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
-      set(i, j, gf->exp(i, j));
+      set(i, j, cg->exp(i, j));
     }
   }
 }
@@ -258,11 +258,11 @@ void Mat<T>::ec_transform1(int i)
   assert(i >= 0 && i < n_rows);
   assert(i >= 0 && i < n_cols);
 
-  T f_minus_1 = gf->inv(get(i, i));
+  T f_minus_1 = cg->inv(get(i, i));
 
   for (k = 0; k < n_rows; k++) {
     set(k, i,
-        gf->mul(f_minus_1,
+        cg->mul(f_minus_1,
                 get(k, i)));
   }
 }
@@ -282,8 +282,8 @@ void Mat<T>::ec_transform2(int i, int j)
 
   for (k = 0; k < n_rows; k++) {
     set(k, j,
-        gf->sub(get(k, j),
-                gf->mul(f_i_j, get(k, i))));
+        cg->sub(get(k, j),
+                cg->mul(f_i_j, get(k, i))));
   }
 }
 
@@ -297,7 +297,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
 
   dim = n_rows + n_cols;
 
-  Mat<T> tmp(gf, dim, n_cols);
+  Mat<T> tmp(cg, dim, n_cols);
 
   tmp.vandermonde();
 
@@ -354,11 +354,11 @@ void Mat<T>::mul(Vec<T> *output, Vec<T> *v)
 
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
-      T x = gf->mul(get(i, j), v->get(j));
+      T x = cg->mul(get(i, j), v->get(j));
       if (0 == j)
         output->set(i, x);
       else
-        output->set(i, gf->add(output->get(i), x));
+        output->set(i, cg->add(output->get(i), x));
     }
   }
 }
@@ -370,7 +370,7 @@ void Mat<T>::cauchy()
 
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
-      set(i, j, gf->inv(gf->add(i, (j + n_rows))));
+      set(i, j, cg->inv(cg->add(i, (j + n_rows))));
     }
   }
 
@@ -378,13 +378,13 @@ void Mat<T>::cauchy()
   // convert 1st row to all 1s
   for (j = 0; j < n_cols; j++) {
     for (i = 0; i < n_rows; i++) {
-      set(i, j, gf->div(get(i, j), get(0, j)));
+      set(i, j, cg->div(get(i, j), get(0, j)));
     }
   }
   // convert 1st element of each row to 1
   for (i = 1; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
-      set(i, j, gf->div(get(i, j), get(i, 0)));
+      set(i, j, cg->div(get(i, j), get(i, 0)));
     }
   }
 }

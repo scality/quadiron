@@ -8,9 +8,8 @@
 template<typename T>
 class FFTLN : public FFT<T>
 {
- public:
-  int l;
  private:
+  int l;
   T w;
   T inv_w;
   Vec<T> *W;

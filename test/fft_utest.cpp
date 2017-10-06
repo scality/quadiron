@@ -146,20 +146,20 @@ class FFTUtest
     char X[] = "1236548787985654354598651354984132468";
     char Y[] = "745211515185321545554545854598651354984132468";
 
-    Vec<T> *_X = _convert_string2vec(&gf_m, fft.n, X);
+    Vec<T> *_X = _convert_string2vec(&gf_m, fft.get_n(), X);
     // _X->dump();
-    Vec<T> *_Y = _convert_string2vec(&gf_m, fft.n, Y);
+    Vec<T> *_Y = _convert_string2vec(&gf_m, fft.get_n(), Y);
     // _Y->dump();
 
-    Vec<T> *sfX = new Vec<T>(&gf_m, fft.n);
-    Vec<T> *sfY = new Vec<T>(&gf_m, fft.n);
-    Vec<T> *_XY = new Vec<T>(&gf_m, fft.n);
-    Vec<T> *sfXY = new Vec<T>(&gf_m, fft.n);
+    Vec<T> *sfX = new Vec<T>(&gf_m, fft.get_n());
+    Vec<T> *sfY = new Vec<T>(&gf_m, fft.get_n());
+    Vec<T> *_XY = new Vec<T>(&gf_m, fft.get_n());
+    Vec<T> *sfXY = new Vec<T>(&gf_m, fft.get_n());
 
     fft.fft(sfX, _X);
     fft.fft(sfY, _Y);
 
-    for (int i = 0; i <= fft.n-1; i++) {
+    for (int i = 0; i <= fft.get_n()-1; i++) {
       DoubleT<T> val = DoubleT<T>(sfX->get(i)) * sfY->get(i);
       _XY->set(i, val % m);
     }
@@ -169,7 +169,7 @@ class FFTUtest
     // carry propagation
     mpz_class z = 0;
     mpz_class u;
-    for (int i = 0; i <= fft.n-1; i++) {
+    for (int i = 0; i <= fft.get_n()-1; i++) {
       mpz_class t, b;
       b = 10;
       mpz_pow_ui(t.get_mpz_t(), b.get_mpz_t(), i);
@@ -215,7 +215,7 @@ class FFTUtest
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
@@ -250,7 +250,7 @@ class FFTUtest
 
     FFT2K<T> fft = FFT2K<T>(&gf, n);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
@@ -282,7 +282,7 @@ class FFTUtest
 
     FFTPF<T> fft = FFTPF<T>(&gf, n);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 10000; j++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
@@ -315,7 +315,7 @@ class FFTUtest
 
     FFTCT<T> fft = FFTCT<T>(&gf, n);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 10000; j++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
@@ -347,7 +347,7 @@ class FFTUtest
 
     FFTCT<T> fft = FFTCT<T>(&gf, n);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 10000; j++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
@@ -377,7 +377,7 @@ class FFTUtest
     // std::cerr << "n=" << n << "\n";
     FFTADD<T> fft = FFTADD<T>(&gf, m);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 10000; j++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
@@ -415,7 +415,7 @@ class FFTUtest
 
     FFT2<T> fft = FFT2<T>(&gf);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
@@ -454,7 +454,7 @@ class FFTUtest
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     v.zero_fill();
     for (int i = 0; i < n_data; i++)
       v.set(i, gf.weak_rand());
@@ -506,7 +506,7 @@ class FFTUtest
 
     FFTN<T> fft = FFTN<T>(&gf, n, r);
 
-    Vec<T> v(&gf, fft.n), _v(&gf, fft.n), v2(&gf, fft.n);
+    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (T i = 0; i < 100000; i++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)

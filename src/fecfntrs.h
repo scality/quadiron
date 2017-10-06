@@ -24,7 +24,7 @@ class FECFNTRS : public FEC<T>
     T gf_p = (1ULL << (8*word_size)) + 1;
     this->gf = new GFP<T>(gf_p);
 
-    T q = this->gf->p;
+    T q = this->gf->card();
     T R = this->gf->get_prime_root();  // primitive root
     assert(this->arith->jacobi(R, q) == -1);
 
@@ -67,7 +67,7 @@ class FECFNTRS : public FEC<T>
     fft->fft(output, &vwords);
     // check for out of range value in output
     for (int i = 0; i < n; i++) {
-      if (output->get(i) == (fft->gf->p - 1)) {
+      if (output->get(i) == (fft->get_gf()->card() - 1)) {
         char buf[256];
         snprintf(buf, sizeof (buf), "%zd:%d", offset, i);
         assert(nullptr != props[i]);
@@ -120,7 +120,7 @@ class FECFNTRS : public FEC<T>
       snprintf(buf, sizeof (buf), "%zd:%d", offset, j);
       if (nullptr != props[j]) {
         if (props[j]->is_key(buf) && props[j]->at(buf) == "@")
-          words->set(i, fft->gf->p - 1);
+          words->set(i, fft->get_gf()->card() - 1);
       }
     }
 
