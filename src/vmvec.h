@@ -6,15 +6,16 @@
  *
  */
 template<typename T>
-class VcVec : public Vec<T>
+class VmVec : public Vec<T>
 {
  private:
   Vec<T> *vec;
   int offset;
   int step;
   int N;
+  int loc(int i);
  public:
-  explicit VcVec(Vec<T> *vec, int n = 0, int offset = 0, int step = 1);
+  explicit VmVec(Vec<T> *vec, int n = 0, int offset = 0, int step = 1);
   int get_n(void);
   T get(int i);
   void set(int i, T val);
@@ -24,47 +25,57 @@ class VcVec : public Vec<T>
 };
 
 template <typename T>
-VcVec<T>::VcVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(vec->mg, n)
+VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(vec->mg, n)
 {
   this->vec = vec;
   this->offset = offset;
   this->step = step;
-  this->n = n;
   this->N = vec->get_n();
+  if (offset >= this->N)
+    this->n = 0;
+  else
+    this->n = n;
   assert(this->n <= this->N);
 }
 
 template <typename T>
-int VcVec<T>::get_n(void)
+inline int VmVec<T>::loc(int i)
+{
+  assert(i >= 0 && i < this->n);
+  return offset + step * i;
+}
+
+template <typename T>
+int VmVec<T>::get_n(void)
 {
   return this->n;
 }
 
 template <typename T>
-T VcVec<T>::get(int i)
+inline T VmVec<T>::get(int i)
 {
-  assert(i >= 0 && i < this->n);
-
-  T loc = (offset + step * i) % this->N;
-  return vec->get(loc);
+  int j = loc(i);
+  if (j >= N)
+    return 0;
+  return vec->get(j);
 }
 
 template <typename T>
-void VcVec<T>::set_map(int offset, int step)
+void VmVec<T>::set_map(int offset, int step)
 {
   this->offset = offset;
   this->step = step;
 }
 
 template <typename T>
-void VcVec<T>::set_len(int n)
+void VmVec<T>::set_len(int n)
 {
   assert(this->n <= this->N);
   this->n = n;
 }
 
 template <typename T>
-void VcVec<T>::set_vec(Vec<T> *vec)
+void VmVec<T>::set_vec(Vec<T> *vec)
 {
   assert(this->n <= vec->get_n());
   this->vec = vec;
@@ -73,10 +84,9 @@ void VcVec<T>::set_vec(Vec<T> *vec)
 }
 
 template <typename T>
-void VcVec<T>::set(int i, T val)
+inline void VmVec<T>::set(int i, T val)
 {
-  assert(i >= 0 && i < this->n);
-
-  T loc = (offset + step * i) % this->N;
-  vec->set(loc, val);
+  int j = loc(i);
+  if (j < N)
+    vec->set(j, val);
 }
