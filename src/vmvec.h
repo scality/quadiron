@@ -24,7 +24,7 @@ class VmVec : public Vec<T>
 };
 
 template <typename T>
-VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(vec->gf, n)
+VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(vec->cg, n)
 {
   this->vec = vec;
   this->offset = offset;
@@ -68,7 +68,7 @@ void VmVec<T>::set_vec(Vec<T> *vec)
 {
   assert(this->n <= vec->n);
   this->vec = vec;
-  this->gf = vec->gf;
+  this->cg = vec->cg;
   this->N = vec->n;
 }
 

@@ -5,16 +5,6 @@ template<typename T>
 class GFUtest
 {
  public:
-  void test_basic_ops()
-  {
-    assert(__arith64.sqrt(2025) == 45);
-    assert(__arith64.is_prime(2));
-    assert(__arith64.is_prime(3));
-    assert(__arith64.is_prime(13));
-    assert(!__arith64.is_prime(4));
-    assert(!__arith64.is_prime(15));
-  }
-
   void test_negation(GF<T> *gf)
   {
     int i;
@@ -79,7 +69,7 @@ class GFUtest
   {
     gf->find_prime_root();
     // std::cout << "root " << gf->root << std::endl;
-    assert(gf->check_prime_root(gf->root));
+    assert(gf->check_prime_root(gf->get_root()));
   }
 
   void test_get_order(GF<T> *gf)
@@ -246,7 +236,6 @@ class GFUtest
 
     srand(time(0));
 
-    test_basic_ops();
     test_negation_gf5();
     test_reciprocal_gf5();
     test_prime_root_gf5();
@@ -279,7 +268,6 @@ class GFUtest
 
     srand(time(0));
 
-    test_basic_ops();
     test_negation_gf5();
     test_reciprocal_gf5();
     test_prime_root_gf5();

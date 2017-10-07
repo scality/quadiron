@@ -49,7 +49,7 @@ class FECGFPFFTRS : public FEC<T>
     assert(gf_p / 2 < this->limit_value);
 
     this->gf = new GFP<T>(gf_p);
-    T q = this->gf->p;
+    T q = this->gf->card();
     T R = this->gf->get_prime_root();  // primitive root
     assert(this->arith->jacobi(R, q) == -1);
 

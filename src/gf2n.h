@@ -62,7 +62,11 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
   if (n/8 > sizeof(T)) {
     assert(false);
   }
-  if (n == 3)
+  if (n == 1)
+    this->prim_poly = 0x1;
+  else if (n == 2)
+    this->prim_poly = 0x7;
+  else if (n == 3)
     this->prim_poly = 0xb;
   else if (n == 4)
     this->prim_poly = 0x13;

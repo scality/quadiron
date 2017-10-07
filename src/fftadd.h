@@ -60,7 +60,7 @@ FFTADD<T>::FFTADD(GF<T> *gf, T m, Vec<T>* betas) :
   create_betas = false;
   if (betas == NULL) {
     // it supports only GF2N
-    assert(gf->p == 2);
+    assert(gf->get_sub_field()->card() == 2);
 
     create_betas = true;
     betas = new Vec<T>(gf, m);
