@@ -41,7 +41,7 @@ typedef enum
   } NtlException;
 
 #include "arith.h"
-#include "cg.h"
+#include "mg.h"
 #include "gf.h"
 #include "gfp.h"
 #include "gf2n.h"
