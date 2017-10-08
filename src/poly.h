@@ -437,7 +437,7 @@ void Poly<T>::inv_taylor_expand(std::vector<Poly<T>> *res, T t) {
  */
 template <typename T>
 void Poly<T>::inv_taylor_expand_t2(Vec<T> *G0, Vec<T> *G1) {
-  assert(G0->n == G1->n);
+  assert(G0->get_n() == G1->get_n());
   // y(x) = x^2 - x
   Poly<T> y(gf);
   y.set(1, 1);
@@ -445,7 +445,7 @@ void Poly<T>::inv_taylor_expand_t2(Vec<T> *G0, Vec<T> *G1) {
 
   clear();
 
-  int i = G0->n - 1;
+  int i = G0->get_n() - 1;
   set(0, G0->get(i));
   set(1, G1->get(i));
   while(--i >= 0) {
@@ -470,11 +470,11 @@ bool Poly<T>::equal(Poly<T> *f) {
 template <typename T>
 void Poly<T>::to_vec(Vec<T> *vec) {
   T deg = degree();
-  assert(vec->n > deg);
+  assert(vec->get_n() > deg);
   int i;
   for (i = 0; i <= deg; i++)
     vec->set(i, get(i));
-  for (; i < vec->n; i++)
+  for (; i < vec->get_n(); i++)
     vec->set(i, 0);
 }
 

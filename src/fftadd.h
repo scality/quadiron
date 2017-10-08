@@ -150,9 +150,9 @@ void FFTADD<T>::compute_subspace(Vec<T> *basis, Vec<T> *subspace)
 {
   int i, j;
   int size = 1;
-  int dim = basis->n;
+  int dim = basis->get_n();
   T val = 0;
-  assert(subspace->n == this->gf->arith->exp2(dim));
+  assert(subspace->get_n() == this->gf->arith->exp2(dim));
   // index of element in G
   std::vector<int> ids;
   // create sequence 2^i
@@ -180,7 +180,7 @@ template <typename T>
 void FFTADD<T>::_fft(Vec<T> *output, Vec<T> *input)
 {
   int i;
-  int deg = input->n;
+  int deg = input->get_n();
   Poly<T> g(this->gf);
   T beta = beta_m;
   g.set(0, input->get(0));
@@ -190,7 +190,7 @@ void FFTADD<T>::_fft(Vec<T> *output, Vec<T> *input)
   }
 
   // compute taylor expansion of g(x) at (x^2 - x)
-  g.taylor_expand_t2(g0, g1, this->n);
+  g.taylor_expand_t2(g0, g1, this->get_n());
 
   this->fft_add->fft(u, g0);
   this->fft_add->fft(v, g1);

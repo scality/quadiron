@@ -9,9 +9,10 @@ class Vec
 {
  private:
   T *mem;
+ protected:
+  int n;
  public:
   CG<T> *cg;
-  int n;
   Vec(CG<T> *cg, int n);
   ~Vec();
   virtual int get_n(void);

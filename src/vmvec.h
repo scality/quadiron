@@ -30,7 +30,7 @@ VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) : Vec<T>(vec->cg, n)
   this->offset = offset;
   this->step = step;
   this->n = n;
-  this->N = vec->n;
+  this->N = vec->get_n();
   assert(this->n <= this->N);
 }
 
@@ -66,10 +66,10 @@ void VmVec<T>::set_len(int n)
 template <typename T>
 void VmVec<T>::set_vec(Vec<T> *vec)
 {
-  assert(this->n <= vec->n);
+  assert(this->n <= vec->get_n());
   this->vec = vec;
   this->cg = vec->cg;
-  this->N = vec->n;
+  this->N = vec->get_n();
 }
 
 template <typename T>

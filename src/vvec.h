@@ -34,5 +34,5 @@ T VVec<T>::get(int i)
 {
   assert(i >= 0 && i < n);
 
-  return (i < vec->n) ? vec->get(i) : 0;
+  return (i < vec->get_n()) ? vec->get(i) : 0;
 }
