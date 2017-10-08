@@ -41,7 +41,7 @@ class FECGF2NRS : public FEC<T>
     }
 
     // has to be a n_data*n_data invertible square matrix
-    decode_mat = new Mat<T>(this->gf, mat->n_cols, mat->n_cols);
+    decode_mat = new Mat<T>(this->gf, mat->get_n_cols(), mat->get_n_cols());
   }
 
   ~FECGF2NRS()
@@ -65,7 +65,7 @@ class FECGF2NRS : public FEC<T>
   void decode_add_data(int fragment_index, int row)
   {
     // for each data available generate the corresponding identity
-    for (int j = 0; j < mat->n_cols; j++) {
+    for (int j = 0; j < mat->get_n_cols(); j++) {
       if (row == j)
         decode_mat->set(fragment_index, j, 1);
       else
@@ -76,7 +76,7 @@ class FECGF2NRS : public FEC<T>
   void decode_add_parities(int fragment_index, int row)
   {
     // copy corresponding row in vandermonde matrix
-    for (int j = 0; j < mat->n_cols; j++) {
+    for (int j = 0; j < mat->get_n_cols(); j++) {
       decode_mat->set(fragment_index, j, mat->get(row, j));
     }
   }

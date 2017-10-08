@@ -34,7 +34,7 @@ bool V2Vec<T>::is_v2vec()
 }
 
 template <typename T>
-V2Vec<T>::V2Vec(Vec<T> *vec) : Vec<T>(vec->cg, vec->n)
+V2Vec<T>::V2Vec(Vec<T> *vec) : Vec<T>(vec->cg, vec->get_n())
 {
   this->vec = vec;
 }
@@ -42,18 +42,20 @@ V2Vec<T>::V2Vec(Vec<T> *vec) : Vec<T>(vec->cg, vec->n)
 template <typename T>
 int V2Vec<T>::get_n(void)
 {
-  return vec->n * 2;
+  return vec->get_n() * 2;
 }
 
 template <typename T>
 T V2Vec<T>::get(int i)
 {
-  assert(i >= 0 && i < 2*vec->n);
+  int vec_n = vec->get_n();
 
-  if (i < vec->n)
+  assert(i >= 0 && i < 2*vec_n);
+
+  if (i < vec_n)
     return vec->get(i);
   else
-    return vec->get(i - vec->n);
+    return vec->get(i - vec_n);
 }
 
 template <typename T>

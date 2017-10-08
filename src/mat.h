@@ -11,9 +11,6 @@ template<typename T>
 class Mat
 {
  public:
-  CG<T> *cg;
-  int n_rows;
-  int n_cols;
   Mat(CG<T> *cg, int n_rows, int n_cols);
   ~Mat();
   virtual int get_n_rows();
@@ -29,6 +26,9 @@ class Mat
   void dump_row(int row);
   void dump(void);
  private:
+  CG<T> *cg;
+  int n_rows;
+  int n_cols;
   T *mem;
   void swap_rows(int row0, int row1);
   void mul_row(int row, T factor);
@@ -350,7 +350,7 @@ void Mat<T>::mul(Vec<T> *output, Vec<T> *v)
   int i, j;
 
   assert(get_n_cols() == v->get_n());
-  assert(get_n_rows() == output->n);
+  assert(get_n_rows() == output->get_n());
 
   for (i = 0; i < n_rows; i++) {
     for (j = 0; j < n_cols; j++) {
