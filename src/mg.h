@@ -8,15 +8,12 @@ template<typename T>
 class Arith;
 
 /**
- * Generic class for Cyclic Groups
- *
- * @note Functions starting with _ are convenience function that does
- *       not call CG specific operations
+ * Generic class for Multiplicative group of integers modulo n
  *
  * @param n cardinal
  */
 template<typename T>
-class CG
+class MG
 {
 private:
   T _card;
@@ -25,8 +22,8 @@ private:
 public:
   Arith<T> *arith = NULL;
 
-  CG(T card);
-  virtual ~CG();
+  MG(T card);
+  virtual ~MG();
   virtual T card(void);
   virtual T card_minus_one(void) ;
   virtual bool check(T a) ;
@@ -68,7 +65,7 @@ public:
 };
 
 template <typename T>
-CG<T>::CG(T card)
+MG<T>::MG(T card)
 {
   this->_card = card;
   this->root = 0;
@@ -76,7 +73,7 @@ CG<T>::CG(T card)
 }
 
 template <typename T>
-CG<T>::~CG()
+MG<T>::~MG()
 {
   if (primes) delete primes;
   if (exponent) delete exponent;
@@ -86,25 +83,25 @@ CG<T>::~CG()
 }
 
 template <typename T>
-T CG<T>::card(void)
+T MG<T>::card(void)
 {
   return this->_card;
 }
 
 template <typename T>
-T CG<T>::card_minus_one(void)
+T MG<T>::card_minus_one(void)
 {
   return this->_card - 1;
 }
 
 template <typename T>
-bool CG<T>::check(T a)
+bool MG<T>::check(T a)
 {
   return (a >= 0 && a < this->_card);
 }
 
 template <typename T>
-T CG<T>::neg(T a)
+T MG<T>::neg(T a)
 {
   assert(check(a));
 
@@ -112,7 +109,7 @@ T CG<T>::neg(T a)
 }
 
 template <typename T>
-T CG<T>::add(T a, T b)
+T MG<T>::add(T a, T b)
 {
   assert(check(a));
   assert(check(b));
@@ -125,7 +122,7 @@ T CG<T>::add(T a, T b)
 }
 
 template <typename T>
-T CG<T>::sub(T a, T b)
+T MG<T>::sub(T a, T b)
 {
   assert(check(a));
   assert(check(b));
@@ -137,7 +134,7 @@ T CG<T>::sub(T a, T b)
 }
 
 template <typename T>
-T CG<T>::mul(T a, T b)
+T MG<T>::mul(T a, T b)
 {
   assert(check(a));
   assert(check(b));
@@ -146,7 +143,7 @@ T CG<T>::mul(T a, T b)
 }
 
 template <typename T>
-T CG<T>::div(T a, T b)
+T MG<T>::div(T a, T b)
 {
   assert(check(a));
   assert(check(b));
@@ -164,7 +161,7 @@ T CG<T>::div(T a, T b)
  * @return
  */
 template <typename T>
-T CG<T>::inv_bezout(T a)
+T MG<T>::inv_bezout(T a)
 {
   assert(check(a));
 
@@ -179,26 +176,26 @@ T CG<T>::inv_bezout(T a)
 }
 
 template <typename T>
-T CG<T>::inv(T a)
+T MG<T>::inv(T a)
 {
   return inv_bezout(a);
 }
 
 template <typename T>
-T CG<T>::exp(T a, T b)
+T MG<T>::exp(T a, T b)
 {
   assert(check(a));
   assert(check(b));
 
-  return CG<T>::exp_quick(a, b);
+  return MG<T>::exp_quick(a, b);
 }
 
 template <typename T>
-T CG<T>::log(T a, T b)
+T MG<T>::log(T a, T b)
 {
   assert(check(a));
 
-  return CG<T>::log_naive(a, b);
+  return MG<T>::log_naive(a, b);
 }
 
 /**
@@ -210,7 +207,7 @@ T CG<T>::log(T a, T b)
  * @return
  */
 template <typename T>
-T CG<T>::exp_naive(T base, T exponent)
+T MG<T>::exp_naive(T base, T exponent)
 {
   T result;
   T i;
@@ -237,7 +234,7 @@ T CG<T>::exp_naive(T base, T exponent)
  * @return
  */
 template <typename T>
-T CG<T>::exp_quick(T base, T exponent)
+T MG<T>::exp_quick(T base, T exponent)
 {
   T result;
   T i;
@@ -266,7 +263,7 @@ T CG<T>::exp_quick(T base, T exponent)
  * return
  */
 template <typename T>
-T CG<T>::log_naive(T base, T exponent)
+T MG<T>::log_naive(T base, T exponent)
 {
   T result;
 
@@ -280,7 +277,7 @@ T CG<T>::log_naive(T base, T exponent)
 }
 
 template <typename T>
-void CG<T>::compute_factors_of_order()
+void MG<T>::compute_factors_of_order()
 {
   if (this->compute_factors_of_order_done) return;
 
@@ -314,7 +311,7 @@ void CG<T>::compute_factors_of_order()
  * @return boolean
  */
 template <typename T>
-bool CG<T>::is_quadratic_residue(T q)
+bool MG<T>::is_quadratic_residue(T q)
 {
   T i;
 
@@ -334,7 +331,7 @@ bool CG<T>::is_quadratic_residue(T q)
  * @param w n-th root of unity
  */
 template <typename T>
-void CG<T>::compute_omegas(Vec<T> *W, int n, T w)
+void MG<T>::compute_omegas(Vec<T> *W, int n, T w)
 {
   for (int i = 0; i <= n; i++) {
     W->set(i, this->exp(w, i));
@@ -353,7 +350,7 @@ void CG<T>::compute_omegas(Vec<T> *W, int n, T w)
  * @param w n-th root of unity
  */
 template <typename T>
-void CG<T>::compute_omegas_cached(Vec<T> *W, int n, T w)
+void MG<T>::compute_omegas_cached(Vec<T> *W, int n, T w)
 {
   std::ostringstream filename;
 
@@ -380,7 +377,7 @@ void CG<T>::compute_omegas_cached(Vec<T> *W, int n, T w)
 }
 
 template <typename T>
-T CG<T>::weak_rand(void)
+T MG<T>::weak_rand(void)
 {
   return this->arith->weak_rand(this->card());
 }
@@ -408,7 +405,7 @@ T CG<T>::weak_rand(void)
  *  Contradict to Step 3 of the algorith.
  */
 template <typename T>
-bool CG<T>::is_prime_root(T nb)
+bool MG<T>::is_prime_root(T nb)
 {
   bool ok = true;
   typename std::vector<T>::size_type i;
@@ -436,7 +433,7 @@ bool CG<T>::is_prime_root(T nb)
  * Use the algorithm of checking if a number is primitive root or not
  */
 template <typename T>
-void CG<T>::find_prime_root()
+void MG<T>::find_prime_root()
 {
   if (this->root) return;
   T nb = 2;
@@ -470,13 +467,13 @@ void CG<T>::find_prime_root()
 }
 
 template <typename T>
-T CG<T>::get_root()
+T MG<T>::get_root()
 {
   return root;
 }
 
 template <typename T>
-T CG<T>::do_step_get_order(T x, T h, std::vector<T> *primes,
+T MG<T>::do_step_get_order(T x, T h, std::vector<T> *primes,
   std::vector<T> *exponent)
 {
   T y, p, r;
@@ -506,7 +503,7 @@ T CG<T>::do_step_get_order(T x, T h, std::vector<T> *primes,
 }
 
 /*
- * Get order of an element x of CG(q)
+ * Get order of an element x of MG(q)
  *  The order d is the smallest divisor of (q-1) such that x^d = 1
  * Pseudocode:
  *  Prime factorisation of (q-1) = p1^r1 * p2^r2 * ... * pm^rm
@@ -529,7 +526,7 @@ T CG<T>::do_step_get_order(T x, T h, std::vector<T> *primes,
  *   }
  */
 template <typename T>
-T CG<T>::get_order(T x)
+T MG<T>::get_order(T x)
 {
   if (x == 0 || x == 1) return 1;
   std::vector<T> primes;
@@ -546,7 +543,7 @@ T CG<T>::get_order(T x)
  * Check whether a number is a primitive root
  */
 template <typename T>
-bool CG<T>::check_prime_root(T nb)
+bool MG<T>::check_prime_root(T nb)
 {
   T h = this->card_minus_one();
   return (get_order(nb) == h);
@@ -556,7 +553,7 @@ bool CG<T>::check_prime_root(T nb)
  * Check naively order of a number
  */
 template <typename T>
-bool CG<T>::check_order_naive(T nb, T order)
+bool MG<T>::check_order_naive(T nb, T order)
 {
   if (this->exp(nb, order) != 1) return false;
 
@@ -579,7 +576,7 @@ bool CG<T>::check_order_naive(T nb, T order)
  * @return root
  */
 template <typename T>
-T CG<T>::get_nth_root(T n)
+T MG<T>::get_nth_root(T n)
 {
   T q_minus_one = this->card_minus_one();
   T d = this->arith->gcd(n, q_minus_one);
@@ -595,7 +592,7 @@ T CG<T>::get_nth_root(T n)
  * @return root
  */
 template <typename T>
-T CG<T>::get_prime_root()
+T MG<T>::get_prime_root()
 {
   if (!this->root)
     this->find_prime_root();
@@ -612,7 +609,7 @@ T CG<T>::get_prime_root()
  * @return root
  */
 template <typename T>
-T CG<T>::get_code_len(T n)
+T MG<T>::get_code_len(T n)
 {
   T nb = this->card_minus_one();
   if (nb < n) assert(false);
@@ -631,7 +628,7 @@ T CG<T>::get_code_len(T n)
  * @return root
  */
 template <typename T>
-T CG<T>::get_code_len_high_compo(T n)
+T MG<T>::get_code_len_high_compo(T n)
 {
   T nb = this->card_minus_one();
   if (nb < n) assert(false);

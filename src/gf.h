@@ -11,7 +11,7 @@ class GFP;
  * @param n exponent
  */
 template<typename T>
-class GF : public CG<T>
+class GF : public MG<T>
 {
 private:
   T p;
@@ -25,7 +25,7 @@ public:
 };
 
 template <typename T>
-GF<T>::GF(T p, T n) : CG<T>(this->arith->exp(p, n))
+GF<T>::GF(T p, T n) : MG<T>(this->arith->exp(p, n))
 {
   // XXX shall check that p is prime
   this->p = p;

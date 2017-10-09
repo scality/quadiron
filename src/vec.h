@@ -12,8 +12,8 @@ class Vec
  protected:
   int n;
  public:
-  CG<T> *cg;
-  Vec(CG<T> *cg, int n);
+  MG<T> *mg;
+  Vec(MG<T> *mg, int n);
   ~Vec();
   virtual int get_n(void);
   void zero_fill(void);
@@ -33,9 +33,9 @@ class Vec
 };
 
 template <typename T>
-Vec<T>::Vec(CG<T> *cg, int n)
+Vec<T>::Vec(MG<T> *mg, int n)
 {
-  this->cg = cg;
+  this->mg = mg;
   this->n = n;
   this->mem = new T[n];
 }
@@ -98,7 +98,7 @@ template <typename T>
 void Vec<T>::mul_scalar(T scalar)
 {
   for (int i = 0; i < n; i++)
-    set(i, cg->mul(get(i), scalar));
+    set(i, mg->mul(get(i), scalar));
 }
 
 /**
@@ -112,7 +112,7 @@ void Vec<T>::hadamard_mul(Vec<T> *v)
   assert(n == v->get_n());
 
   for (int i = 0; i < n; i++)
-    set(i, cg->mul(get(i), v->get(i)));
+    set(i, mg->mul(get(i), v->get(i)));
 }
 
 template <>
@@ -126,7 +126,7 @@ void Vec<T>::add(Vec<T> *v)
   assert(n == v->get_n());
 
   for (int i = 0; i < n; i++)
-    set(i, cg->add(get(i), v->get(i)));
+    set(i, mg->add(get(i), v->get(i)));
 }
 
 template <typename T>
@@ -137,7 +137,7 @@ void Vec<T>::add(Vec<T> *v, int offset)
   int j;
   for (int i = 0; i < v->get_n(); i++) {
     j = i + offset;
-    set(j, cg->add(get(j), v->get(i)));
+    set(j, mg->add(get(j), v->get(i)));
   }
 }
 
