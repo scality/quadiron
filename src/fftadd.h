@@ -80,12 +80,12 @@ FFTADD<T>::FFTADD(GF<T> *gf, T m, Vec<T>* betas) :
     create_betas = true;
     betas = new Vec<T>(gf, m);
     T beta = this->gf->get_prime_root();
-    betas->set(0, 1);
-    betas->set(1, beta);
-    for (T i = 2; i < m; i++) {
-      betas->set(i, this->gf->exp(beta, i));
+    betas->set(0, beta);
+    for (T i = 1; i < m-1; i++) {
+      betas->set(i, this->gf->exp(beta, i+1));
     }
-}
+    betas->set(m-1, 1);
+  }
   this->betas = betas;
   this->beta_1 = betas->get(0);
   this->inv_beta_1 = gf->inv(this->beta_1);
@@ -148,7 +148,9 @@ void FFTADD<T>::compute_basis()
 {
   int i;
   for (i = 0; i < m-1; i++) {
-    T gamma = this->gf->mul(inv_beta_m, betas->get(i));
+    T gamma = betas->get(i);
+    if (beta_m > 1)
+      gamma = this->gf->mul(inv_beta_m, betas->get(i));
     this->gammas->set(i, gamma);
     this->deltas->set(i, this->gf->add(this->gf->exp(gamma, 2), gamma));
   }
@@ -218,9 +220,14 @@ void FFTADD<T>::_fft(Vec<T> *output, Vec<T> *input)
 {
   int i;
   int deg = input->get_n();
-  mem->set(0, input->get(0));
-  for (i = 1; i < deg; i++) {
-    mem->set(i, this->gf->mul(beta_m_powers->get(i), input->get(i)));
+  if (beta_m == 1) {
+    mem->zero_fill();
+    mem->add_mutual(input);
+  } else {
+    mem->set(0, input->get(0));
+    for (i = 1; i < deg; i++) {
+      mem->set(i, this->gf->mul(beta_m_powers->get(i), input->get(i)));
+    }
   }
 
   // compute taylor expansion of g(x) at (x^2 - x)
@@ -252,11 +259,13 @@ void FFTADD<T>::_ifft(Vec<T> *output, Vec<T> *input)
 
   inv_taylor_expand_t2(output, g0, g1);
 
-  T beta = inv_beta_m;
-  T deg = output->get_n();
-  for (i = 1; i < deg; i++) {
-    output->set(i, this->gf->mul(beta, output->get(i)));
-    beta = this->gf->mul(beta, inv_beta_m);
+  if (beta_m > 1) {
+    T beta = inv_beta_m;
+    T deg = output->get_n();
+    for (i = 1; i < deg; i++) {
+      output->set(i, this->gf->mul(beta, output->get(i)));
+      beta = this->gf->mul(beta, inv_beta_m);
+    }
   }
 }
 
