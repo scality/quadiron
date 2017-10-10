@@ -221,8 +221,7 @@ void FFTADD<T>::_fft(Vec<T> *output, Vec<T> *input)
   int i;
   int deg = input->get_n();
   if (beta_m == 1) {
-    mem->zero_fill();
-    mem->add_mutual(input);
+    mem->copy(input, this->n);
   } else {
     mem->set(0, input->get(0));
     for (i = 1; i < deg; i++) {
@@ -391,7 +390,7 @@ void FFTADD<T>::taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t,
   }
 
   Vec<T> *_input = new Vec<T>(this->gf, input->get_n());
-  _input->copy(input);
+  _input->copy(input, input->get_n());
   _taylor_expand(output, _input, n, t);
 
   delete _input;
@@ -401,8 +400,7 @@ template <typename T>
 void FFTADD<T>::_taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t)
 {
   if (n <= t) {
-    // TODO: copy_mutual has not worked yet for VmVec due to copying of `mem`
-    output->add_mutual(input);
+    output->copy(input, output->get_n());
     return;
   }
   // find k s.t. t2^k < n <= 2 *t2^k
@@ -452,7 +450,7 @@ void FFTADD<T>::taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, Vec<T> *input, int n,
   }
 
   Vec<T> *_input = new Vec<T>(this->gf, input->get_n());
-  _input->copy(input);
+  _input->copy(input, input->get_n());
   _taylor_expand_t2(G0, G1, _input, n, _k, 0);
 
   delete _input;
