@@ -342,6 +342,17 @@ enum ec_type
     EC_TYPE_FNTRS,
   };
 
+bool check(int n, int word_size, ec_type eflag)
+{
+  // we suppose that code length is not too long, i.e. > 2^32
+  if (word_size >= 4)
+    return true;
+  if (eflag == EC_TYPE_FNTRS) {
+    return (n <= (1ULL << (8*word_size)) + 1);
+  } else {
+    return (n <= (1ULL << (8*word_size)));
+  }
+}
 
 int main(int argc, char **argv)
 {
@@ -412,14 +423,11 @@ int main(int argc, char **argv)
   if (!(uflag || cflag || rflag))
     xusage();
 
-#if 0
-  // XXX TODO
-  if (0 != check(n_data + n_parities)) {
+  if (0 == check(n_data + n_parities, word_size, eflag)) {
     std::cerr <<
       "Number of fragments is too big compared to Galois field size\n";
     exit(1);
   }
-#endif
 
   if (-1 == n_data || -1 == n_parities || NULL == prefix)
     xusage();
