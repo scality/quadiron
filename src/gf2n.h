@@ -95,6 +95,7 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
     this->restricted = true;
   }
 
+  this->mask = new T[n];
   init_mask();
 
   this->tab_nb = n/4 - 1;
@@ -139,6 +140,7 @@ GF2N<T>::~GF2N()
     }
     delete[] gfsplit;
   }
+  if (mask != NULL) delete[] mask;
 }
 
 template <typename T>
@@ -146,7 +148,6 @@ void GF2N<T>::init_mask(void)
 {
   T i, v;
 
-  mask = new T[n];
   v = 1;
   for (i = 0; i < n; i++, v *= 2) {
     mask[i] = v;
