@@ -42,8 +42,8 @@ class FFTCT : public FFT<T>
   T n2;
   T w, w1, w2, inv_w;
   Vec<T> *G = NULL;
-  VmVec<T> *Y = NULL;
-  VmVec<T> *X = NULL;
+  VcVec<T> *Y = NULL;
+  VcVec<T> *X = NULL;
   FFT<T> *dft_outer = NULL;
   FFT<T> *dft_inner = NULL;
   std::vector<T>* prime_factors = NULL;
@@ -100,8 +100,8 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
     else
       this->dft_inner = new FFTCT<T>(gf, _n2, id+1, this->prime_factors, w2);
     this->G = new Vec<T>(this->gf, this->n);
-    this->Y = new VmVec<T>(this->G);
-    this->X = new VmVec<T>(this->G);
+    this->Y = new VcVec<T>(this->G);
+    this->X = new VcVec<T>(this->G);
   } else
     loop = false;
 }

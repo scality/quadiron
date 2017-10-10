@@ -361,31 +361,71 @@ class FFTUtest
     }
   }
 
-  void test_fftadd_with_n(int gf_n)
+  void run_taylor_expand(GF<T> *gf, FFTADD<T> *fft) {
+    int t = (gf->weak_rand() % 6) + 2;
+    int n = (gf->weak_rand() % 30) + t + 1;
+    Vec<T> v1(gf, n);
+    int m = n/t;
+    while (m*t < n) m++;
+    Vec<T> v2(gf, t*m);
+    for (int i = 0; i < n; i++)
+      v1.set(i, gf->weak_rand());
+    // v1.dump();
+    fft->taylor_expand(&v2, &v1, n, t, true);
+    Vec<T> _v1(gf, n);
+    fft->inv_taylor_expand(&_v1, &v2, t);
+    // _v1.dump();
+    assert(_v1.eq(&v1));
+  }
+
+  // taylor expansion on (x^t - x)
+  void test_taylor_expand(GF<T> *gf, FFTADD<T> *fft)
   {
-    int n, m;
-    GF2N<T> gf = GF2N<T>(gf_n);
-    int n_data = 3;
-    int n_parities = 3;
+    std::cout << "test_taylor_expand\n";
+    for (int i = 0; i < 1000; i++)
+      run_taylor_expand(gf, fft);
+  }
 
-    std::cout << "test_fftadd_with_n=" << gf_n << "\n";
+  void run_taylor_expand_t2(GF<T> *gf, FFTADD<T> *fft) {
+    // a random number that is power of 2
+    int n = (gf->weak_rand() % 30) + 6;
+    n = gf->arith->exp2(gf->arith->log2(n) + 1);
+    int t = 2;
+    int m = n/2;
+    while (m * 2 < n) m++;
+    Vec<T> v1(gf, n);
+    Vec<T> G0(gf, m);
+    Vec<T> G1(gf, m);
+    for (int i = 0; i < n; i++)
+      v1.set(i, gf->weak_rand());
+    // v1.dump();
+    fft->taylor_expand_t2(&G0, &G1, &v1, n, true);
+    Vec<T> _v1(gf, n);
+    fft->inv_taylor_expand_t2(&_v1, &G0, &G1);
+    // _v1.dump();
+    assert(_v1.eq(&v1));
+  }
 
-    // n is power of 2 and at least n_data + n_parities
-    n = gf.arith->get_smallest_power_of_2(n_data + n_parities);
-    m = gf.arith->log2(n);
+  // taylor expansion on (x^2 - x)
+  void test_taylor_expand_t2(GF<T> *gf, FFTADD<T> *fft)
+  {
+    std::cout << "test_taylor_expand_t2\n";
+    for (int i = 0; i < 1000; i++)
+      run_taylor_expand_t2(gf, fft);
+  }
 
-    // std::cerr << "n=" << n << "\n";
-    FFTADD<T> fft = FFTADD<T>(&gf, m);
-
-    Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
+  void test_fftadd_codec(GF<T> *gf, FFTADD<T> *fft, int n_data)
+  {
+    std::cout << "test_fftadd_codec\n";
+    Vec<T> v(gf, fft->get_n()), _v(gf, fft->get_n()), v2(gf, fft->get_n());
     for (int j = 0; j < 10000; j++) {
       v.zero_fill();
       for (int i = 0; i < n_data; i++)
-        v.set(i, gf.weak_rand());
+        v.set(i, gf->weak_rand());
         // v.dump();
-      fft.fft(&_v, &v);
+      fft->fft(&_v, &v);
         // _v.dump();
-      fft.ifft(&v2, &_v);
+      fft->ifft(&v2, &_v);
         // v2.dump();
       assert(v.eq(&v2));
     }
@@ -393,8 +433,23 @@ class FFTUtest
 
   void test_fftadd()
   {
-    for (int n = 4; n <= 128 && n <= 8 * sizeof(T); n *= 2)
-      test_fftadd_with_n(n);
+    int n, m;
+    int n_data = 3;
+    int n_parities = 3;
+    for (int gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
+      GF2N<T> gf = GF2N<T>(gf_n);
+      std::cout << "test_fftadd_with_n=" << gf_n << "\n";
+      // n is power of 2 and at least n_data + n_parities
+      n = gf.arith->get_smallest_power_of_2(n_data + n_parities);
+      m = gf.arith->log2(n);
+
+      // std::cerr << "n=" << n << "\n";
+      FFTADD<T> fft = FFTADD<T>(&gf, m);
+
+      test_taylor_expand(&gf, &fft);
+      test_taylor_expand_t2(&gf, &fft);
+      test_fftadd_codec(&gf, &fft, n_data);
+    }
   }
 
   void test_fft2_gfp()

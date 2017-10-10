@@ -147,57 +147,6 @@ void poly_utest7()
   assert(result == 5);
 }
 
-void taylor_expand(GF2N<uint32_t> *gf) {
-  Poly<uint32_t> p1(gf);
-  std::vector<Poly<uint32_t>> p2;
-  uint32_t n = (gf->weak_rand() % 30) + 6;
-  uint32_t t = (gf->weak_rand() % 6) + 2;
-  for (int i = 0; i < n; i++)
-    p1.set(i, gf->weak_rand());
-  // p1.dump();
-  p1.taylor_expand(&p2, n, t);
-  Poly<uint32_t> _p1(gf);
-  _p1.inv_taylor_expand(&p2, t);
-  // _p1.dump();
-  assert(_p1.equal(&p1));
-}
-
-// taylor expansion on (x^t - x)
-void poly_utest8()
-{
-  std::cout << "poly_utest8\n";
-  GF2N<uint32_t> gf(8);
-  for (int i = 0; i < 1000; i++)
-    taylor_expand(&gf);
-}
-
-void taylor_expand_t2(GF2N<uint32_t> *gf) {
-  Poly<uint32_t> p1(gf);
-  uint32_t n = (gf->weak_rand() % 30) + 6;
-  uint32_t t = 2;
-  uint32_t m = n/2;
-  if (m * 2 < n) m++;
-  Vec<uint32_t> G0(gf, m);
-  Vec<uint32_t> G1(gf, m);
-  for (int i = 0; i < n; i++)
-    p1.set(i, gf->weak_rand());
-  // p1.dump();
-  p1.taylor_expand_t2(&G0, &G1, n);
-  Poly<uint32_t> _p1(gf);
-  _p1.inv_taylor_expand_t2(&G0, &G1);
-  // _p1.dump();
-  assert(_p1.equal(&p1));
-}
-
-// taylor expansion on (x^2 - x)
-void poly_utest9()
-{
-  std::cout << "poly_utest9\n";
-  GF2N<uint32_t> gf(8);
-  for (int i = 0; i < 1000; i++)
-    taylor_expand_t2(&gf);
-}
-
 void poly_utest()
 {
   std::cout << "poly_utest\n";
@@ -209,6 +158,4 @@ void poly_utest()
   poly_utest5();
   poly_utest6();
   poly_utest7();
-  poly_utest8();
-  poly_utest9();
 }
