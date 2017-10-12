@@ -212,15 +212,14 @@ class ArithUtest
     std::cout << "test_factor_distinct_prime\n";
 
     int i;
-    std::vector<T> *primes = new std::vector<T>();
     for (i = 0; i < 1000; i++) {
       T x;
+      std::vector<T> primes;
       // std::cout << "i=" << i << "\n";
       x = arith->weak_rand(max);
       // std::cout << "x=" << x << "\n";
-      arith->factor_distinct_prime(x, primes);
-      check_all_primes(primes, true);
-      primes->clear();
+      arith->factor_distinct_prime(x, &primes);
+      check_all_primes(&primes, true);
     }
   }
 

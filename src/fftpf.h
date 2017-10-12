@@ -38,7 +38,7 @@ class FFTPF : public FFT<T>
 {
  private:
   bool loop;
-  T N;
+  bool first_layer_fft;
   T n1;
   T n2;
   T w, w1, w2;
@@ -74,14 +74,15 @@ template <typename T>
 FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
   FFT<T>(gf, n)
 {
-  if (id == 0) {
-    this->N = n;
+  if (factors == NULL) {
     this->prime_factors = new std::vector<T>();
+    first_layer_fft = true;
     this->arith->get_coprime_factors(n, this->prime_factors);
     // w is of order-n
     w = gf->get_nth_root(n);
   } else {
     this->prime_factors = factors;
+    first_layer_fft = false;
     w = _w;
   }
   n1 = prime_factors->at(id);
@@ -116,7 +117,7 @@ FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
 template <typename T>
 FFTPF<T>::~FFTPF()
 {
-  if (prime_factors && this->N == this->n) delete prime_factors;
+  if (prime_factors && first_layer_fft) delete prime_factors;
   if (dft_outer) delete dft_outer;
   if (dft_inner) delete dft_inner;
   if (X) delete X;
@@ -195,7 +196,7 @@ void FFTPF<T>::ifft(Vec<T> *output, Vec<T> *input)
   /*
    * We need to divide output to `N` for the inverse formular
    */
-  if ((this->N == this->n) && (this->inv_n_mod_p > 1)) {
+  if (this->first_layer_fft && (this->inv_n_mod_p > 1)) {
     output->mul_scalar(this->inv_n_mod_p);
   }
 }
