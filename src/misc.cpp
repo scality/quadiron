@@ -1,10 +1,6 @@
 
 #include "ntl.h"
 
-Arith<uint32_t> __arith32;
-Arith<uint64_t> __arith64;
-Arith<mpz_class> __arithmpz;
-
 std::ostream&
 operator<<(std::ostream& dest, __uint128_t value)
 {

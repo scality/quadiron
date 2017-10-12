@@ -1,10 +1,6 @@
 /* -*- mode: c++ -*- */
 #pragma once
 
-extern Arith<uint32_t> __arith32;
-extern Arith<uint64_t> __arith64;
-extern Arith<mpz_class> __arithmpz;
-
 #if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)
 {

@@ -6,7 +6,7 @@ class ArithUtest
 {
  public:
   T max;
-  Arith<T> *arith;
+
   ArithUtest() {
     if (sizeof(T) < 16)
       max = std::numeric_limits<T>::max();
@@ -15,39 +15,37 @@ class ArithUtest
       for (int i = 0; i < sizeof(T)*8; i++)
         max += (T)1 << i;
     }
-    arith = new Arith<T>();
   }
 
   ~ArithUtest() {
-    delete arith;
   }
 
   void test_basic_ops()
   {
     std::cout << "test_basic_ops\n";
-    assert(arith->sqrt(2025) == 45);
-    assert(arith->is_prime(2));
-    assert(arith->is_prime(3));
-    assert(arith->is_prime(13));
-    assert(!arith->is_prime(4));
-    assert(!arith->is_prime(15));
+    assert(sqrt<T>(2025) == 45);
+    assert(is_prime<T>(2));
+    assert(is_prime<T>(3));
+    assert(is_prime<T>(13));
+    assert(!is_prime<T>(4));
+    assert(!is_prime<T>(15));
   }
 
   void test_reciprocal()
   {
     std::cout << "test_reciprocal\n";
     int i;
-    T sub_max = arith->sqrt(max);
+    T sub_max = sqrt<T>(max);
     for (i = 0; i < 1000; i++) {
       T x, y, z;
 
       // std::cout << "i=" << i << "\n";
 
-      x = arith->weak_rand(sub_max);
+      x = _weak_rand<T>(sub_max);
       // std::cout << "x=" << x << "\n";
-      y = arith->exp(x, 2);
+      y = exp<T>(x, 2);
       // std::cout << "exp(x)=" << y << "\n";
-      z = arith->sqrt(y);
+      z = sqrt<T>(y);
       // std::cout << "z=" << z << "\n";
       assert(z == x);
     }
@@ -71,33 +69,33 @@ class ArithUtest
     n[0] = 107;
     a[1] = 2;
     n[1] = 74;
-    omega = arith->chinese_remainder(2, a, n);
+    omega = chinese_remainder<T>(2, a, n);
     assert(omega == 5996);
 
     a[0] = 6;
     n[0] = 7;
     a[1] = 4;
     n[1] = 8;
-    omega = arith->chinese_remainder(2, a, n);
+    omega = chinese_remainder<T>(2, a, n);
     assert(omega == 20);
 
     a[0] = 3;
     n[0] = 4;
     a[1] = 0;
     n[1] = 6;
-    omega = arith->chinese_remainder(2, a, n);
+    omega = chinese_remainder<T>(2, a, n);
     // no solution XXX detect it
   }
 
   void test_jacobi()
   {
     std::cout << "test_jacobi\n";
-    assert(arith->jacobi(1001, 9907) == -1);
-    assert(arith->jacobi(19, 45) == 1);
-    assert(arith->jacobi(8, 21) == -1);
-    assert(arith->jacobi(5, 21) == 1);
-    assert(arith->jacobi(47, 221) == -1);
-    assert(arith->jacobi(2, 221) == -1);
+    assert(jacobi<T>(1001, 9907) == -1);
+    assert(jacobi<T>(19, 45) == 1);
+    assert(jacobi<T>(8, 21) == -1);
+    assert(jacobi<T>(5, 21) == 1);
+    assert(jacobi<T>(47, 221) == -1);
+    assert(jacobi<T>(2, 221) == -1);
   }
 
   /**
@@ -114,7 +112,7 @@ class ArithUtest
 
     int b = 10;  // base
     int p = 14;  // we could multiply integers of 2^p digits
-    T max_digits = arith->exp(2, p);
+    T max_digits = exp<T>(2, p);
     // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
     T l = p + 1;
@@ -125,30 +123,30 @@ class ArithUtest
     // a 2^n-th principal root of unity in GF_p
     T a1 = 2;
     T a2 = 5;
-    T p1 = a1 * arith->exp(2, 15) + 1;
-    T p2 = a2 * arith->exp(2, 15) + 1;
+    T p1 = a1 * exp<T>(2, 15) + 1;
+    T p2 = a2 * exp<T>(2, 15) + 1;
     // std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
-    assert(arith->is_prime(p1));
-    assert(arith->is_prime(p2));
+    assert(is_prime<T>(p1));
+    assert(is_prime<T>(p2));
 
     // ensure their product is bounded (b-1)^2*2^(n-1) < m
     T m = p1 * p2;
     // check overflow
     assert(m/p1 == p2);
     // std::cerr << " m=" << m << "\n";
-    assert(arith->exp((b - 1), 2) * arith->exp(p, 2) < m);
+    assert(exp<T>((b - 1), 2) * exp<T>(p, 2) < m);
 
     // find x so it is not a quadratic residue in GF_p1 and GF_p2
-    assert(arith->jacobi(3, p1) == arith->jacobi(p1, 3));
-    assert(arith->jacobi(p1, 3) == arith->jacobi(2, 3));
-    assert(arith->jacobi(3, p2) == arith->jacobi(p2, 3));
-    assert(arith->jacobi(p2, 3) == arith->jacobi(2, 3));
-    assert(arith->jacobi(2, 3) == -1);
+    assert(jacobi<T>(3, p1) == jacobi<T>(p1, 3));
+    assert(jacobi<T>(p1, 3) == jacobi<T>(2, 3));
+    assert(jacobi<T>(3, p2) == jacobi<T>(p2, 3));
+    assert(jacobi<T>(p2, 3) == jacobi<T>(2, 3));
+    assert(jacobi<T>(2, 3) == -1);
     // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
 
     // therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
-    T w1 = arith->exp(3, a1);
-    T w2 = arith->exp(3, a2);
+    T w1 = exp<T>(3, a1);
+    T w2 = exp<T>(3, a2);
     // std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
     assert(w1 == 9);
     assert(w2 == 243);
@@ -160,7 +158,7 @@ class ArithUtest
     _n[0] = p1;
     _a[1] = w2;
     _n[1] = p2;
-    T w = arith->chinese_remainder(2, _a, _n);
+    T w = chinese_remainder<T>(2, _a, _n);
     // std::cerr << " w=" << w << "\n";
     assert(w == 25559439);
   }
@@ -171,11 +169,11 @@ class ArithUtest
     SignedDoubleT<T> bezout[2];
 
     // not explicitely related to GF(97)
-    assert(2 == arith->extended_gcd(240, 46, NULL, NULL));
-    assert(6 == arith->extended_gcd(54, 24, NULL, NULL));
-    assert(15 == arith->extended_gcd(210, 45, NULL, NULL));
+    assert(2 == extended_gcd<T>(240, 46, NULL, NULL));
+    assert(6 == extended_gcd<T>(54, 24, NULL, NULL));
+    assert(15 == extended_gcd<T>(210, 45, NULL, NULL));
     //
-    assert(1 == arith->extended_gcd(97, 20, bezout, NULL));
+    assert(1 == extended_gcd<T>(97, 20, bezout, NULL));
     assert(bezout[0] == -7 && bezout[1] == 34);
   }
 
@@ -184,11 +182,11 @@ class ArithUtest
 
     typename std::vector<T>::size_type j;
 
-    assert(arith->is_prime(primes->at(0)));
+    assert(is_prime<T>(primes->at(0)));
 
     for (j = 1; j != primes->size(); ++j) {
       // std::cout << j << ": " << primes->at(j) << "\n";
-      assert(arith->is_prime(primes->at(j)));
+      assert(is_prime<T>(primes->at(j)));
       if (distinct)
         assert(primes->at(j-1) != primes->at(j));
     }
@@ -202,7 +200,7 @@ class ArithUtest
     typename std::vector<T>::size_type j;
     T y = 1;
     for (j = 0; j != primes->size(); ++j) {
-      y *= arith->exp(primes->at(j), exponent->at(j));
+      y *= exp<T>(primes->at(j), exponent->at(j));
     }
     assert(y == nb);
   }
@@ -216,9 +214,9 @@ class ArithUtest
       T x;
       std::vector<T> primes;
       // std::cout << "i=" << i << "\n";
-      x = arith->weak_rand(max);
+      x = _weak_rand<T>(max);
       // std::cout << "x=" << x << "\n";
-      arith->factor_distinct_prime(x, &primes);
+      factor_distinct_prime<T>(x, &primes);
       check_all_primes(&primes, true);
     }
   }
@@ -233,9 +231,9 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T x;
       // std::cout << "i=" << i << "\n";
-      x = arith->weak_rand(max);
+      x = _weak_rand<T>(max);
       // std::cout << "x=" << x << "\n";
-      arith->factor_prime(x, &primes, &exponent);
+      factor_prime<T>(x, &primes, &exponent);
       check_all_primes(&primes, true);
       check_primes_exponent(x, &primes, &exponent);
       primes.clear();
@@ -244,7 +242,7 @@ class ArithUtest
   }
 
   void check_divisors(T nb, std::vector<T> *divisors, bool proper) {
-    if (proper && arith->is_prime(nb))
+    if (proper && is_prime<T>(nb))
       assert(divisors->size() == 0);
     else
       assert(divisors->size() > 0);
@@ -254,7 +252,7 @@ class ArithUtest
       // std::cout << i << ": " << divisors->at(i) << "\n";
       assert(nb % divisors->at(i) == 0);
       if (proper)
-        assert(arith->is_prime(nb / divisors->at(i)));
+        assert(is_prime<T>(nb / divisors->at(i)));
     }
   }
 
@@ -267,9 +265,9 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T x;
       // std::cout << "i=" << i << "\n";
-      x = arith->weak_rand(max);
+      x = _weak_rand<T>(max);
       // std::cout << "x=" << x << "\n";
-      arith->get_proper_divisors(x, &divisors);
+      get_proper_divisors<T>(x, &divisors);
       check_divisors(x, &divisors, true);
       divisors.clear();
     }
@@ -284,11 +282,11 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T x;
       // std::cout << "i=" << i << "\n";
-      x = arith->weak_rand(max);
+      x = _weak_rand<T>(max);
       std::vector<T> factors;
-      arith->factor_distinct_prime(x, &factors);
+      factor_distinct_prime<T>(x, &factors);
       // std::cout << "x=" << x << "\n";
-      arith->get_proper_divisors(x, &factors, &divisors);
+      get_proper_divisors<T>(x, &factors, &divisors);
       check_divisors(x, &divisors, true);
       divisors.clear();
     }
@@ -303,9 +301,9 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T x;
       // std::cout << "i=" << i << "\n";
-      x = arith->weak_rand(max);
+      x = _weak_rand<T>(max);
       // std::cout << "x=" << x << "\n";
-      arith->compute_all_divisors(x, &divisors);
+      compute_all_divisors<T>(x, &divisors);
       check_divisors(x, &divisors, false);
       divisors.clear();
     }
@@ -319,11 +317,11 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T order, n;
       // std::cout << "i=" << i << "\n";
-      order = arith->weak_rand(max);
+      order = _weak_rand<T>(max);
       // std::cout << "order=" << order << "\n";
-      n = arith->weak_rand(order);
+      n = _weak_rand<T>(order);
       // std::cout << "n=" << n << "\n";
-      T len = arith->get_code_len(order, n);
+      T len = _get_code_len<T>(order, n);
       // std::cout << "len=" << len << "\n";
       assert(order % len == 0);
       assert(len >= n);
@@ -338,11 +336,11 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T order, n;
       // std::cout << "i=" << i << "\n";
-      order = arith->weak_rand(max);
+      order = _weak_rand<T>(max);
       // std::cout << "order=" << order << "\n";
-      n = arith->weak_rand(order);
+      n = _weak_rand<T>(order);
       // std::cout << "n=" << n << "\n";
-      T len = arith->get_code_len_high_compo(order, n);
+      T len = _get_code_len_high_compo<T>(order, n);
       // std::cout << "len=" << len << "\n";
       assert(order % len == 0);
       assert(len >= n);
@@ -357,13 +355,13 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T order, n;
       // std::cout << "i=" << i << "\n";
-      order = arith->weak_rand(max);
+      order = _weak_rand<T>(max);
       // std::cout << "order=" << order << "\n";
-      n = arith->weak_rand(order);
+      n = _weak_rand<T>(order);
       // std::cout << "n=" << n << "\n";
       std::vector<T> factors;
-      arith->get_prime_factors(order, &factors);
-      T len = arith->get_code_len_high_compo(&factors, n);
+      get_prime_factors<T>(order, &factors);
+      T len = _get_code_len_high_compo<T>(&factors, n);
       // std::cout << "len=" << len << "\n";
       assert(order % len == 0);
       assert(len >= n);
@@ -378,7 +376,7 @@ class ArithUtest
       // std::cout << i << ": " << divisors->at(i) << "\n";
       assert(nb % divisors->at(i) == 0);
       if (!coprime)
-        assert(arith->is_prime(divisors->at(i)));
+        assert(is_prime<T>(divisors->at(i)));
       else {
         for (j = i+1; j != divisors->size(); ++j) {
           assert(divisors->at(i) != divisors->at(j));
@@ -396,9 +394,9 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T n;
       // std::cout << "i=" << i << "\n";
-      n = arith->weak_rand(max);
+      n = _weak_rand<T>(max);
       // std::cout << "n=" << n << "\n";
-      arith->get_coprime_factors(n, &divisors);
+      get_coprime_factors<T>(n, &divisors);
       check_prime_divisors(n, &divisors, true);
       divisors.clear();
     }
@@ -413,9 +411,9 @@ class ArithUtest
     for (i = 0; i < 1000; i++) {
       T n;
       // std::cout << "i=" << i << "\n";
-      n = arith->weak_rand(max);
+      n = _weak_rand<T>(max);
       // std::cout << "n=" << n << "\n";
-      arith->get_prime_factors(n, &divisors);
+      get_prime_factors<T>(n, &divisors);
       check_prime_divisors(n, &divisors, false);
       divisors.clear();
     }
@@ -475,10 +473,6 @@ class ArithUtest
     test_ext_gcd();
   }
 };
-
-template class Arith<uint32_t>;
-template class Arith<uint64_t>;
-template class Arith<mpz_class>;
 
 void arith_utest()
 {

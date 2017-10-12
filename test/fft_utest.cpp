@@ -14,7 +14,7 @@ class FFTUtest
     int i;
     for (i = 0; i < 100; i++) {
       T x = gf->weak_rand();
-      assert(1 == gf->arith->extended_gcd(97, x, bezout, NULL));
+      assert(1 == extended_gcd<T>(97, x, bezout, NULL));
       // std::cerr << bezout[0] << "*" << 97 << " " << bezout[1] << "*";
       // stdd:cerr << x << "=1\n";
       T y = gf->inv(x);
@@ -89,7 +89,7 @@ class FFTUtest
 
     int b = 10;  // base
     int p = 14;  // we could multiply integers of 2^p digits
-    int max_digits = __arith64.exp(2, p);
+    int max_digits = exp<T>(2, p);
     // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
     uint64_t l = p + 1;
@@ -100,30 +100,30 @@ class FFTUtest
     // a 2^n-th principal root of unity in GF_p
     uint64_t a1 = 2;
     uint64_t a2 = 5;
-    uint64_t p1 = a1 * __arith64.exp(2, 15) + 1;
-    uint64_t p2 = a2 * __arith64.exp(2, 15) + 1;
+    uint64_t p1 = a1 * exp<T>(2, 15) + 1;
+    uint64_t p2 = a2 * exp<T>(2, 15) + 1;
     // std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
-    assert(__arith64.is_prime(p1));
-    assert(__arith64.is_prime(p2));
+    assert(is_prime<T>(p1));
+    assert(is_prime<T>(p2));
 
     // ensure their product is bounded (b-1)^2*2^(n-1) < m
     uint64_t m = p1 * p2;
     // check overflow
     assert(m/p1 == p2);
     // std::cerr << " m=" << m << "\n";
-    assert(__arith64.exp((b - 1), 2) * __arith64.exp(p, 2) < m);
+    assert(exp<T>((b - 1), 2) * exp<T>(p, 2) < m);
 
     // find x so it is not a quadratic residue in GF_p1 and GF_p2
-    assert(__arith64.jacobi(3, p1) == __arith64.jacobi(p1, 3));
-    assert(__arith64.jacobi(p1, 3) == __arith64.jacobi(2, 3));
-    assert(__arith64.jacobi(3, p2) == __arith64.jacobi(p2, 3));
-    assert(__arith64.jacobi(p2, 3) == __arith64.jacobi(2, 3));
-    assert(__arith64.jacobi(2, 3) == -1);
+    assert(jacobi<T>(3, p1) == jacobi<T>(p1, 3));
+    assert(jacobi<T>(p1, 3) == jacobi<T>(2, 3));
+    assert(jacobi<T>(3, p2) == jacobi<T>(p2, 3));
+    assert(jacobi<T>(p2, 3) == jacobi<T>(2, 3));
+    assert(jacobi<T>(2, 3) == -1);
     // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
 
     // therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
-    uint64_t w1 = __arith64.exp(3, a1);
-    uint64_t w2 = __arith64.exp(3, a2);
+    uint64_t w1 = exp<T>(3, a1);
+    uint64_t w2 = exp<T>(3, a2);
     // std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
     assert(w1 == 9);
     assert(w2 == 243);
@@ -135,7 +135,7 @@ class FFTUtest
     _n[0] = p1;
     _a[1] = w2;
     _n[1] = p2;
-    uint64_t w = __arith64.chinese_remainder(2, _a, _n);
+    uint64_t w = chinese_remainder<uint64_t>(2, _a, _n);
     // std::cerr << " w=" << w << "\n";
     assert(w == 25559439);
 
@@ -201,7 +201,7 @@ class FFTUtest
 
     std::cout << "test_fftn\n";
 
-    assert(gf.arith->jacobi(R, q) == -1);
+    assert(jacobi<T>(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
@@ -240,7 +240,7 @@ class FFTUtest
 
     std::cout << "test_fft2k\n";
 
-    assert(gf.arith->jacobi(R, q) == -1);
+    assert(jacobi<T>(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
@@ -389,7 +389,7 @@ class FFTUtest
   void run_taylor_expand_t2(GF<T> *gf, FFTADD<T> *fft) {
     // a random number that is power of 2
     int n = (gf->weak_rand() % 30) + 6;
-    n = gf->arith->exp2(gf->arith->log2(n) + 1);
+    n = exp2<T>(log2<T>(n) + 1);
     int t = 2;
     int m = n/2;
     while (m * 2 < n) m++;
@@ -440,8 +440,8 @@ class FFTUtest
       GF2N<T> gf = GF2N<T>(gf_n);
       std::cout << "test_fftadd_with_n=" << gf_n << "\n";
       // n is power of 2 and at least n_data + n_parities
-      n = gf.arith->get_smallest_power_of_2(n_data + n_parities);
-      m = gf.arith->log2(n);
+      n = get_smallest_power_of_2<T>(n_data + n_parities);
+      m = log2<T>(n);
 
       // std::cerr << "n=" << n << "\n";
       FFTADD<T> fft = FFTADD<T>(&gf, m);
@@ -496,7 +496,7 @@ class FFTUtest
 
     std::cout << "test_fft2\n";
 
-    assert(gf.arith->jacobi(R, q) == -1);
+    assert(jacobi<T>(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
@@ -602,7 +602,6 @@ class FFTUtest
   }
 };
 
-template class Arith<uint32_t>;
 template class Mat<uint32_t>;
 template class Vec<uint32_t>;
 template class FFT<uint32_t>;
@@ -610,14 +609,12 @@ template class FFTLN<uint32_t>;
 template class FFTPF<uint32_t>;
 template class FFTADD<uint32_t>;
 
-template class Arith<uint64_t>;
 template class Mat<uint64_t>;
 template class Vec<uint64_t>;
 template class FFT<uint64_t>;
 template class FFTPF<uint64_t>;
 template class FFTADD<uint64_t>;
 
-template class Arith<mpz_class>;
 template class Mat<mpz_class>;
 template class Vec<mpz_class>;
 

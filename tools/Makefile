@@ -4,7 +4,7 @@
 CXXFLAGS = -std=c++11 -I../src -g -O2 -DNDEBUG
 LDFLAGS = -L../src -lntl -lgmpxx -lgmp
 
-all: ec find_pminus1_compo #is_prime find_primes
+all: ec #find_pminus1_compo is_prime find_primes
 
 ec: ec.o ../src/libntl.a
 	$(CXX) -o ec ec.o $(LDFLAGS)

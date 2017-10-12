@@ -25,8 +25,8 @@ class FECGF2NFFTADDRS : public FEC<T>
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = smallest power of 2 and at least (n_parities + n_data)
-    n = this->gf->arith->get_smallest_power_of_2(n_data + n_parities);
-    m = this->gf->arith->log2(n);
+    n = get_smallest_power_of_2<T>(n_data + n_parities);
+    m = log2<T>(n);
 
     // std::cerr << "n_parities=" << n_parities << "\n";
     // std::cerr << "n_data=" << n_data << "\n";
