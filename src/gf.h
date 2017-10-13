@@ -11,9 +11,9 @@ class GFP;
  * @param n exponent
  */
 template<typename T>
-class GF : public MG<T>
+class GF : public RN<T>
 {
-private:
+protected:
   T p;
   T n;
   GFP<T> *sub_field;
@@ -22,10 +22,12 @@ public:
   GF(T p, T n);
   virtual ~GF();
   GF<T> *get_sub_field();
+  T get_p();
+  T get_n();
 };
 
 template <typename T>
-GF<T>::GF(T p, T n) : MG<T>(this->arith->exp(p, n))
+GF<T>::GF(T p, T n) : RN<T>(exp<T>(p, n))
 {
   // XXX shall check that p is prime
   this->p = p;
@@ -53,4 +55,16 @@ GF<T> *GF<T>::get_sub_field()
     return this->sub_field;
   else
     return this;
+}
+
+template <typename T>
+T GF<T>::get_p()
+{
+  return p;
+}
+
+template <typename T>
+T GF<T>::get_n()
+{
+  return n;
 }

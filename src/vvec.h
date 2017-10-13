@@ -9,8 +9,8 @@ class VVec : public Vec<T>
 {
  private:
   Vec<T> *vec;
- public:
   int n;
+ public:
   VVec(Vec<T> *vec, int n);
   int get_n(void);
   T get(int i);
@@ -18,7 +18,7 @@ class VVec : public Vec<T>
 
 template <typename T>
 VVec<T>::VVec(Vec<T> *vec, int n) :
-  Vec<T>(vec->mg, n, vec->get_mem(), vec->get_mem_len())
+  Vec<T>(vec->rn, n, vec->get_mem(), vec->get_mem_len())
 {
   this->vec = vec;
   this->n = n;

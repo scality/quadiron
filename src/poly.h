@@ -8,12 +8,14 @@ class Vec;
 template<typename T>
 class Poly
 {
- public:
+private:
   struct Term: std::map <int, T> {};
-
-  GF<T> *gf;
+  RN<T> *rn;
+  GF<T> *sub_field;
   Term terms;
 
+ public:
+  explicit Poly(RN<T> *rn);
   explicit Poly(GF<T> *gf);
   void clear();
   void copy(Poly<T> *src);
@@ -39,13 +41,23 @@ class Poly
   T eval(T x);
   bool equal(Poly<T> *f);
   void to_vec(Vec<T> *vec);
+  T to_num();
+  void from_num(T x, int max_deg);
   void dump();
 };
 
 template <typename T>
+Poly<T>::Poly(RN<T> *rn)
+{
+  this->rn = rn;
+  this->sub_field = NULL;
+}
+
+template <typename T>
 Poly<T>::Poly(GF<T> *gf)
 {
-  this->gf = gf;
+  this->rn = gf;
+  this->sub_field = gf->get_sub_field();
 }
 
 template <typename T>
@@ -101,7 +113,7 @@ T Poly<T>::get(int exponent)
 template <typename T>
 void Poly<T>::set(int exponent, T coef)
 {
-  assert(gf->check(coef));
+  assert(rn->check(coef));
 
   typename Term::const_iterator it = terms.find(exponent);
 
@@ -115,7 +127,7 @@ void Poly<T>::_neg(Poly<T> *result, Poly<T> *a)
 {
   result->clear();
 
-  Poly<T> b(gf);
+  Poly<T> b(rn);
   sub(result, &b, a);
 }
 
@@ -128,7 +140,7 @@ void Poly<T>::_add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 
   for (int i = max; i >= 0; i--)
     result->set(i,
-                gf->add(a->get(i), b->get(i)));
+                rn->add(a->get(i), b->get(i)));
 }
 
 template <typename T>
@@ -140,7 +152,7 @@ void Poly<T>::_sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 
   for (int i = max; i >= 0; i--)
     result->set(i,
-                gf->sub(a->get(i), b->get(i)));
+                rn->sub(a->get(i), b->get(i)));
 }
 
 template <typename T>
@@ -151,8 +163,8 @@ void Poly<T>::_mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
   for (int i = a->degree(); i >= 0; i--)
     for (int j = b->degree(); j >= 0; j--)
       result->set(i + j,
-                  gf->add(result->get(i + j),
-                          gf->mul(a->get(i), b->get(j))));
+                  rn->add(result->get(i + j),
+                          rn->mul(a->get(i), b->get(j))));
 }
 
 /**
@@ -166,7 +178,7 @@ void Poly<T>::_mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 template <typename T>
 void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
 {
-  Poly<T> _q(gf), _r(gf);
+  Poly<T> _q(rn), _r(rn);
 
   if (d->is_zero())
     throw NTL_EX_DIV_BY_ZERO;
@@ -174,9 +186,9 @@ void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
   _q.clear();
   _r.copy(n);
   while (!_r.is_zero() && (_r.degree() >= d->degree())) {
-    Poly<T> _t(gf);
+    Poly<T> _t(rn);
     _t.set(_r.degree() - d->degree(),
-           gf->div(_r.lead(), d->lead()));
+           rn->div(_r.lead(), d->lead()));
     _q.add(&_t);
     _t.mul(d);
     _r.sub(&_t);
@@ -192,16 +204,23 @@ void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
 template <typename T>
 void Poly<T>::_derivative(Poly<T> *result, Poly<T> *a)
 {
+  T _card;
+
+  if (sub_field)
+    _card = sub_field->card();
+  else
+    _card = rn->card();
+
   result->clear();
 
   for (int i = a->degree(); i > 0; i--)
-    result->set(i - 1, gf->mul(a->get(i), i % gf->get_sub_field()->card()));
+    result->set(i - 1, rn->mul(a->get(i), i % _card));
 }
 
 template <typename T>
 void Poly<T>::neg()
 {
-  Poly<T> a(gf), b(gf);
+  Poly<T> a(rn), b(rn);
   b.copy(this);
   _sub(this, &a, &b);
 }
@@ -209,7 +228,7 @@ void Poly<T>::neg()
 template <typename T>
 void Poly<T>::add(Poly<T> *b)
 {
-  Poly<T> a(gf);
+  Poly<T> a(rn);
   a.copy(this);
   _add(this, &a, b);
 }
@@ -217,7 +236,7 @@ void Poly<T>::add(Poly<T> *b)
 template <typename T>
 void Poly<T>::sub(Poly<T> *b)
 {
-  Poly<T> a(gf);
+  Poly<T> a(rn);
   a.copy(this);
   _sub(this, &a, b);
 }
@@ -225,7 +244,7 @@ void Poly<T>::sub(Poly<T> *b)
 template <typename T>
 void Poly<T>::mul(Poly<T> *b)
 {
-  Poly<T> a(gf);
+  Poly<T> a(rn);
   a.copy(this);
   _mul(this, &a, b);
 }
@@ -233,7 +252,7 @@ void Poly<T>::mul(Poly<T> *b)
 template <typename T>
 void Poly<T>::div(Poly<T> *b)
 {
-  Poly<T> a(gf);
+  Poly<T> a(rn);
   a.copy(this);
   _div(this, NULL, &a, b);
 }
@@ -241,7 +260,7 @@ void Poly<T>::div(Poly<T> *b)
 template <typename T>
 void Poly<T>::mod(Poly<T> *b)
 {
-  Poly<T> a(gf);
+  Poly<T> a(rn);
   a.copy(this);
   _div(NULL, this, &a, b);
 }
@@ -249,7 +268,7 @@ void Poly<T>::mod(Poly<T> *b)
 template <typename T>
 void Poly<T>::derivative()
 {
-  Poly<T> a(gf);
+  Poly<T> a(rn);
   a.copy(this);
   _derivative(this, &a);
 }
@@ -261,7 +280,7 @@ T Poly<T>::eval(T x)
   T result = get(i);
 
   while (i >= 1) {
-    result = gf->add(gf->mul(result, x), get(i - 1));
+    result = rn->add(rn->mul(result, x), get(i - 1));
     i--;
   }
   return result;
@@ -287,6 +306,42 @@ void Poly<T>::to_vec(Vec<T> *vec) {
     vec->set(i, get(i));
   for (; i < vec->get_n(); i++)
     vec->set(i, 0);
+}
+
+/** 
+ * convert a polynomial to numerical representation
+ * 
+ * 
+ * @return 
+ */
+template <typename T>
+T Poly<T>::to_num()
+{
+  int i = degree();
+  T result = 0;
+  
+  while (i >= 0) {
+    result += get(i) * exp<T>(rn->card(), i);
+    i--;
+  }
+  return result;
+}
+
+/** 
+ * convert a numerical representation of a polynomial
+ * 
+ * @param x 
+ */
+template <typename T>
+void Poly<T>::from_num(T x, int max_deg)
+{
+  for (int i = max_deg;i >= 0;i--) {
+    T tmp = exp<T>(rn->card(), i);
+    T tmp2 = x / tmp;
+    if (tmp2 != 0)
+      set(i, tmp2);
+    x -= tmp2 * tmp;
+  }
 }
 
 template <typename T>

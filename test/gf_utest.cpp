@@ -121,6 +121,14 @@ class GFUtest
     test_reciprocal(&gf5);
   }
 
+  void test_log_gf5()
+  {
+    std::cout << "test_log_gf5\n";
+
+    GFP<T> gf5(5);
+    test_log(&gf5);
+  }
+
   void test_prime_root_gf5()
   {
     std::cout << "test_prime_root_gf5\n";
@@ -129,24 +137,6 @@ class GFUtest
     test_find_prime_root(&gf5);
     test_get_order(&gf5);
     test_get_nth_root(&gf5);
-  }
-
-  void test_log_gf()
-  {
-    std::cout << "test_log_gf\n";
-
-    GFP<T> gf(32);
-    test_log(&gf);
-  }
-
-  void test_prime_root_gf31()
-  {
-    std::cout << "test_prime_root_gf31\n";
-
-    GFP<T> gf(31);
-    test_find_prime_root(&gf);
-    test_get_order(&gf);
-    test_get_nth_root(&gf);
   }
 
   void test_negation_gf256()
@@ -181,19 +171,6 @@ class GFUtest
     test_find_prime_root(&gf256);
     test_get_order(&gf256);
     test_get_nth_root(&gf256);
-  }
-
-  void test_misc_gf29()
-  {
-    GFP<T> gf29(29);
-
-    std::cout << "test_misc_gf29\n";
-
-    assert(gf29.neg(28) == 1);
-    assert(gf29.neg(18) == 11);
-    assert(gf29.neg(4) == 25);
-
-    assert(gf29.add(28, 1) == 0);
   }
 
   void test_negation_gf2_bign(T n)
@@ -238,13 +215,11 @@ class GFUtest
 
     test_negation_gf5();
     test_reciprocal_gf5();
+    test_log_gf5();
     test_prime_root_gf5();
-    test_log_gf();
-    test_prime_root_gf31();
     test_negation_gf256();
     test_reciprocal_gf256();
     test_log_gf256();
-    test_misc_gf29();
     test_negation_gf256();
     test_prime_root_gf256();
   }
@@ -270,10 +245,8 @@ class GFUtest
 
     test_negation_gf5();
     test_reciprocal_gf5();
+    test_log_gf5();
     test_prime_root_gf5();
-    test_log_gf();
-    test_misc_gf29();
-    test_prime_root_gf31();
   }
 
   void gf_utest_2_n()

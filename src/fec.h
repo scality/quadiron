@@ -27,7 +27,6 @@ class FEC
 
  protected:
   GF<T> *gf;
-  Arith<T> *arith;
 
  public:
   FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities);
@@ -89,13 +88,11 @@ FEC<T>::FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities)
   this->word_size = word_size;
   this->n_data = n_data;
   this->n_parities = n_parities;
-  this->arith = new Arith<T>();
 }
 
 template <typename T>
 FEC<T>::~FEC()
 {
-  delete arith;
 }
 
 template <typename T>

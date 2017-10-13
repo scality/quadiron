@@ -14,8 +14,8 @@ class Vec
  protected:
   int n;
  public:
-  MG<T> *mg;
-  Vec(MG<T> *mg, int n, T* mem=NULL, int mem_len=0);
+  RN<T> *rn;
+  Vec(RN<T> *rn, int n, T* mem=NULL, int mem_len=0);
   ~Vec();
   virtual int get_n(void);
   int get_mem_len(void);
@@ -39,9 +39,9 @@ class Vec
 };
 
 template <typename T>
-Vec<T>::Vec(MG<T> *mg, int n, T* mem, int mem_len)
+Vec<T>::Vec(RN<T> *rn, int n, T* mem, int mem_len)
 {
-  this->mg = mg;
+  this->rn = rn;
   this->n = n;
   if (mem == NULL) {
     this->mem = new T[n];
@@ -118,7 +118,7 @@ template <typename T>
 void Vec<T>::mul_scalar(T scalar)
 {
   for (int i = 0; i < n; i++)
-    set(i, mg->mul(get(i), scalar));
+    set(i, rn->mul(get(i), scalar));
 }
 
 /**
@@ -132,7 +132,7 @@ void Vec<T>::hadamard_mul(Vec<T> *v)
   assert(n == v->get_n());
 
   for (int i = 0; i < n; i++)
-    set(i, mg->mul(get(i), v->get(i)));
+    set(i, rn->mul(get(i), v->get(i)));
 }
 
 template <>
@@ -146,7 +146,7 @@ void Vec<T>::add(Vec<T> *v)
   assert(n == v->get_n());
 
   for (int i = 0; i < n; i++)
-    set(i, mg->add(get(i), v->get(i)));
+    set(i, rn->add(get(i), v->get(i)));
 }
 
 template <typename T>
@@ -157,7 +157,7 @@ void Vec<T>::add(Vec<T> *v, int offset)
   int j;
   for (int i = 0; i < v->get_n(); i++) {
     j = i + offset;
-    set(j, mg->add(get(j), v->get(i)));
+    set(j, rn->add(get(j), v->get(i)));
   }
 }
 
@@ -166,7 +166,7 @@ void Vec<T>::add_mutual(Vec<T> *v)
 {
   assert(n >= v->get_n());
   for (int i = 0; i < v->get_n(); i++)
-    set(i, mg->add(get(i), v->get(i)));
+    set(i, rn->add(get(i), v->get(i)));
 }
 
 template <typename T>
@@ -176,7 +176,7 @@ void Vec<T>::add_mutual(Vec<T> *v, int offset)
   int j;
   for (int i = 0; i < v->get_n(); i++) {
     j = i + offset;
-    set(j, mg->add(get(j), v->get(i)));
+    set(j, rn->add(get(j), v->get(i)));
   }
 }
 
@@ -188,7 +188,7 @@ void Vec<T>::add_mutual(Vec<T> *v, int offset, int len)
   int j;
   for (int i = 0; i < len; i++) {
     j = i + offset;
-    set(j, mg->add(get(j), v->get(i)));
+    set(j, rn->add(get(j), v->get(i)));
   }
 }
 

@@ -41,11 +41,11 @@ typedef enum
   } NtlException;
 
 #include "arith.h"
-#include "mg.h"
+#include "misc.h"
+#include "rn.h"
 #include "gf.h"
 #include "gfp.h"
 #include "gf2n.h"
-#include "misc.h"
 #include "config.h"
 #include "vec.h"
 #include "vvec.h"

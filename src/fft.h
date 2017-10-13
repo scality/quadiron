@@ -11,7 +11,6 @@ class FFT
 {
  protected:
   GF<T> *gf;
-  Arith<T> *arith;
   int n;
   T inv_n_mod_p;
   FFT(GF<T> *gf, int n);
@@ -30,13 +29,11 @@ FFT<T>::FFT(GF<T> *gf, int n)
   this->gf = gf;
   this->n = n;
   this->inv_n_mod_p = gf->inv(n) % gf->get_sub_field()->card();
-  this->arith = new Arith<T>();
 }
 
 template <typename T>
 FFT<T>::~FFT()
 {
-  delete arith;
 }
 
 template <typename T>
