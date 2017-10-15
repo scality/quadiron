@@ -8,46 +8,50 @@ template<typename T>
 using SignedDoubleT = typename SignedDouble<T>::T;
 
 template <class T>
-T sqrt(T n);
+T _sqrt(T n);
 template <class T>
-T exp(T base, T exponent);
+T _exp(T base, T exponent);
 template <class T>
-T exp_mod(T base, T exponent, T modulus);
+T _exp_mod(T base, T exponent, T modulus);
 template <class T>
-bool is_power_of_2(int x);
+bool _is_power_of_2(int x);
 template <class T>
-T get_smallest_power_of_2(int x);
+T _get_smallest_power_of_2(int x);
 template <class T>
-int log2(int x);
+int _log2(int x);
 template <class T>
-int exp2(int x);
+int _exp2(int x);
 template <class T>
-SignedDoubleT<T> extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b,
-                              SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2]);
+SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b,
+                               SignedDoubleT<T> bezout_coef[2],
+                               SignedDoubleT<T> quotient_gcd[2]);
 template <class T>
-T chinese_remainder(int n_mod, T a[], T n[]);
+T _chinese_remainder(int n_mod, T a[], T n[]);
 template <class T>
-int jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m);
+int _jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m);
 template <class T>
-bool solovay_strassen1(T a, T n);
+bool _solovay_strassen1(T a, T n);
 template <class T>
-bool solovay_strassen(T n);
+bool _solovay_strassen(T n);
 template <class T>
-bool is_prime(T n);
+bool _is_prime(T n);
 template <class T>
 T _weak_rand(T max);
 template <class T>
-T gcd(T u, T v);
+T _weak_rand0(T max);
 template <class T>
-void factor_distinct_prime(T n, std::vector<T> *output);
+T _gcd(T u, T v);
 template <class T>
-void factor_prime(T nb, std::vector<T> *primes, std::vector<T> *exponent);
+void _factor_distinct_prime(T n, std::vector<T> *output);
 template <class T>
-void get_proper_divisors(T n, std::vector<T> *output);
+void _factor_prime(T nb, std::vector<T> *primes, std::vector<T> *exponent);
 template <class T>
-void get_proper_divisors(T n, std::vector<T> *primes, std::vector<T> *output);
+void _get_proper_divisors(T n, std::vector<T> *output);
 template <class T>
-void compute_all_divisors(T nb, std::vector<T> *output);
+void _get_proper_divisors(T n, std::vector<T> *primes,
+                          std::vector<T> *output);
+template <class T>
+void _compute_all_divisors(T nb, std::vector<T> *output);
 template <class T>
 T _get_code_len(T order, T n);
 template <class T>
@@ -55,12 +59,13 @@ T _get_code_len_high_compo(T order, T n);
 template <class T>
 T _get_code_len_high_compo(std::vector<T> *factors, T n);
 template <class T>
-void get_coprime_factors(T nb, std::vector<T> *output);
+void _get_coprime_factors(T nb, std::vector<T> *output);
 template <class T>
-void get_prime_factors(T nb, std::vector<T> *output);
+void _get_prime_factors(T nb, std::vector<T> *output);
 template <class T>
-void get_prime_factors_final(std::vector<T> *primes,
-                             std::vector<T> *exponent, std::vector<T> *output);
+void _get_prime_factors_final(std::vector<T> *primes,
+                              std::vector<T> *exponent, 
+                              std::vector<T> *output);
 
 /**
  * integer square root (from Wikipedia)
@@ -70,7 +75,7 @@ void get_prime_factors_final(std::vector<T> *primes,
  * @return
  */
 template <class T>
-T sqrt(T remainder)
+T _sqrt(T remainder)
 {
   // calculated by precompiler = same runtime as: place = 0x40000000
   T place = (T)1 << (sizeof (T) * 8 - 2);
@@ -103,7 +108,7 @@ T sqrt(T remainder)
  * @return
  */
 template <class T>
-T exp(T base, T exponent)
+T _exp(T base, T exponent)
 {
   if (exponent == 0)
     return 1;
@@ -131,7 +136,7 @@ T exp(T base, T exponent)
  * @return
  */
 template <class T>
-T exp_mod(T base, T exponent, T modulus)
+T _exp_mod(T base, T exponent, T modulus)
 {
   if (1 == modulus)
     return 0;
@@ -156,7 +161,7 @@ T exp_mod(T base, T exponent, T modulus)
  * @return
  */
 template <class T>
-bool is_power_of_2(int x)
+bool _is_power_of_2(int x)
 {
   return x > 0 && !(x & (x-1));
 }
@@ -169,11 +174,11 @@ bool is_power_of_2(int x)
  * @return
  */
 template <class T>
-T get_smallest_power_of_2(int x)
+T _get_smallest_power_of_2(int x)
 {
-  if (is_power_of_2<T>(x))
+  if (_is_power_of_2<T>(x))
     return x;
-  return exp2<T>(log2<T>(x) + 1);
+  return _exp2<T>(_log2<T>(x) + 1);
 }
 
 /**
@@ -184,7 +189,7 @@ T get_smallest_power_of_2(int x)
  * @return
  */
 template <class T>
-int log2(int x)
+int _log2(int x)
 {
   int result = 0;
 
@@ -210,7 +215,7 @@ int log2(int x)
  * @return
  */
 template <class T>
-int exp2(int x)
+int _exp2(int x)
 {
   return 1 << x;
 }
@@ -232,7 +237,7 @@ int exp2(int x)
  * @return the GCD
  */
 template <class T>
-SignedDoubleT<T> extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b,
+SignedDoubleT<T> _extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b,
   SignedDoubleT<T> bezout_coef[2], SignedDoubleT<T> quotient_gcd[2])
 {
   SignedDoubleT<T> s = 0;
@@ -286,7 +291,7 @@ SignedDoubleT<T> extended_gcd(SignedDoubleT<T> a, SignedDoubleT<T> b,
  * @throw NTL_EX_NO_SOLUTION
  */
 template <class T>
-T chinese_remainder(int n_mod, T a[], T n[])
+T _chinese_remainder(int n_mod, T a[], T n[])
 {
   int i;
   SignedDoubleT<T> _N, x;
@@ -301,7 +306,7 @@ T chinese_remainder(int n_mod, T a[], T n[])
     SignedDoubleT<T> bezout[2];
 
     N[i] = _N / n[i];
-    extended_gcd<T>(N[i], n[i], bezout, NULL);
+    _extended_gcd<T>(N[i], n[i], bezout, NULL);
     M[i] = bezout[0];  // XXX % n[i];
   }
 
@@ -336,7 +341,7 @@ T chinese_remainder(int n_mod, T a[], T n[])
  * @throw NT_EX_INVAL if b is even or b is negative
  */
 template <class T>
-int jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m)
+int _jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m)
 {
   SignedDoubleT<T> t;
   int jac;
@@ -388,7 +393,7 @@ int jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m)
 }
 
 template <class T>
-bool solovay_strassen1(T a, T n)
+bool _solovay_strassen1(T a, T n)
 {
   T _n = (n - 1) / 2;
   T _j = exp_mod(a, _n, n);
@@ -406,7 +411,7 @@ bool solovay_strassen1(T a, T n)
  * @return true if n is (probably) prime else false
  */
 template <class T>
-bool solovay_strassen(T n)
+bool _solovay_strassen(T n)
 {
   int ok = 0;
   for (int i = 0; i < 100; i++) {
@@ -425,12 +430,12 @@ bool solovay_strassen(T n)
  * @return
  */
 template <class T>
-bool is_prime(T n)
+bool _is_prime(T n)
 {
   if (n == 2)
     return true;
 
-  T root = sqrt<T>(n);
+  T root = _sqrt<T>(n);
   for (T i = 2; i <= root; i++) {
     if (n % i == 0)
       return false;
@@ -456,12 +461,28 @@ T _weak_rand(T max)
   return r;
 }
 
+/**
+ * Returns a number n such as 0 <= n < max
+ *
+ * @param max
+ *
+ * @return
+ */
+template <class T>
+T _weak_rand0(T max)
+{
+  T r;
+ retry:
+  r = rand() % max;
+  return r;
+}
+
 /*
  * A given number `n` is factored into primes-> Only primes are stored, their
  *  exponent is ignored.
  */
 template<class T>
-void factor_distinct_prime(T nb, std::vector<T> *output)
+void _factor_distinct_prime(T nb, std::vector<T> *output)
 {
   T last_found = 1;
   while (nb % 2 == 0) {
@@ -472,7 +493,7 @@ void factor_distinct_prime(T nb, std::vector<T> *output)
     nb = nb/2;
   }
   // n must be odd at this point.  So we can skip one element
-  for (T i = 3; i <= sqrt<T>(nb); i = i + 2) {
+  for (T i = 3; i <= _sqrt<T>(nb); i = i + 2) {
     // While i divides n, get i and divide n
     while (nb % i == 0) {
       if (last_found != i) {
@@ -493,11 +514,11 @@ void factor_distinct_prime(T nb, std::vector<T> *output)
  * Get proper divisors of a given number from its factored distince primes
  */
 template<class T>
-void get_proper_divisors(T nb, std::vector<T> *output)
+void _get_proper_divisors(T nb, std::vector<T> *output)
 {
   std::vector<T> input;
   typename std::vector<T>::iterator it;
-  factor_distinct_prime(nb, &input);
+  _factor_distinct_prime<T>(nb, &input);
   // std::cout << "nb: " << nb << std::endl;
   for (it = input.begin(); it != input.end(); ++it) {
     if (*it < nb) {
@@ -511,7 +532,7 @@ void get_proper_divisors(T nb, std::vector<T> *output)
  * Get proper divisors of a given number from its factored distince primes
  */
 template<class T>
-void get_proper_divisors(T nb, std::vector<T> *primes,
+void _get_proper_divisors(T nb, std::vector<T> *primes,
   std::vector<T> *output)
 {
   assert(primes != NULL);
@@ -529,7 +550,7 @@ void get_proper_divisors(T nb, std::vector<T> *primes,
  * A given number `n` is factored into primes
  */
 template<class T>
-void factor_prime(T nb, std::vector<T> *primes,
+void _factor_prime(T nb, std::vector<T> *primes,
   std::vector<T> *exponent)
 {
   // std::cout << nb << ": ";
@@ -546,7 +567,7 @@ void factor_prime(T nb, std::vector<T> *primes,
     occurence = 0;
   }
   // n must be odd at this point.  So we can skip one element
-  for (T i = 3; i <= sqrt<T>(nb); i = i + 2) {
+  for (T i = 3; i <= _sqrt<T>(nb); i = i + 2) {
     // While i divides n, get i and divide n
     while (nb % i == 0) {
       occurence++;
@@ -581,7 +602,7 @@ void factor_prime(T nb, std::vector<T> *primes,
  * @return the GCD(u, v)
  */
 template <class T>
-T gcd(T u, T v)
+T _gcd(T u, T v)
 {
   T r;
   if (v == 0) return u;
@@ -599,11 +620,11 @@ T gcd(T u, T v)
  *
  */
 template <class T>
-void compute_all_divisors(T nb, std::vector<T>* output)
+void _compute_all_divisors(T nb, std::vector<T>* output)
 {
   typename std::vector<T> tmp;
 
-  T nb_sqrt = sqrt<T>(nb);
+  T nb_sqrt = _sqrt<T>(nb);
   for (T i = 1; i <= nb_sqrt; i++) {
     // While i divides n, get i and n/i
     if (nb % i == 0) {
@@ -630,7 +651,7 @@ T _get_code_len(T order, T n)
 {
   if (order % n == 0) return n;
   if (order < n) assert(false);
-  T nb_sqrt = sqrt<T>(order);
+  T nb_sqrt = _sqrt<T>(order);
   T i;
   if (n > nb_sqrt) {
     for (i = order/n; i >= 1; i--) {
@@ -666,7 +687,7 @@ T _get_code_len_high_compo(T order, T n)
   if (order < n) assert(false);
 
   std::vector<T> factors;
-  get_prime_factors(order, &factors);
+  _get_prime_factors<T>(order, &factors);
   T x = 1;
   typename std::vector<T>::size_type i, j;
   // forward to get a divisor of (q-1) >= n and of highly composited
@@ -728,15 +749,15 @@ T _get_code_len_high_compo(std::vector<T> *factors, T n)
  * @return
  */
 template <class T>
-void get_coprime_factors(T nb, std::vector<T> *output)
+void _get_coprime_factors(T nb, std::vector<T> *output)
 {
   std::vector<T> primes;
   std::vector<T> exponent;
-  factor_prime(nb, &primes, &exponent);
+  _factor_prime<T>(nb, &primes, &exponent);
 
   typename std::vector<T>::size_type i;
   for (i = 0; i != primes.size(); ++i) {
-    output->push_back(exp(primes[i], exponent[i]));
+    output->push_back(_exp<T>(primes[i], exponent[i]));
   }
 }
 
@@ -748,12 +769,12 @@ void get_coprime_factors(T nb, std::vector<T> *output)
  * @return
  */
 template <class T>
-void get_prime_factors(T nb, std::vector<T> *output)
+void _get_prime_factors(T nb, std::vector<T> *output)
 {
   std::vector<T> primes;
   std::vector<T> exponent;
-  factor_prime(nb, &primes, &exponent);
-  get_prime_factors_final(&primes, &exponent, output);
+  _factor_prime<T>(nb, &primes, &exponent);
+  _get_prime_factors_final<T>(&primes, &exponent, output);
 }
 
 /**
@@ -765,8 +786,9 @@ void get_prime_factors(T nb, std::vector<T> *output)
  * @return
  */
 template <class T>
-void get_prime_factors_final(std::vector<T> *primes,
-  std::vector<T> *exponent, std::vector<T> *output)
+void _get_prime_factors_final(std::vector<T> *primes,
+                             std::vector<T> *exponent, 
+                             std::vector<T> *output)
 {
   typename std::vector<T>::size_type i, j;
   for (i = 0; i != primes->size(); ++i)

@@ -5,9 +5,6 @@
 template<typename T>
 class GFP : public GF<T>
 {
-private:
-  T p;
-
  public:
   explicit GFP(T p);
   T inv_exp(T a);
@@ -16,7 +13,6 @@ private:
 template <typename T>
 GFP<T>::GFP(T p) : GF<T>(p, 1)
 {
-  this->p = p;
 }
 
 /**

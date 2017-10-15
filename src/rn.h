@@ -38,7 +38,7 @@ public:
   bool is_quadratic_residue(T q);
   void compute_omegas(Vec<T> *W, int n, T w);
   void compute_omegas_cached(Vec<T> *W, int n, T w);
-  T weak_rand(void);
+  virtual T weak_rand(void);
   bool is_prime_root(T nb);
   void find_prime_root();
   T get_root();
@@ -162,7 +162,7 @@ T RN<T>::inv_bezout(T a)
   SignedDoubleT<T> n = this->_card;
   SignedDoubleT<T> bezout[2];
 
-  extended_gcd<T>(x, n, bezout, NULL);
+  _extended_gcd<T>(x, n, bezout, NULL);
   if (bezout[0] < 0)
     bezout[0] = this->_card + bezout[0];
   return bezout[0];
@@ -282,14 +282,14 @@ void RN<T>::compute_factors_of_order()
 
   // prime factorisation of order, i.e. order = p_i^e_i where
   //  p_i, e_i are ith element of this->primes and this->exponent
-  factor_prime<T>(h, this->primes, this->exponent);
+  _factor_prime<T>(h, this->primes, this->exponent);
   // store all primes in a vector. A prime is replicated according to its
   //  exponent
-  get_prime_factors_final<T>(this->primes, this->exponent,
-                             this->all_primes_factors);
+  _get_prime_factors_final<T>(this->primes, this->exponent,
+                              this->all_primes_factors);
   // calculate all proper divisor of order. A proper divisor = order/p_i for
   //  each prime divisor of order.
-  get_proper_divisors<T>(h, this->primes, this->proper_divisors);
+  _get_proper_divisors<T>(h, this->primes, this->proper_divisors);
 
   this->compute_factors_of_order_done = true;
 }
@@ -525,7 +525,7 @@ T RN<T>::get_order(T x)
   std::vector<T> primes;
   std::vector<T> exponent;
   T h = this->card_minus_one();
-  factor_prime<T>(h, &primes, &exponent);
+  _factor_prime<T>(h, &primes, &exponent);
   T order = do_step_get_order(x, h, &primes, &exponent);
 
   if (order == 1) return h;
@@ -572,7 +572,7 @@ template <typename T>
 T RN<T>::get_nth_root(T n)
 {
   T q_minus_one = this->card_minus_one();
-  T d = gcd<T>(n, q_minus_one);
+  T d = _gcd<T>(n, q_minus_one);
   if (!this->root)
     this->find_prime_root();
   T nth_root = this->exp(this->root, q_minus_one/d);

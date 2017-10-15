@@ -27,7 +27,7 @@ public:
 };
 
 template <typename T>
-GF<T>::GF(T p, T n) : RN<T>(exp<T>(p, n))
+GF<T>::GF(T p, T n) : RN<T>(_exp<T>(p, n))
 {
   // XXX shall check that p is prime
   this->p = p;

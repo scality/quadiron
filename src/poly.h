@@ -43,6 +43,7 @@ private:
   void to_vec(Vec<T> *vec);
   T to_num();
   void from_num(T x, int max_deg);
+  void dump(std::ostream &dest);
   void dump();
 };
 
@@ -105,6 +106,8 @@ bool Poly<T>::is_zero()
 template <typename T>
 T Poly<T>::get(int exponent)
 {
+  assert(exponent >= 0);
+
   typename Term::const_iterator it = terms.find(exponent);
 
   return (it == terms.end()) ? 0 : it->second;
@@ -113,6 +116,7 @@ T Poly<T>::get(int exponent)
 template <typename T>
 void Poly<T>::set(int exponent, T coef)
 {
+  assert(exponent >= 0);
   assert(rn->check(coef));
 
   typename Term::const_iterator it = terms.find(exponent);
@@ -185,7 +189,9 @@ void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
 
   _q.clear();
   _r.copy(n);
+
   while (!_r.is_zero() && (_r.degree() >= d->degree())) {
+
     Poly<T> _t(rn);
     _t.set(_r.degree() - d->degree(),
            rn->div(_r.lead(), d->lead()));
@@ -321,7 +327,7 @@ T Poly<T>::to_num()
   T result = 0;
   
   while (i >= 0) {
-    result += get(i) * exp<T>(rn->card(), i);
+    result += get(i) * _exp<T>(rn->card(), i);
     i--;
   }
   return result;
@@ -336,7 +342,7 @@ template <typename T>
 void Poly<T>::from_num(T x, int max_deg)
 {
   for (int i = max_deg;i >= 0;i--) {
-    T tmp = exp<T>(rn->card(), i);
+    T tmp = _exp<T>(rn->card(), i);
     T tmp2 = x / tmp;
     if (tmp2 != 0)
       set(i, tmp2);
@@ -345,11 +351,30 @@ void Poly<T>::from_num(T x, int max_deg)
 }
 
 template <typename T>
-void Poly<T>::dump()
+void Poly<T>::dump(std::ostream &dest)
 {
   typename Term::const_reverse_iterator it = terms.rbegin();
 
-  for (; it != terms.rend(); it++)
-    std::cout << " " << it->second << "x^" << it->first;
+  if (it == terms.rend()) {
+    dest << "0";
+    return ;
+  }
+  bool first = true;
+  for (; it != terms.rend(); it++) {
+    if (first) {
+      first = false;
+    } else {
+      dest << " + ";
+    }
+    dest << it->second;
+    if (0 != it->first)
+      dest << "x^" << it->first;
+  }
+}
+
+template <typename T>
+void Poly<T>::dump()
+{
+  dump(std::cout);
   std::cout << "\n";
 }

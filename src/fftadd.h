@@ -68,7 +68,7 @@ class FFTADD : public FFT<T>
  */
 template <typename T>
 FFTADD<T>::FFTADD(GF<T> *gf, T m, Vec<T>* betas) :
-  FFT<T>(gf, exp2<T>(m))
+  FFT<T>(gf, _exp2<T>(m))
 {
   assert(m >= 1);
   this->m = m;
@@ -95,7 +95,7 @@ FFTADD<T>::FFTADD(GF<T> *gf, T m, Vec<T>* betas) :
   this->beta_m_powers = new Vec<T>(gf, this->n);
   this->compute_beta_m_powers();
   if (m > 1) {
-    this->k = exp2<T>(m - 1);
+    this->k = _exp2<T>(m - 1);
 
     // compute gammas and deltas
     this->gammas = new Vec<T>(gf, m-1);
@@ -191,20 +191,20 @@ void FFTADD<T>::compute_subspace(Vec<T> *basis, Vec<T> *subspace)
   int size = 1;
   int dim = basis->get_n();
   T val = 0;
-  assert(subspace->get_n() == exp2<T>(dim));
+  assert(subspace->get_n() == _exp2<T>(dim));
   // index of element in G
   std::vector<int> ids;
   // create sequence 2^i
   Vec<T> powers2(this->gf, dim);
   for (i = 0; i < dim; i++)
-    powers2.set(i, exp2<T>(i));
+    powers2.set(i, _exp2<T>(i));
 
   ids.push_back(0);
   subspace->set(0, 0);
   for (i = 0; i < dim; i++) {
     for (j = size - 1; j >= 0; j--) {
       int id = this->gf->add(ids.at(j), powers2.get(i));
-      int diff = log2<T>(this->gf->add(id, ids.back()));
+      int diff = _log2<T>(this->gf->add(id, ids.back()));
       val = this->gf->add(val, basis->get(diff));
       subspace->set(id, val);
       // for next i
@@ -405,7 +405,7 @@ void FFTADD<T>::_taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t)
   }
   // find k s.t. t2^k < n <= 2 *t2^k
   int k = find_k(n, t);
-  int deg2 = exp2<T>(k);
+  int deg2 = _exp2<T>(k);
   int deg0 = t*deg2;
 
   VmVec<T> g0(input, deg0);
@@ -485,7 +485,7 @@ void FFTADD<T>::_taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, Vec<T> *input, int n,
     return;
   }
 
-  int deg2 = exp2<T>(_k);
+  int deg2 = _exp2<T>(_k);
   int deg0 = 2*deg2;
 
   VmVec<T> g0(input, deg0);

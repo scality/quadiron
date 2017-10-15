@@ -51,7 +51,7 @@ class FECGFPFFTRS : public FEC<T>
     this->gf = new GFP<T>(gf_p);
     T q = this->gf->card();
     T R = this->gf->get_prime_root();  // primitive root
-    assert(jacobi<T>(R, q) == -1);
+    assert(_jacobi<T>(R, q) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
@@ -65,7 +65,7 @@ class FECGFPFFTRS : public FEC<T>
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    if (is_power_of_2<T>(n))
+    if (_is_power_of_2<T>(n))
       this->fft = new FFT2K<T>(this->gf, n);
     else
       this->fft = new FFTCT<T>(this->gf, n);
