@@ -147,6 +147,37 @@ void poly_utest7()
   assert(result == 5);
 }
 
+void poly_utest8()
+{
+  std::cout << "poly_utest8\n";
+  RN<uint32_t> rn(8);
+  Poly<uint32_t> p1(&rn);
+  p1.set(6, 3);
+  p1.set(4, 7);
+  p1.set(3, 4);
+  p1.set(0, 5);
+  //p1.dump();
+  Poly<uint32_t> p2(&rn);
+  p2.set(4, 1);
+  p2.set(3, 3);
+  p2.set(0, 4);
+  //p2.dump();
+  Poly<uint32_t> p3(&rn);
+  Poly<uint32_t> p4(&rn);
+  p1._div(&p3, &p4, &p1, &p2);
+  //p3.dump();
+  //p4.dump();
+  assert(p3.degree() == 2);
+  assert(p3.get(2) == 3);
+  assert(p3.get(1) == 7);
+  assert(p3.get(0) == 2);
+  assert(p4.degree() == 3);
+  assert(p4.get(3) == 6);
+  assert(p4.get(2) == 4);
+  assert(p4.get(1) == 4);
+  assert(p4.get(0) == 5);
+}
+
 void poly_utest()
 {
   std::cout << "poly_utest\n";
@@ -158,4 +189,5 @@ void poly_utest()
   poly_utest5();
   poly_utest6();
   poly_utest7();
+  poly_utest8();
 }

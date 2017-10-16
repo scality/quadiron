@@ -74,7 +74,7 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
   if (factors == NULL) {
     this->prime_factors = new std::vector<T>();
     first_layer_fft = true;
-    get_prime_factors<T>(n, this->prime_factors);
+    _get_prime_factors<T>(n, this->prime_factors);
     // w is of order-n
     w = gf->get_nth_root(n);
   } else {
@@ -96,7 +96,7 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
     loop = true;
     w2 = gf->exp(w, n1);  // order of w2 = n2
     T _n2 = n/n1;
-    if (is_power_of_2<T>(_n2))
+    if (_is_power_of_2<T>(_n2))
       this->dft_inner = new FFTCT<T>(gf, _n2);
     else
       this->dft_inner = new FFTCT<T>(gf, _n2, id+1, this->prime_factors, w2);
