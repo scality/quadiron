@@ -64,6 +64,11 @@ RN<T>::RN(T card)
 {
   this->_card = card;
   this->root = 0;
+
+  this->primes = new std::vector<T>();
+  this->exponent = new std::vector<T>();
+  this->all_primes_factors = new std::vector<T>();
+  this->proper_divisors = new std::vector<T>();
 }
 
 template <typename T>
@@ -275,11 +280,6 @@ void RN<T>::compute_factors_of_order()
   if (this->compute_factors_of_order_done) return;
 
   T h = this->card_minus_one();
-  this->primes = new std::vector<T>();
-  this->exponent = new std::vector<T>();
-  this->all_primes_factors = new std::vector<T>();
-  this->proper_divisors = new std::vector<T>();
-
   // prime factorisation of order, i.e. order = p_i^e_i where
   //  p_i, e_i are ith element of this->primes and this->exponent
   _factor_prime<T>(h, this->primes, this->exponent);
