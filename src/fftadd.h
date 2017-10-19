@@ -42,18 +42,14 @@ class FFTADD : public FFT<T>
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
   void fft_inv(Vec<T> *output, Vec<T> *input);
-  void taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t,
-    bool do_copy=false);
-  void taylor_expand_t2(Vec<T> *g0, Vec<T> *g1, Vec<T> *input, int n,
-    bool do_copy=false);
+  void taylor_expand_t2(Vec<T> *input, int n, bool do_copy=false);
+  void taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t);
+  void inv_taylor_expand_t2(Vec<T> *output);
   void inv_taylor_expand(Vec<T> *output, Vec<T> *input, int t);
-  void inv_taylor_expand_t2(Vec<T> *output, Vec<T> *g0, Vec<T> *g1);
  private:
   int find_k(int n, int t);
-  void compute_g0_g1(Vec<T> *vec, int deg0, int deg2, Vec<T> *g0, Vec<T> *g1);
-  void _taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t);
-  void _taylor_expand_t2(Vec<T> *g0, Vec<T> *g1, Vec<T> *input, int n, int k,
-    int start);
+  void _taylor_expand_t2(Vec<T> *input, int n, int k, int start);
+  void _taylor_expand(Vec<T> *input, int n, int t);
   void mul_xt_x(Vec<T> *vec, int t);
   void _fft(Vec<T> *output, Vec<T> *input);
   void _ifft(Vec<T> *output, Vec<T> *input);
@@ -219,27 +215,27 @@ template <typename T>
 void FFTADD<T>::_fft(Vec<T> *output, Vec<T> *input)
 {
   int i;
-  int deg = input->get_n();
-  if (beta_m == 1) {
-    mem->copy(input, this->n);
-  } else {
-    mem->set(0, input->get(0));
-    for (i = 1; i < deg; i++) {
-      mem->set(i, this->gf->mul(beta_m_powers->get(i), input->get(i)));
-    }
-  }
+  mem->copy(input, this->n);
+  if (beta_m > 1)
+    mem->hadamard_mul(beta_m_powers);
 
   // compute taylor expansion of g(x) at (x^2 - x)
-  taylor_expand_t2(g0, g1, mem, this->n);
+  // outputs are this->g0 and this->g1
+  taylor_expand_t2(mem, this->n);
 
   this->fft_add->fft(u, g0);
   this->fft_add->fft(v, g1);
 
-  for (i = 0; i < k; i++) {
-    T w_i = this->gf->add(u->get(i), this->gf->mul(G->get(i), v->get(i)));
-    output->set(i, w_i);
-    output->set(k + i, this->gf->add(w_i, v->get(i)));
-  }
+  // copy output = (undefined, v)
+  output->copy(v, k, k);
+  // perform G * v hadamard multiplication
+  v->hadamard_mul(G);
+  // v += u
+  v->add(u);
+  // output = (u + G*v, v)
+  output->copy(v, k);
+  // output = (u + G*v, (u + G*v) + v)
+  output->add(v, k);
 }
 
 template <typename T>
@@ -247,24 +243,29 @@ void FFTADD<T>::_ifft(Vec<T> *output, Vec<T> *input)
 {
   int i;
   output->zero_fill();
-  for (i = 0; i < k; i++) {
-    v->set(i, this->gf->add(input->get(k+i), input->get(i)));
-    u->set(i, this->gf->add(input->get(i),
-                            this->gf->mul(G->get(i), v->get(i))));
-  }
+  /*
+   * input = (w0, w1)
+   * calculate u, v s.t. v = w1 - w0, u = w0 - G * v
+   */
+  VmVec<T> w0(input, k);
+  // v = w_1
+  v->copy(input, k, 0, k);
+  // v = w0 + w1
+  v->add(&w0);
+  // u = v
+  u->copy(v);
+  // u = G * v
+  u->hadamard_mul(G);
+  // u = w0 + G * v;
+  u->add(&w0);
 
   this->fft_add->ifft(g0, u);
   this->fft_add->ifft(g1, v);
 
-  inv_taylor_expand_t2(output, g0, g1);
+  inv_taylor_expand_t2(output);
 
   if (beta_m > 1) {
-    T beta = inv_beta_m;
-    T deg = output->get_n();
-    for (i = 1; i < deg; i++) {
-      output->set(i, this->gf->mul(beta, output->get(i)));
-      beta = this->gf->mul(beta, inv_beta_m);
-    }
+    output->mul_beta(inv_beta_m);
   }
 }
 
@@ -303,12 +304,13 @@ template <typename T>
 void FFTADD<T>::fft(Vec<T> *output, Vec<T> *input)
 {
   if (m > 1)
-    return _fft(output, input);
-
-  // m == 1 -> output = (f(0), f(beta_1))
-  output->set(0, input->get(0));
-  output->set(1, this->gf->add(input->get(0),
-                               this->gf->mul(input->get(1), this->beta_1)));
+     _fft(output, input);
+  else {
+    // m == 1 -> output = (f(0), f(beta_1))
+    output->set(0, input->get(0));
+    output->set(1, this->gf->add(input->get(0),
+                                 this->gf->mul(input->get(1), this->beta_1)));
+  }
 }
 
 template <typename T>
@@ -362,81 +364,22 @@ void FFTADD<T>::ifft(Vec<T> *output, Vec<T> *input)
 }
 
 /**
- * Taylor expansion at (x^t - x)
- *  Algorithm 1 in the paper of Shuhong Gao and Todd Mateer:
- *    "Additive Fast Fourier Transforms Over Finite Fields"
- *
- *  f(x) = sum_i h_i(x) * (x^t - x)^i
- *
- * @param output: output of hi(x) polynomials
- * @param input: input polynomial f(x)
- * @param n
- * @param t
- * @param do_copy: flag to do a copy of input or not since this function will
- *  modify input vector
- */
-template <typename T>
-void FFTADD<T>::taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t,
-  bool do_copy)
-{
-  assert(n >= 1);
-  assert(t > 1);
-  assert(input->get_n() <= n);
-  output->zero_fill();
-
-  if (!do_copy) {
-    _taylor_expand(output, input, n, t);
-    return;
-  }
-
-  Vec<T> *_input = new Vec<T>(this->gf, input->get_n());
-  _input->copy(input, input->get_n());
-  _taylor_expand(output, _input, n, t);
-
-  delete _input;
-}
-
-template <typename T>
-void FFTADD<T>::_taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t)
-{
-  if (n <= t) {
-    output->copy(input, output->get_n());
-    return;
-  }
-  // find k s.t. t2^k < n <= 2 *t2^k
-  int k = find_k(n, t);
-  int deg2 = _exp2<T>(k);
-  int deg0 = t*deg2;
-
-  VmVec<T> g0(input, deg0);
-  VmVec<T> g1(input, n - deg0, deg0);
-  VmVec<T> V1(output, deg0);
-  VmVec<T> V2(output, n - deg0, deg0);
-
-  compute_g0_g1(input, deg0, deg2, &g0, &g1);
-  _taylor_expand(&V1, &g0, deg0, t);
-  _taylor_expand(&V2, &g1, n - deg0, t);
-}
-
-
-/**
  * Taylor expansion at (x^2 - x)
  *  Algorithm 1 in the paper of Shuhong Gao and Todd Mateer:
  *    "Additive Fast Fourier Transforms Over Finite Fields"
  *
  * This function is used for FFT over n=2^m, hence n must be power of 2
  *
- * @param G0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
+ * @param g0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
  *            The polynomial is of degree at most t*2^k
- * @param G1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
+ * @param g1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
  *            The polynomial is of degree at most (n-t*2^k)
  * @param n: a power of 2
  * @param do_copy: flag to do a copy of input or not since this function will
  *  modify input vector
  */
 template <typename T>
-void FFTADD<T>::taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, Vec<T> *input, int n,
-  bool do_copy)
+void FFTADD<T>::taylor_expand_t2(Vec<T> *input, int n, bool do_copy)
 {
   assert(n >= 1);
   assert(input->get_n() <= n);
@@ -444,16 +387,23 @@ void FFTADD<T>::taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, Vec<T> *input, int n,
   // find k s.t. t2^k < n <= 2 *t2^k
   int _k = find_k(n, 2);
 
-  if (!do_copy) {
-    _taylor_expand_t2(G0, G1, input, n, _k, 0);
-    return;
+  Vec<T> *_input;
+  if (do_copy) {
+    _input = new Vec<T>(this->gf, input->get_n());
+    _input->copy(input, input->get_n());
+  } else
+    _input = input;
+
+  _taylor_expand_t2(_input, n, _k, 0);
+
+  // get g0, g1 from mem
+  for (int i = 0; i < this->n; i += 2) {
+    g0->set(i/2, _input->get(i));
+    g1->set(i/2, _input->get(i+1));
   }
 
-  Vec<T> *_input = new Vec<T>(this->gf, input->get_n());
-  _input->copy(input, input->get_n());
-  _taylor_expand_t2(G0, G1, _input, n, _k, 0);
-
-  delete _input;
+  if (do_copy)
+    delete _input;
 }
 
 /**
@@ -463,84 +413,40 @@ void FFTADD<T>::taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, Vec<T> *input, int n,
  *
  * This function is used for FFT over n=2^m, hence n must be power of 2
  *
- * @param G0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
+ * @param g0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
  *            The polynomial is of degree at most t*2^k
- * @param G1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
+ * @param g1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
  *            The polynomial is of degree at most (n-t*2^k)
  *
  * @param n: a power of 2
  * @param k: a number st t*2^k < n <= 2*t*2^k
- * @param s_deg: start degree of G0 and G1
+ * @param s_deg: start degree of g0 and g1
  */
 template <typename T>
-void FFTADD<T>::_taylor_expand_t2(Vec<T> *G0, Vec<T> *G1, Vec<T> *input, int n,
-  int _k, int s_deg)
+void FFTADD<T>::_taylor_expand_t2(Vec<T> *input, int n, int _k, int s_deg)
 {
-  if (n <= 2) {
-    G0->set(s_deg, input->get(0));
-    if (n == 2)
-      G1->set(s_deg, input->get(1));
-    else
-      G1->set(s_deg, 0);
-    return;
-  }
-
   int deg2 = _exp2<T>(_k);
   int deg0 = 2*deg2;
-
-  VmVec<T> g0(input, deg0);
-  VmVec<T> g1(input, n - deg0, deg0);
-  compute_g0_g1(input, deg0, deg2, &g0, &g1);
-
-  _taylor_expand_t2(G0, G1, &g0, deg0, _k-1, s_deg);
-  _taylor_expand_t2(G0, G1, &g1, n - deg0, _k-1, s_deg + deg2);
-}
-
-template <typename T>
-void FFTADD<T>::compute_g0_g1(Vec<T> *vec, int deg0, int deg2,
-  Vec<T> *g0, Vec<T> *g1) {
-  // find k s.t. t*2^k < n <= 2*t*2^k
   int deg1 = deg0 - deg2;
+
+  VmVec<T> _g0(input, deg0);
+  VmVec<T> _g1(input, n - deg0, deg0);
 
   // find f0, f1, f2 s.t.
   // f = f0 + x^(t2^k)( f1 + x^( (t-1)2^k) f2 )
   // NOTE: f0 === g0
-  VmVec<T> f1(vec, deg1, deg0, 1);
-  VmVec<T> f2(vec, deg2, deg0+deg1, 1);
+  VmVec<T> f2(input, deg2, deg0+deg1);
 
   // since deg1 >= deg2, add f2 into f1 to perform h === f1
   // that is also actually g1
-  f1.add_mutual(&f2);
+  _g1.add_mutual(&f2);
+
   // add h (=== f1) into g0 with offset deg2=2^k
-  g0->add_mutual(&f1, deg2);
-  // since g1 = (f1+f2, f2) so nothing to do
-}
+  _g0.add_mutual(&_g1, deg2, deg1);
 
-/*
- * This function compute f(x) from its taylor expansion
- *
- *  f(x) = sum_i res_i(x) * (x^t - x)^i
- * We perform it in the following way
- *  f(x) = (..(( h_k*y + h_{k-1} )*y + h_{k-2})*y ...)
- *  where y = x^t - x
- *        h_i := ith polynomial of taylor expansion output
- *
- * @param result: vector of hi(x) polynomials
- * @param t
- */
-template <typename T>
-void FFTADD<T>::inv_taylor_expand(Vec<T> *output, Vec<T> *input, int t) {
-  output->zero_fill();
-
-  int i = input->get_n() - t;
-  VmVec<T> hi(input, t, i);
-  output->add_mutual(&hi);
-  while(i >= t) {
-    i -= t;
-    // multiply output to (x^t - x)
-    mul_xt_x(output, t);
-    hi.set_map(i, 1);
-    output->add_mutual(&hi);
+  if (deg0 > 2) {
+    _taylor_expand_t2(&_g0, deg0, _k-1, s_deg);
+    _taylor_expand_t2(&_g1, n - deg0, _k-1, s_deg + deg2);
   }
 }
 
@@ -553,25 +459,25 @@ void FFTADD<T>::inv_taylor_expand(Vec<T> *output, Vec<T> *input, int t) {
  *  where y = x^2 - x
  *        h_i = gi0 + gi1*x
  *
- * @param G0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
+ * @param g0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
  *            The polynomial is of degree at most t*2^k
- * @param G1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
+ * @param g1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
  *            The polynomial is of degree at most (n-t*2^k)
  */
 template <typename T>
-void FFTADD<T>::inv_taylor_expand_t2(Vec<T> *output, Vec<T> *G0, Vec<T> *G1) {
-  assert(G0->get_n() == G1->get_n());
+void FFTADD<T>::inv_taylor_expand_t2(Vec<T> *output) {
+  assert(g0->get_n() == g1->get_n());
   output->zero_fill();
 
-  int i = G0->get_n() - 1;
-  output->set(0, G0->get(i));
-  output->set(1, G1->get(i));
+  int i = output->get_n() / 2 - 1;
+  output->set(0, g0->get(i));
+  output->set(1, g1->get(i));
   while(--i >= 0) {
     // multiply output to (x^2 - x)
     mul_xt_x(output, 2);
-    output->set(0, G0->get(i));
-    if (G1->get(i) > 0)
-      output->set(1, this->gf->add(output->get(1), G1->get(i)));
+    output->set(0, g0->get(i));
+    if (g1->get(i) > 0)
+      output->set(1, this->gf->add(output->get(1), g1->get(i)));
   }
 }
 
@@ -610,4 +516,92 @@ inline int FFTADD<T>::find_k(int n, int t)
     t2k *= 2;
   }
   return 0;
+}
+
+/**
+ * Taylor expansion at (x^t - x)
+ *  Algorithm 1 in the paper of Shuhong Gao and Todd Mateer:
+ *    "Additive Fast Fourier Transforms Over Finite Fields"
+ *
+ *  f(x) = sum_i h_i(x) * (x^t - x)^i
+ *
+ * @param output: output of hi(x) polynomials
+ * @param input: input polynomial f(x)
+ * @param n
+ * @param t
+ */
+template <typename T>
+void FFTADD<T>::taylor_expand(Vec<T> *output, Vec<T> *input, int n, int t)
+{
+  assert(n >= 1);
+  assert(t > 1);
+  assert(input->get_n() <= n);
+
+  if (output->get_n() > input->get_n())
+    output->zero_fill();
+
+  // set output as input
+  output->copy(input);
+  _taylor_expand(output, n, t);
+}
+
+template <typename T>
+void FFTADD<T>::_taylor_expand(Vec<T> *input, int n, int t)
+{
+  // find k s.t. t2^k < n <= 2 *t2^k
+  int k = find_k(n, t);
+  int deg2 = _exp2<T>(k);
+  int deg0 = t*deg2;
+  int deg1 = deg0 - deg2;
+  int g1deg = n - deg0;
+  int hdeg = deg1;
+  if (g1deg < hdeg)
+    hdeg = g1deg;
+  VmVec<T> _g0(input, deg0);
+  VmVec<T> _g1(input, g1deg, deg0);
+
+  // find f0, f1, f2 s.t.
+  // f = f0 + x^(t2^k)( f1 + x^( (t-1)2^k) f2 )
+  // NOTE: f0 is stored by _g0, f1 is stored by _g1
+  VmVec<T> f2(input, deg2, deg0+deg1);
+
+  // since deg1 >= deg2, add f2 into f1 to perform h == f1 + f2
+  // that is also actually g1
+  _g1.add_mutual(&f2);
+
+  // add h (=== f1) into g0 with offset deg2=2^k
+  _g0.add_mutual(&_g1, deg2, hdeg);
+
+  if (deg0 > t)
+    _taylor_expand(&_g0, deg0, t);
+  if (g1deg > t)
+    _taylor_expand(&_g1, g1deg, t);
+}
+
+/*
+ * This function compute f(x) from its taylor expansion
+ *
+ *  f(x) = sum_i res_i(x) * (x^t - x)^i
+ * We perform it in the following way
+ *  f(x) = (..(( h_k*y + h_{k-1} )*y + h_{k-2})*y ...)
+ *  where y = x^t - x
+ *        h_i := ith polynomial of taylor expansion output
+ *
+ * @param result: vector of hi(x) polynomials
+ * @param t
+ */
+template <typename T>
+void FFTADD<T>::inv_taylor_expand(Vec<T> *output, Vec<T> *input, int t) {
+  output->zero_fill();
+
+  int i = input->get_n() - t;
+  VmVec<T> hi(input, t, i);
+  output->add_mutual(&hi);
+  while(i >= t) {
+    i -= t;
+    // multiply output to (x^t - x)
+    mul_xt_x(output, t);
+    hi.set_map(i);
+    output->add_mutual(&hi);
+  }
 }

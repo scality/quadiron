@@ -2,92 +2,66 @@
 #pragma once
 
 /**
- * Virtual vector on a base vector from an offset and a step
+ * Virtual vector on a base vector from an offset
+ *  vmvec[i] = base[i + offset]
  *
  */
 template<typename T>
 class VmVec : public Vec<T>
 {
  private:
-  Vec<T> *vec;
+  T *mem_offset;
+  int base_len;
   int offset;
-  int step;
-  int N;
-  int loc(int i);
  public:
-  explicit VmVec(Vec<T> *vec, int n = 0, int offset = 0, int step = 1);
-  int get_n(void);
+  explicit VmVec(Vec<T> *vec, int n = 0, int offset = 0);
   T get(int i);
   void set(int i, T val);
-  void set_map(int offset, int step);
-  void set_len(int n);
-  void set_vec(Vec<T> *vec);
+  void set_map(int offset);
+  int get_offset(void);
 };
 
 template <typename T>
-VmVec<T>::VmVec(Vec<T> *vec, int n, int offset, int step) :
-  Vec<T>(vec->rn, n, vec->get_mem() + offset, vec->get_mem_len())
+VmVec<T>::VmVec(Vec<T> *vec, int n, int offset) :
+  Vec<T>(vec->rn, n, vec->get_mem() + offset,
+    vec->get_mem_len() > offset ? vec->get_mem_len() - offset : 0)
 {
-  this->vec = vec;
+  this->mem_offset = this->get_mem();
+  this->base_len = vec->get_n();
   this->offset = offset;
-  this->step = step;
-  this->N = vec->get_n();
-  if (offset >= this->N)
-    this->n = 0;
-  else
-    this->n = n;
-  assert(this->n <= this->N);
-}
-
-template <typename T>
-inline int VmVec<T>::loc(int i)
-{
-  assert(i >= 0 && i < this->n);
-  return offset + step * i;
-}
-
-template <typename T>
-int VmVec<T>::get_n(void)
-{
-  return this->n;
+  this->n = (n + this->offset < this->base_len) ? n :
+    (this->base_len > this->offset ? this->base_len - this->offset : 0);
 }
 
 template <typename T>
 inline T VmVec<T>::get(int i)
 {
-  int j = loc(i);
-  if (j >= N)
-    return 0;
-  return vec->get(j);
+  assert(i >= 0 && i < this->n);
+
+  return mem_offset[i];
 }
 
 template <typename T>
-void VmVec<T>::set_map(int offset, int step)
+void VmVec<T>::set_map(int offset)
 {
+  this->mem_offset = this->mem_offset - this->offset + offset;
   this->offset = offset;
-  this->step = step;
-}
-
-template <typename T>
-void VmVec<T>::set_len(int n)
-{
-  assert(this->n <= this->N);
-  this->n = n;
-}
-
-template <typename T>
-void VmVec<T>::set_vec(Vec<T> *vec)
-{
-  assert(this->n <= vec->get_n());
-  this->vec = vec;
-  this->rn = vec->rn;
-  this->N = vec->get_n();
+  int n = this->n;
+  this->n = (n + this->offset < this->base_len) ? n :
+    (this->base_len > this->offset ? this->base_len - this->offset : 0);
+  this->set_mem(this->mem_offset, this->n);
 }
 
 template <typename T>
 inline void VmVec<T>::set(int i, T val)
 {
-  int j = loc(i);
-  if (j < N)
-    vec->set(j, val);
+  assert(i >= 0 && i < this->n);
+
+  mem_offset[i] = val;
+}
+
+template <typename T>
+int VmVec<T>::get_offset()
+{
+  return this->offset;
 }

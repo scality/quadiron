@@ -96,10 +96,11 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
     loop = true;
     w2 = gf->exp(w, n1);  // order of w2 = n2
     T _n2 = n/n1;
-    if (_is_power_of_2<T>(_n2))
-      this->dft_inner = new FFTCT<T>(gf, _n2);
-    else
-      this->dft_inner = new FFTCT<T>(gf, _n2, id+1, this->prime_factors, w2);
+    // TODO: fix that FFT2K does not work here
+    // if (_is_power_of_2<T>(_n2))
+    //   this->dft_inner = new FFT2K<T>(gf, _n2);
+    // else
+    this->dft_inner = new FFTCT<T>(gf, _n2, id+1, this->prime_factors, w2);
     this->G = new Vec<T>(this->gf, this->n);
     this->Y = new VcVec<T>(this->G);
     this->X = new VcVec<T>(this->G);

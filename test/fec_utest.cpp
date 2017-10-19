@@ -149,10 +149,7 @@ template class GFP<mpz_class>;
 void fec_utest()
 {
   FECUtest<uint32_t> fec_utest_uint32;
-  //fecgfpfftrs overflows
-  fec_utest_uint32.test_fecfntrs();
-  fec_utest_uint32.test_fecgf2nfftrs();
-  fec_utest_uint32.test_fecgf2nfftaddrs();
+  fec_utest_uint32.fec_utest();
   FECUtest<uint64_t> fec_utest_uint64;
   fec_utest_uint64.fec_utest();
   FECUtest<__uint128_t> fec_utest_uint128;

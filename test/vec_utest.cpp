@@ -95,12 +95,38 @@ class VECUtest
     assert(vec1.get(7) == 58879);
   }
 
+  void vec_utest3()
+  {
+    std::cout << "vec_utest3\n";
+
+    GFP<T> gfp(65537);
+    int len = 20;
+    Vec<T> base_vec(&gfp, len);
+    for (int i = 0; i < len; i++)
+      base_vec.set(i, gfp.weak_rand());
+    int len1 = 7;
+    int len2 = 5;
+    int offset1 = 2;
+    int offset2 = 3;
+    int len3 = len2;
+    if (offset2 + len2 > len1)
+      len3 = len1 - offset2;
+    // vmvec1 = base_vec[offset1, .., offset1 + len1 - 1]
+    VmVec<T> vmvec1(&base_vec, len1, offset1);
+    // vmvec2 = vmvec1[offset2, .., min(offset2 + len2 - 1, len1 - 1)]
+    VmVec<T> vmvec2(&vmvec1, len2, offset2);
+    // vmvec3 = base_vec[offset1 + offset2, .., offset1 + len1 - 1]
+    VmVec<T> vmvec3(&base_vec, len3, offset1 + offset2);
+    assert(vmvec3.eq(&vmvec2));
+  }
+
   void vec_utest()
   {
     std::cout << "vec_utest\n";
 
     vec_utest1();
     vec_utest2();
+    vec_utest3();
   }
 };
 

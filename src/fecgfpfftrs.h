@@ -35,14 +35,15 @@ class FECGFPFFTRS : public FEC<T>
   {
     // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
     T gf_p;
-    if (word_size < 4)
+    if (word_size < 4) {
        gf_p = (1ULL << (8*word_size)) + 1;
-    else if (word_size == 4)
+       this->limit_value = (1ULL << (8 * word_size));
+    } else if (word_size == 4) {
       gf_p = 4294991873;  // p-1=2^13 29^1 101^1 179^1
-    else
+      this->limit_value = 4294967296;   // 2^32
+    } else
       assert(false);  // not support yet
 
-    this->limit_value = (1ULL << (8 * word_size));
 
     assert(gf_p >= this->limit_value);
     // we choose gf_p for a simple implementation
