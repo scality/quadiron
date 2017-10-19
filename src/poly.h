@@ -10,12 +10,11 @@ class Poly
 {
 private:
   struct Term: std::map <int, T> {};
-  RN<T> *rn;
+  GF<T> *gf;
   GF<T> *sub_field;
   Term terms;
 
  public:
-  explicit Poly(RN<T> *rn);
   explicit Poly(GF<T> *gf);
   void clear();
   void copy(Poly<T> *src);
@@ -30,6 +29,11 @@ private:
   void _sub(Poly<T> *result, Poly<T> *a, Poly<T> *b);
   void _mul(Poly<T> *result, Poly<T> *a, Poly<T> *b);
   void _div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d);
+  void _gcd(Poly<T> *u, Poly<T> *v, Poly<T> *gcd);
+  void _extended_gcd(Poly<T> *a, Poly<T> *b,
+                     Poly<T> *bezout_coef[2],
+                     Poly<T> *quotient_gcd[2],
+                     Poly<T> *gcd);
   void _derivative(Poly<T> *result, Poly<T> *a);
   void neg();
   void add(Poly<T> *b);
@@ -48,16 +52,9 @@ private:
 };
 
 template <typename T>
-Poly<T>::Poly(RN<T> *rn)
-{
-  this->rn = rn;
-  this->sub_field = NULL;
-}
-
-template <typename T>
 Poly<T>::Poly(GF<T> *gf)
 {
-  this->rn = gf;
+  this->gf = gf;
   this->sub_field = gf->get_sub_field();
 }
 
@@ -117,12 +114,19 @@ template <typename T>
 void Poly<T>::set(int exponent, T coef)
 {
   assert(exponent >= 0);
-  assert(rn->check(coef));
+  assert(gf->check(coef));
 
   typename Term::const_iterator it = terms.find(exponent);
 
-  if (it == terms.end() && coef == 0)
-    return;
+  if (it == terms.end()) {
+    if (coef == 0)
+      return;
+  } else {
+    if (coef == 0) {
+      terms.erase(it);
+      return ;
+    }
+  }
   terms[exponent] = coef;
 }
 
@@ -131,7 +135,7 @@ void Poly<T>::_neg(Poly<T> *result, Poly<T> *a)
 {
   result->clear();
 
-  Poly<T> b(rn);
+  Poly<T> b(gf);
   sub(result, &b, a);
 }
 
@@ -144,7 +148,7 @@ void Poly<T>::_add(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 
   for (int i = max; i >= 0; i--)
     result->set(i,
-                rn->add(a->get(i), b->get(i)));
+                gf->add(a->get(i), b->get(i)));
 }
 
 template <typename T>
@@ -156,7 +160,7 @@ void Poly<T>::_sub(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 
   for (int i = max; i >= 0; i--)
     result->set(i,
-                rn->sub(a->get(i), b->get(i)));
+                gf->sub(a->get(i), b->get(i)));
 }
 
 template <typename T>
@@ -167,8 +171,8 @@ void Poly<T>::_mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
   for (int i = a->degree(); i >= 0; i--)
     for (int j = b->degree(); j >= 0; j--)
       result->set(i + j,
-                  rn->add(result->get(i + j),
-                          rn->mul(a->get(i), b->get(j))));
+                  gf->add(result->get(i + j),
+                          gf->mul(a->get(i), b->get(j))));
 }
 
 /**
@@ -182,7 +186,7 @@ void Poly<T>::_mul(Poly<T> *result, Poly<T> *a, Poly<T> *b)
 template <typename T>
 void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
 {
-  Poly<T> _q(rn), _r(rn);
+  Poly<T> _q(gf), _r(gf);
 
   if (d->is_zero())
     throw NTL_EX_DIV_BY_ZERO;
@@ -192,9 +196,9 @@ void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
 
   while (!_r.is_zero() && (_r.degree() >= d->degree())) {
 
-    Poly<T> _t(rn);
+    Poly<T> _t(gf);
     _t.set(_r.degree() - d->degree(),
-           rn->div(_r.lead(), d->lead()));
+           gf->div(_r.lead(), d->lead()));
     _q.add(&_t);
     _t.mul(d);
     _r.sub(&_t);
@@ -207,6 +211,114 @@ void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
     r->copy(&_r);
 }
 
+/** 
+ * compute the GCD of 2 different polynomials (modern algorithm)
+ * 
+ * @param u 
+ * @param v 
+ * @param gcd cannot be NULL
+ */
+template <typename T>
+void Poly<T>::_gcd(Poly<T> *u, Poly<T> *v, Poly<T> *gcd)
+{
+  Poly<T> r(sub_field);
+
+  if (v->degree() == 0) {
+    gcd->copy(u);
+    return ;
+  }
+  if (u->degree() == 0) {
+    gcd->copy(v);
+    return ;
+  }
+  while (1) {
+    r.copy(u);
+    r.mod(v);
+    if (r.degree() == 0) {
+      gcd->copy(&r);
+      return ;
+    }
+    u->copy(v);
+    v->copy(&r);
+  }
+}
+
+/** 
+ * compute the extended euclidean algorithm
+ * 
+ * @param a (e.g. the polynomial that define the field)
+ * @param b (e.g. the element of the extension field)
+ * @param bezout_coef can be NULL
+ * @param quotient_gcd can be NULL
+ * @param gcd can be NULL
+ */
+template <typename T>
+void Poly<T>::_extended_gcd(Poly<T> *a, Poly<T> *b,
+                            Poly<T> *bezout_coef[2],
+                            Poly<T> *quotient_gcd[2],
+                            Poly<T> *gcd)
+{
+  Poly<T> s(sub_field);
+  Poly<T> old_s(sub_field);
+  old_s.set(0, 1);
+  Poly<T> t(sub_field);
+  t.set(0, 1);
+  Poly<T> old_t(sub_field);
+  Poly<T> r(sub_field);
+  r.copy(b);
+  Poly<T> old_r(sub_field);
+  old_r.copy(a);
+  Poly<T> quotient(sub_field);
+  Poly<T> tmp(sub_field);
+  Poly<T> tmp2(sub_field);
+
+  while (!r.is_zero()) {
+   
+    _div(&quotient, NULL, &old_r, &r);
+
+    tmp.copy(&r);
+    tmp2.copy(&quotient);
+    tmp2.mul(&r);
+    r.copy(&old_r);
+    r.sub(&tmp2);
+    old_r.copy(&tmp);
+
+    tmp.copy(&s);
+    tmp2.copy(&quotient);
+    tmp2.mul(&s);
+    s.copy(&old_s);
+    s.sub(&tmp2);
+    old_s.copy(&tmp);
+
+    tmp.copy(&t);
+    tmp2.copy(&quotient);
+    tmp2.mul(&t);
+    t.copy(&old_t);
+    t.sub(&tmp2);
+    old_t.copy(&tmp);
+  }
+
+  if (old_r.degree() > 0) {
+    //the primitive polynomial is not irreducible or
+    //the element is multiple of the primitive polynomial
+    throw(NTL_EX_INVAL);
+  }
+
+  if (bezout_coef) {
+    bezout_coef[0]->copy(&old_s);
+    bezout_coef[1]->copy(&old_t);
+  }
+
+  if (quotient_gcd) {
+    quotient_gcd[0]->copy(&t);
+    quotient_gcd[1]->copy(&s);
+  }
+  
+  if (gcd) {
+    gcd->copy(&old_r);
+  }
+}
+
 template <typename T>
 void Poly<T>::_derivative(Poly<T> *result, Poly<T> *a)
 {
@@ -215,18 +327,18 @@ void Poly<T>::_derivative(Poly<T> *result, Poly<T> *a)
   if (sub_field)
     _card = sub_field->card();
   else
-    _card = rn->card();
+    _card = gf->card();
 
   result->clear();
 
   for (int i = a->degree(); i > 0; i--)
-    result->set(i - 1, rn->mul(a->get(i), i % _card));
+    result->set(i - 1, gf->mul(a->get(i), i % _card));
 }
 
 template <typename T>
 void Poly<T>::neg()
 {
-  Poly<T> a(rn), b(rn);
+  Poly<T> a(gf), b(gf);
   b.copy(this);
   _sub(this, &a, &b);
 }
@@ -234,7 +346,7 @@ void Poly<T>::neg()
 template <typename T>
 void Poly<T>::add(Poly<T> *b)
 {
-  Poly<T> a(rn);
+  Poly<T> a(gf);
   a.copy(this);
   _add(this, &a, b);
 }
@@ -242,7 +354,7 @@ void Poly<T>::add(Poly<T> *b)
 template <typename T>
 void Poly<T>::sub(Poly<T> *b)
 {
-  Poly<T> a(rn);
+  Poly<T> a(gf);
   a.copy(this);
   _sub(this, &a, b);
 }
@@ -250,7 +362,7 @@ void Poly<T>::sub(Poly<T> *b)
 template <typename T>
 void Poly<T>::mul(Poly<T> *b)
 {
-  Poly<T> a(rn);
+  Poly<T> a(gf);
   a.copy(this);
   _mul(this, &a, b);
 }
@@ -258,7 +370,7 @@ void Poly<T>::mul(Poly<T> *b)
 template <typename T>
 void Poly<T>::div(Poly<T> *b)
 {
-  Poly<T> a(rn);
+  Poly<T> a(gf);
   a.copy(this);
   _div(this, NULL, &a, b);
 }
@@ -266,7 +378,7 @@ void Poly<T>::div(Poly<T> *b)
 template <typename T>
 void Poly<T>::mod(Poly<T> *b)
 {
-  Poly<T> a(rn);
+  Poly<T> a(gf);
   a.copy(this);
   _div(NULL, this, &a, b);
 }
@@ -274,7 +386,7 @@ void Poly<T>::mod(Poly<T> *b)
 template <typename T>
 void Poly<T>::derivative()
 {
-  Poly<T> a(rn);
+  Poly<T> a(gf);
   a.copy(this);
   _derivative(this, &a);
 }
@@ -286,7 +398,7 @@ T Poly<T>::eval(T x)
   T result = get(i);
 
   while (i >= 1) {
-    result = rn->add(rn->mul(result, x), get(i - 1));
+    result = gf->add(gf->mul(result, x), get(i - 1));
     i--;
   }
   return result;
@@ -327,7 +439,7 @@ T Poly<T>::to_num()
   T result = 0;
   
   while (i >= 0) {
-    result += get(i) * _exp<T>(rn->card(), i);
+    result += get(i) * _exp<T>(gf->card(), i);
     i--;
   }
   return result;
@@ -341,11 +453,14 @@ T Poly<T>::to_num()
 template <typename T>
 void Poly<T>::from_num(T x, int max_deg)
 {
+  clear(); //XXX
   for (int i = max_deg;i >= 0;i--) {
-    T tmp = _exp<T>(rn->card(), i);
+    T tmp = _exp<T>(gf->card(), i);
     T tmp2 = x / tmp;
     if (tmp2 != 0)
       set(i, tmp2);
+    else
+      set(i, 0);
     x -= tmp2 * tmp;
   }
 }

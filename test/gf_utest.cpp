@@ -5,6 +5,40 @@ template<typename T>
 class GFUtest
 {
  public:
+  void simple_tests()
+  {
+    std::cout << "simple tests\n";
+
+    GFPN<T> gf256(2, 8); //dumb way to declare a binary field but for sake of testing
+    Poly<T> _x(gf256.get_sub_field());
+    _x.set(6, 1);
+    _x.set(4, 1);
+    _x.set(1, 1);
+    _x.set(0, 1);
+    T x = gf256.inv(_x.to_num());
+    _x.from_num(x, 31);
+    assert(_x.degree() == 7);
+    assert(_x.get(7) == 1);
+    assert(_x.get(6) == 1);
+    assert(_x.get(5) == 0);
+    assert(_x.get(4) == 0);
+    assert(_x.get(3) == 1);
+    assert(_x.get(2) == 0);
+    assert(_x.get(1) == 1);
+    assert(_x.get(0) == 0);
+
+    GFPN<T> gf27(3, 3);
+    Poly<T> _y(gf27.get_sub_field());
+    _y.set(2, 1);
+    _y.set(0, 1);
+    T y = gf27.inv(_y.to_num());
+    _y.from_num(y, 31);
+    assert(_y.degree() == 2);
+    assert(_y.get(2) == 1);
+    assert(_y.get(1) == 1);
+    assert(_y.get(0) == 0);
+  }
+
   void test_negation(GF<T> *gf)
   {
     int i;
@@ -25,6 +59,7 @@ class GFUtest
   void test_reciprocal(GF<T> *gf)
   {
     int i;
+    int n_found = 0;
 
     for (i = 0; i < 100; i++) {
       T x, y;
@@ -33,15 +68,22 @@ class GFUtest
 
       x = gf->weak_rand();
       // std::cout << "x=" << x << "\n";
-      y = gf->inv(x);
+      try {
+        y = gf->inv(x);
+      } catch (NtlException e) {
+        continue ;
+      }
       // std::cout << "inv(x)=" << y << "\n";
       assert(gf->mul(x, y) == 1);
+      n_found++;
     }
+    assert(n_found > 0);
   }
 
   void test_log(GF<T> *gf)
   {
     int i;
+    int n_found = 0;
 
     for (i = 0; i < 1000; i++) {
       T x, y, z, t;
@@ -62,7 +104,9 @@ class GFUtest
       t = gf->exp(x, z);
       // std::cout << "t=" << t << "\n";
       assert(t == y);
+      n_found++;
     }
+    assert(n_found > 0);
   }
 
   void test_find_prime_root(GF<T> *gf)
@@ -83,7 +127,6 @@ class GFUtest
       // std::cout << gf->card() << "\n";
       x = gf->weak_rand();
       order = gf->get_order(x);
-      // std::cout << "x=" << x << " " << order << std::endl;
       assert(gf->exp(x, order) == 1);
       assert(h % order == 0);
     }
@@ -137,6 +180,40 @@ class GFUtest
     test_find_prime_root(&gf5);
     test_get_order(&gf5);
     test_get_nth_root(&gf5);
+  }
+
+  void test_negation_gf9()
+  {
+    std::cout << "test_negation_gf9\n";
+
+    GFPN<T> gf9(3, 2);
+    test_negation(&gf9);
+  }
+
+  void test_reciprocal_gf9()
+  {
+    std::cout << "test_reciprocal_gf9\n";
+
+    GFPN<T> gf9(3, 2);
+    test_reciprocal(&gf9);
+  }
+
+  void test_log_gf9()
+  {
+    std::cout << "test_log_gf9\n";
+
+    GFPN<T> gf9(3, 2);
+    test_log(&gf9);
+  }
+
+  void test_prime_root_gf9()
+  {
+    std::cout << "test_prime_root_gf9\n";
+
+    GFPN<T> gf9(3, 2);
+    test_find_prime_root(&gf9);
+    test_get_order(&gf9);
+    test_get_nth_root(&gf9);
   }
 
   void test_negation_gf256()
@@ -213,10 +290,15 @@ class GFUtest
 
     srand(time(0));
 
+    simple_tests();
     test_negation_gf5();
     test_reciprocal_gf5();
     test_log_gf5();
     test_prime_root_gf5();
+    test_negation_gf9();
+    test_reciprocal_gf9();
+    test_log_gf9();
+    test_prime_root_gf9();
     test_negation_gf256();
     test_reciprocal_gf256();
     test_log_gf256();

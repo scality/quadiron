@@ -441,8 +441,8 @@ void RN<T>::find_prime_root()
     // check nb^divisor == 1
     // std::cout << "checking.." << nb << std::endl;
     for (i = 0; i != this->proper_divisors->size(); ++i) {
-      // std::cout << nb << "^" << divisors.at(i) << "=";
-      // std::cout << exp(nb, divisors.at(i)) << std::endl;
+      // std::cout << nb << "^" << proper_divisors->at(i) << "=";
+      // std::cout << this->exp(nb, this->proper_divisors->at(i)) << std::endl;
       if (this->exp(nb, this->proper_divisors->at(i)) == 1) {
         ok = false;
         break;
@@ -522,11 +522,12 @@ template <typename T>
 T RN<T>::get_order(T x)
 {
   if (x == 0 || x == 1) return 1;
-  std::vector<T> primes;
-  std::vector<T> exponent;
   T h = this->card_minus_one();
-  _factor_prime<T>(h, &primes, &exponent);
-  T order = do_step_get_order(x, h, &primes, &exponent);
+  if (!this->compute_factors_of_order_done)
+    _factor_prime<T>(h, this->primes, this->exponent);
+  std::vector<T> _primes(*primes);
+  std::vector<T> _exponent(*exponent);
+  T order = do_step_get_order(x, h, &_primes, &_exponent);
 
   if (order == 1) return h;
   return order;
