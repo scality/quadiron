@@ -37,7 +37,7 @@ typedef enum
     NTL_EX_INVAL,
     NTL_EX_OVERFLOW,
     NTL_EX_IO,
-    NTL_EX_DIV_BY_ZERO
+    NTL_EX_DIV_BY_ZERO,
   } NtlException;
 
 #include "arith.h"
@@ -62,6 +62,7 @@ typedef enum
 #include "fftpf.h"
 #include "fftadd.h"
 #include "poly.h"
+#include "gfpn.h"
 #include "fec.h"
 #include "fecgf2nrs.h"
 #include "fecfntrs.h"
