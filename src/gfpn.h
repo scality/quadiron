@@ -14,7 +14,7 @@ private:
   Poly<T> *prim_poly;
 
 public:
-  explicit GFPN(T p, T n);
+  explicit GFPN(T p, int n);
   ~GFPN();
   T card(void);
   T card_minus_one(void);
@@ -30,7 +30,7 @@ public:
 };
 
 template <typename T>
-GFPN<T>::GFPN(T p, T n) : GF<T>(p, n)
+GFPN<T>::GFPN(T p, int n) : GF<T>(p, n)
 {
   // XXX shall check that p is prime
   sub_field = new GFP<T>(p);
