@@ -34,7 +34,7 @@
  * @param input
  */
 template<typename T>
-class FFTPF : public FFT<T>
+class FFTPF : public DFT<T>
 {
  private:
   bool loop;
@@ -46,8 +46,8 @@ class FFTPF : public FFT<T>
   Vec<T> *G = NULL;
   VcVec<T> *Y = NULL;
   VcVec<T> *X = NULL;
-  FFT<T> *dft_outer = NULL;
-  FFT<T> *dft_inner = NULL;
+  DFT<T> *dft_outer = NULL;
+  DFT<T> *dft_inner = NULL;
   std::vector<T>* prime_factors = NULL;
 
  public:
@@ -72,7 +72,7 @@ class FFTPF : public FFT<T>
  */
 template <typename T>
 FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
-  FFT<T>(gf, n)
+  DFT<T>(gf, n)
 {
   if (factors == NULL) {
     this->prime_factors = new std::vector<T>();

@@ -53,7 +53,7 @@ typedef enum
 #include "vcvec.h"
 #include "vmvec.h"
 #include "mat.h"
-#include "fft.h"
+#include "dft.h"
 #include "fft2.h"
 #include "fftn.h"
 #include "fftln.h"

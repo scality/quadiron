@@ -6,7 +6,7 @@
  * Algorithm for very small n
  */
 template<typename T>
-class FFTN : public FFT<T>
+class FFTN : public DFT<T>
 {
  private:
   T w;
@@ -24,7 +24,7 @@ class FFTN : public FFT<T>
 };
 
 template <typename T>
-FFTN<T>::FFTN(GF<T> *gf, int n, T w) : FFT<T>(gf, n)
+FFTN<T>::FFTN(GF<T> *gf, int n, T w) : DFT<T>(gf, n)
 {
   this->w = w;
   this->inv_w = gf->inv(w);

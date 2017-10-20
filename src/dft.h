@@ -3,19 +3,19 @@
 #pragma once
 
 /*
- * FFT over the field gf and over vectors of size n with w as n-th
+ * DFT over the field gf and over vectors of size n with w as n-th
  * root of unity
  */
 template<typename T>
-class FFT
+class DFT
 {
  protected:
   GF<T> *gf;
   int n;
   T inv_n_mod_p;
-  FFT(GF<T> *gf, int n);
+  DFT(GF<T> *gf, int n);
  public:
-  virtual ~FFT();
+  virtual ~DFT();
   int get_n();
   GF<T> *get_gf();
   virtual void fft(Vec<T> *output, Vec<T> *input) = 0;
@@ -24,7 +24,7 @@ class FFT
 };
 
 template <typename T>
-FFT<T>::FFT(GF<T> *gf, int n)
+DFT<T>::DFT(GF<T> *gf, int n)
 {
   this->gf = gf;
   this->n = n;
@@ -32,19 +32,18 @@ FFT<T>::FFT(GF<T> *gf, int n)
 }
 
 template <typename T>
-FFT<T>::~FFT()
+DFT<T>::~DFT()
 {
 }
 
 template <typename T>
-int FFT<T>::get_n()
+int DFT<T>::get_n()
 {
   return n;
 }
 
 template <typename T>
-GF<T> *FFT<T>::get_gf()
+GF<T> *DFT<T>::get_gf()
 {
   return gf;
 }
-

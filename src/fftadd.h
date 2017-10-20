@@ -12,7 +12,7 @@
  * @param input
  */
 template<typename T>
-class FFTADD : public FFT<T>
+class FFTADD : public DFT<T>
 {
  private:
   bool create_betas;
@@ -64,7 +64,7 @@ class FFTADD : public FFT<T>
  */
 template <typename T>
 FFTADD<T>::FFTADD(GF<T> *gf, T m, Vec<T>* betas) :
-  FFT<T>(gf, _exp2<T>(m))
+  DFT<T>(gf, _exp2<T>(m))
 {
   assert(m >= 1);
   this->m = m;

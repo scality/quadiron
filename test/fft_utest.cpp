@@ -600,14 +600,14 @@ class FFTUtest
 
 template class Mat<uint32_t>;
 template class Vec<uint32_t>;
-template class FFT<uint32_t>;
+template class DFT<uint32_t>;
 template class FFTLN<uint32_t>;
 template class FFTPF<uint32_t>;
 template class FFTADD<uint32_t>;
 
 template class Mat<uint64_t>;
 template class Vec<uint64_t>;
-template class FFT<uint64_t>;
+template class DFT<uint64_t>;
 template class FFTPF<uint64_t>;
 template class FFTADD<uint64_t>;
 
