@@ -46,7 +46,7 @@ public:
   bool check_prime_root(T nb);
   bool check_order_naive(T nb, T order);
   T do_step_get_order(T x, T h, std::vector<T> *primes,
-    std::vector<T> *exponent);
+    std::vector<int> *exponent);
   T get_order(T x);
   T get_nth_root(T n);
   T get_code_len(T n);
@@ -54,7 +54,7 @@ public:
  private:
   bool compute_factors_of_order_done = false;
   std::vector<T>* primes = NULL;
-  std::vector<T>* exponent = NULL;
+  std::vector<int>* exponent = NULL;
   std::vector<T>* all_primes_factors = NULL;
   std::vector<T>* proper_divisors = NULL;
 };
@@ -66,7 +66,7 @@ RN<T>::RN(T card)
   this->root = 0;
 
   this->primes = new std::vector<T>();
-  this->exponent = new std::vector<T>();
+  this->exponent = new std::vector<int>();
   this->all_primes_factors = new std::vector<T>();
   this->proper_divisors = new std::vector<T>();
 }
@@ -467,9 +467,10 @@ T RN<T>::get_root()
 
 template <typename T>
 T RN<T>::do_step_get_order(T x, T h, std::vector<T> *primes,
-  std::vector<T> *exponent)
+  std::vector<int> *exponent)
 {
-  T y, p, r;
+  T y, p;
+  int r;
   while (!primes->empty()) {
     p = primes->back();
     r = exponent->back();
@@ -526,7 +527,7 @@ T RN<T>::get_order(T x)
   if (!this->compute_factors_of_order_done)
     _factor_prime<T>(h, this->primes, this->exponent);
   std::vector<T> _primes(*primes);
-  std::vector<T> _exponent(*exponent);
+  std::vector<int> _exponent(*exponent);
   T order = do_step_get_order(x, h, &_primes, &_exponent);
 
   if (order == 1) return h;
