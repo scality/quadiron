@@ -213,7 +213,7 @@ class FFTUtest
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    FFTN<T> fft = FFTN<T>(&gf, n, r);
+    DFTN<T> fft = DFTN<T>(&gf, n, r);
 
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
@@ -503,7 +503,7 @@ class FFTUtest
 
     // std::cerr << "r=" << r << "\n";
 
-    FFTN<T> fft = FFTN<T>(&gf, n, r);
+    DFTN<T> fft = DFTN<T>(&gf, n, r);
 
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     v.zero_fill();
@@ -555,7 +555,7 @@ class FFTUtest
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    FFTN<T> fft = FFTN<T>(&gf, n, r);
+    DFTN<T> fft = DFTN<T>(&gf, n, r);
 
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (T i = 0; i < 100000; i++) {

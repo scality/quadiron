@@ -90,7 +90,7 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
   if (n1 == 2)
     this->dft_outer = new FFT2<T>(gf);
   else
-    this->dft_outer = new FFTN<T>(gf, n1, w1);
+    this->dft_outer = new DFTN<T>(gf, n1, w1);
 
   if (n2 > 1) {
     loop = true;

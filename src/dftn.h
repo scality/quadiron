@@ -6,7 +6,7 @@
  * Algorithm for very small n
  */
 template<typename T>
-class FFTN : public DFT<T>
+class DFTN : public DFT<T>
 {
  private:
   T w;
@@ -16,15 +16,15 @@ class FFTN : public DFT<T>
   void compute_W(Mat<T> *_W, T _w);
   void _fft(Vec<T> *output, Vec<T> *input, Mat<T> *_W);
  public:
-  FFTN(GF<T> *gf, int n, T w);
-  ~FFTN();
+  DFTN(GF<T> *gf, int n, T w);
+  ~DFTN();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
   void fft_inv(Vec<T> *output, Vec<T> *input);
 };
 
 template <typename T>
-FFTN<T>::FFTN(GF<T> *gf, int n, T w) : DFT<T>(gf, n)
+DFTN<T>::DFTN(GF<T> *gf, int n, T w) : DFT<T>(gf, n)
 {
   this->w = w;
   this->inv_w = gf->inv(w);
@@ -36,7 +36,7 @@ FFTN<T>::FFTN(GF<T> *gf, int n, T w) : DFT<T>(gf, n)
 }
 
 template <typename T>
-FFTN<T>::~FFTN()
+DFTN<T>::~DFTN()
 {
   delete this->inv_W;
   delete this->W;
@@ -49,7 +49,7 @@ FFTN<T>::~FFTN()
  * @param _w nth root of unity
  */
 template <typename T>
-void FFTN<T>::compute_W(Mat<T> *_W, T _w)
+void DFTN<T>::compute_W(Mat<T> *_W, T _w)
 {
   for (int i = 0; i <= this->n-1; i++) {
     for (int j = 0; j <= this->n-1; j++) {
@@ -60,13 +60,13 @@ void FFTN<T>::compute_W(Mat<T> *_W, T _w)
 }
 
 template <typename T>
-void FFTN<T>::_fft(Vec<T> *output, Vec<T> *input, Mat<T> *_W)
+void DFTN<T>::_fft(Vec<T> *output, Vec<T> *input, Mat<T> *_W)
 {
   _W->mul(output, input);
 }
 
 template <typename T>
-void FFTN<T>::fft(Vec<T> *output, Vec<T> *input)
+void DFTN<T>::fft(Vec<T> *output, Vec<T> *input)
 {
   _fft(output, input, W);
 }
@@ -77,13 +77,13 @@ void FFTN<T>::fft(Vec<T> *output, Vec<T> *input)
  *
  */
 template <typename T>
-void FFTN<T>::fft_inv(Vec<T> *output, Vec<T> *input)
+void DFTN<T>::fft_inv(Vec<T> *output, Vec<T> *input)
 {
   _fft(output, input, inv_W);
 }
 
 template <typename T>
-void FFTN<T>::ifft(Vec<T> *output, Vec<T> *input)
+void DFTN<T>::ifft(Vec<T> *output, Vec<T> *input)
 {
   _fft(output, input, inv_W);
   if (this->inv_n_mod_p > 1)
