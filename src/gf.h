@@ -15,19 +15,19 @@ class GF : public RN<T>
 {
 protected:
   T p;
-  T n;
+  int n;
   GFP<T> *sub_field;
 
 public:
-  GF(T p, T n);
+  GF(T p, int n);
   virtual ~GF();
   GF<T> *get_sub_field();
   T get_p();
-  T get_n();
+  int get_n();
 };
 
 template <typename T>
-GF<T>::GF(T p, T n) : RN<T>(_exp<T>(p, n))
+GF<T>::GF(T p, int n) : RN<T>(_exp<T>(p, n))
 {
   // XXX shall check that p is prime
   this->p = p;
@@ -44,7 +44,7 @@ GF<T>::~GF()
   if (sub_field) delete sub_field;
 }
 
-/** 
+/**
  * return the field in which is based the extension field (or the field
  * itself if n == 1)
  */
@@ -64,7 +64,7 @@ T GF<T>::get_p()
 }
 
 template <typename T>
-T GF<T>::get_n()
+int GF<T>::get_n()
 {
   return n;
 }

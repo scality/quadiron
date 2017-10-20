@@ -193,11 +193,11 @@ class ArithUtest
   }
 
   void check_primes_exponent(T nb, std::vector<T> *primes,
-    std::vector<T> *exponent) {
+    std::vector<int> *exponent) {
     assert(primes->size() > 0);
     assert(exponent->size() > 0);
 
-    typename std::vector<T>::size_type j;
+    typename std::vector<int>::size_type j;
     T y = 1;
     for (j = 0; j != primes->size(); ++j) {
       y *= _exp<T>(primes->at(j), exponent->at(j));
@@ -227,7 +227,7 @@ class ArithUtest
 
     int i;
     std::vector<T> primes;
-    std::vector<T> exponent;
+    std::vector<int> exponent;
     for (i = 0; i < 1000; i++) {
       T x;
       // std::cout << "i=" << i << "\n";

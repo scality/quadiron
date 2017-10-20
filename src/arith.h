@@ -44,7 +44,7 @@ T _gcd(T u, T v);
 template <class T>
 void _factor_distinct_prime(T n, std::vector<T> *output);
 template <class T>
-void _factor_prime(T nb, std::vector<T> *primes, std::vector<T> *exponent);
+void _factor_prime(T nb, std::vector<T> *primes, std::vector<int> *exponent);
 template <class T>
 void _get_proper_divisors(T n, std::vector<T> *output);
 template <class T>
@@ -64,7 +64,7 @@ template <class T>
 void _get_prime_factors(T nb, std::vector<T> *output);
 template <class T>
 void _get_prime_factors_final(std::vector<T> *primes,
-                              std::vector<T> *exponent, 
+                              std::vector<int> *exponent,
                               std::vector<T> *output);
 
 /**
@@ -550,11 +550,10 @@ void _get_proper_divisors(T nb, std::vector<T> *primes,
  * A given number `n` is factored into primes
  */
 template<class T>
-void _factor_prime(T nb, std::vector<T> *primes,
-  std::vector<T> *exponent)
+void _factor_prime(T nb, std::vector<T> *primes, std::vector<int> *exponent)
 {
   // std::cout << nb << ": ";
-  T occurence = 0;
+  int occurence = 0;
   while (nb % 2 == 0) {
     occurence++;
     if (occurence == 1) {
@@ -752,7 +751,7 @@ template <class T>
 void _get_coprime_factors(T nb, std::vector<T> *output)
 {
   std::vector<T> primes;
-  std::vector<T> exponent;
+  std::vector<int> exponent;
   _factor_prime<T>(nb, &primes, &exponent);
 
   typename std::vector<T>::size_type i;
@@ -772,7 +771,7 @@ template <class T>
 void _get_prime_factors(T nb, std::vector<T> *output)
 {
   std::vector<T> primes;
-  std::vector<T> exponent;
+  std::vector<int> exponent;
   _factor_prime<T>(nb, &primes, &exponent);
   _get_prime_factors_final<T>(&primes, &exponent, output);
 }
@@ -787,12 +786,12 @@ void _get_prime_factors(T nb, std::vector<T> *output)
  */
 template <class T>
 void _get_prime_factors_final(std::vector<T> *primes,
-                             std::vector<T> *exponent, 
+                             std::vector<int> *exponent,
                              std::vector<T> *output)
 {
-  typename std::vector<T>::size_type i, j;
+  typename std::vector<T>::size_type i;
   for (i = 0; i != primes->size(); ++i)
-    for (j = 0; j != exponent->at(i); ++j) {
+    for (int j = 0; j != exponent->at(i); ++j) {
       output->push_back(primes->at(i));
     }
 }
