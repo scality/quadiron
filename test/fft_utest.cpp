@@ -213,7 +213,7 @@ class FFTUtest
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    FFTN<T> fft = FFTN<T>(&gf, n, r);
+    DFTN<T> fft = DFTN<T>(&gf, n, r);
 
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
@@ -503,7 +503,7 @@ class FFTUtest
 
     // std::cerr << "r=" << r << "\n";
 
-    FFTN<T> fft = FFTN<T>(&gf, n, r);
+    DFTN<T> fft = DFTN<T>(&gf, n, r);
 
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     v.zero_fill();
@@ -555,7 +555,7 @@ class FFTUtest
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    FFTN<T> fft = FFTN<T>(&gf, n, r);
+    DFTN<T> fft = DFTN<T>(&gf, n, r);
 
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (T i = 0; i < 100000; i++) {
@@ -600,14 +600,14 @@ class FFTUtest
 
 template class Mat<uint32_t>;
 template class Vec<uint32_t>;
-template class FFT<uint32_t>;
+template class DFT<uint32_t>;
 template class FFTLN<uint32_t>;
 template class FFTPF<uint32_t>;
 template class FFTADD<uint32_t>;
 
 template class Mat<uint64_t>;
 template class Vec<uint64_t>;
-template class FFT<uint64_t>;
+template class DFT<uint64_t>;
 template class FFTPF<uint64_t>;
 template class FFTADD<uint64_t>;
 

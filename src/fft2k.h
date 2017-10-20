@@ -18,7 +18,7 @@
  * @param input
  */
 template<typename T>
-class FFT2K : public FFT<T>
+class FFT2K : public DFT<T>
 {
  private:
   FFT2<T> *fft2 = NULL;
@@ -56,7 +56,7 @@ class FFT2K : public FFT<T>
  * @return
  */
 template <typename T>
-FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : FFT<T>(gf, n)
+FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : DFT<T>(gf, n)
 {
   w = gf->get_nth_root(n);
   inv_w = gf->inv(w);

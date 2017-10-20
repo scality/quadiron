@@ -6,7 +6,7 @@
  * Algorithm for very large n=2^l
  */
 template<typename T>
-class FFTLN : public FFT<T>
+class FFTLN : public DFT<T>
 {
  private:
   int l;
@@ -32,7 +32,7 @@ class FFTLN : public FFT<T>
 };
 
 template <typename T>
-FFTLN<T>::FFTLN(GF<T> *gf, int l, T w) : FFT<T>(gf, _exp2<T>(l))
+FFTLN<T>::FFTLN(GF<T> *gf, int l, T w) : DFT<T>(gf, _exp2<T>(l))
 {
   this->l = l;
   this->w = w;

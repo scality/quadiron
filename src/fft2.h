@@ -8,7 +8,7 @@
  *    And w^(-1) = w = -1;
  */
 template<typename T>
-class FFT2 : public FFT<T>
+class FFT2 : public DFT<T>
 {
  public:
   explicit FFT2(GF<T> *gf);
@@ -19,7 +19,7 @@ class FFT2 : public FFT<T>
 };
 
 template <typename T>
-FFT2<T>::FFT2(GF<T> *gf) : FFT<T>(gf, 2)
+FFT2<T>::FFT2(GF<T> *gf) : DFT<T>(gf, 2)
 {}
 
 template <typename T>

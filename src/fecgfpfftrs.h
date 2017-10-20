@@ -23,7 +23,7 @@ template<typename T>
 class FECGFPFFTRS : public FEC<T>
 {
  private:
-  FFT<T> *fft = NULL;
+  DFT<T> *fft = NULL;
   T limit_value;
 
  public:

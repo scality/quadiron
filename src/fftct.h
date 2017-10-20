@@ -33,7 +33,7 @@
  * @param input
  */
 template<typename T>
-class FFTCT : public FFT<T>
+class FFTCT : public DFT<T>
 {
  private:
   bool loop;
@@ -44,8 +44,8 @@ class FFTCT : public FFT<T>
   Vec<T> *G = NULL;
   VcVec<T> *Y = NULL;
   VcVec<T> *X = NULL;
-  FFT<T> *dft_outer = NULL;
-  FFT<T> *dft_inner = NULL;
+  DFT<T> *dft_outer = NULL;
+  DFT<T> *dft_inner = NULL;
   std::vector<T>* prime_factors = NULL;
   void mul_twiddle_factors(bool inv);
  public:
@@ -69,7 +69,7 @@ class FFTCT : public FFT<T>
  */
 template <typename T>
 FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
-  FFT<T>(gf, n)
+  DFT<T>(gf, n)
 {
   if (factors == NULL) {
     this->prime_factors = new std::vector<T>();
@@ -90,7 +90,7 @@ FFTCT<T>::FFTCT(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
   if (n1 == 2)
     this->dft_outer = new FFT2<T>(gf);
   else
-    this->dft_outer = new FFTN<T>(gf, n1, w1);
+    this->dft_outer = new DFTN<T>(gf, n1, w1);
 
   if (n2 > 1) {
     loop = true;
