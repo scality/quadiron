@@ -63,6 +63,7 @@ typedef enum
 #include "fftadd.h"
 #include "poly.h"
 #include "gfpn.h"
+#include "gff4n.h"
 #include "fec.h"
 #include "fecgf2nrs.h"
 #include "fecfntrs.h"

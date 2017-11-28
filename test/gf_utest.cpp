@@ -80,6 +80,30 @@ class GFUtest
     assert(n_found > 0);
   }
 
+  void test_reciprocal_gff4n(GFF4N<T> *gf)
+  {
+    int i;
+    int n_found = 0;
+
+    for (i = 0; i < 100; i++) {
+      T x, y;
+
+      // std::cout << "i=" << i << "\n";
+
+      x = gf->weak_rand();
+      // std::cout << "x=" << x << "\n";
+      try {
+        y = gf->inv(x);
+      } catch (NtlException e) {
+        continue ;
+      }
+      // std::cout << "inv(x)=" << y << "\n";
+      assert(gf->mul(x, y) == gf->get_unit());
+      n_found++;
+    }
+    assert(n_found > 0);
+  }
+
   void test_log(GF<T> *gf)
   {
     int i;
@@ -284,6 +308,27 @@ class GFUtest
     test_get_nth_root(&gf2n);
   }
 
+  void gf_utest_f4n_with_n(T n)
+  {
+    std::cout << "gf_utest_f4n_with_n=" << n << "\n";
+
+    srand(time(0));
+
+    GFF4N<T> gf(n);
+
+    test_negation(&gf);
+    test_reciprocal_gff4n(&gf);
+    test_log(&gf);
+  }
+
+  void gf_utest_f4n()
+  {
+    int max_n = sizeof(T) / 4;
+    std::cout << "sizeofT=" << sizeof(T) << "gf_utest_f4n for max_n=" << max_n << "\n";
+    for (int n = 1; n <= max_n; n++)
+      gf_utest_f4n_with_n(n);
+  }
+
   void gf_utest()
   {
     std::cout << "gf_utest\n";
@@ -304,6 +349,7 @@ class GFUtest
     test_log_gf256();
     test_negation_gf256();
     test_prime_root_gf256();
+    gf_utest_f4n();
   }
 
   void gf_utest_2_bign(T n)
@@ -343,10 +389,14 @@ class GFUtest
 template class GF<uint32_t>;
 template class GFP<uint32_t>;
 template class GF2N<uint32_t>;
+template class GFF4N<uint32_t>;
 
 template class GF<uint64_t>;
 template class GFP<uint64_t>;
 template class GF2N<uint64_t>;
+template class GFF4N<uint64_t>;
+
+template class GFF4N<__uint128_t>;
 
 template class GF<mpz_class>;
 template class GFP<mpz_class>;
