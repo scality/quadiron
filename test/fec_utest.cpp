@@ -15,6 +15,19 @@ class FECUtest
     run_test(&fec, fec.n, n_data, true);
   }
 
+  void test_fecgff4nrs()
+  {
+    std::cout << "test_fecgff4nrs\n";
+    u_int n_data = 3;
+    u_int n_parities = 3;
+
+    for (u_int word_size = 4; word_size <= sizeof(T)/2; word_size += 4) {
+      std::cout << "test_fecgff4nrs with word_size=" << word_size << "\n";
+      FECGFF4NRS<T> fec = FECGFF4NRS<T>(word_size, n_data, n_parities);
+      run_test(&fec, fec.n, n_data, true);
+    }
+  }
+
   void test_fecgf2nfftrs() {
     std::cout << "test_fecgf2nfftrs with sizeof(T)=" << sizeof(T) << "\n";
     for (int wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
@@ -69,28 +82,31 @@ class FECUtest
 
     Vec<T> v(gf, n_data), _v(gf, n), _v2(gf, n_data), f(gf, n_data),
       v2(gf, n_data);
+    Vec<T> v_p(gf, n_data);
     std::vector<int> ids;
     for (int i = 0; i < n; i++)
       ids.push_back(i);
     std::vector<KeyValue*>props(n, nullptr);
-    for (int j = 0; j < 10000; j++) {
+    for (int j = 0; j < 10; j++) {
       if (propos_flag) {
         for (int i = 0; i < n; i++)
           props[i] = new KeyValue();
       }
       for (int i = 0; i < n_data; i++)
         v.set(i, gf->weak_rand());
-      // v.dump();
+      // FIXME: gff4n will modify v after encode
+      v_p.copy(&v);
+      // std::cout << " v:"; v.dump();
       fec->encode(&_v, props, 0, &v);
-      // _v.dump();
+      // std::cout << "_v:"; _v.dump();
       std::random_shuffle(ids.begin(), ids.end());
       for (int i = 0; i < n_data; i++) {
         f.set(i, ids.at(i));
         _v2.set(i, _v.get(ids.at(i)));
       }
       fec->decode(&v2, props, 0, &f, &_v2);
-      // v2.dump();
-      assert(v.eq(&v2));
+      // std::cout << "v2:"; v2.dump();
+      assert(v_p.eq(&v2));
       if (propos_flag) {
         for (int i = 0; i < n; i++)
           delete props[i];
@@ -103,6 +119,7 @@ class FECUtest
     std::cout << "fec_utest\n";
 
     test_fecfntrs();
+    test_fecgff4nrs();
     test_fecgf2nfftrs();
     test_fecgf2nfftaddrs();
     test_fecgfpfftrs();
@@ -114,6 +131,7 @@ template class Vec<uint32_t>;
 template class FEC<uint32_t>;
 template class FECGF2NRS<uint32_t>;
 template class FECFNTRS<uint32_t>;
+template class FECGFF4NRS<uint32_t>;
 template class FECGF2NFFTRS<uint32_t>;
 
 template class Mat<uint64_t>;
@@ -121,6 +139,7 @@ template class Vec<uint64_t>;
 template class FEC<uint64_t>;
 template class FECGF2NRS<uint64_t>;
 template class FECFNTRS<uint64_t>;
+template class FECGFF4NRS<uint64_t>;
 template class FECGF2NFFTRS<uint64_t>;
 template class FECGFPFFTRS<uint64_t>;
 
@@ -129,6 +148,7 @@ template class Vec<__uint128_t>;
 template class FEC<__uint128_t>;
 template class FECGF2NRS<__uint128_t>;
 // template class FECFNTRS<uint64_t>;
+template class FECGFF4NRS<__uint128_t>;
 template class FECGF2NFFTRS<__uint128_t>;
 template class FECGFPFFTRS<__uint128_t>;
 
@@ -153,6 +173,7 @@ void fec_utest()
   FECUtest<uint64_t> fec_utest_uint64;
   fec_utest_uint64.fec_utest();
   FECUtest<__uint128_t> fec_utest_uint128;
+  fec_utest_uint128.test_fecgff4nrs();
   // fecfntrs does not work for uint128_t
   fec_utest_uint128.test_fecgf2nfftrs();  // it runs slowly over gf2n(128)
 }

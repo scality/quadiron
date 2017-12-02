@@ -56,6 +56,23 @@ class GFUtest
     }
   }
 
+  void test_negation_gff4n(GFF4N<T> *gf)
+  {
+    int i;
+
+    for (i = 0; i < 100; i++) {
+      T x, y;
+
+      // std::cout << "i=" << i << "\n";
+
+      x = gf->weak_rand_tuple();
+      // std::cout << "x=" << x << "\n";
+      y = gf->neg(x);
+      // std::cout << "inv(x)=" << y << "\n";
+      assert(gf->add(x, y) == 0);
+    }
+  }
+
   void test_reciprocal(GF<T> *gf)
   {
     int i;
@@ -90,7 +107,7 @@ class GFUtest
 
       // std::cout << "i=" << i << "\n";
 
-      x = gf->weak_rand();
+      x = gf->weak_rand_tuple();
       // std::cout << "x=" << x << "\n";
       try {
         y = gf->inv(x);
@@ -131,6 +148,26 @@ class GFUtest
       n_found++;
     }
     assert(n_found > 0);
+  }
+
+  void test_pack_unpack(GFF4N<T> *gf)
+  {
+    int i;
+
+    for (i = 0; i < 100; i++) {
+      T x, y;
+      compT<T> z;
+
+      // std::cout << "i=" << i << "\n";
+
+      x = gf->weak_rand_tuple();
+      // std::cout << "x=" << x << "\n";
+      z = gf->unpack(x);
+      // std::cout << "unpack(x)=" << z.val << "\n";
+      y = gf->pack(z.val, z.flag);
+      // std::cout << "pack(z)=" << y << "\n";
+      assert(x == y);
+    }
   }
 
   void test_find_prime_root(GF<T> *gf)
@@ -316,9 +353,9 @@ class GFUtest
 
     GFF4N<T> gf(n);
 
-    test_negation(&gf);
+    test_negation_gff4n(&gf);
     test_reciprocal_gff4n(&gf);
-    test_log(&gf);
+    test_pack_unpack(&gf);
   }
 
   void gf_utest_f4n()
@@ -411,6 +448,7 @@ void gf_utest()
   gfutest_uint64.gf_utest_2_n();
   GFUtest<__uint128_t> gfutest_uint128;
   // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
+  gfutest_uint128.gf_utest_f4n();
   gfutest_uint128.gf_utest_2_n();
   GFUtest<mpz_class> gfutest_mpz;
   gfutest_mpz.gf_utest_nogf2n();  // XXX gf2n broken for now
