@@ -36,7 +36,7 @@ public:
   T log_naive(T base, T exponent);
   void compute_factors_of_order();
   bool is_quadratic_residue(T q);
-  void compute_omegas(Vec<T> *W, int n, T w);
+  virtual void compute_omegas(Vec<T> *W, int n, T w);
   void compute_omegas_cached(Vec<T> *W, int n, T w);
   virtual T weak_rand(void);
   bool is_prime_root(T nb);
@@ -48,7 +48,7 @@ public:
   T do_step_get_order(T x, T h, std::vector<T> *primes,
     std::vector<int> *exponent);
   T get_order(T x);
-  T get_nth_root(T n);
+  virtual T get_nth_root(T n);
   T get_code_len(T n);
   T get_code_len_high_compo(T n);
  private:
