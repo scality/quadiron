@@ -30,6 +30,12 @@ template<>           struct SignedDouble<uint64_t> {typedef __int128_t T;};
 template<>           struct SignedDouble<__uint128_t> {typedef int256_t T;};
 template<>           struct SignedDouble<mpz_class> {typedef mpz_class T;};
 
+template<typename T>
+struct compT {
+  T val;
+  uint32_t flag;
+};
+
 typedef enum
   {
     NTL_EX_NOT_FOUND,
@@ -67,6 +73,7 @@ typedef enum
 #include "fec.h"
 #include "fecgf2nrs.h"
 #include "fecfntrs.h"
+#include "fecgff4n.h"
 #include "fecgf2nfftrs.h"
 #include "fecgf2nfftaddrs.h"
 #include "fecgfpfftrs.h"
