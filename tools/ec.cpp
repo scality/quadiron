@@ -29,7 +29,7 @@ char *prefix = NULL;
 void xusage()
 {
   std::cerr << std::string("Usage: ") +
-    "ec [-e gf2nrsv|gf2nrsc|gf2nfftrs|gf2nfftaddrs|gfpfftrs|fntrs]" +
+    "ec [-e gf2nrsv|gf2nrsc|gf2nfftrs|gf2nfftaddrs|gfpfftrs|fntrs|gff4nrs]" +
     "[-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
   exit(1);
@@ -332,6 +332,26 @@ void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
   delete fec;
 }
 
+template <typename T>
+void run_FECGFF4NRS(int word_size, int n_data, int n_parities, int rflag)
+{
+  FECGFF4NRS<T> *fec;
+  fec = new FECGFF4NRS<T>(word_size, n_data, n_parities);
+
+  if (tflag) {
+    print_fec_type<T>(fec);
+    exit(1);
+  }
+  if (rflag) {
+    if (0 != repair_data_files<T>(fec)) {
+      exit(1);
+    }
+  }
+  create_coding_files<T>(fec);
+  print_stats<T>(fec);
+  delete fec;
+}
+
 enum ec_type
   {
     EC_TYPE_UNDEF = 0,
@@ -340,6 +360,7 @@ enum ec_type
     EC_TYPE_GF2NFFTADDRS,
     EC_TYPE_GFPFFTRS,
     EC_TYPE_FNTRS,
+    EC_TYPE_GFF4NRS,
   };
 
 bool check(int n, int word_size, ec_type eflag)
@@ -380,6 +401,8 @@ int main(int argc, char **argv)
         eflag = EC_TYPE_GF2NFFTADDRS;
       } else if (!strcmp(optarg, "gfpfftrs")) {
         eflag = EC_TYPE_GFPFFTRS;
+      } else if (!strcmp(optarg, "gff4nrs")) {
+        eflag = EC_TYPE_GFF4NRS;
       } else if (!strcmp(optarg, "fntrs"))
         eflag = EC_TYPE_FNTRS;
       else
@@ -439,6 +462,13 @@ int main(int argc, char **argv)
       run_FECFNTRS<uint64_t>(word_size, n_data, n_parities, rflag);
     // else if (word_size <= 16)
     // run_FECFNTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
+  } else if (eflag == EC_TYPE_GFF4NRS) {
+    if (word_size <= 2)
+      run_FECGFF4NRS<uint32_t>(word_size, n_data, n_parities, rflag);
+    else if (word_size <= 4)
+      run_FECGFF4NRS<uint64_t>(word_size, n_data, n_parities, rflag);
+    else if (word_size <= 8)
+      run_FECGFF4NRS<__uint128_t>(word_size, n_data, n_parities, rflag);
   } else if (eflag == EC_TYPE_GF2NRS) {
     if (word_size <= 4)
       run_FECGF2NRS<uint32_t>(word_size, n_data, n_parities, mflag, rflag);
