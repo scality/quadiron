@@ -56,7 +56,7 @@ class GFUtest
     }
   }
 
-  void test_negation_gff4n(GFF4N<T> *gf)
+  void test_negation_ngff4(NGFF4<T> *gf)
   {
     int i;
 
@@ -97,7 +97,7 @@ class GFUtest
     assert(n_found > 0);
   }
 
-  void test_reciprocal_gff4n(GFF4N<T> *gf)
+  void test_reciprocal_ngff4(NGFF4<T> *gf)
   {
     int i;
     int n_found = 0;
@@ -150,7 +150,7 @@ class GFUtest
     assert(n_found > 0);
   }
 
-  void test_pack_unpack(GFF4N<T> *gf)
+  void test_pack_unpack(NGFF4<T> *gf)
   {
     int i;
 
@@ -351,10 +351,10 @@ class GFUtest
 
     srand(time(0));
 
-    GFF4N<T> gf(n);
+    NGFF4<T> gf(n);
 
-    test_negation_gff4n(&gf);
-    test_reciprocal_gff4n(&gf);
+    test_negation_ngff4(&gf);
+    test_reciprocal_ngff4(&gf);
     test_pack_unpack(&gf);
   }
 
@@ -426,14 +426,14 @@ class GFUtest
 template class GF<uint32_t>;
 template class GFP<uint32_t>;
 template class GF2N<uint32_t>;
-template class GFF4N<uint32_t>;
+template class NGFF4<uint32_t>;
 
 template class GF<uint64_t>;
 template class GFP<uint64_t>;
 template class GF2N<uint64_t>;
-template class GFF4N<uint64_t>;
+template class NGFF4<uint64_t>;
 
-template class GFF4N<__uint128_t>;
+template class NGFF4<__uint128_t>;
 
 template class GF<mpz_class>;
 template class GFP<mpz_class>;

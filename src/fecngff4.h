@@ -10,27 +10,27 @@
  * by Alexandre Soro and Jerome Lacan
  */
 template<typename T>
-class FECGFF4NRS : public FEC<T>
+class FECNGFF4RS : public FEC<T>
 {
  private:
   FFT2K<T> *fft = NULL;
   GF<uint32_t> *sub_field;
-  GFF4N<T> *gff4n;
+  NGFF4<T> *ngff4;
   int gf_n;
 
  public:
   T n;
   T r;
-  FECGFF4NRS(u_int word_size, u_int n_data, u_int n_parities) :
+  FECNGFF4RS(u_int word_size, u_int n_data, u_int n_parities) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     assert(word_size <= 8);
     gf_n = word_size / 2;
 
-    gff4n = new GFF4N<T>(gf_n);
-    this->gf = gff4n;
+    ngff4 = new NGFF4<T>(gf_n);
+    this->gf = ngff4;
 
-    sub_field = gff4n->get_sub_field();
+    sub_field = ngff4->get_sub_field();
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
@@ -42,13 +42,13 @@ class FECGFF4NRS : public FEC<T>
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFT2K<T>(gff4n, n);
+    this->fft = new FFT2K<T>(ngff4, n);
   }
 
-  ~FECGFF4NRS()
+  ~FECNGFF4RS()
   {
     delete fft;
-    delete gff4n;
+    delete ngff4;
   }
 
   int get_n_outputs()
@@ -69,7 +69,7 @@ class FECGFF4NRS : public FEC<T>
   {
     //std::cout << "words:"; words->dump();
     for (int i = 0; i < this->n_data; i++) {
-      words->set(i, gff4n->pack(words->get(i)));
+      words->set(i, ngff4->pack(words->get(i)));
     }
     //std::cout << "pack words:"; words->dump();
     VVec<T> vwords(words, n);
@@ -77,7 +77,7 @@ class FECGFF4NRS : public FEC<T>
     //std::cout << "encoded:"; output->dump();
     for (int i = 0; i < n; i++) {
       T val = output->get(i);
-      compT<T> true_val = gff4n->unpack(val);
+      compT<T> true_val = ngff4->unpack(val);
       if (true_val.flag > 0) {
         char buf[256];
         snprintf(buf, sizeof (buf), "%zd:%d", offset, i);
@@ -123,10 +123,10 @@ class FECGFF4NRS : public FEC<T>
   {
     int k = this->n_data;  // number of fragments received
     // vector x=(x_0, x_1, ..., x_k-1)
-    Vec<T> vx(gff4n, k);
+    Vec<T> vx(ngff4, k);
     for (int i = 0; i < k; i++) {
       vx.set(i,
-        gff4n->replicate(this->sub_field->exp(r, fragments_ids->get(i))));
+        ngff4->replicate(this->sub_field->exp(r, fragments_ids->get(i))));
     }
     //std::cout << "vx"; vx.dump();
 
@@ -139,25 +139,25 @@ class FECGFF4NRS : public FEC<T>
         props[j]->is_key(buf)) {
         uint32_t flag = std::atoi(props[j]->at(buf).c_str());
         // std::cout << "\nflag at " << buf << ":" << flag << std::endl;
-        true_val = gff4n->pack(words->get(i), flag);
+        true_val = ngff4->pack(words->get(i), flag);
         // std::cout << "word:" << words->get(i) << " -> " << true_val << std::endl;
       } else {
-        true_val = gff4n->pack(words->get(i));
+        true_val = ngff4->pack(words->get(i));
       }
       words->set(i, true_val);
     }
     //std::cout << "words packed"; words->dump();
 
     // Lagrange interpolation
-    Poly<T> A(gff4n), _A(gff4n);
+    Poly<T> A(ngff4), _A(ngff4);
 
     // compute A(x) = prod_j(x-x_j)
-    T one = gff4n->get_unit();
+    T one = ngff4->get_unit();
     A.set(0, one);
     for (int i = 0; i < k; i++) {
-      Poly<T> _t(gff4n);
+      Poly<T> _t(ngff4);
       _t.set(1, one);
-      _t.set(0, gff4n->sub(0, vx.get(i)));
+      _t.set(0, ngff4->sub(0, vx.get(i)));
       // _t.dump();
       A.mul(&_t);
     }
@@ -166,21 +166,21 @@ class FECGFF4NRS : public FEC<T>
     // compute A'(x) since A_i(x_i) = A'_i(x_i)
     // _A.derivative();
     for (int i = 1; i <= A.degree(); i++)
-      _A.set(i - 1, gff4n->mul(A.get(i), gff4n->replicate(i)));
+      _A.set(i - 1, ngff4->mul(A.get(i), ngff4->replicate(i)));
 
     //std::cout << "A'(x)="; _A.dump();
 
     // evaluate n_i=v_i/A'_i(x_i)
-    Vec<T> _n(gff4n, k);
+    Vec<T> _n(ngff4, k);
     for (int i = 0; i < k; i++) {
       _n.set(i,
-             gff4n->div(words->get(i),
+             ngff4->div(words->get(i),
                            _A.eval(vx.get(i))));
     }
     //std::cout << "_n="; _n.dump();
 
     // compute N'(x) = sum_i{n_i * x^z_i}
-    Poly<T> N_p(gff4n);
+    Poly<T> N_p(ngff4);
     for (int i = 0; i <= k-1; i++) {
       N_p.set(fragments_ids->get(i), _n.get(i));
     }
@@ -190,9 +190,9 @@ class FECGFF4NRS : public FEC<T>
     // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
     // using Taylor series we rewrite the expression into
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
-    Poly<T> S(gff4n);
+    Poly<T> S(ngff4);
     for (int i = 0; i <= n-1; i++) {
-      T val = gff4n->replicate(sub_field->inv(sub_field->exp(r, i+1)));
+      T val = ngff4->replicate(sub_field->inv(sub_field->exp(r, i+1)));
       S.set(i, N_p.eval(val));
     }
     //std::cout << "S="; S.dump();
@@ -202,7 +202,7 @@ class FECGFF4NRS : public FEC<T>
     // No need to mod x^n since only last n_data coefs are obtained
     // output is n_data length
     for (int i = 0; i < this->n_data; i++)
-      output->set(i, gff4n->unpack(S.get(i)).val);
+      output->set(i, ngff4->unpack(S.get(i)).val);
     //std::cout << "decoded"; output->dump();
   }
 };
