@@ -8,7 +8,7 @@ template<typename T>
 class Poly;
 
 template<typename T>
-class GFF4N : public GF<T>
+class NGFF4 : public GF<T>
 {
 private:
   T unit;
@@ -19,8 +19,8 @@ private:
   void init(void);
 
 public:
-  explicit GFF4N(int n);
-  ~GFF4N();
+  explicit NGFF4(int n);
+  ~NGFF4();
   T card(void);
   T card_minus_one(void);
   bool check(T a);
@@ -45,13 +45,13 @@ public:
 };
 
 template <typename T>
-GFF4N<T>::GFF4N(int n) : GF<T>(65537, n)
+NGFF4<T>::NGFF4(int n) : GF<T>(65537, n)
 {
   sub_field = new GFP<uint32_t>(65537);
 
   if (!check_n(n)) {
     // not supported yet
-    assert("Input n is not supported for GFF4N");
+    assert("Input n is not supported for NGFF4");
   }
 
   unit = 0;
@@ -61,7 +61,7 @@ GFF4N<T>::GFF4N(int n) : GF<T>(65537, n)
 }
 
 template <typename T>
-GFF4N<T>::~GFF4N()
+NGFF4<T>::~NGFF4()
 {
   delete sub_field;
 }
@@ -71,13 +71,13 @@ GFF4N<T>::~GFF4N()
  * Hence, n <= sizeof(T) / 4
  */
 template <typename T>
-bool GFF4N<T>::check_n(int n)
+bool NGFF4<T>::check_n(int n)
 {
   return (n <= sizeof(T) / 4);
 }
 
 template <typename T>
-T GFF4N<T>::replicate(T a)
+T NGFF4<T>::replicate(T a)
 {
   T b = a;
   for (int i = 1; i < this->n; i++) {
@@ -87,7 +87,7 @@ T GFF4N<T>::replicate(T a)
 }
 
 template <typename T>
-void GFF4N<T>::init(void)
+void NGFF4<T>::init(void)
 {
   unit = replicate(1);
   q = replicate(65537);
@@ -95,31 +95,31 @@ void GFF4N<T>::init(void)
 }
 
 template <typename T>
-T GFF4N<T>::card(void)
+T NGFF4<T>::card(void)
 {
   return q;
 }
 
 template <typename T>
-T GFF4N<T>::card_minus_one(void)
+T NGFF4<T>::card_minus_one(void)
 {
   return h;
 }
 
 template <typename T>
-T GFF4N<T>::get_unit(void)
+T NGFF4<T>::get_unit(void)
 {
   return unit;
 }
 
 template <typename T>
-T GFF4N<T>::neg(T a)
+T NGFF4<T>::neg(T a)
 {
   return sub(0, a);
 }
 
 template <typename T>
-T GFF4N<T>::add(T a, T b)
+T NGFF4<T>::add(T a, T b)
 {
   T c = 0;
   uint32_t mask = 0xffffffff;
@@ -136,7 +136,7 @@ T GFF4N<T>::add(T a, T b)
 }
 
 template <typename T>
-T GFF4N<T>::sub(T a, T b)
+T NGFF4<T>::sub(T a, T b)
 {
   T c = 0;
   uint32_t mask = 0xffffffff;
@@ -153,7 +153,7 @@ T GFF4N<T>::sub(T a, T b)
 }
 
 template <typename T>
-T GFF4N<T>::mul(T a, T b)
+T NGFF4<T>::mul(T a, T b)
 {
   T c = 0;
   uint32_t mask = 0xffffffff;
@@ -170,7 +170,7 @@ T GFF4N<T>::mul(T a, T b)
 }
 
 template <typename T>
-T GFF4N<T>::div(T a, T b)
+T NGFF4<T>::div(T a, T b)
 {
   T c = 0;
   uint32_t mask = 0xffffffff;
@@ -187,7 +187,7 @@ T GFF4N<T>::div(T a, T b)
 }
 
 template <typename T>
-T GFF4N<T>::inv(T a)
+T NGFF4<T>::inv(T a)
 {
   T c = 0;
   uint32_t mask = 0xffffffff;
@@ -203,7 +203,7 @@ T GFF4N<T>::inv(T a)
 }
 
 template <typename T>
-T GFF4N<T>::exp(T a, T b)
+T NGFF4<T>::exp(T a, T b)
 {
   T c = 0;
   uint32_t mask = 0xffffffff;
@@ -220,7 +220,7 @@ T GFF4N<T>::exp(T a, T b)
 }
 
 template <typename T>
-T GFF4N<T>::log(T a, T b)
+T NGFF4<T>::log(T a, T b)
 {
   T c = 0;
   uint32_t mask = 0xffffffff;
@@ -237,7 +237,7 @@ T GFF4N<T>::log(T a, T b)
 }
 
 template <typename T>
-T GFF4N<T>::weak_rand_tuple(void)
+T NGFF4<T>::weak_rand_tuple(void)
 {
   T c = 0;
   uint32_t mask = 0xffffffff;
@@ -252,7 +252,7 @@ T GFF4N<T>::weak_rand_tuple(void)
 }
 
 template <typename T>
-T GFF4N<T>::weak_rand(void)
+T NGFF4<T>::weak_rand(void)
 {
   T c = weak_rand_tuple();
   return unpack(c).val;
@@ -262,7 +262,7 @@ T GFF4N<T>::weak_rand(void)
  * Pack of n numbers each of 16 bits into n numbers each of 32 bits
  */
 template <typename T>
-T GFF4N<T>::pack(T a)
+T NGFF4<T>::pack(T a)
 {
   uint32_t mask = 0xffff;
   int shift = 0;
@@ -280,7 +280,7 @@ T GFF4N<T>::pack(T a)
  *  If flag contains 2^i, ith number == 65537
  */
 template <typename T>
-T GFF4N<T>::pack(T a, uint32_t flag)
+T NGFF4<T>::pack(T a, uint32_t flag)
 {
   uint32_t mask = 0xffff;
   int shift = 0;
@@ -305,7 +305,7 @@ T GFF4N<T>::pack(T a, uint32_t flag)
  *  as zero
  */
 template <typename T>
-compT<T> GFF4N<T>::unpack(T a)
+compT<T> NGFF4<T>::unpack(T a)
 {
   compT<T> b = compT<T>();
   uint32_t mask = 0xffffffff;
@@ -325,7 +325,7 @@ compT<T> GFF4N<T>::unpack(T a)
 
 // Use for fft
 template <typename T>
-T GFF4N<T>::get_nth_root(T n)
+T NGFF4<T>::get_nth_root(T n)
 {
   T sub_w = sub_field->get_nth_root(n);
   T w = replicate(sub_w);
@@ -333,7 +333,7 @@ T GFF4N<T>::get_nth_root(T n)
 }
 
 template <typename T>
-bool GFF4N<T>::check(T a)
+bool NGFF4<T>::check(T a)
 {
   return (a >= 0 && a < q);
 }
@@ -346,7 +346,7 @@ bool GFF4N<T>::check(T a)
  * @param w n-th root of unity
  */
 template <typename T>
-void GFF4N<T>::compute_omegas(Vec<T> *W, int n, T w)
+void NGFF4<T>::compute_omegas(Vec<T> *W, int n, T w)
 {
   for (int i = 0; i <= n; i++) {
     W->set(i, this->exp(w, replicate(i)));
@@ -354,7 +354,7 @@ void GFF4N<T>::compute_omegas(Vec<T> *W, int n, T w)
 }
 
 template <typename T>
-GF<uint32_t> *GFF4N<T>::get_sub_field()
+GF<uint32_t> *NGFF4<T>::get_sub_field()
 {
   return sub_field;
 }

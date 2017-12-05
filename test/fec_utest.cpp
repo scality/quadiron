@@ -15,15 +15,15 @@ class FECUtest
     run_test(&fec, fec.n, n_data, true);
   }
 
-  void test_fecgff4nrs()
+  void test_fecngff4rs()
   {
-    std::cout << "test_fecgff4nrs\n";
+    std::cout << "test_fecngff4rs\n";
     u_int n_data = 3;
     u_int n_parities = 3;
 
     for (u_int word_size = 4; word_size <= sizeof(T)/2; word_size += 4) {
-      std::cout << "test_fecgff4nrs with word_size=" << word_size << "\n";
-      FECGFF4NRS<T> fec = FECGFF4NRS<T>(word_size, n_data, n_parities);
+      std::cout << "test_fecngff4rs with word_size=" << word_size << "\n";
+      FECNGFF4RS<T> fec = FECNGFF4RS<T>(word_size, n_data, n_parities);
       run_test(&fec, fec.n, n_data, true);
     }
   }
@@ -94,7 +94,7 @@ class FECUtest
       }
       for (int i = 0; i < n_data; i++)
         v.set(i, gf->weak_rand());
-      // FIXME: gff4n will modify v after encode
+      // FIXME: ngff4 will modify v after encode
       v_p.copy(&v);
       // std::cout << " v:"; v.dump();
       fec->encode(&_v, props, 0, &v);
@@ -119,7 +119,7 @@ class FECUtest
     std::cout << "fec_utest\n";
 
     test_fecfntrs();
-    test_fecgff4nrs();
+    test_fecngff4rs();
     test_fecgf2nfftrs();
     test_fecgf2nfftaddrs();
     test_fecgfpfftrs();
@@ -131,7 +131,7 @@ template class Vec<uint32_t>;
 template class FEC<uint32_t>;
 template class FECGF2NRS<uint32_t>;
 template class FECFNTRS<uint32_t>;
-template class FECGFF4NRS<uint32_t>;
+template class FECNGFF4RS<uint32_t>;
 template class FECGF2NFFTRS<uint32_t>;
 
 template class Mat<uint64_t>;
@@ -139,7 +139,7 @@ template class Vec<uint64_t>;
 template class FEC<uint64_t>;
 template class FECGF2NRS<uint64_t>;
 template class FECFNTRS<uint64_t>;
-template class FECGFF4NRS<uint64_t>;
+template class FECNGFF4RS<uint64_t>;
 template class FECGF2NFFTRS<uint64_t>;
 template class FECGFPFFTRS<uint64_t>;
 
@@ -148,7 +148,7 @@ template class Vec<__uint128_t>;
 template class FEC<__uint128_t>;
 template class FECGF2NRS<__uint128_t>;
 // template class FECFNTRS<uint64_t>;
-template class FECGFF4NRS<__uint128_t>;
+template class FECNGFF4RS<__uint128_t>;
 template class FECGF2NFFTRS<__uint128_t>;
 template class FECGFPFFTRS<__uint128_t>;
 
@@ -173,7 +173,7 @@ void fec_utest()
   FECUtest<uint64_t> fec_utest_uint64;
   fec_utest_uint64.fec_utest();
   FECUtest<__uint128_t> fec_utest_uint128;
-  fec_utest_uint128.test_fecgff4nrs();
+  fec_utest_uint128.test_fecngff4rs();
   // fecfntrs does not work for uint128_t
   fec_utest_uint128.test_fecgf2nfftrs();  // it runs slowly over gf2n(128)
 }
