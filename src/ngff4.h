@@ -122,12 +122,12 @@ template <typename T>
 T NGFF4<T>::add(T a, T b)
 {
   T c = 0;
+  T tmp;
   uint32_t mask = 0xffffffff;
   int shift = 0;
   for (int i = 0; i < this->n; i++) {
-    T tmp = sub_field->add(a & mask, b & mask);
-    tmp <<= shift;
-    c += tmp;
+    tmp = ((uint32_t)(a&mask) + (uint32_t)(b&mask)) % 65537;
+    c += (tmp << shift);
     shift += 32;
     a >>= 32;
     b >>= 32;
@@ -139,12 +139,12 @@ template <typename T>
 T NGFF4<T>::sub(T a, T b)
 {
   T c = 0;
+  T tmp;
   uint32_t mask = 0xffffffff;
   int shift = 0;
   for (int i = 0; i < this->n; i++) {
-    T tmp = sub_field->sub(a & mask, b & mask);
-    tmp <<= shift;
-    c += tmp;
+    tmp = sub_field->sub(a&mask, b&mask);
+    c += (tmp << shift);
     shift += 32;
     a >>= 32;
     b >>= 32;
@@ -156,12 +156,12 @@ template <typename T>
 T NGFF4<T>::mul(T a, T b)
 {
   T c = 0;
+  T tmp;
   uint32_t mask = 0xffffffff;
   int shift = 0;
   for (int i = 0; i < this->n; i++) {
-    T tmp = sub_field->mul(a & mask, b & mask);
-    tmp <<= shift;
-    c += tmp;
+    tmp = ((uint64_t)(a&mask) * (uint32_t)(b&mask)) % 65537;
+    c += (tmp << shift);
     shift += 32;
     a >>= 32;
     b >>= 32;
@@ -173,12 +173,12 @@ template <typename T>
 T NGFF4<T>::div(T a, T b)
 {
   T c = 0;
+  T tmp;
   uint32_t mask = 0xffffffff;
   int shift = 0;
   for (int i = 0; i < this->n; i++) {
-    T tmp = sub_field->div(a & mask, b & mask);
-    tmp <<= shift;
-    c += tmp;
+    tmp = sub_field->div(a & mask, b & mask);
+    c += (tmp << shift);
     shift += 32;
     a >>= 32;
     b >>= 32;
@@ -190,12 +190,12 @@ template <typename T>
 T NGFF4<T>::inv(T a)
 {
   T c = 0;
+  T tmp;
   uint32_t mask = 0xffffffff;
   int shift = 0;
   for (int i = 0; i < this->n; i++) {
-    T tmp = sub_field->inv(a & mask);
-    tmp <<= shift;
-    c += tmp;
+    tmp = sub_field->inv(a & mask);
+    c += (tmp << shift);
     shift += 32;
     a >>= 32;
   }
@@ -206,12 +206,12 @@ template <typename T>
 T NGFF4<T>::exp(T a, T b)
 {
   T c = 0;
+  T tmp;
   uint32_t mask = 0xffffffff;
   int shift = 0;
   for (int i = 0; i < this->n; i++) {
-    T tmp = sub_field->exp(a & mask, b & mask);
-    tmp <<= shift;
-    c += tmp;
+    tmp = sub_field->exp(a & mask, b & mask);
+    c += (tmp << shift);
     shift += 32;
     a >>= 32;
     b >>= 32;
@@ -223,12 +223,12 @@ template <typename T>
 T NGFF4<T>::log(T a, T b)
 {
   T c = 0;
+  T tmp;
   uint32_t mask = 0xffffffff;
   int shift = 0;
   for (int i = 0; i < this->n; i++) {
-    T tmp = sub_field->log(a & mask, b & mask);
-    tmp <<= shift;
-    c += tmp;
+    tmp = sub_field->log(a & mask, b & mask);
+    c += (tmp << shift);
     shift += 32;
     a >>= 32;
     b >>= 32;
@@ -240,12 +240,12 @@ template <typename T>
 T NGFF4<T>::weak_rand_tuple(void)
 {
   T c = 0;
+  T tmp;
   uint32_t mask = 0xffffffff;
   int shift = 0;
   for (int i = 0; i < this->n; i++) {
-    T tmp = sub_field->weak_rand();
-    tmp <<= shift;
-    c += tmp;
+    tmp = sub_field->weak_rand();
+    c += (tmp << shift);
     shift += 32;
   }
   return c;
@@ -268,7 +268,7 @@ T NGFF4<T>::pack(T a)
   int shift = 0;
   T b = 0;
   for (int i = 0; i < this->n; i++) {
-    b += ((a & mask) << shift);
+    b += ((T)(a & mask) << shift);
     shift += 32;
     a >>= 16;
   }
@@ -289,7 +289,7 @@ T NGFF4<T>::pack(T a, uint32_t flag)
     if (flag % 2 == 1) {
       b += ((T)65536 << shift);
     } else {
-      b += ((a & mask) << shift);
+      b += ((T)(a & mask) << shift);
     }
     flag >>= 1;
     shift += 32;
