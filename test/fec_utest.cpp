@@ -12,7 +12,7 @@ class FECUtest
     u_int n_parities = 3;
 
     FECFNTRS<T> fec = FECFNTRS<T>(2, n_data, n_parities);
-    run_test(&fec, fec.n, n_data, true);
+    run_test(&fec, fec.n, n_data, n_data+n_parities, true);
   }
 
   void test_fecngff4rs()
@@ -24,7 +24,7 @@ class FECUtest
     for (u_int word_size = 4; word_size <= sizeof(T)/2; word_size += 4) {
       std::cout << "test_fecngff4rs with word_size=" << word_size << "\n";
       FECNGFF4RS<T> fec = FECNGFF4RS<T>(word_size, n_data, n_parities);
-      run_test(&fec, fec.n, n_data, true);
+      run_test(&fec, fec.n, n_data, n_data+n_parities, true);
     }
   }
 
@@ -41,7 +41,7 @@ class FECUtest
     u_int n_parities = 3;
 
     FECGF2NFFTRS<T> fec = FECGF2NFFTRS<T>(wordsize, n_data, n_parities);
-    run_test(&fec, fec.n, n_data);
+    run_test(&fec, fec.n, n_data, n_data+n_parities);
   }
 
   void test_fecgf2nfftaddrs() {
@@ -57,7 +57,7 @@ class FECUtest
     u_int n_parities = 3;
 
     FECGF2NFFTADDRS<T> fec = FECGF2NFFTADDRS<T>(wordsize, n_data, n_parities);
-    run_test(&fec, fec.n, n_data);
+    run_test(&fec, fec.n, n_data, n_data+n_parities);
   }
 
   void test_fecgfpfftrs() {
@@ -74,22 +74,23 @@ class FECUtest
     u_int n_parities = 3;
 
     FECGFPFFTRS<T> fec = FECGFPFFTRS<T>(word_size, n_data, n_parities);
-    run_test(&fec, fec.n, n_data, true);
+    run_test(&fec, fec.n, n_data, n_data+n_parities, true);
   }
 
-  void run_test(FEC<T> *fec, int n, int n_data, bool propos_flag=false) {
+  void run_test(FEC<T> *fec, int n, int n_data, int code_len,
+                bool propos_flag=false) {
     GF<T> *gf = fec->get_gf();
 
     Vec<T> v(gf, n_data), _v(gf, n), _v2(gf, n_data), f(gf, n_data),
       v2(gf, n_data);
     Vec<T> v_p(gf, n_data);
     std::vector<int> ids;
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < code_len; i++)
       ids.push_back(i);
-    std::vector<KeyValue*>props(n, nullptr);
-    for (int j = 0; j < 10; j++) {
+    std::vector<KeyValue*>props(code_len, nullptr);
+    for (int j = 0; j < 1000; j++) {
       if (propos_flag) {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < code_len; i++)
           props[i] = new KeyValue();
       }
       for (int i = 0; i < n_data; i++)
@@ -108,7 +109,7 @@ class FECUtest
       // std::cout << "v2:"; v2.dump();
       assert(v_p.eq(&v2));
       if (propos_flag) {
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < code_len; i++)
           delete props[i];
       }
     }

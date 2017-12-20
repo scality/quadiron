@@ -19,6 +19,7 @@ class FEC
   u_int word_size;
   u_int n_data;
   u_int n_parities;
+  u_int code_len;
 
   uint64_t total_encode_cycles = 0;
   uint64_t n_encode_ops = 0;
@@ -88,6 +89,7 @@ FEC<T>::FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities)
   this->word_size = word_size;
   this->n_data = n_data;
   this->n_parities = n_parities;
+  this->code_len = n_data + n_parities;
 }
 
 template <typename T>
@@ -181,8 +183,8 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
   off_t offset = 0;
 
   assert(input_data_bufs.size() == n_data);
-  assert(output_parities_bufs.size() == get_n_outputs());
-  assert(output_parities_props.size() == get_n_outputs());
+  assert(output_parities_bufs.size() == code_len);
+  assert(output_parities_props.size() == code_len);
 
   Vec<T> words = Vec<T>(gf, n_data);
   Vec<T> output = Vec<T>(gf, get_n_outputs());
@@ -206,7 +208,9 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
     total_encode_cycles += end - start;
     n_encode_ops++;
 
-    for (int i = 0; i < get_n_outputs(); i++) {
+    int out_parities_nb = (code_len < get_n_outputs()) ?
+                            code_len : get_n_outputs();
+    for (int i = 0; i < out_parities_nb; i++) {
       T tmp = output.get(i);
       writew(tmp, output_parities_bufs[i]);
     }
@@ -239,8 +243,8 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 
   if (type == TYPE_1)
     assert(input_data_bufs.size() == n_data);
-  assert(input_parities_bufs.size() == get_n_outputs());
-  assert(input_parities_props.size() == get_n_outputs());
+  assert(input_parities_bufs.size() == code_len);
+  assert(input_parities_props.size() == code_len);
   assert(output_data_bufs.size() == n_data);
 
   if (type == TYPE_1) {
@@ -257,7 +261,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 
   if (fragment_index < n_data) {
     // finish with parities available
-    for (int i = 0; i < get_n_outputs(); i++) {
+    for (int i = 0; i < code_len; i++) {
       if (input_parities_bufs[i] != nullptr) {
         decode_add_parities(fragment_index, i);
         fragment_index++;
@@ -277,7 +281,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
   if (type == TYPE_1)
     n_words = n_data;
   else if (type == TYPE_2)
-    n_words = get_n_outputs();
+    n_words = code_len;
 
   Vec<T> words(gf, n_words);
   Vec<T> fragments_ids(gf, n_words);
@@ -305,7 +309,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
       if (fragment_index == n_data)
         break;
     }
-    for (int i = 0; i < get_n_outputs(); i++) {
+    for (int i = 0; i < code_len; i++) {
       if (input_parities_bufs[i] != nullptr) {
         T tmp;
         if (!readw(&tmp, input_parities_bufs[i])) {
