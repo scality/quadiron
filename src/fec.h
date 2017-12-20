@@ -1,6 +1,22 @@
 /* -*- mode: c++ -*- */
 #pragma once
 
+#include <sys/time.h>
+
+static timeval tick()
+{
+  struct timeval tv;
+  gettimeofday(&tv, nullptr);
+  return tv;
+}
+
+static uint64_t hrtime_usec(timeval begin)
+{
+  struct timeval tv;
+  gettimeofday(&tv, nullptr);
+  return 1000000 * (tv.tv_sec - begin.tv_sec) + tv.tv_usec - begin.tv_usec;
+}
+
 /**
  * Generic class for Forward-Encoding-Codes
  */
@@ -25,6 +41,9 @@ class FEC
   uint64_t n_encode_ops = 0;
   uint64_t total_decode_cycles = 0;
   uint64_t n_decode_ops = 0;
+
+  uint64_t total_enc_usec = 0;
+  uint64_t total_dec_usec = 0;
 
  protected:
   GF<T> *gf;
@@ -70,6 +89,18 @@ class FEC
 
   GF<T>* get_gf() {
     return this->gf;
+  }
+
+  void reset_stats_enc() {
+    total_encode_cycles = 0;
+    n_encode_ops = 0;
+    total_enc_usec = 0;
+  }
+
+  void reset_stats_dec() {
+    total_decode_cycles = 0;
+    n_decode_ops = 0;
+    total_dec_usec = 0;
   }
 };
 
@@ -202,9 +233,13 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
     if (!cont)
       break;
 
+    timeval t1 = tick();
     uint64_t start = rdtsc();
     encode(&output, output_parities_props, offset, &words);
     uint64_t end = rdtsc();
+    uint64_t t2 = hrtime_usec(t1);
+
+    total_enc_usec += t2;
     total_encode_cycles += end - start;
     n_encode_ops++;
 
@@ -327,9 +362,13 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     if (!cont)
       break;
 
+    timeval t1 = tick();
     uint64_t start = rdtsc();
     decode(&output, input_parities_props, offset, &fragments_ids, &words);
     uint64_t end = rdtsc();
+    uint64_t t2 = hrtime_usec(t1);
+
+    total_dec_usec += t2;
     total_decode_cycles += end - start;
     n_decode_ops++;
 
