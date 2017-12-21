@@ -34,17 +34,19 @@ template class FECNGFF4RS<__uint128_t>;
 #define POLY 0x82f63b78
 
 enum ec_type {
-  EC_TYPE_UNDEF = 0,
+  EC_TYPE_ALL = 0,
+  EC_TYPE_FNTRS,
+  EC_TYPE_NGFF4RS,
+  EC_TYPE_GFPFFTRS,
+  EC_TYPE_GF2NFFTADDRS,
   EC_TYPE_GF2NRSV,
   EC_TYPE_GF2NRSC,
   EC_TYPE_GF2NFFTRS,
-  EC_TYPE_GF2NFFTADDRS,
-  EC_TYPE_GFPFFTRS,
-  EC_TYPE_FNTRS,
-  EC_TYPE_NGFF4RS,
+  EC_TYPE_END,
 };
 
 std::map<int, std::string> ec_desc = {
+  { EC_TYPE_ALL, "All available Reed-solomon codes" },
   { EC_TYPE_GF2NRSV, "Classical Vandermonde Reed-solomon codes over GF(2^n)" },
   { EC_TYPE_GF2NRSC, "Classical Cauchy Reed-solomon codes over GF(2^n)" },
   { EC_TYPE_GF2NFFTRS, "Reed-solomon codes over GF(2^n) using FFT" },
@@ -65,6 +67,9 @@ enum errors {
   ERR_WORD_SIZE,
   ERR_COMPT_CODE_LEN_T,
   ERR_FEC_TYPE_NOT_SUPPORTED,
+  ERR_SCENARIO_TYPE_NOT_SUPPORTED,
+  ERR_FAILED_CHUNK,
+  ERR_T_NOT_SUPPORTED,
 };
 
 std::map<int, std::string> errors_desc = {
@@ -72,9 +77,13 @@ std::map<int, std::string> errors_desc = {
   { ERR_WORD_SIZE, "Word size is incorrect" },
   { ERR_COMPT_CODE_LEN_T, "Code length is too long vs. type T" },
   { ERR_FEC_TYPE_NOT_SUPPORTED, "Fec type is not recognised" },
+  { ERR_SCENARIO_TYPE_NOT_SUPPORTED, "Scenario type is not recognised" },
+  { ERR_FAILED_CHUNK, "ERROR: Repaired chunks are incorrect" },
+  { ERR_T_NOT_SUPPORTED, "Type T is not supported" },
 };
 
 std::map<std::string, ec_type> fec_type_map = {
+  { "all", EC_TYPE_ALL },
   { "gf2nrsv", EC_TYPE_GF2NRSV },
   { "gf2nrsc", EC_TYPE_GF2NRSC },
   { "gf2nfftrs", EC_TYPE_GF2NFFTRS },
@@ -84,36 +93,74 @@ std::map<std::string, ec_type> fec_type_map = {
   { "ngff4rs", EC_TYPE_NGFF4RS },
 };
 
+enum scenario_type {
+  ENC_ONLY = 0,
+  DEC_ONLY,
+  ENC_DEC,
+};
+
+std::map<std::string, scenario_type> sce_type_map = {
+  { "enc_only", ENC_ONLY },
+  { "dec_only", DEC_ONLY },
+  { "enc_dec", ENC_DEC },
+};
+
+std::map<int, std::string> sce_desc = {
+  { ENC_ONLY, "Only encodings" },
+  { DEC_ONLY, "Encode once and many decodings" },
+  { ENC_DEC, "Encodings and decodings" },
+};
+
 struct Params_t
 {
-  ec_type fec_type = EC_TYPE_FNTRS;
+  ec_type fec_type = EC_TYPE_ALL;
   int word_size = 2;
   int k = 3;
   int m = 2;
-  size_t chunk_size = 8;
-  uint32_t samples_nb = 3;
+  size_t chunk_size = 512;
+  uint32_t samples_nb = 100;
   int extra_param = -1;
-  int sizeof_T = 4;
+  int sizeof_T = -1;
+  scenario_type sce_type = ENC_DEC;
+
   void print() {
-    std::cout << "----- Parameters -----\n";
-    std::cout << "fec_type: " << ec_desc[fec_type] << std::endl;
-    std::cout << "word_size: " << word_size << std::endl;
-    std::cout << "k: " << k << std::endl;
-    std::cout << "m: " << m << std::endl;
-    std::cout << "chunk_size: " << chunk_size << std::endl;
-    std::cout << "samples_nb: " << samples_nb << std::endl;
-    std::cout << "extra_param: " << extra_param << std::endl;
-    std::cout << "sizeof_T: " << sizeof_T << std::endl;
-    std::cout << "----------------------\n";
+    std::cout << "\n--------------- Parameters ----------------\n";
+    std::cout << "FEC type:             " << ec_desc[fec_type] << std::endl;
+    std::cout << "Scenario benchmark:   " << sce_desc[sce_type] << std::endl;
+    std::cout << "Word size:            " << word_size << std::endl;
+    std::cout << "Number of data:       " << k << std::endl;
+    std::cout << "Number of parity:     " << m << std::endl;
+    std::cout << "Chunk size:           " << chunk_size << std::endl;
+    std::cout << "Number of samples:    " << samples_nb << std::endl;
+    if (sizeof_T > -1)
+      std::cout << "Size of integer type: " << sizeof_T << std::endl;
+    if (extra_param > -1)
+      std::cout << "Extra parameter:      " << extra_param << std::endl;
+    std::cout << "-------------------------------------------\n";
+  }
+
+  void get_sizeof_T() {
+    if (sizeof_T == -1) {
+      if (fec_type == EC_TYPE_NGFF4RS) {
+        sizeof_T = (((word_size-1) / 2) + 1) * 4;
+      } else {
+        sizeof_T = (((word_size-1) / 4) + 1) * 4;
+      }
+      std::cout << "Size of integer type: " << sizeof_T << std::endl;
+    }
   }
 };
 
-struct Stats_t {
-  uint64_t nb = 0;
-  uint64_t sum = 0;
-  uint64_t sum_2 = 0;
-  double avg;
-  double std_dev;
+class Stats_t {
+public:
+  Stats_t(const std::string& str, size_t work_load) {
+    this->name = str;
+    this->work_load = work_load;
+
+    this->nb = 0;
+    this->sum = 0;
+    this->sum_2 = 0;
+  }
 
   void begin() {
     nb = 0;
@@ -132,9 +179,19 @@ struct Stats_t {
     std_dev = sqrt((double)sum_2 / (double)nb - avg * avg);
   }
 
-  void show(const char* name) {
-    std::cout << name << ": " << avg << " +/- " << std_dev << std::endl;
+  void show() {
+    std::cout << name << ":\tLatency(us) " << avg << " +/- " << std_dev;
+    std::cout << "\t\tThroughput " << work_load/avg << " (MB/s)" << std::endl;
   }
+
+private:
+  uint64_t nb;
+  uint64_t sum;
+  uint64_t sum_2;
+  double avg;
+  double std_dev;
+  size_t work_load;
+  std::string name;
 };
 
 template <typename CharT>
@@ -243,6 +300,7 @@ private:
   int k;
   int m;
   int n;
+  int n_c;
   int word_size;
   ec_type fec_type;
   int extra_param;
@@ -251,14 +309,16 @@ private:
   PRNG *prng = nullptr;
   FEC<T> *fec = nullptr;
 
+  bool systematic_ec = false;
+
   std::vector<int> *c_chunks_id;
 
   std::vector<uint8_t*> *d_chunks = nullptr;
   std::vector<uint8_t*> *c_chunks = nullptr;
   std::vector<uint8_t*> *r_chunks = nullptr;
 
-  Stats_t enc_stats;
-  Stats_t dec_stats;
+  Stats_t *enc_stats = nullptr;
+  Stats_t *dec_stats = nullptr;
 
   // streams of data chunks
   std::vector<std::istream*> *d_streams = nullptr;
@@ -278,6 +338,7 @@ public:
     this->k = params.k;
     this->m = params.m;
     this->n = params.k + params.m;
+    this->n_c = this->n;  // if systematic, it will be updated in init()
     this->chunk_size = params.chunk_size;
     this->samples_nb = params.samples_nb;
     if (params.extra_param > -1) {
@@ -287,15 +348,13 @@ public:
     int error;
     if ((error = this->check_params()) < 0) {
       std::cerr << errors_desc[error] << std::endl;
-      exit(1);
+      throw std::invalid_argument(errors_desc[error]);
     }
 
     if ((error = this->init()) < 0) {
       std::cerr << errors_desc[error] << std::endl;
-      exit(1);
+      throw std::invalid_argument(errors_desc[error]);
     }
-
-    std::cout << "Bench init done" << std::endl;
   }
 
   ~Benchmark() {
@@ -309,7 +368,7 @@ public:
       delete d_streams;
     }
     if (c_streams != nullptr) {
-      for (int i = 0; i < n; i++) {
+      for (int i = 0; i < n_c; i++) {
         delete c_streams->at(i);
         delete c_propos->at(i);
       }
@@ -336,7 +395,7 @@ public:
       delete d_chunks;
     }
     if (c_chunks != nullptr) {
-      for (int i = 0; i < n; i++) {
+      for (int i = 0; i < n_c; i++) {
         delete[] c_chunks->at(i);
       }
       delete c_chunks;
@@ -347,6 +406,11 @@ public:
       }
       delete r_chunks;
     }
+
+    if (enc_stats != nullptr)
+      delete enc_stats;
+    if (dec_stats != nullptr)
+      delete dec_stats;
   }
 
 private:
@@ -377,18 +441,23 @@ private:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
 
+    this->systematic_ec = (fec->type == FEC<T>::TYPE_1);
+    if (this->systematic_ec) {
+      this->n_c = this->m;
+    }
+
     this->prng = new PRNG(time(NULL));
 
     // Allocate memory for data
     int i;
     d_chunks = new std::vector<uint8_t*>(k);
-    c_chunks = new std::vector<uint8_t*>(n);
+    c_chunks = new std::vector<uint8_t*>(n_c);
     r_chunks = new std::vector<uint8_t*>(k);
 
     for (i = 0; i < k; i++) {
       d_chunks->at(i) = new uint8_t[chunk_size];
     }
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n_c; i++) {
       c_chunks->at(i) = new uint8_t[chunk_size];
     }
     for (i = 0; i < k; i++) {
@@ -397,25 +466,36 @@ private:
 
     // Allocate memory for streams
     d_streams = new std::vector<std::istream*>(k);
-    c_streams = new std::vector<std::ostream*>(n);
+    c_streams = new std::vector<std::ostream*>(n_c);
     a_streams = new std::vector<std::istream*>(n);
     r_streams = new std::vector<std::ostream*>(k);
-    c_propos = new std::vector<KeyValue*> (n);
+    c_propos = new std::vector<KeyValue*> (n_c);
 
     for (i = 0; i < k; i++) {
       d_streams->at(i) = new std::istream(
         new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
     }
 
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n_c; i++) {
       c_streams->at(i) = new std::ostream(
         new ostreambuf<char>((char*)c_chunks->at(i), chunk_size));
       c_propos->at(i) = new KeyValue();
     }
 
-    for (i = 0; i < n; i++) {
-      a_streams->at(i) = new std::istream(
-        new istreambuf<char>((char*)c_chunks->at(i), chunk_size));
+    if (systematic_ec) {
+      for (i = 0; i < k; i++) {
+        a_streams->at(i) = new std::istream(
+          new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
+      }
+      for (; i < n; i++) {
+        a_streams->at(i) = new std::istream(
+          new istreambuf<char>((char*)c_chunks->at(i-k), chunk_size));
+      }
+    } else {
+      for (i = 0; i < n; i++) {
+        a_streams->at(i) = new std::istream(
+          new istreambuf<char>((char*)c_chunks->at(i), chunk_size));
+      }
     }
 
     for (i = 0; i < k; i++) {
@@ -429,6 +509,8 @@ private:
       c_chunks_id->push_back(i);
     }
 
+    this->enc_stats = new Stats_t("Encode", chunk_size*k);
+    this->dec_stats = new Stats_t("Decode", chunk_size*k);
     return 1;
   }
 
@@ -437,15 +519,29 @@ private:
       return ERR_WORD_SIZE;
     }
 
+    if (fec_type == EC_TYPE_NGFF4RS) {
+      if (word_size < 2) {
+        return ERR_WORD_SIZE;
+      }
+    }
+
     if (sizeof(T) < word_size) {
       return ERR_COMPT_WORD_SIZE_T;
+    }
+    if (fec_type == EC_TYPE_FNTRS ||
+        fec_type == EC_TYPE_GFPFFTRS) {
+      if (sizeof(T) <= word_size) {
+        return ERR_COMPT_WORD_SIZE_T;
+      }
+    }
+    if (fec_type == EC_TYPE_NGFF4RS) {
+      if (sizeof(T) < 2 * word_size) {
+        return ERR_COMPT_WORD_SIZE_T;
+      }
     }
 
     uint64_t n_max;
     if (fec_type == EC_TYPE_FNTRS) {
-      if (sizeof(T) <= word_size) {
-        return ERR_COMPT_WORD_SIZE_T;
-      }
       n_max = (1ULL << (8*word_size)) + 1;
     } else if (fec_type == EC_TYPE_NGFF4RS) {
       n_max = 65536;
@@ -456,12 +552,20 @@ private:
       return ERR_COMPT_CODE_LEN_T;
     }
 
+    // adjust chunk_size
+    if (chunk_size % word_size > 0)
+      chunk_size = ((chunk_size - 1)/word_size + 1)*word_size;
+
     return 1;
   }
 
   void gen_data() {
     for (int i = 0; i < k; i++) {
       prng->gen_chunk(d_chunks->at(i), chunk_size);
+    }
+    if (!check(d_chunks)) {
+      std::cerr << errors_desc[ERR_FAILED_CHUNK] << std::endl;
+      throw errors_desc[ERR_FAILED_CHUNK];
     }
   }
 
@@ -485,6 +589,14 @@ private:
     std::cout << std::endl;
   }
 
+  void dump_chunk(const char* name, uint8_t *chunk) {
+    std::cout << name << ": ";
+    for (int j = 0; j < chunk_size; j++) {
+      std::cout << unsigned(chunk[j]) << " ";
+    }
+    std::cout << std::endl;
+  }
+
   void reset_d_streams() {
     for (int i = 0; i < k; i++) {
       d_streams->at(i)->rdbuf(
@@ -493,7 +605,7 @@ private:
   }
 
   void reset_c_streams() {
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n_c; i++) {
       c_streams->at(i)->rdbuf(
         new ostreambuf<char>((char*)c_chunks->at(i), chunk_size));
       c_propos->at(i)->clear();
@@ -501,9 +613,21 @@ private:
   }
 
   void reset_a_streams() {
-    for (int i = 0; i < n; i++) {
-      a_streams->at(i)->rdbuf(
-        new istreambuf<char>((char*)c_chunks->at(i), chunk_size));
+    int i;
+    if (systematic_ec) {
+      for (i = 0; i < k; i++) {
+        a_streams->at(i)->rdbuf(
+          new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
+      }
+      for (; i < n; i++) {
+        a_streams->at(i)->rdbuf(
+          new istreambuf<char>((char*)c_chunks->at(i-k), chunk_size));
+      }
+    } else {
+      for (i = 0; i < n; i++) {
+        a_streams->at(i)->rdbuf(
+          new istreambuf<char>((char*)c_chunks->at(i), chunk_size));
+      }
     }
   }
 
@@ -514,21 +638,36 @@ private:
     }
   }
 
-  void get_avail_chunks(std::vector<std::istream*> *avail_c_chunks,
+  void get_avail_chunks(std::vector<std::istream*> *avail_d_chunks,
+                        std::vector<std::istream*> *avail_c_chunks,
                         std::vector<KeyValue*> *avail_c_props) {
 
     std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end());
 
     int i;
     for (i = 0; i < k; i++) {
-      int j = c_chunks_id->at(i);
-      avail_c_chunks->at(j) = a_streams->at(j);
-      avail_c_props->at(j) = c_propos->at(j);
+      avail_d_chunks->at(i) = nullptr;
     }
-    for (; i < n; i++) {
-      int j = c_chunks_id->at(i);
-      avail_c_chunks->at(j) = nullptr;
-      avail_c_props->at(j) = nullptr;
+    for (i = 0; i < n_c; i++) {
+      avail_c_chunks->at(i) = nullptr;
+      avail_c_props->at(i) = nullptr;
+    }
+    if (systematic_ec) {
+      for (i = 0; i < k; i++) {
+        int j = c_chunks_id->at(i);
+        if (j < k) {
+          avail_d_chunks->at(j) = a_streams->at(j);
+        } else {
+          avail_c_chunks->at(j-k) = a_streams->at(j);
+          avail_c_props->at(j-k) = c_propos->at(j-k);
+        }
+      }
+    } else {
+      for (i = 0; i < k; i++) {
+        int j = c_chunks_id->at(i);
+        avail_c_chunks->at(j) = a_streams->at(j);
+        avail_c_props->at(j) = c_propos->at(j);
+      }
     }
   }
 
@@ -537,14 +676,8 @@ private:
     reset_d_streams();
     fec->encode_bufs(*d_streams, *c_streams, *c_propos);
 
-    if (!check(d_chunks)) {
-      std::cout << "check d_chunks failed\n";
-      return false;
-    }
-
     // update stats
-    enc_stats.add(fec->total_enc_usec);
-    fec->reset_stats_enc();
+    enc_stats->add(fec->total_enc_usec);
 
     // dump("d_chunks", d_chunks);
     // dump("c_chunks", c_chunks);
@@ -553,36 +686,36 @@ private:
   }
 
   bool decode() {
-    std::vector<std::istream*> c_streams_shuffled(n, nullptr);
-    std::vector<KeyValue*> c_props_shuffled(n, nullptr);
+    std::vector<std::istream*> d_streams_shuffled(k, nullptr);
+    std::vector<std::istream*> c_streams_shuffled(n_c, nullptr);
+    std::vector<KeyValue*> c_props_shuffled(n_c, nullptr);
 
-    get_avail_chunks(&c_streams_shuffled, &c_props_shuffled);
+    get_avail_chunks(&d_streams_shuffled, &c_streams_shuffled,
+      &c_props_shuffled);
 
     // this operation is done per trail
     reset_a_streams();
     reset_r_streams();
 
-    fec->decode_bufs(*d_streams, c_streams_shuffled, c_props_shuffled,
+    fec->decode_bufs(d_streams_shuffled, c_streams_shuffled, c_props_shuffled,
       *r_streams);
 
     // dump("r_chunks", r_chunks);
 
     if (!check(r_chunks)) {
-      std::cout << "check r_chunks failed\n";
+      std::cerr << errors_desc[ERR_FAILED_CHUNK] << std::endl;
       return false;
     }
 
     // update stats
-    dec_stats.add(fec->total_dec_usec);
-    fec->reset_stats_dec();
+    dec_stats->add(fec->total_dec_usec);
 
     return true;
   }
 
 public:
   bool enc_only() {
-    enc_stats.begin();
-    std::cout << samples_nb << " encodings..";
+    enc_stats->begin();
     // this operation is done once per benchmark
     gen_data();
 
@@ -590,19 +723,17 @@ public:
       if (!encode())
         return false;
     }
-    std::cout << "done\n";
 
-    enc_stats.end();
-    enc_stats.show("Enc (usec)");
+    enc_stats->end();
+    enc_stats->show();
 
     return true;
   }
 
   bool dec_only() {
-    enc_stats.begin();
-    dec_stats.begin();
+    enc_stats->begin();
+    dec_stats->begin();
 
-    std::cout << "encode once then " << samples_nb << " decodings..";
     // this operation is done once per benchmark
     gen_data();
 
@@ -613,21 +744,19 @@ public:
       if (!decode())
         return false;
     }
-    std::cout << "done\n";
 
-    enc_stats.end();
-    enc_stats.show("Enc (usec)");
-    dec_stats.end();
-    dec_stats.show("Dec (usec)");
+    enc_stats->end();
+    enc_stats->show();
+    dec_stats->end();
+    dec_stats->show();
 
     return true;
   }
 
   bool enc_dec() {
-    enc_stats.begin();
-    dec_stats.begin();
+    enc_stats->begin();
+    dec_stats->begin();
 
-    std::cout << samples_nb << " encodings and decodings..";
     // this operation is done once per benchmark
     gen_data();
 
@@ -637,23 +766,108 @@ public:
       if (!decode())
         return false;
     }
-    std::cout << "done\n";
 
-    enc_stats.end();
-    enc_stats.show("Enc (usec)");
-    dec_stats.end();
-    dec_stats.show("Dec (usec)");
+    enc_stats->end();
+    enc_stats->show();
+    dec_stats->end();
+    dec_stats->show();
     return true;
   }
 };
 
 void xusage()
 {
-  std::cerr << std::string("Usage: benchmark") +
-    "[-e gf2nrsv|gf2nrsc|gf2nfftrs|gf2nfftaddrs|gfpfftrs|fntrs|ngff4rs]" +
-    "[-w word_size][-k k][-m k][-c chunk_size][-s samples_nb]" +
-    "[-x extra_param]\n";
+  std::cerr << std::string("Usage: benchmark [options]\n") +
+    "Options:\n" +
+    "\t-e \tType of Reed-Solomon codes, either\n" +
+    "\t\t\tgf2nrsv: " + ec_desc[EC_TYPE_GF2NRSV] + "\n" +
+    "\t\t\tgf2nrsc: " + ec_desc[EC_TYPE_GF2NRSC] + "\n" +
+    "\t\t\tgf2nfftrs: " + ec_desc[EC_TYPE_GF2NFFTRS] + "\n" +
+    "\t\t\tgf2nfftaddrs: " + ec_desc[EC_TYPE_GF2NFFTADDRS] + "\n" +
+    "\t\t\tgfpfftrs: " + ec_desc[EC_TYPE_GFPFFTRS] + "\n" +
+    "\t\t\tfntrs: " + ec_desc[EC_TYPE_FNTRS] + "\n" +
+    "\t\t\tngff4rs: " + ec_desc[EC_TYPE_NGFF4RS] + "\n" +
+    "\t\t\tall: All available Reed-solomon codes\n" +
+    "\t-s \tScenario for benchmark, either\n" +
+    "\t\t\tenc_only: Only encodings\n" +
+    "\t\t\tdec_only: Only decodings\n" +
+    "\t\t\tenc_dec: Encodings and decodings\n" +
+    "\t-w \tWord size (bytes)\n" +
+    "\t-k \tNumber of data chunks\n" +
+    "\t-m \tNumber of parity chunks\n" +
+    "\t-c \tChunk size (bytes)\n" +
+    "\t-n \tNumber of samples per operation\n" +
+    "\t-t \tSize of used integer type, either " +
+      "4, 8, 16 for uint32_t, uint64_t, __uint128_t\n" +
+    "\t-x \tExtra parameter\n\n";
   exit(1);
+}
+
+template <typename T>
+void run(Benchmark<T> *bench, Params_t params) {
+  switch (params.sce_type) {
+    case ENC_ONLY:
+      bench->enc_only();
+      break;
+    case DEC_ONLY:
+      bench->dec_only();
+      break;
+    case ENC_DEC:
+      bench->enc_dec();
+      break;
+  }
+}
+
+void run_scenario(Params_t params) {
+  // get sizeof_T if necessary
+  params.get_sizeof_T();
+
+  switch (params.sizeof_T) {
+    case 4: {
+      try {
+        Benchmark<uint32_t> bench(params);
+        run(&bench, params);
+      } catch(const std::exception& e) {
+        return;
+      }
+      break;
+    }
+    case 8: {
+      try {
+        Benchmark<uint64_t> bench(params);
+        run(&bench, params);
+      } catch(const std::exception& e) {
+        return;
+      }
+      break;
+    }
+    case 16: {
+      try {
+        Benchmark<__uint128_t> bench(params);
+        run(&bench, params);
+      } catch(const std::exception& e) {
+        return;
+      }
+      break;
+    }
+    default:
+      std::cerr << errors_desc[ERR_T_NOT_SUPPORTED] <<
+        " T: " << params.sizeof_T << std::endl;
+      exit(0);
+  }
+}
+
+void run_benchmark(Params_t params) {
+  if (params.fec_type == EC_TYPE_ALL) {
+    for (int type = EC_TYPE_ALL + 1; type < EC_TYPE_END; type++) {
+      params.fec_type = (ec_type)type;
+      std::cout << "\nBenchmarking for " <<
+        ec_desc[params.fec_type] << std::endl;
+      run_scenario(params);
+    }
+  } else {
+    run_scenario(params);
+  }
 }
 
 int main(int argc, char **argv)
@@ -662,17 +876,24 @@ int main(int argc, char **argv)
   Params_t params;
   int opt;
 
-  while ((opt = getopt(argc, argv, "t:e:w:k:m:c:s:x:")) != -1) {
+  while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:")) != -1) {
     switch (opt) {
     case 't':
       params.sizeof_T = atoi(optarg);
       break;
     case 'e':
       if (fec_type_map.find(optarg) == fec_type_map.end()) {
-        assert("Input fec type is incorrect");
+        std::cerr << errors_desc[ERR_FEC_TYPE_NOT_SUPPORTED] << std::endl;
         xusage();
       }
       params.fec_type = fec_type_map[optarg];
+      break;
+    case 's':
+      if (sce_type_map.find(optarg) == sce_type_map.end()) {
+        std::cerr << errors_desc[ERR_SCENARIO_TYPE_NOT_SUPPORTED] << std::endl;
+        xusage();
+      }
+      params.sce_type = sce_type_map[optarg];
       break;
     case 'w':
       params.word_size = atoi(optarg);
@@ -686,7 +907,7 @@ int main(int argc, char **argv)
     case 'c':
       params.chunk_size = atoi(optarg);
       break;
-    case 's':
+    case 'n':
       params.samples_nb = atoi(optarg);
       break;
     case 'x':
@@ -699,25 +920,7 @@ int main(int argc, char **argv)
 
   params.print();
 
-  switch (params.sizeof_T) {
-    case 4: {
-      Benchmark<uint32_t> bench(params);
-      bench.enc_dec();
-      break;
-    }
-    case 8: {
-      Benchmark<uint64_t> bench(params);
-      bench.enc_dec();
-      break;
-    }
-    case 16: {
-      Benchmark<__uint128_t> bench(params);
-      bench.enc_dec();
-      break;
-    }
-    default:
-      assert("T type is not supported");
-  }
+  run_benchmark(params);
 
   return 0;
 }

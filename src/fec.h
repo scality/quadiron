@@ -220,6 +220,8 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
   Vec<T> words = Vec<T>(gf, n_data);
   Vec<T> output = Vec<T>(gf, get_n_outputs());
 
+  reset_stats_enc();
+
   while (true) {
     words.zero_fill();
     for (int i = 0; i < n_data; i++) {
@@ -281,6 +283,8 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
   assert(input_parities_bufs.size() == code_len);
   assert(input_parities_props.size() == code_len);
   assert(output_data_bufs.size() == n_data);
+
+  reset_stats_dec();
 
   if (type == TYPE_1) {
     for (int i = 0; i < n_data; i++) {
