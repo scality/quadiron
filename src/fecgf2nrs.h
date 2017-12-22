@@ -26,7 +26,6 @@ class FECGF2NRS : public FEC<T>
     FEC<T>(FEC<T>::TYPE_1, word_size, n_data, n_parities)
   {
     assert(type == VANDERMONDE || type == CAUCHY);
-    this->type = type;
 
     if (word_size > 16)
       assert(false);  // not support yet
