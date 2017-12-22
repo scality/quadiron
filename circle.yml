@@ -15,6 +15,6 @@ test:
     - ./lint.sh
     # - cd test; valgrind  --leak-check=full -v --show-leak-kinds=all ./tests
     - cd test; ./tests
-    - cd benchmark; ./benchmark
+    - cd benchmark; sh run.sh
     # - cd tools; valgrind  --leak-check=full -v --show-leak-kinds=all ./test_ec.sh
     - cd tools; ./test_ec.sh
