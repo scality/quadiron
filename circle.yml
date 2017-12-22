@@ -8,11 +8,13 @@ compile:
     - cd src; make
     - cd test; make
     - cd tools; make
+    - cd benchmark; make
 
 test:
   override:
     - ./lint.sh
     # - cd test; valgrind  --leak-check=full -v --show-leak-kinds=all ./tests
     - cd test; ./tests
+    - cd benchmark; ./benchmark
     # - cd tools; valgrind  --leak-check=full -v --show-leak-kinds=all ./test_ec.sh
     - cd tools; ./test_ec.sh

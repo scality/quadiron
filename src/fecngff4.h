@@ -75,7 +75,7 @@ class FECNGFF4RS : public FEC<T>
     VVec<T> vwords(words, n);
     fft->fft(output, &vwords);
     //std::cout << "encoded:"; output->dump();
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < this->code_len; i++) {
       T val = output->get(i);
       compT<T> true_val = ngff4->unpack(val);
       if (true_val.flag > 0) {

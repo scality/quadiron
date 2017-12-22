@@ -66,7 +66,7 @@ class FECFNTRS : public FEC<T>
     VVec<T> vwords(words, n);
     fft->fft(output, &vwords);
     // check for out of range value in output
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < this->code_len; i++) {
       if (output->get(i) == (fft->get_gf()->card() - 1)) {
         char buf[256];
         snprintf(buf, sizeof (buf), "%zd:%d", offset, i);
