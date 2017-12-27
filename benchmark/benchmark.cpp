@@ -69,6 +69,7 @@ enum errors {
   ERR_FEC_TYPE_NOT_SUPPORTED,
   ERR_SCENARIO_TYPE_NOT_SUPPORTED,
   ERR_FAILED_CHUNK,
+  ERR_FAILED_REPAIR_CHUNK,
   ERR_T_NOT_SUPPORTED,
 };
 
@@ -78,7 +79,8 @@ std::map<int, std::string> errors_desc = {
   { ERR_COMPT_CODE_LEN_T, "Code length is too long vs. type T" },
   { ERR_FEC_TYPE_NOT_SUPPORTED, "Fec type is not recognised" },
   { ERR_SCENARIO_TYPE_NOT_SUPPORTED, "Scenario type is not recognised" },
-  { ERR_FAILED_CHUNK, "ERROR: Repaired chunks are incorrect" },
+  { ERR_FAILED_CHUNK, "ERROR: Chunks are incorrect" },
+  { ERR_FAILED_REPAIR_CHUNK, "ERROR: Repaired chunks are incorrect" },
   { ERR_T_NOT_SUPPORTED, "Type T is not supported" },
 };
 
@@ -143,6 +145,8 @@ struct Params_t
     if (sizeof_T == -1) {
       if (fec_type == EC_TYPE_NGFF4RS) {
         sizeof_T = (((word_size-1) / 2) + 1) * 4;
+      } else if (fec_type == EC_TYPE_GFPFFTRS && word_size == 4) {
+        sizeof_T = 8;
       } else {
         sizeof_T = (((word_size-1) / 4) + 1) * 4;
       }
@@ -267,6 +271,12 @@ public:
       }
       *(uint32_t*)buffer = ~crc;
     }
+  }
+
+  uint32_t get_crc(void* chunk, size_t size) {
+    if (size < 4)
+      return 0;
+    return *(uint32_t*)chunk;
   }
 
   bool check_chunk(void* chunk, size_t size) {
@@ -540,15 +550,8 @@ private:
       }
     }
 
-    uint64_t n_max;
-    if (fec_type == EC_TYPE_FNTRS) {
-      n_max = (1ULL << (8*word_size)) + 1;
-    } else if (fec_type == EC_TYPE_NGFF4RS) {
-      n_max = 65536;
-    } else {
-      n_max = (1ULL << (8*word_size));
-    }
-    if (n > n_max) {
+    int wordsize_limit = (_log2<T>(n) + 1) / 8;
+    if (wordsize_limit > word_size) {
       return ERR_COMPT_CODE_LEN_T;
     }
 
@@ -571,8 +574,31 @@ private:
 
   bool check(std::vector<uint8_t*> *chunks) {
     for (std::vector<int>::size_type i = 0; i < chunks->size(); i++) {
-      if (!prng->check_chunk(chunks->at(i), chunk_size))
+      if (!prng->check_chunk(chunks->at(i), chunk_size)) {
+        dump_chunk("failed chunk", chunks->at(i));
         return false;
+      }
+    }
+    return true;
+  }
+
+  bool compare(std::vector<uint8_t*> *arr1, std::vector<uint8_t*> *arr2) {
+    if (arr1->size() != arr2->size()) {
+      std::cout << "Sizes are different\n";
+      return false;
+    }
+    for (std::vector<int>::size_type i = 0; i < arr1->size(); i++) {
+      if (prng->get_crc(arr1->at(i), chunk_size) !=
+          prng->get_crc(arr2->at(i), chunk_size)) {
+        // dump_chunk("chunk1", arr1->at(i));
+        // dump_chunk("chunk2", arr2->at(i));
+        std::cout << "CRCs are different\n";
+        return false;
+      }
+    }
+    if (!check(arr1) || !check(arr2)) {
+      std::cout << "Contents are different\n";
+      return false;
     }
     return true;
   }
@@ -653,15 +679,20 @@ private:
       avail_c_props->at(i) = nullptr;
     }
     if (systematic_ec) {
+      int avail_d_chunks_nb = 0;
       for (i = 0; i < k; i++) {
         int j = c_chunks_id->at(i);
         if (j < k) {
           avail_d_chunks->at(j) = a_streams->at(j);
+          avail_d_chunks_nb++;
         } else {
           avail_c_chunks->at(j-k) = a_streams->at(j);
           avail_c_props->at(j-k) = c_propos->at(j-k);
         }
       }
+      // shuffle again if all data are available
+      if (avail_d_chunks_nb == k)
+        get_avail_chunks(avail_d_chunks, avail_c_chunks, avail_c_props);
     } else {
       for (i = 0; i < k; i++) {
         int j = c_chunks_id->at(i);
@@ -697,13 +728,14 @@ private:
     reset_a_streams();
     reset_r_streams();
 
-    fec->decode_bufs(d_streams_shuffled, c_streams_shuffled, c_props_shuffled,
-      *r_streams);
+    if (!fec->decode_bufs(d_streams_shuffled, c_streams_shuffled,
+      c_props_shuffled, *r_streams))
+      return false;
 
     // dump("r_chunks", r_chunks);
 
-    if (!check(r_chunks)) {
-      std::cerr << errors_desc[ERR_FAILED_CHUNK] << std::endl;
+    if (!compare(d_chunks, r_chunks)) {
+      std::cerr << errors_desc[ERR_FAILED_REPAIR_CHUNK] << std::endl;
       return false;
     }
 
