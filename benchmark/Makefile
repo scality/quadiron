@@ -1,7 +1,7 @@
 
 #CXX = clang++
 
-CXXFLAGS = -std=c++11  -I../benchmark -I../src -g -O2 #-DNDEBUG
+CXXFLAGS = -std=c++11  -I../benchmark -I../src -g -O2 -DNDEBUG
 LDFLAGS = -L../src -lntl -lgmpxx -lgmp
 
 OBJS = benchmark.o
