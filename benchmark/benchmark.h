@@ -181,11 +181,16 @@ class Benchmark
 
   bool systematic_ec = false;
 
-  std::vector<int> *c_chunks_id;
+  std::vector<int> *c_chunks_id = nullptr;
 
   std::vector<uint8_t*> *d_chunks = nullptr;
   std::vector<uint8_t*> *c_chunks = nullptr;
   std::vector<uint8_t*> *r_chunks = nullptr;
+
+  std::vector<istreambuf<char>*> *d_istreambufs = nullptr;
+  std::vector<istreambuf<char>*> *c_istreambufs = nullptr;
+  std::vector<ostreambuf<char>*> *c_ostreambufs = nullptr;
+  std::vector<ostreambuf<char>*> *r_ostreambufs = nullptr;
 
   Stats_t *enc_stats = nullptr;
   Stats_t *dec_stats = nullptr;
