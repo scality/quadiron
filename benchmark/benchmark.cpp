@@ -1,811 +1,526 @@
 /* -*- mode: c++ -*- */
 
-#include "ntl.h"
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
-template class FECGF2NRS<uint32_t>;
-template class FECGF2NRS<uint64_t>;
-template class FECGF2NRS<__uint128_t>;
-
-template class FECGF2NFFTRS<uint32_t>;
-template class FECGF2NFFTRS<uint64_t>;
-template class FECGF2NFFTRS<__uint128_t>;
-
-template class FECGF2NFFTADDRS<uint32_t>;
-template class FECGF2NFFTADDRS<uint64_t>;
-template class FECGF2NFFTADDRS<__uint128_t>;
-
-template class FECGFPFFTRS<uint32_t>;
-template class FECGFPFFTRS<uint64_t>;
-template class FECGFPFFTRS<__uint128_t>;
-
-template class FECFNTRS<uint32_t>;
-template class FECFNTRS<uint64_t>;
-template class FECFNTRS<__uint128_t>;
-
-template class FECNGFF4RS<uint32_t>;
-template class FECNGFF4RS<uint64_t>;
-template class FECNGFF4RS<__uint128_t>;
-
-// CRC-32C (iSCSI) polynomial in reversed bit order
-#define POLY 0x82f63b78
-
-enum ec_type {
-  EC_TYPE_ALL = 0,
-  EC_TYPE_FNTRS,
-  EC_TYPE_NGFF4RS,
-  EC_TYPE_GFPFFTRS,
-  EC_TYPE_GF2NFFTADDRS,
-  EC_TYPE_GF2NRSV,
-  EC_TYPE_GF2NRSC,
-  EC_TYPE_GF2NFFTRS,
-  EC_TYPE_END,
-};
-
-std::map<int, std::string> ec_desc = {
-  { EC_TYPE_ALL, "All available Reed-solomon codes" },
-  { EC_TYPE_GF2NRSV, "Classical Vandermonde Reed-solomon codes over GF(2^n)" },
-  { EC_TYPE_GF2NRSC, "Classical Cauchy Reed-solomon codes over GF(2^n)" },
-  { EC_TYPE_GF2NFFTRS, "Reed-solomon codes over GF(2^n) using FFT" },
-  { EC_TYPE_GF2NFFTADDRS, "Reed-solomon codes over GF(2^n) using additive FFT"},
-  { EC_TYPE_GFPFFTRS, "Reed-solomon codes over GF(p) using FFT" },
-  { EC_TYPE_FNTRS, "Reed-solomon codes over GF(p = Fermat number) using FFT" },
-  { EC_TYPE_NGFF4RS,
-    "Reed-solomon codes over GF(65537) using FFT on pack of codewords" },
-};
-
-enum gf2nrs_type {
-  VANDERMONDE = 0,
-  CAUCHY,
-};
-
-enum errors {
-  ERR_COMPT_WORD_SIZE_T = -4,
-  ERR_WORD_SIZE,
-  ERR_COMPT_CODE_LEN_T,
-  ERR_FEC_TYPE_NOT_SUPPORTED,
-  ERR_SCENARIO_TYPE_NOT_SUPPORTED,
-  ERR_FAILED_CHUNK,
-  ERR_FAILED_REPAIR_CHUNK,
-  ERR_T_NOT_SUPPORTED,
-};
-
-std::map<int, std::string> errors_desc = {
-  { ERR_COMPT_WORD_SIZE_T, "Word size and type T is not compatible" },
-  { ERR_WORD_SIZE, "Word size is incorrect" },
-  { ERR_COMPT_CODE_LEN_T, "Code length is too long vs. type T" },
-  { ERR_FEC_TYPE_NOT_SUPPORTED, "Fec type is not recognised" },
-  { ERR_SCENARIO_TYPE_NOT_SUPPORTED, "Scenario type is not recognised" },
-  { ERR_FAILED_CHUNK, "ERROR: Chunks are incorrect" },
-  { ERR_FAILED_REPAIR_CHUNK, "ERROR: Repaired chunks are incorrect" },
-  { ERR_T_NOT_SUPPORTED, "Type T is not supported" },
-};
-
-std::map<std::string, ec_type> fec_type_map = {
-  { "all", EC_TYPE_ALL },
-  { "gf2nrsv", EC_TYPE_GF2NRSV },
-  { "gf2nrsc", EC_TYPE_GF2NRSC },
-  { "gf2nfftrs", EC_TYPE_GF2NFFTRS },
-  { "gf2nfftaddrs", EC_TYPE_GF2NFFTADDRS },
-  { "gfpfftrs", EC_TYPE_GFPFFTRS },
-  { "fntrs", EC_TYPE_FNTRS },
-  { "ngff4rs", EC_TYPE_NGFF4RS },
-};
-
-enum scenario_type {
-  ENC_ONLY = 0,
-  DEC_ONLY,
-  ENC_DEC,
-};
-
-std::map<std::string, scenario_type> sce_type_map = {
-  { "enc_only", ENC_ONLY },
-  { "dec_only", DEC_ONLY },
-  { "enc_dec", ENC_DEC },
-};
-
-std::map<int, std::string> sce_desc = {
-  { ENC_ONLY, "Only encodings" },
-  { DEC_ONLY, "Encode once and many decodings" },
-  { ENC_DEC, "Encodings and decodings" },
-};
-
-struct Params_t
-{
-  ec_type fec_type = EC_TYPE_ALL;
-  int word_size = 2;
-  int k = 3;
-  int m = 2;
-  size_t chunk_size = 512;
-  uint32_t samples_nb = 100;
-  int extra_param = -1;
-  int sizeof_T = -1;
-  scenario_type sce_type = ENC_DEC;
-
-  void print() {
-    std::cout << "\n--------------- Parameters ----------------\n";
-    std::cout << "FEC type:             " << ec_desc[fec_type] << std::endl;
-    std::cout << "Scenario benchmark:   " << sce_desc[sce_type] << std::endl;
-    std::cout << "Word size:            " << word_size << std::endl;
-    std::cout << "Number of data:       " << k << std::endl;
-    std::cout << "Number of parity:     " << m << std::endl;
-    std::cout << "Chunk size:           " << chunk_size << std::endl;
-    std::cout << "Number of samples:    " << samples_nb << std::endl;
-    if (sizeof_T > -1)
-      std::cout << "Size of integer type: " << sizeof_T << std::endl;
-    if (extra_param > -1)
-      std::cout << "Extra parameter:      " << extra_param << std::endl;
-    std::cout << "-------------------------------------------\n";
-  }
-
-  void get_sizeof_T() {
-    if (sizeof_T == -1) {
-      if (fec_type == EC_TYPE_NGFF4RS) {
-        sizeof_T = (((word_size-1) / 2) + 1) * 4;
-      } else if (fec_type == EC_TYPE_GFPFFTRS && word_size == 4) {
-        sizeof_T = 8;
-      } else {
-        sizeof_T = (((word_size-1) / 4) + 1) * 4;
-      }
-      std::cout << "Size of integer type: " << sizeof_T << std::endl;
-    }
-  }
-};
-
-class Stats_t {
-public:
-  Stats_t(const std::string& str, size_t work_load) {
-    this->name = str;
-    this->work_load = work_load;
-
-    this->nb = 0;
-    this->sum = 0;
-    this->sum_2 = 0;
-  }
-
-  void begin() {
-    nb = 0;
-    sum = 0;
-    sum_2 = 0;
-  }
-
-  void add(uint64_t val) {
-    nb++;
-    sum += val;
-    sum_2 += (val * val);
-  }
-
-  void end() {
-    avg = (double)sum / (double)nb;
-    std_dev = sqrt((double)sum_2 / (double)nb - avg * avg);
-  }
-
-  void show() {
-    std::cout << name << ":\tLatency(us) " << avg << " +/- " << std_dev;
-    std::cout << "\t\tThroughput " << work_load/avg << " (MB/s)" << std::endl;
-  }
-
-private:
-  uint64_t nb;
-  uint64_t sum;
-  uint64_t sum_2;
-  double avg;
-  double std_dev;
-  size_t work_load;
-  std::string name;
-};
-
-template <typename CharT>
-class ostreambuf : public std::basic_streambuf<CharT>
-{
-public:
-  ostreambuf(CharT* buffer, size_t buf_len)
-  {
-    std::basic_streambuf<CharT>::setp(buffer, buffer + buf_len);
-  }
-};
-
-template <typename CharT>
-class istreambuf : public std::basic_streambuf<CharT>
-{
-public:
-  istreambuf(CharT* buffer, size_t buf_len)
-  {
-    std::basic_streambuf<CharT>::setg(buffer, buffer, buffer + buf_len);
-  }
-};
-
-/*
- *  From http://www.pcg-random.org/
- *
- * *Really* minimal PCG32 code / (c) 2014 M.E. O'Neill / pcg-random.org
- * Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
- */
-class PRNG {
-
-private:
-  uint64_t state;
-  uint64_t inc;
-
-public:
-  PRNG(uint64_t initstate = 0, uint64_t initseq = 0) {
-    this->state = initstate;
-    this->inc = initseq;
-  }
-
-  void srandom(uint64_t initstate, uint64_t initseq) {
-    state = 0U;
-    inc = (initseq << 1u) | 1u;
-    rand();
-    state += initstate;
-    rand();
-  }
-
-  uint32_t _rand() {
-    uint64_t oldstate = state;
-    state = oldstate * 6364136223846793005ULL + inc;
-    uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
-    uint32_t rot = oldstate >> 59u;
-    return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
-  }
-
-  void gen_chunk(void* chunk, size_t size) {
-    uint8_t* buffer = (uint8_t*)chunk;
-    if (size < 4) {
-      buffer[0] = (uint8_t)_rand();
-      for (size_t i = 1; i < size; i++) {
-        buffer[i] = buffer[0];
-      }
-    } else {
-      uint32_t crc = 0;
-      crc = ~crc;
-      for (size_t i = 4; i < size; i++) {
-        uint8_t val = (uint8_t)_rand();
-        buffer[i] = val;
-        crc ^= val;
-        for (int k = 0; k < 8; k++)
-          crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-      }
-      *(uint32_t*)buffer = ~crc;
-    }
-  }
-
-  uint32_t get_crc(void* chunk, size_t size) {
-    if (size < 4)
-      return 0;
-    return *(uint32_t*)chunk;
-  }
-
-  bool check_chunk(void* chunk, size_t size) {
-    uint8_t* buffer = (uint8_t*)chunk;
-    if (size < 4) {
-      uint8_t val = buffer[0];
-      for (size_t i = 1; i < size; i++) {
-        if (buffer[i] != val)
-          return false;
-      }
-    } else {
-      uint32_t crc = 0;
-      crc = ~crc;
-      for (size_t i = 4; i < size; i++) {
-        crc ^= buffer[i];
-        for (int k = 0; k < 8; k++)
-          crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
-      }
-      uint32_t _crc = *(uint32_t*)buffer;
-      if (_crc != ~crc)
-        return false;
-    }
-    return true;
-  }
-};
+#include "benchmark.h"
 
 template<typename T>
-class Benchmark
-{
-private:
-  int k;
-  int m;
-  int n;
-  int n_c;
-  int word_size;
-  ec_type fec_type;
-  int extra_param;
-  size_t chunk_size;
-  uint32_t samples_nb;
-  PRNG *prng = nullptr;
-  FEC<T> *fec = nullptr;
+Benchmark<T>::Benchmark(Params_t params) {
+  this->fec_type = params.fec_type;
+  this->word_size = params.word_size;
+  this->k = params.k;
+  this->m = params.m;
+  this->n = params.k + params.m;
+  this->n_c = this->n;  // if systematic, it will be updated in init()
+  this->chunk_size = params.chunk_size;
+  this->samples_nb = params.samples_nb;
+  if (params.extra_param > -1) {
+    this->extra_param = params.extra_param;
+  }
 
-  bool systematic_ec = false;
+  int error;
+  if ((error = this->check_params()) < 0) {
+    std::cerr << errors_desc[error] << std::endl;
+    throw std::invalid_argument(errors_desc[error]);
+  }
 
-  std::vector<int> *c_chunks_id;
+  if ((error = this->init()) < 0) {
+    std::cerr << errors_desc[error] << std::endl;
+    throw std::invalid_argument(errors_desc[error]);
+  }
+}
 
-  std::vector<uint8_t*> *d_chunks = nullptr;
-  std::vector<uint8_t*> *c_chunks = nullptr;
-  std::vector<uint8_t*> *r_chunks = nullptr;
+template<typename T>
+Benchmark<T>::~Benchmark() {
+  if (fec != nullptr) delete fec;
+  if (prng != nullptr) delete prng;
+  if (c_chunks_id != nullptr) delete c_chunks_id;
 
-  Stats_t *enc_stats = nullptr;
-  Stats_t *dec_stats = nullptr;
-
-  // streams of data chunks
-  std::vector<std::istream*> *d_streams = nullptr;
-  // streams of coded chunks
-  std::vector<std::ostream*> *c_streams = nullptr;
-  // streams of available chunks
-  std::vector<std::istream*> *a_streams = nullptr;
-  // streams of repair chunks
-  std::vector<std::ostream*> *r_streams = nullptr;
-  // propos vector
-  std::vector<KeyValue*> *c_propos = nullptr;
-
-public:
-  Benchmark(Params_t params) {
-    this->fec_type = params.fec_type;
-    this->word_size = params.word_size;
-    this->k = params.k;
-    this->m = params.m;
-    this->n = params.k + params.m;
-    this->n_c = this->n;  // if systematic, it will be updated in init()
-    this->chunk_size = params.chunk_size;
-    this->samples_nb = params.samples_nb;
-    if (params.extra_param > -1) {
-      this->extra_param = params.extra_param;
+  if (d_streams != nullptr) {
+    for (int i = 0; i < k; i++) {
+      delete d_streams->at(i);
     }
-
-    int error;
-    if ((error = this->check_params()) < 0) {
-      std::cerr << errors_desc[error] << std::endl;
-      throw std::invalid_argument(errors_desc[error]);
+    delete d_streams;
+  }
+  if (c_streams != nullptr) {
+    for (int i = 0; i < n_c; i++) {
+      delete c_streams->at(i);
+      delete c_propos->at(i);
     }
+    delete c_streams;
+    delete c_propos;
+  }
+  if (a_streams != nullptr) {
+    for (int i = 0; i < n; i++) {
+      delete a_streams->at(i);
+    }
+    delete a_streams;
+  }
+  if (r_streams != nullptr) {
+    for (int i = 0; i < k; i++) {
+      delete r_streams->at(i);
+    }
+    delete r_streams;
+  }
 
-    if ((error = this->init()) < 0) {
-      std::cerr << errors_desc[error] << std::endl;
-      throw std::invalid_argument(errors_desc[error]);
+  if (d_istreambufs != nullptr) {
+    for (int i = 0; i < k; i++) {
+      delete d_istreambufs->at(i);
+    }
+    delete d_istreambufs;
+  }
+  if (c_istreambufs != nullptr) {
+    for (int i = 0; i < n_c; i++) {
+      delete c_istreambufs->at(i);
+    }
+    delete c_istreambufs;
+  }
+  if (c_ostreambufs != nullptr) {
+    for (int i = 0; i < n_c; i++) {
+      delete c_ostreambufs->at(i);
+    }
+    delete c_ostreambufs;
+  }
+  if (r_ostreambufs != nullptr) {
+    for (int i = 0; i < k; i++) {
+      delete r_ostreambufs->at(i);
+    }
+    delete r_ostreambufs;
+  }
+
+  if (d_chunks != nullptr) {
+    for (int i = 0; i < k; i++) {
+      delete[] d_chunks->at(i);
+    }
+    delete d_chunks;
+  }
+  if (c_chunks != nullptr) {
+    for (int i = 0; i < n_c; i++) {
+      delete[] c_chunks->at(i);
+    }
+    delete c_chunks;
+  }
+  if (r_chunks != nullptr) {
+    for (int i = 0; i < k; i++) {
+      delete[] r_chunks->at(i);
+    }
+    delete r_chunks;
+  }
+
+  if (enc_stats != nullptr)
+    delete enc_stats;
+  if (dec_stats != nullptr)
+    delete dec_stats;
+}
+
+template<typename T>
+int Benchmark<T>::init() {
+  switch (fec_type) {
+    case EC_TYPE_GF2NRSV:
+      fec = new FECGF2NRS<T>(word_size, k, m, FECGF2NRS<T>::VANDERMONDE);
+      break;
+    case EC_TYPE_GF2NRSC:
+      fec = new FECGF2NRS<T>(word_size, k, m, FECGF2NRS<T>::CAUCHY);
+      break;
+    case EC_TYPE_GF2NFFTRS:
+      fec = new FECGF2NFFTRS<T>(word_size, k, m);
+      break;
+    case EC_TYPE_GF2NFFTADDRS:
+      fec = new FECGF2NFFTADDRS<T>(word_size, k, m);
+      break;
+    case EC_TYPE_GFPFFTRS:
+      fec = new FECGFPFFTRS<T>(word_size, k, m);
+      break;
+    case EC_TYPE_NGFF4RS:
+      fec = new FECNGFF4RS<T>(word_size, k, m);
+      break;
+    case EC_TYPE_FNTRS:
+      fec = new FECFNTRS<T>(word_size, k, m);
+      break;
+    default:
+      return ERR_FEC_TYPE_NOT_SUPPORTED;
+  }
+
+  this->systematic_ec = (fec->type == FEC<T>::TYPE_1);
+  if (this->systematic_ec) {
+    this->n_c = this->m;
+  }
+
+  this->prng = new PRNG(time(NULL));
+
+  // Allocate memory for data
+  int i;
+  d_chunks = new std::vector<uint8_t*>(k);
+  c_chunks = new std::vector<uint8_t*>(n_c);
+  r_chunks = new std::vector<uint8_t*>(k);
+
+  for (i = 0; i < k; i++) {
+    d_chunks->at(i) = new uint8_t[chunk_size];
+  }
+  for (i = 0; i < n_c; i++) {
+    c_chunks->at(i) = new uint8_t[chunk_size];
+  }
+  for (i = 0; i < k; i++) {
+    r_chunks->at(i) = new uint8_t[chunk_size];
+  }
+
+  // Allocate memory for iostreambufs
+  d_istreambufs = new std::vector<istreambuf<char>*>(k);
+  c_istreambufs = new std::vector<istreambuf<char>*>(n_c);
+  c_ostreambufs = new std::vector<ostreambuf<char>*>(n_c);
+  r_ostreambufs = new std::vector<ostreambuf<char>*>(k);
+  for (i = 0; i < k; i++) {
+    d_istreambufs->at(i) =
+      new istreambuf<char>((char*)d_chunks->at(i), chunk_size);
+  }
+  for (i = 0; i < n_c; i++) {
+    c_istreambufs->at(i) =
+      new istreambuf<char>((char*)c_chunks->at(i), chunk_size);
+    c_ostreambufs->at(i) =
+      new ostreambuf<char>((char*)c_chunks->at(i), chunk_size);
+  }
+  for (i = 0; i < k; i++) {
+    r_ostreambufs->at(i) =
+      new ostreambuf<char>((char*)r_chunks->at(i), chunk_size);
+  }
+
+  // Allocate memory for streams
+  d_streams = new std::vector<std::istream*>(k);
+  c_streams = new std::vector<std::ostream*>(n_c);
+  a_streams = new std::vector<std::istream*>(n);
+  r_streams = new std::vector<std::ostream*>(k);
+  c_propos = new std::vector<KeyValue*>(n_c);
+
+  for (i = 0; i < k; i++) {
+    d_streams->at(i) = new std::istream(d_istreambufs->at(i));
+  }
+
+  for (i = 0; i < n_c; i++) {
+    c_streams->at(i) = new std::ostream(c_ostreambufs->at(i));
+    c_propos->at(i) = new KeyValue();
+  }
+
+  if (systematic_ec) {
+    for (i = 0; i < k; i++) {
+      a_streams->at(i) = new std::istream(d_istreambufs->at(i));
+    }
+    for (; i < n; i++) {
+      a_streams->at(i) = new std::istream(c_istreambufs->at(i-k));
+    }
+  } else {
+    for (i = 0; i < n; i++) {
+      a_streams->at(i) = new std::istream(c_istreambufs->at(i));
     }
   }
 
-  ~Benchmark() {
-    if (fec != nullptr) delete fec;
-    if (prng != nullptr) delete prng;
-
-    if (d_streams != nullptr) {
-      for (int i = 0; i < k; i++) {
-        delete d_streams->at(i);
-      }
-      delete d_streams;
-    }
-    if (c_streams != nullptr) {
-      for (int i = 0; i < n_c; i++) {
-        delete c_streams->at(i);
-        delete c_propos->at(i);
-      }
-      delete c_streams;
-      delete c_propos;
-    }
-    if (a_streams != nullptr) {
-      for (int i = 0; i < n; i++) {
-        delete a_streams->at(i);
-      }
-      delete a_streams;
-    }
-    if (r_streams != nullptr) {
-      for (int i = 0; i < k; i++) {
-        delete r_streams->at(i);
-      }
-      delete r_streams;
-    }
-
-    if (d_chunks != nullptr) {
-      for (int i = 0; i < k; i++) {
-        delete[] d_chunks->at(i);
-      }
-      delete d_chunks;
-    }
-    if (c_chunks != nullptr) {
-      for (int i = 0; i < n_c; i++) {
-        delete[] c_chunks->at(i);
-      }
-      delete c_chunks;
-    }
-    if (r_chunks != nullptr) {
-      for (int i = 0; i < k; i++) {
-        delete[] r_chunks->at(i);
-      }
-      delete r_chunks;
-    }
-
-    if (enc_stats != nullptr)
-      delete enc_stats;
-    if (dec_stats != nullptr)
-      delete dec_stats;
+  for (i = 0; i < k; i++) {
+    r_streams->at(i) = new std::ostream(r_ostreambufs->at(i));
   }
 
-private:
-  int init() {
-    switch (fec_type) {
-      case EC_TYPE_GF2NRSV:
-        fec = new FECGF2NRS<T>(word_size, k, m, FECGF2NRS<T>::VANDERMONDE);
-        break;
-      case EC_TYPE_GF2NRSC:
-        fec = new FECGF2NRS<T>(word_size, k, m, FECGF2NRS<T>::CAUCHY);
-        break;
-      case EC_TYPE_GF2NFFTRS:
-        fec = new FECGF2NFFTRS<T>(word_size, k, m);
-        break;
-      case EC_TYPE_GF2NFFTADDRS:
-        fec = new FECGF2NFFTADDRS<T>(word_size, k, m);
-        break;
-      case EC_TYPE_GFPFFTRS:
-        fec = new FECGFPFFTRS<T>(word_size, k, m);
-        break;
-      case EC_TYPE_NGFF4RS:
-        fec = new FECNGFF4RS<T>(word_size, k, m);
-        break;
-      case EC_TYPE_FNTRS:
-        fec = new FECFNTRS<T>(word_size, k, m);
-        break;
-      default:
-        return ERR_FEC_TYPE_NOT_SUPPORTED;
-    }
-
-    this->systematic_ec = (fec->type == FEC<T>::TYPE_1);
-    if (this->systematic_ec) {
-      this->n_c = this->m;
-    }
-
-    this->prng = new PRNG(time(NULL));
-
-    // Allocate memory for data
-    int i;
-    d_chunks = new std::vector<uint8_t*>(k);
-    c_chunks = new std::vector<uint8_t*>(n_c);
-    r_chunks = new std::vector<uint8_t*>(k);
-
-    for (i = 0; i < k; i++) {
-      d_chunks->at(i) = new uint8_t[chunk_size];
-    }
-    for (i = 0; i < n_c; i++) {
-      c_chunks->at(i) = new uint8_t[chunk_size];
-    }
-    for (i = 0; i < k; i++) {
-      r_chunks->at(i) = new uint8_t[chunk_size];
-    }
-
-    // Allocate memory for streams
-    d_streams = new std::vector<std::istream*>(k);
-    c_streams = new std::vector<std::ostream*>(n_c);
-    a_streams = new std::vector<std::istream*>(n);
-    r_streams = new std::vector<std::ostream*>(k);
-    c_propos = new std::vector<KeyValue*> (n_c);
-
-    for (i = 0; i < k; i++) {
-      d_streams->at(i) = new std::istream(
-        new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
-    }
-
-    for (i = 0; i < n_c; i++) {
-      c_streams->at(i) = new std::ostream(
-        new ostreambuf<char>((char*)c_chunks->at(i), chunk_size));
-      c_propos->at(i) = new KeyValue();
-    }
-
-    if (systematic_ec) {
-      for (i = 0; i < k; i++) {
-        a_streams->at(i) = new std::istream(
-          new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
-      }
-      for (; i < n; i++) {
-        a_streams->at(i) = new std::istream(
-          new istreambuf<char>((char*)c_chunks->at(i-k), chunk_size));
-      }
-    } else {
-      for (i = 0; i < n; i++) {
-        a_streams->at(i) = new std::istream(
-          new istreambuf<char>((char*)c_chunks->at(i), chunk_size));
-      }
-    }
-
-    for (i = 0; i < k; i++) {
-      r_streams->at(i) = new std::ostream(
-        new ostreambuf<char>((char*)r_chunks->at(i), chunk_size));
-    }
-
-    // init index of chunks
-    c_chunks_id = new std::vector<int>();
-    for (i = 0; i < n; i++){
-      c_chunks_id->push_back(i);
-    }
-
-    this->enc_stats = new Stats_t("Encode", chunk_size*k);
-    this->dec_stats = new Stats_t("Decode", chunk_size*k);
-    return 1;
+  // init index of chunks
+  c_chunks_id = new std::vector<int>();
+  for (i = 0; i < n; i++){
+    c_chunks_id->push_back(i);
   }
 
-  int check_params() {
-    if (word_size <= 0) {
+  this->enc_stats = new Stats_t("Encode", chunk_size*k);
+  this->dec_stats = new Stats_t("Decode", chunk_size*k);
+  return 1;
+}
+
+template<typename T>
+int Benchmark<T>::check_params() {
+  if (word_size <= 0) {
+    return ERR_WORD_SIZE;
+  }
+
+  if (fec_type == EC_TYPE_NGFF4RS) {
+    if (word_size < 2) {
       return ERR_WORD_SIZE;
     }
+  }
 
-    if (fec_type == EC_TYPE_NGFF4RS) {
-      if (word_size < 2) {
-        return ERR_WORD_SIZE;
-      }
-    }
-
-    if (sizeof(T) < word_size) {
+  if (sizeof(T) < word_size) {
+    return ERR_COMPT_WORD_SIZE_T;
+  }
+  if (fec_type == EC_TYPE_FNTRS ||
+      fec_type == EC_TYPE_GFPFFTRS) {
+    if (sizeof(T) <= word_size) {
       return ERR_COMPT_WORD_SIZE_T;
     }
-    if (fec_type == EC_TYPE_FNTRS ||
-        fec_type == EC_TYPE_GFPFFTRS) {
-      if (sizeof(T) <= word_size) {
-        return ERR_COMPT_WORD_SIZE_T;
-      }
-    }
-    if (fec_type == EC_TYPE_NGFF4RS) {
-      if (sizeof(T) < 2 * word_size) {
-        return ERR_COMPT_WORD_SIZE_T;
-      }
-    }
-
-    int wordsize_limit = (_log2<T>(n) + 1) / 8;
-    if (wordsize_limit > word_size) {
-      return ERR_COMPT_CODE_LEN_T;
-    }
-
-    // adjust chunk_size
-    if (chunk_size % word_size > 0)
-      chunk_size = ((chunk_size - 1)/word_size + 1)*word_size;
-
-    return 1;
   }
-
-  void gen_data() {
-    for (int i = 0; i < k; i++) {
-      prng->gen_chunk(d_chunks->at(i), chunk_size);
-    }
-    if (!check(d_chunks)) {
-      std::cerr << errors_desc[ERR_FAILED_CHUNK] << std::endl;
-      throw errors_desc[ERR_FAILED_CHUNK];
+  if (fec_type == EC_TYPE_NGFF4RS) {
+    if (sizeof(T) < 2 * word_size) {
+      return ERR_COMPT_WORD_SIZE_T;
     }
   }
 
-  bool check(std::vector<uint8_t*> *chunks) {
-    for (std::vector<int>::size_type i = 0; i < chunks->size(); i++) {
-      if (!prng->check_chunk(chunks->at(i), chunk_size)) {
-        dump_chunk("failed chunk", chunks->at(i));
-        return false;
-      }
-    }
-    return true;
+  int wordsize_limit = _log2<T>(n) + 1;
+  if (wordsize_limit > 8 * word_size) {
+    return ERR_COMPT_CODE_LEN_T;
   }
 
-  bool compare(std::vector<uint8_t*> *arr1, std::vector<uint8_t*> *arr2) {
-    if (arr1->size() != arr2->size()) {
-      std::cout << "Sizes are different\n";
+  // adjust chunk_size
+  if (chunk_size % word_size > 0)
+    chunk_size = ((chunk_size - 1)/word_size + 1)*word_size;
+
+  return 1;
+}
+
+template<typename T>
+void Benchmark<T>::gen_data() {
+  for (int i = 0; i < k; i++) {
+    prng->gen_chunk(d_chunks->at(i), chunk_size);
+  }
+  if (!check(d_chunks)) {
+    std::cerr << errors_desc[ERR_FAILED_CHUNK] << std::endl;
+    throw errors_desc[ERR_FAILED_CHUNK];
+  }
+}
+
+template<typename T>
+bool Benchmark<T>::check(std::vector<uint8_t*> *chunks) {
+  for (std::vector<int>::size_type i = 0; i < chunks->size(); i++) {
+    if (!prng->check_chunk(chunks->at(i), chunk_size))
+      return false;
+  }
+  return true;
+}
+
+template<typename T>
+bool Benchmark<T>::compare(std::vector<uint8_t*> *arr1,
+                           std::vector<uint8_t*> *arr2) {
+  if (arr1->size() != arr2->size()) {
+    std::cout << "Sizes are different\n";
+    return false;
+  }
+  for (std::vector<int>::size_type i = 0; i < arr1->size(); i++) {
+    if (prng->get_crc(arr1->at(i), chunk_size) !=
+        prng->get_crc(arr2->at(i), chunk_size)) {
+      // dump_chunk("chunk1", arr1->at(i));
+      // dump_chunk("chunk2", arr2->at(i));
+      std::cout << "CRCs are different\n";
       return false;
     }
-    for (std::vector<int>::size_type i = 0; i < arr1->size(); i++) {
-      if (prng->get_crc(arr1->at(i), chunk_size) !=
-          prng->get_crc(arr2->at(i), chunk_size)) {
-        // dump_chunk("chunk1", arr1->at(i));
-        // dump_chunk("chunk2", arr2->at(i));
-        std::cout << "CRCs are different\n";
-        return false;
-      }
-    }
-    if (!check(arr1) || !check(arr2)) {
-      std::cout << "Contents are different\n";
-      return false;
-    }
-    return true;
   }
-
-  void dump(const char* name, std::vector<uint8_t*> *chunks) {
-    std::cout << name << ": ";
-    for (std::vector<int>::size_type i = 0; i < chunks->size(); i++) {
-      uint8_t *chunk = chunks->at(i);
-      for (int j = 0; j < chunk_size; j++) {
-        std::cout << unsigned(chunk[j]) << " ";
-      }
-      std::cout << "|";
-    }
-    std::cout << std::endl;
+  if (!check(arr1) || !check(arr2)) {
+    std::cout << "Contents are different\n";
+    return false;
   }
+  return true;
+}
 
-  void dump_chunk(const char* name, uint8_t *chunk) {
-    std::cout << name << ": ";
+template<typename T>
+void Benchmark<T>::dump(const char* name, std::vector<uint8_t*> *chunks) {
+  std::cout << name << ": ";
+  for (std::vector<int>::size_type i = 0; i < chunks->size(); i++) {
+    uint8_t *chunk = chunks->at(i);
     for (int j = 0; j < chunk_size; j++) {
       std::cout << unsigned(chunk[j]) << " ";
     }
-    std::cout << std::endl;
+    std::cout << "|";
   }
+  std::cout << std::endl;
+}
 
-  void reset_d_streams() {
-    for (int i = 0; i < k; i++) {
-      d_streams->at(i)->rdbuf(
-        new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
-    }
+template<typename T>
+void Benchmark<T>::dump_chunk(const char* name, uint8_t *chunk) {
+  std::cout << name << ": ";
+  for (int j = 0; j < chunk_size; j++) {
+    std::cout << unsigned(chunk[j]) << " ";
   }
+  std::cout << std::endl;
+}
 
-  void reset_c_streams() {
-    for (int i = 0; i < n_c; i++) {
-      c_streams->at(i)->rdbuf(
-        new ostreambuf<char>((char*)c_chunks->at(i), chunk_size));
-      c_propos->at(i)->clear();
-    }
+template<typename T>
+void Benchmark<T>::reset_d_streams() {
+  for (int i = 0; i < k; i++) {
+    char *buffer = (char*)d_chunks->at(i);
+    d_streams->at(i)->rdbuf()->pubsetbuf((char*)d_chunks->at(i), chunk_size);
   }
+}
 
-  void reset_a_streams() {
-    int i;
-    if (systematic_ec) {
-      for (i = 0; i < k; i++) {
-        a_streams->at(i)->rdbuf(
-          new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
-      }
-      for (; i < n; i++) {
-        a_streams->at(i)->rdbuf(
-          new istreambuf<char>((char*)c_chunks->at(i-k), chunk_size));
-      }
-    } else {
-      for (i = 0; i < n; i++) {
-        a_streams->at(i)->rdbuf(
-          new istreambuf<char>((char*)c_chunks->at(i), chunk_size));
-      }
-    }
+template<typename T>
+void Benchmark<T>::reset_c_streams() {
+  for (int i = 0; i < n_c; i++) {
+    c_streams->at(i)->rdbuf()->pubsetbuf((char*)c_chunks->at(i), chunk_size);
+    c_propos->at(i)->clear();
   }
+}
 
-  void reset_r_streams() {
-    for (int i = 0; i < k; i++) {
-      r_streams->at(i)->rdbuf(
-        new ostreambuf<char>((char*)r_chunks->at(i), chunk_size));
-    }
-  }
-
-  void get_avail_chunks(std::vector<std::istream*> *avail_d_chunks,
-                        std::vector<std::istream*> *avail_c_chunks,
-                        std::vector<KeyValue*> *avail_c_props) {
-
-    std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end());
-
-    int i;
+template<typename T>
+void Benchmark<T>::reset_a_streams() {
+  int i;
+  if (systematic_ec) {
     for (i = 0; i < k; i++) {
-      avail_d_chunks->at(i) = nullptr;
+      a_streams->at(i)->rdbuf()->pubsetbuf((char*)d_chunks->at(i), chunk_size);
     }
-    for (i = 0; i < n_c; i++) {
-      avail_c_chunks->at(i) = nullptr;
-      avail_c_props->at(i) = nullptr;
+    for (; i < n; i++) {
+      a_streams->at(i)->rdbuf()->pubsetbuf((char*)c_chunks->at(i), chunk_size);
     }
-    if (systematic_ec) {
-      int avail_d_chunks_nb = 0;
-      for (i = 0; i < k; i++) {
-        int j = c_chunks_id->at(i);
-        if (j < k) {
-          avail_d_chunks->at(j) = a_streams->at(j);
-          avail_d_chunks_nb++;
-        } else {
-          avail_c_chunks->at(j-k) = a_streams->at(j);
-          avail_c_props->at(j-k) = c_propos->at(j-k);
-        }
+  } else {
+    for (i = 0; i < n; i++) {
+      a_streams->at(i)->rdbuf()->pubsetbuf((char*)c_chunks->at(i), chunk_size);
+    }
+  }
+}
+
+template<typename T>
+void Benchmark<T>::reset_r_streams() {
+  for (int i = 0; i < k; i++) {
+    r_streams->at(i)->rdbuf()->pubsetbuf((char*)r_chunks->at(i), chunk_size);
+  }
+}
+
+template<typename T>
+void Benchmark<T>::get_avail_chunks(std::vector<std::istream*> *avail_d_chunks,
+                      std::vector<std::istream*> *avail_c_chunks,
+                      std::vector<KeyValue*> *avail_c_props) {
+
+  std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end());
+
+  int i;
+  for (i = 0; i < k; i++) {
+    avail_d_chunks->at(i) = nullptr;
+  }
+  for (i = 0; i < n_c; i++) {
+    avail_c_chunks->at(i) = nullptr;
+    avail_c_props->at(i) = nullptr;
+  }
+  if (systematic_ec) {
+    int avail_d_chunks_nb = 0;
+    for (i = 0; i < k; i++) {
+      int j = c_chunks_id->at(i);
+      if (j < k) {
+        avail_d_chunks->at(j) = a_streams->at(j);
+        avail_d_chunks_nb++;
+      } else {
+        avail_c_chunks->at(j-k) = a_streams->at(j);
+        avail_c_props->at(j-k) = c_propos->at(j-k);
       }
-      // shuffle again if all data are available
-      if (avail_d_chunks_nb == k)
-        get_avail_chunks(avail_d_chunks, avail_c_chunks, avail_c_props);
-    } else {
-      for (i = 0; i < k; i++) {
-        int j = c_chunks_id->at(i);
-        avail_c_chunks->at(j) = a_streams->at(j);
-        avail_c_props->at(j) = c_propos->at(j);
-      }
+    }
+    // shuffle again if all data are available
+    if (avail_d_chunks_nb == k)
+      get_avail_chunks(avail_d_chunks, avail_c_chunks, avail_c_props);
+  } else {
+    for (i = 0; i < k; i++) {
+      int j = c_chunks_id->at(i);
+      avail_c_chunks->at(j) = a_streams->at(j);
+      avail_c_props->at(j) = c_propos->at(j);
     }
   }
+}
 
-  bool encode() {
-    // this operation is done per trail
-    reset_d_streams();
-    fec->encode_bufs(*d_streams, *c_streams, *c_propos);
+template<typename T>
+bool Benchmark<T>::encode() {
+  // this operation is done per trail
+  reset_d_streams();
+  fec->encode_bufs(*d_streams, *c_streams, *c_propos);
 
-    // update stats
-    enc_stats->add(fec->total_enc_usec);
+  // update stats
+  enc_stats->add(fec->total_enc_usec);
 
-    // dump("d_chunks", d_chunks);
-    // dump("c_chunks", c_chunks);
+  // dump("d_chunks", d_chunks);
+  // dump("c_chunks", c_chunks);
 
-    return true;
+  return true;
+}
+
+template<typename T>
+bool Benchmark<T>::decode() {
+  std::vector<std::istream*> d_streams_shuffled(k, nullptr);
+  std::vector<std::istream*> c_streams_shuffled(n_c, nullptr);
+  std::vector<KeyValue*> c_props_shuffled(n_c, nullptr);
+
+  get_avail_chunks(&d_streams_shuffled, &c_streams_shuffled,
+    &c_props_shuffled);
+
+  // this operation is done per trail
+  reset_a_streams();
+  reset_r_streams();
+
+  if (!fec->decode_bufs(d_streams_shuffled, c_streams_shuffled,
+    c_props_shuffled, *r_streams))
+    return false;
+
+  if (!compare(d_chunks, r_chunks)) {
+    std::cerr << errors_desc[ERR_FAILED_REPAIR_CHUNK] << std::endl;
+    return false;
   }
 
-  bool decode() {
-    std::vector<std::istream*> d_streams_shuffled(k, nullptr);
-    std::vector<std::istream*> c_streams_shuffled(n_c, nullptr);
-    std::vector<KeyValue*> c_props_shuffled(n_c, nullptr);
+  // dump("r_chunks", r_chunks);
 
-    get_avail_chunks(&d_streams_shuffled, &c_streams_shuffled,
-      &c_props_shuffled);
-
-    // this operation is done per trail
-    reset_a_streams();
-    reset_r_streams();
-
-    if (!fec->decode_bufs(d_streams_shuffled, c_streams_shuffled,
-      c_props_shuffled, *r_streams))
-      return false;
-
-    // dump("r_chunks", r_chunks);
-
-    if (!compare(d_chunks, r_chunks)) {
-      std::cerr << errors_desc[ERR_FAILED_REPAIR_CHUNK] << std::endl;
-      return false;
-    }
-
-    // update stats
-    dec_stats->add(fec->total_dec_usec);
-
-    return true;
+  if (!check(r_chunks)) {
+    std::cerr << errors_desc[ERR_FAILED_CHUNK] << std::endl;
+    return false;
   }
 
-public:
-  bool enc_only() {
-    enc_stats->begin();
-    // this operation is done once per benchmark
-    gen_data();
+  // update stats
+  dec_stats->add(fec->total_dec_usec);
 
-    for (int i = 0; i < samples_nb; i++) {
-      if (!encode())
-        return false;
-    }
+  return true;
+}
 
-    enc_stats->end();
-    enc_stats->show();
+template<typename T>
+bool Benchmark<T>::enc_only() {
+  enc_stats->begin();
+  // this operation is done once per benchmark
+  gen_data();
 
-    return true;
-  }
-
-  bool dec_only() {
-    enc_stats->begin();
-    dec_stats->begin();
-
-    // this operation is done once per benchmark
-    gen_data();
-
+  for (int i = 0; i < samples_nb; i++) {
     if (!encode())
       return false;
-
-    for (int i = 0; i < samples_nb; i++) {
-      if (!decode())
-        return false;
-    }
-
-    enc_stats->end();
-    enc_stats->show();
-    dec_stats->end();
-    dec_stats->show();
-
-    return true;
   }
 
-  bool enc_dec() {
-    enc_stats->begin();
-    dec_stats->begin();
+  enc_stats->end();
+  enc_stats->show();
 
-    // this operation is done once per benchmark
-    gen_data();
+  return true;
+}
 
-    for (int i = 0; i < samples_nb; i++) {
-      if (!encode())
-        return false;
-      if (!decode())
-        return false;
-    }
+template<typename T>
+bool Benchmark<T>::dec_only() {
+  enc_stats->begin();
+  dec_stats->begin();
 
-    enc_stats->end();
-    enc_stats->show();
-    dec_stats->end();
-    dec_stats->show();
-    return true;
+  // this operation is done once per benchmark
+  gen_data();
+
+  if (!encode())
+    return false;
+
+  for (int i = 0; i < samples_nb; i++) {
+    if (!decode())
+      return false;
   }
-};
+
+  enc_stats->end();
+  enc_stats->show();
+  dec_stats->end();
+  dec_stats->show();
+
+  return true;
+}
+
+template<typename T>
+bool Benchmark<T>::enc_dec() {
+  enc_stats->begin();
+  dec_stats->begin();
+
+  // this operation is done once per benchmark
+  gen_data();
+
+  for (int i = 0; i < samples_nb; i++) {
+    if (!encode())
+      return false;
+    if (!decode())
+      return false;
+  }
+
+  enc_stats->end();
+  enc_stats->show();
+  dec_stats->end();
+  dec_stats->show();
+  return true;
+}
 
 void xusage()
 {
@@ -858,7 +573,7 @@ void run_scenario(Params_t params) {
     case 4: {
       try {
         Benchmark<uint32_t> bench(params);
-        run(&bench, params);
+        run<uint32_t>(&bench, params);
       } catch(const std::exception& e) {
         return;
       }
@@ -867,7 +582,7 @@ void run_scenario(Params_t params) {
     case 8: {
       try {
         Benchmark<uint64_t> bench(params);
-        run(&bench, params);
+        run<uint64_t>(&bench, params);
       } catch(const std::exception& e) {
         return;
       }
@@ -876,7 +591,7 @@ void run_scenario(Params_t params) {
     case 16: {
       try {
         Benchmark<__uint128_t> bench(params);
-        run(&bench, params);
+        run<__uint128_t>(&bench, params);
       } catch(const std::exception& e) {
         return;
       }
