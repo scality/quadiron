@@ -253,8 +253,8 @@ int Benchmark<T>::check_params() {
     }
   }
 
-  int wordsize_limit = (_log2<T>(n) + 1) / 8;
-  if (wordsize_limit > word_size) {
+  int wordsize_limit = _log2<T>(n) + 1;
+  if (wordsize_limit > 8 * word_size) {
     return ERR_COMPT_CODE_LEN_T;
   }
 
