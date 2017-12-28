@@ -32,6 +32,7 @@ template<typename T>
 Benchmark<T>::~Benchmark() {
   if (fec != nullptr) delete fec;
   if (prng != nullptr) delete prng;
+  if (c_chunks_id != nullptr) delete c_chunks_id;
 
   if (d_streams != nullptr) {
     for (int i = 0; i < k; i++) {
@@ -58,6 +59,31 @@ Benchmark<T>::~Benchmark() {
       delete r_streams->at(i);
     }
     delete r_streams;
+  }
+
+  if (d_istreambufs != nullptr) {
+    for (int i = 0; i < k; i++) {
+      delete d_istreambufs->at(i);
+    }
+    delete d_istreambufs;
+  }
+  if (c_istreambufs != nullptr) {
+    for (int i = 0; i < n_c; i++) {
+      delete c_istreambufs->at(i);
+    }
+    delete c_istreambufs;
+  }
+  if (c_ostreambufs != nullptr) {
+    for (int i = 0; i < n_c; i++) {
+      delete c_ostreambufs->at(i);
+    }
+    delete c_ostreambufs;
+  }
+  if (r_ostreambufs != nullptr) {
+    for (int i = 0; i < k; i++) {
+      delete r_ostreambufs->at(i);
+    }
+    delete r_ostreambufs;
   }
 
   if (d_chunks != nullptr) {
@@ -136,6 +162,26 @@ int Benchmark<T>::init() {
     r_chunks->at(i) = new uint8_t[chunk_size];
   }
 
+  // Allocate memory for iostreambufs
+  d_istreambufs = new std::vector<istreambuf<char>*>(k);
+  c_istreambufs = new std::vector<istreambuf<char>*>(n_c);
+  c_ostreambufs = new std::vector<ostreambuf<char>*>(n_c);
+  r_ostreambufs = new std::vector<ostreambuf<char>*>(k);
+  for (i = 0; i < k; i++) {
+    d_istreambufs->at(i) =
+      new istreambuf<char>((char*)d_chunks->at(i), chunk_size);
+  }
+  for (i = 0; i < n_c; i++) {
+    c_istreambufs->at(i) =
+      new istreambuf<char>((char*)c_chunks->at(i), chunk_size);
+    c_ostreambufs->at(i) =
+      new ostreambuf<char>((char*)c_chunks->at(i), chunk_size);
+  }
+  for (i = 0; i < k; i++) {
+    r_ostreambufs->at(i) =
+      new ostreambuf<char>((char*)r_chunks->at(i), chunk_size);
+  }
+
   // Allocate memory for streams
   d_streams = new std::vector<std::istream*>(k);
   c_streams = new std::vector<std::ostream*>(n_c);
@@ -144,35 +190,29 @@ int Benchmark<T>::init() {
   c_propos = new std::vector<KeyValue*>(n_c);
 
   for (i = 0; i < k; i++) {
-    d_streams->at(i) = new std::istream(
-      new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
+    d_streams->at(i) = new std::istream(d_istreambufs->at(i));
   }
 
   for (i = 0; i < n_c; i++) {
-    c_streams->at(i) = new std::ostream(
-      new ostreambuf<char>((char*)c_chunks->at(i), chunk_size));
+    c_streams->at(i) = new std::ostream(c_ostreambufs->at(i));
     c_propos->at(i) = new KeyValue();
   }
 
   if (systematic_ec) {
     for (i = 0; i < k; i++) {
-      a_streams->at(i) = new std::istream(
-        new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
+      a_streams->at(i) = new std::istream(d_istreambufs->at(i));
     }
     for (; i < n; i++) {
-      a_streams->at(i) = new std::istream(
-        new istreambuf<char>((char*)c_chunks->at(i-k), chunk_size));
+      a_streams->at(i) = new std::istream(c_istreambufs->at(i-k));
     }
   } else {
     for (i = 0; i < n; i++) {
-      a_streams->at(i) = new std::istream(
-        new istreambuf<char>((char*)c_chunks->at(i), chunk_size));
+      a_streams->at(i) = new std::istream(c_istreambufs->at(i));
     }
   }
 
   for (i = 0; i < k; i++) {
-    r_streams->at(i) = new std::ostream(
-      new ostreambuf<char>((char*)r_chunks->at(i), chunk_size));
+    r_streams->at(i) = new std::ostream(r_ostreambufs->at(i));
   }
 
   // init index of chunks
@@ -293,16 +333,16 @@ void Benchmark<T>::dump_chunk(const char* name, uint8_t *chunk) {
 template<typename T>
 void Benchmark<T>::reset_d_streams() {
   for (int i = 0; i < k; i++) {
-    d_streams->at(i)->rdbuf(
-      new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
+    d_streams->at(i)->clear();
+    d_streams->at(i)->rdbuf()->pubseekpos(0);
   }
 }
 
 template<typename T>
 void Benchmark<T>::reset_c_streams() {
   for (int i = 0; i < n_c; i++) {
-    c_streams->at(i)->rdbuf(
-      new ostreambuf<char>((char*)c_chunks->at(i), chunk_size));
+    c_streams->at(i)->clear();
+    c_streams->at(i)->rdbuf()->pubseekpos(0);
     c_propos->at(i)->clear();
   }
 }
@@ -310,28 +350,17 @@ void Benchmark<T>::reset_c_streams() {
 template<typename T>
 void Benchmark<T>::reset_a_streams() {
   int i;
-  if (systematic_ec) {
-    for (i = 0; i < k; i++) {
-      a_streams->at(i)->rdbuf(
-        new istreambuf<char>((char*)d_chunks->at(i), chunk_size));
-    }
-    for (; i < n; i++) {
-      a_streams->at(i)->rdbuf(
-        new istreambuf<char>((char*)c_chunks->at(i-k), chunk_size));
-    }
-  } else {
-    for (i = 0; i < n; i++) {
-      a_streams->at(i)->rdbuf(
-        new istreambuf<char>((char*)c_chunks->at(i), chunk_size));
-    }
+  for (i = 0; i < n; i++) {
+    a_streams->at(i)->clear();
+    a_streams->at(i)->rdbuf()->pubseekpos(0);
   }
 }
 
 template<typename T>
 void Benchmark<T>::reset_r_streams() {
   for (int i = 0; i < k; i++) {
-    r_streams->at(i)->rdbuf(
-      new ostreambuf<char>((char*)r_chunks->at(i), chunk_size));
+    r_streams->at(i)->clear();
+    r_streams->at(i)->rdbuf()->pubseekpos(0);
   }
 }
 
