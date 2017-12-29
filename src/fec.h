@@ -131,7 +131,7 @@ FEC<T>::~FEC()
 }
 
 template <typename T>
-bool FEC<T>::readw(T *ptr, std::istream *stream)
+inline bool FEC<T>::readw(T *ptr, std::istream *stream)
 {
   if (word_size == 1) {
     u_char c;
@@ -170,7 +170,7 @@ bool FEC<T>::readw(T *ptr, std::istream *stream)
 }
 
 template <typename T>
-bool FEC<T>::writew(T val, std::ostream *stream)
+inline bool FEC<T>::writew(T val, std::ostream *stream)
 {
   if (word_size == 1) {
     u_char c = val;
