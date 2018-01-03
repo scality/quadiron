@@ -3,7 +3,7 @@
 
 AR = ar cq
 
-CXXFLAGS = -std=c++11 -g -O2 #-DNDEBUG
+CXXFLAGS = -std=c++11 -g -O2 -Werror -Wall #-DNDEBUG
 
 OBJS = misc.o config.o vec.o
 

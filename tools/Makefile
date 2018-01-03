@@ -1,7 +1,7 @@
 
 #CXX = clang++
 
-CXXFLAGS = -std=c++11 -I../src -g -O2 -DNDEBUG
+CXXFLAGS = -std=c++11 -I../src -g -O2 -Werror -Wall -DNDEBUG
 LDFLAGS = -L../src -lntl -lgmpxx -lgmp
 
 all: ec #find_pminus1_compo is_prime find_primes
