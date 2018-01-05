@@ -27,9 +27,8 @@ struct test {
 
 int main(int argc, char **argv)
 {
-  bool run_all = true;
   struct test *p;
-    
+
   srand(0);
 
   if (2 == argc) {
