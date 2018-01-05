@@ -59,9 +59,9 @@ void create_coding_files(FEC<T> *fec)
 {
   char filename[1024];
   std::vector<std::istream*> d_files(fec->n_data, nullptr);
-  std::vector<std::ostream*> c_files(fec->code_len, nullptr);
-  std::vector<std::ostream*> c_props_files(fec->code_len, nullptr);
-  std::vector<KeyValue*> c_props(fec->code_len, nullptr);
+  std::vector<std::ostream*> c_files(fec->n_outputs, nullptr);
+  std::vector<std::ostream*> c_props_files(fec->n_outputs, nullptr);
+  std::vector<KeyValue*> c_props(fec->n_outputs, nullptr);
 
   for (int i = 0; i < fec->n_data; i++) {
     snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
@@ -70,7 +70,7 @@ void create_coding_files(FEC<T> *fec)
     d_files[i] = new std::ifstream(filename);
   }
 
-  for (int i = 0; i < fec->code_len; i++) {
+  for (int i = 0; i < fec->n_outputs; i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
       std::cerr<< "create: opening coding for writing " << filename << "\n";
@@ -90,7 +90,7 @@ void create_coding_files(FEC<T> *fec)
     delete d_files[i];
   }
 
-  for (int i = 0; i < fec->code_len; i++) {
+  for (int i = 0; i < fec->n_outputs; i++) {
     *(c_props_files[i]) << *(c_props[i]);
 
     (static_cast<std::ofstream*>(c_props_files[i]))->close();
@@ -111,9 +111,9 @@ bool repair_data_files(FEC<T> *fec)
 {
   char filename[1024];
   std::vector<std::istream*> d_files(fec->n_data, nullptr);
-  std::vector<std::istream*> c_files(fec->code_len, nullptr);
-  std::vector<std::istream*> c_props_files(fec->code_len, nullptr);
-  std::vector<KeyValue*> c_props(fec->code_len, nullptr);
+  std::vector<std::istream*> c_files(fec->n_outputs, nullptr);
+  std::vector<std::istream*> c_props_files(fec->n_outputs, nullptr);
+  std::vector<KeyValue*> c_props(fec->n_outputs, nullptr);
   std::vector<std::ostream*> r_files(fec->n_data, nullptr);
 
   // re-read data
@@ -132,7 +132,7 @@ bool repair_data_files(FEC<T> *fec)
     }
   }
 
-  for (int i = 0; i < fec->code_len; i++) {
+  for (int i = 0; i < fec->n_outputs; i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
       std::cerr << "repair: checking coding " << filename << "\n";
@@ -166,7 +166,7 @@ bool repair_data_files(FEC<T> *fec)
     }
   }
 
-  for (int i = 0; i < fec->code_len; i++) {
+  for (int i = 0; i < fec->n_outputs; i++) {
     if (nullptr != c_props_files[i]) {
       (static_cast<std::ifstream*>(c_props_files[i]))->close();
       delete c_props_files[i];
