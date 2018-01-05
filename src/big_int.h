@@ -42,7 +42,7 @@ struct int256_t
   }
   bool operator<(int x)
   {
-    return (lo < x);
+    return (lo < (__uint128_t)x);
   }
   bool operator!=(__uint128_t x)
   {
@@ -50,7 +50,7 @@ struct int256_t
   }
   bool operator!=(int x)
   {
-    return (lo != x);
+    return (lo != (__uint128_t)x);
   }
   int256_t operator+(__uint128_t x)
   {

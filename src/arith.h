@@ -413,7 +413,6 @@ bool _solovay_strassen1(T a, T n)
 template <class T>
 bool _solovay_strassen(T n)
 {
-  int ok = 0;
   for (int i = 0; i < 100; i++) {
     T a = _weak_rand<T>(n);
     if (!solovay_strassen1(a, n))
@@ -472,7 +471,6 @@ template <class T>
 T _weak_rand0(T max)
 {
   T r;
- retry:
   r = rand() % max;
   return r;
 }

@@ -3,14 +3,14 @@
 
 #include <sys/time.h>
 
-static timeval tick()
+static inline timeval tick()
 {
   struct timeval tv;
   gettimeofday(&tv, nullptr);
   return tv;
 }
 
-static uint64_t hrtime_usec(timeval begin)
+static inline uint64_t hrtime_usec(timeval begin)
 {
   struct timeval tv;
   gettimeofday(&tv, nullptr);
@@ -316,11 +316,9 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 
   decode_build();
 
-  int n_words;
+  int n_words = code_len;
   if (type == TYPE_1)
     n_words = n_data;
-  else if (type == TYPE_2)
-    n_words = code_len;
 
   Vec<T> words(gf, n_words);
   Vec<T> fragments_ids(gf, n_words);

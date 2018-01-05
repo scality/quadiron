@@ -12,7 +12,7 @@ class Mat
 {
  public:
   Mat(RN<T> *rn, int n_rows, int n_cols);
-  ~Mat();
+  virtual ~Mat();
   virtual int get_n_rows();
   virtual int get_n_cols();
   void zero_fill(void);
