@@ -369,9 +369,9 @@ bool check(int n, int word_size, ec_type eflag)
   if (word_size >= 4)
     return true;
   if (eflag == EC_TYPE_FNTRS) {
-    return (n <= (1ULL << (8*word_size)) + 1);
+    return (n <= (1LL << (8*word_size)) + 1);
   } else {
-    return (n <= (1ULL << (8*word_size)));
+    return (n <= (1LL << (8*word_size)));
   }
 }
 
@@ -497,7 +497,6 @@ int main(int argc, char **argv)
       run_FECGF2NFFTADDRS<__uint128_t>(word_size, n_data, n_parities, rflag);
   }
 
- end:
   free(prefix);
   return 0;
 }
