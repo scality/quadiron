@@ -214,7 +214,6 @@ void FFTADD<T>::compute_subspace(Vec<T> *basis, Vec<T> *subspace)
 template <typename T>
 void FFTADD<T>::_fft(Vec<T> *output, Vec<T> *input)
 {
-  int i;
   mem->copy(input, this->n);
   if (beta_m > 1)
     mem->hadamard_mul(beta_m_powers);
@@ -241,7 +240,6 @@ void FFTADD<T>::_fft(Vec<T> *output, Vec<T> *input)
 template <typename T>
 void FFTADD<T>::_ifft(Vec<T> *output, Vec<T> *input)
 {
-  int i;
   output->zero_fill();
   /*
    * input = (w0, w1)

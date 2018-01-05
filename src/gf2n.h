@@ -205,10 +205,7 @@ template <typename T>
 void GF2N<T>::setup_split_tables(void)
 {
   T i, j, t;
-  T nb = 0x100;   // 1 << 8
-  T d = 0x10000;  // 1 << 16
   T x;
-  T tab_card = tab_nb * d;
   T base;
 
   // alloc

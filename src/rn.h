@@ -235,7 +235,6 @@ template <typename T>
 T RN<T>::exp_quick(T base, T exponent)
 {
   T result;
-  T i;
 
   if (0 == exponent)
     return 1;
