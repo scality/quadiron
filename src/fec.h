@@ -3,14 +3,14 @@
 
 #include <sys/time.h>
 
-static timeval tick()
+static inline timeval tick()
 {
   struct timeval tv;
   gettimeofday(&tv, nullptr);
   return tv;
 }
 
-static uint64_t hrtime_usec(timeval begin)
+static inline uint64_t hrtime_usec(timeval begin)
 {
   struct timeval tv;
   gettimeofday(&tv, nullptr);
@@ -131,7 +131,7 @@ FEC<T>::~FEC()
 }
 
 template <typename T>
-bool FEC<T>::readw(T *ptr, std::istream *stream)
+inline bool FEC<T>::readw(T *ptr, std::istream *stream)
 {
   if (word_size == 1) {
     u_char c;
@@ -170,7 +170,7 @@ bool FEC<T>::readw(T *ptr, std::istream *stream)
 }
 
 template <typename T>
-bool FEC<T>::writew(T val, std::ostream *stream)
+inline bool FEC<T>::writew(T val, std::ostream *stream)
 {
   if (word_size == 1) {
     u_char c = val;
@@ -316,11 +316,9 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 
   decode_build();
 
-  int n_words;
+  int n_words = code_len;
   if (type == TYPE_1)
     n_words = n_data;
-  else if (type == TYPE_2)
-    n_words = code_len;
 
   Vec<T> words(gf, n_words);
   Vec<T> fragments_ids(gf, n_words);

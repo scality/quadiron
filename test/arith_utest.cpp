@@ -112,10 +112,10 @@ class ArithUtest
 
     int b = 10;  // base
     int p = 14;  // we could multiply integers of 2^p digits
-    T max_digits = _exp<T>(2, p);
+    // T max_digits = _exp<T>(2, p);
     // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
-    T l = p + 1;
+    // T l = p + 1;
     // std::cerr << "l=" << l << "\n";
 
     // choose 2 prime numbers of the form p=a.2^n+1

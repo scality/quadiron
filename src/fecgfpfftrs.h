@@ -34,15 +34,17 @@ class FECGFPFFTRS : public FEC<T>
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
-    T gf_p;
+    T gf_p = 0;
     if (word_size < 4) {
        gf_p = (1ULL << (8*word_size)) + 1;
        this->limit_value = (1ULL << (8 * word_size));
     } else if (word_size == 4) {
-      gf_p = 4294991873;  // p-1=2^13 29^1 101^1 179^1
-      this->limit_value = 4294967296;   // 2^32
-    } else
+      gf_p = (T)4294991873ULL;  // p-1=2^13 29^1 101^1 179^1
+      this->limit_value = (T)4294967296ULL;   // 2^32
+    } else {
       assert(false);  // not support yet
+      exit(1);
+    }
 
 
     assert(gf_p >= this->limit_value);
@@ -50,9 +52,7 @@ class FECGFPFFTRS : public FEC<T>
     assert(gf_p / 2 < this->limit_value);
 
     this->gf = new GFP<T>(gf_p);
-    T q = this->gf->card();
-    T R = this->gf->get_prime_root();  // primitive root
-    assert(_jacobi<T>(R, q) == -1);
+    assert(_jacobi<T>(this->gf->get_prime_root(), this->gf->card()) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
