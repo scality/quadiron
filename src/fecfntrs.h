@@ -24,9 +24,7 @@ class FECFNTRS : public FEC<T>
     T gf_p = (1ULL << (8*word_size)) + 1;
     this->gf = new GFP<T>(gf_p);
 
-    T q = this->gf->card();
-    T R = this->gf->get_prime_root();  // primitive root
-    assert(_jacobi<T>(R, q) == -1);
+    assert(_jacobi<T>(this->gf->get_prime_root(), this->gf->card()) == -1);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)

@@ -89,7 +89,7 @@ class FFTUtest
 
     int b = 10;  // base
     int p = 14;  // we could multiply integers of 2^p digits
-    int max_digits = _exp<T>(2, p);
+    // int max_digits = _exp<T>(2, p);
     // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
 
     uint64_t l = p + 1;
@@ -268,7 +268,6 @@ class FFTUtest
   {
     T n;
     GF2N<T> gf = GF2N<T>(4);
-    T R = gf.get_prime_root();  // primitive root
     T n_data = 3;
     T n_parities = 3;
 
@@ -301,7 +300,6 @@ class FFTUtest
     T n;
     T q = 65537;
     GFP<T> gf = GFP<T>(q);
-    T R = gf.get_prime_root();  // primitive root
     T n_data = 3;
     T n_parities = 3;
 
@@ -336,7 +334,6 @@ class FFTUtest
     T n_parities = 3;
     for (int gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
       GF2N<T> gf = GF2N<T>(gf_n);
-      T R = gf.get_prime_root();  // primitive root
 
       std::cout << "test_fftct_gf2n=" << gf_n << "\n";
 
@@ -450,17 +447,14 @@ class FFTUtest
 
   void test_fft2_gfp()
   {
-    T n;
     GFP<T> gf = GFP<T>(3);
-    T R = gf.get_prime_root();  // primitive root
     T n_data = 1;
-    T n_parities = 1;
 
     std::cout << "test_fft2_gfp\n";
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
     // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
-    n = gf.get_code_len(n_parities + n_data);
+    // n = gf.get_code_len(n_parities + n_data);
 
     // std::cerr << "n=" << n << "\n";
 

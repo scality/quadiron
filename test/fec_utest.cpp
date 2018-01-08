@@ -21,7 +21,8 @@ class FECUtest
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    for (u_int word_size = 4; word_size <= sizeof(T)/2; word_size += 4) {
+    for (u_int i = 1; i < _log2<T>(sizeof(T)); i++) {
+      u_int word_size = 1 << i;
       std::cout << "test_fecngff4rs with word_size=" << word_size << "\n";
       FECNGFF4RS<T> fec = FECNGFF4RS<T>(word_size, n_data, n_parities);
       run_test(&fec, fec.n, n_data, n_data+n_parities, true);

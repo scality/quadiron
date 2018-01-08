@@ -198,7 +198,6 @@ class GFUtest
     int i;
     T x;
     T nth_root;
-    T h = gf->card_minus_one();
     for (i = 0; i < 1000; i++) {
       // std::cout << "i=" << i << "\n";
       // std::cout << gf->card() << "\n";

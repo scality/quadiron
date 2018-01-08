@@ -19,7 +19,7 @@ class Vec
  public:
   RN<T> *rn;
   Vec(RN<T> *rn, int n, T* mem=NULL, int mem_len=0);
-  ~Vec();
+  virtual ~Vec();
   virtual int get_n(void);
   int get_mem_len(void);
   void zero_fill(void);
@@ -252,8 +252,7 @@ template <typename T>
 void Vec<T>::add_mutual(Vec<T> *v, int offset, int len)
 {
   assert(len == 0 || n - offset >= len);
-  int _len = v->get_n();
-  assert(_len >= len);
+  assert(v->get_n() >= len);
   T *src = v->get_mem();
   T *dest = this->mem + offset;
   for (int i = 0; i < len; i++)

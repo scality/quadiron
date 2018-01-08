@@ -2,7 +2,8 @@
 #pragma once
 #include "ntl.h"
 
-const uint32_t F4 = 65537;
+#define MASK16  0xFFFF
+#define MASK32  0xFFFFFFFF
 
 template<typename T>
 class Poly;
@@ -17,6 +18,11 @@ private:
   GF<uint32_t> *sub_field;
   bool check_n(int n);
   void init(void);
+
+  T expand16(uint16_t *arr);
+  T expand32(uint32_t *arr);
+  // to debug
+  void show_arr(uint32_t *arr);
 
 public:
   explicit NGFF4(int n);
@@ -77,11 +83,41 @@ bool NGFF4<T>::check_n(int n)
 }
 
 template <typename T>
+inline T NGFF4<T>::expand16(uint16_t *arr)
+{
+  T c = arr[this->n - 1];
+  for (int i = this->n - 2; i >= 0; i--) {
+    c = (c << 16) | arr[i];
+  }
+  return c;
+}
+
+template <typename T>
+inline T NGFF4<T>::expand32(uint32_t *arr)
+{
+  T c = arr[this->n - 1];
+  for (int i = this->n - 2; i >= 0; i--) {
+    c = ((c << 16) << 16) | arr[i];
+  }
+  return c;
+}
+
+template <typename T>
+void NGFF4<T>::show_arr(uint32_t *arr)
+{
+  std::cout << "\t arr: ";
+  for (int i = 0; i < this->n; i++) {
+    std::cout << arr[i] << " ";
+  }
+  std::cout << std::endl;
+}
+
+template <typename T>
 T NGFF4<T>::replicate(T a)
 {
   T b = a;
   for (int i = 1; i < this->n; i++) {
-    b += (a <<= 32);
+    b = ((b << 16) << 16) | a;
   }
   return b;
 }
@@ -121,132 +157,145 @@ T NGFF4<T>::neg(T a)
 template <typename T>
 T NGFF4<T>::add(T a, T b)
 {
-  T c = 0;
-  T tmp;
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    tmp = ((uint32_t)(a&mask) + (uint32_t)(b&mask)) % 65537;
-    c += (tmp << shift);
-    shift += 32;
-    a >>= 32;
-    b >>= 32;
+  uint32_t arr[this->n];
+
+  arr[0] = ((uint32_t)(a & MASK32) + (uint32_t)(b & MASK32)) % 65537;
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16) >> 16;
+    b = (b >> 16) >> 16;
+    arr[i] = ((uint32_t)(a & MASK32) + (uint32_t)(b & MASK32)) % 65537;
   }
+
+  T c = expand32(arr);
+
   return c;
 }
 
 template <typename T>
 T NGFF4<T>::sub(T a, T b)
 {
-  T c = 0;
-  T tmp;
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    tmp = sub_field->sub(a&mask, b&mask);
-    c += (tmp << shift);
-    shift += 32;
-    a >>= 32;
-    b >>= 32;
+  uint32_t arr[this->n];
+  uint32_t ae, be;
+
+  ae = (a & MASK32);
+  be = (b & MASK32);
+  if (ae >= be)
+    arr[0] = ae - be;
+  else
+    arr[0] = 65537 + ae - be;
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16) >> 16;
+    b = (b >> 16) >> 16;
+    ae = (uint32_t)(a & MASK32);
+    be = (uint32_t)(b & MASK32);
+    if (ae >= be)
+      arr[i] = ae - be;
+    else
+      arr[i] = 65537 + ae - be;
   }
+
+  T c = expand32(arr);
+
   return c;
 }
 
 template <typename T>
 T NGFF4<T>::mul(T a, T b)
 {
-  T c = 0;
-  T tmp;
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    tmp = ((uint64_t)(a&mask) * (uint32_t)(b&mask)) % 65537;
-    c += (tmp << shift);
-    shift += 32;
-    a >>= 32;
-    b >>= 32;
+  uint32_t arr[this->n];
+  uint64_t ae;
+  uint32_t be;
+
+  ae = (uint64_t)(a & MASK32);
+  be = (uint32_t)(b & MASK32);
+  if (ae == 65536 && be == 65536)
+    arr[0] = 1;
+  else
+    arr[0] = (ae * be) % 65537;
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16) >> 16;
+    b = (b >> 16) >> 16;
+    ae = (uint64_t)(a & MASK32);
+    be = (uint32_t)(b & MASK32);
+    if (ae == 65536 && be == 65536)
+      arr[i] = 1;
+    else
+      arr[i] = (ae * be) % 65537;
   }
+
+  T c = expand32(arr);
   return c;
 }
 
 template <typename T>
 T NGFF4<T>::div(T a, T b)
 {
-  T c = 0;
-  T tmp;
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    tmp = sub_field->div(a & mask, b & mask);
-    c += (tmp << shift);
-    shift += 32;
-    a >>= 32;
-    b >>= 32;
+  uint32_t arr[this->n];
+
+  arr[0] = sub_field->div((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16) >> 16;
+    b = (b >> 16) >> 16;
+    arr[i] = sub_field->div((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
   }
+
+  T c = expand32(arr);
   return c;
 }
 
 template <typename T>
 T NGFF4<T>::inv(T a)
 {
-  T c = 0;
-  T tmp;
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    tmp = sub_field->inv(a & mask);
-    c += (tmp << shift);
-    shift += 32;
-    a >>= 32;
+  uint32_t arr[this->n];
+
+  arr[0] = sub_field->inv((uint32_t)(a & MASK32));
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16) >> 16;
+    arr[i] = sub_field->inv((uint32_t)(a & MASK32));
   }
+
+  T c = expand32(arr);
   return c;
 }
 
 template <typename T>
 T NGFF4<T>::exp(T a, T b)
 {
-  T c = 0;
-  T tmp;
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    tmp = sub_field->exp(a & mask, b & mask);
-    c += (tmp << shift);
-    shift += 32;
-    a >>= 32;
-    b >>= 32;
+  uint32_t arr[this->n];
+
+  arr[0] = sub_field->exp((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16) >> 16;
+    b = (b >> 16) >> 16;
+    arr[i] = sub_field->exp((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
   }
+
+  T c = expand32(arr);
   return c;
 }
 
 template <typename T>
 T NGFF4<T>::log(T a, T b)
 {
-  T c = 0;
-  T tmp;
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    tmp = sub_field->log(a & mask, b & mask);
-    c += (tmp << shift);
-    shift += 32;
-    a >>= 32;
-    b >>= 32;
+  uint32_t arr[this->n];
+
+  arr[0] = sub_field->log((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16) >> 16;
+    b = (b >> 16) >> 16;
+    arr[i] = sub_field->log((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
   }
+
+  T c = expand32(arr);
   return c;
 }
 
 template <typename T>
-T NGFF4<T>::weak_rand_tuple(void)
+T NGFF4<T>::weak_rand_tuple()
 {
-  T c = 0;
-  T tmp;
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    tmp = sub_field->weak_rand();
-    c += (tmp << shift);
-    shift += 32;
+  T c = sub_field->weak_rand();
+  for (int i = 1; i < this->n; i++) {
+    c = ((c << 16) << 16) | sub_field->weak_rand();
   }
   return c;
 }
@@ -264,15 +313,15 @@ T NGFF4<T>::weak_rand(void)
 template <typename T>
 T NGFF4<T>::pack(T a)
 {
-  uint32_t mask = 0xffff;
-  int shift = 0;
-  T b = 0;
-  for (int i = 0; i < this->n; i++) {
-    b += ((T)(a & mask) << shift);
-    shift += 32;
-    a >>= 16;
+  uint32_t arr[this->n];
+  arr[0] = (uint32_t)(a & MASK16);
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16);
+    arr[i] = (uint32_t)(a & MASK16);
   }
-  return b;
+
+  T c = expand32(arr);
+  return c;
 }
 
 /**
@@ -282,22 +331,23 @@ T NGFF4<T>::pack(T a)
 template <typename T>
 T NGFF4<T>::pack(T a, uint32_t flag)
 {
-  uint32_t mask = 0xffff;
-  int shift = 0;
-  T b = 0;
-  for (int i = 0; i < this->n; i++) {
-    if (flag % 2 == 1) {
-      b += ((T)65536 << shift);
-    } else {
-      b += ((T)(a & mask) << shift);
-    }
+  uint32_t arr[this->n];
+  if (flag & 1)
+    arr[0] = 65536;
+  else
+    arr[0] = (uint32_t)(a & MASK16);
+  for (int i = 1; i < this->n; i++) {
     flag >>= 1;
-    shift += 32;
-    a >>= 16;
+    a = (a >> 16);
+    if (flag & 1)
+      arr[i] = 65536;
+    else
+      arr[i] = (uint32_t)(a & MASK16);
   }
-  return b;
-}
 
+  T c = expand32(arr);
+  return c;
+}
 
 /**
  * Unpack of n numbers each of 32 bits into n numbers each of 16 bits
@@ -308,18 +358,28 @@ template <typename T>
 compT<T> NGFF4<T>::unpack(T a)
 {
   compT<T> b = compT<T>();
-  uint32_t mask = 0xffffffff;
-  int shift = 0;
-  for (int i = 0; i < this->n; i++) {
-    T tmp = (a & mask);
-    if (tmp == 65536) {
-      b.flag += (1 << i);
-    } else {
-      b.val += (tmp << shift);
-    }
-    shift += 16;
-    a >>= 32;
+  uint32_t flag = 0;
+  uint32_t ae;
+  uint16_t arr[this->n];
+
+  ae = (uint32_t)(a & MASK32);
+  if (ae == 65536) {
+    flag |= 1;
+    arr[0] = 0;
+  } else
+    arr[0] = (uint16_t)ae;
+  for (int i = 1; i < this->n; i++) {
+    a = (a >> 16) >> 16;
+    ae = (uint32_t)(a & MASK32);
+    if (ae == 65536) {
+      flag |= (1 << i);
+      arr[i] = 0;
+    } else
+      arr[i] = ae;
   }
+
+  b.flag = flag;
+  b.val = expand16(arr);
   return b;
 }
 
