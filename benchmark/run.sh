@@ -18,10 +18,10 @@ done
 
 chunk_size=51200
 sce_type=enc_only
-for word_size in 1 2 4 8; do
+for word_size in 2 8; do
   for ec_type in ngff4rs fntrs gfpfftrs; do
-    for k in 8 16 32; do
-      for m in 8 16 32 64; do
+    for k in 16; do
+      for m in 64; do
         echo ${bin}_e${ec_type}_w${word_size}_k${k}_m${m}_c${chunk_size}_s${sce_type}
         ${valgrind} ${bin} -e ${ec_type} -w ${word_size} -k ${k} -m ${m} -c ${chunk_size} -s ${sce_type}
       done

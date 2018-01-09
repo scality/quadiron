@@ -540,6 +540,7 @@ void xusage()
     "\t-n \tNumber of samples per operation\n" +
     "\t-t \tSize of used integer type, either " +
       "4, 8, 16 for uint32_t, uint64_t, __uint128_t\n" +
+    "\t-g \tNumber of threads\n" +
     "\t-x \tExtra parameter\n\n";
   exit(1);
 }
@@ -611,13 +612,18 @@ void run_benchmark(Params_t params) {
   }
 }
 
+void do_join(std::thread& t)
+{
+    t.join();
+}
+
 int main(int argc, char **argv)
 {
   PRNG prng;
   Params_t params;
   int opt;
 
-  while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:")) != -1) {
+  while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:g:")) != -1) {
     switch (opt) {
     case 't':
       params.sizeof_T = atoi(optarg);
@@ -654,6 +660,9 @@ int main(int argc, char **argv)
     case 'x':
       params.extra_param = atoi(optarg);
       break;
+    case 'g':
+      params.threads_nb = atoi(optarg);
+      break;
     default:
       xusage();
     }
@@ -661,7 +670,11 @@ int main(int argc, char **argv)
 
   params.print();
 
-  run_benchmark(params);
+  std::vector<std::thread> threads;
+  for (uint32_t thr = 0; thr < params.threads_nb; thr++) {
+    threads.push_back(std::thread(run_benchmark, params));
+  }
+  std::for_each(threads.begin(), threads.end(), do_join);
 
   return 0;
 }

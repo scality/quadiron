@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <thread>
 
 #include "ntl.h"
 
@@ -125,6 +126,7 @@ struct Params_t
   int extra_param = -1;
   int sizeof_T = -1;
   scenario_type sce_type = ENC_DEC;
+  uint32_t threads_nb = 4;
 
   void print() {
     std::cout << "\n--------------- Parameters ----------------\n";
@@ -135,6 +137,7 @@ struct Params_t
     std::cout << "Number of parity:     " << m << std::endl;
     std::cout << "Chunk size:           " << chunk_size << std::endl;
     std::cout << "Number of samples:    " << samples_nb << std::endl;
+    std::cout << "Number of threads:    " << threads_nb << std::endl;
     if (sizeof_T > -1)
       std::cout << "Size of integer type: " << sizeof_T << std::endl;
     if (extra_param > -1)
