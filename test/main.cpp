@@ -5,6 +5,7 @@ extern void arith_utest();
 extern void gf_utest();
 extern void rs_utest();
 extern void vec_utest();
+extern void vecp_utest();
 extern void mat_utest();
 extern void fft_utest();
 extern void poly_utest();
@@ -17,6 +18,7 @@ struct test {
   {"arith", arith_utest},
   {"gf", gf_utest},
   {"vec", vec_utest},
+  {"vecp", vec_utest},
   {"mat", mat_utest},
   {"rs", rs_utest},
   {"poly", poly_utest},
