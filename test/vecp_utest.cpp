@@ -115,8 +115,35 @@ class VECPUtest
     }
     assert(ok);
 
-
     delete vec1;
+  }
+
+  void vecp_utest3()
+  {
+    std::cout << "vecp_utest3\n";
+
+    int n = 8;
+    int size = 32;
+    int n1 = 4;
+    int n2 = 10;
+
+    Vecp<T> *vec = gen_vecp_rand_data(n, size);
+    Vecp<T> vec1(vec, n1);
+    Vecp<T> vec2(vec, n2);
+
+    Vecp<T> *_vec1 = vec->slice(0, n1);
+    Vecp<T> *_vec2 = new VVecp<T>(vec, n2);
+
+    assert(vec1.eq(_vec1));
+    assert(vec2.eq(_vec2));
+
+    delete vec;
+
+    Vecp<T> vec3(&vec2, n1);
+    assert(vec3.eq(&vec1));
+
+    delete _vec1;
+    delete _vec2;
   }
 
   void vecp_utest()
@@ -125,6 +152,7 @@ class VECPUtest
 
     vecp_utest1();
     vecp_utest2();
+    vecp_utest3();
   }
 };
 
