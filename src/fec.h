@@ -88,6 +88,17 @@ class FEC
                    std::vector<KeyValue*> input_parities_props,
                    std::vector<std::ostream*> output_data_bufs);
 
+  void encode_vec(std::vector<T*> input_data_bufs,
+                  std::vector<T*> output_parities_bufs,
+                  std::vector<KeyValue*> output_parities_props,
+                  size_t chunk_size);
+
+  bool decode_vec(std::vector<uint32_t> index_bufs,
+                   std::vector<T*> input_bufs,
+                   std::vector<KeyValue*> input_props,
+                   std::vector<T*> output_data_bufs,
+                   size_t chunk_size);
+
   GF<T>* get_gf() {
     return this->gf;
   }
@@ -255,6 +266,46 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
   }
 }
 
+template <typename T>
+void FEC<T>::encode_vec(std::vector<T*> input_data_bufs,
+                         std::vector<T*> output_parities_bufs,
+                         std::vector<KeyValue*> output_parities_props,
+                         size_t chunk_size)
+{
+  off_t offset = 0;
+
+  assert(input_data_bufs.size() == n_data);
+  assert(output_parities_bufs.size() == n_outputs);
+  assert(output_parities_props.size() == n_outputs);
+
+  Vec<T> words = Vec<T>(gf, n_data);
+  Vec<T> output = Vec<T>(gf, get_n_outputs());
+
+  reset_stats_enc();
+  int i, j;
+  for (i = 0; i < chunk_size; i++) {
+    words.zero_fill();
+    for (j = 0; j < n_data; j++) {
+      words.set(j, input_data_bufs[j][i]);
+    }
+
+    timeval t1 = tick();
+    uint64_t start = rdtsc();
+    encode(&output, output_parities_props, offset, &words);
+    uint64_t end = rdtsc();
+    uint64_t t2 = hrtime_usec(t1);
+
+    total_enc_usec += t2;
+    total_encode_cycles += end - start;
+    n_encode_ops++;
+
+    for (j = 0; j < n_outputs; j++) {
+      output_parities_bufs[j][i] = output.get(j);
+    }
+    offset += word_size;
+  }
+}
+
 /**
  * Decode buffers
  *
@@ -379,6 +430,55 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
         T tmp = output.get(i);
         writew(tmp, output_data_bufs[i]);
       }
+    }
+
+    offset += word_size;
+  }
+
+  return true;
+}
+
+template <typename T>
+bool FEC<T>::decode_vec(std::vector<uint32_t> index_bufs,
+                         std::vector<T*> input_bufs,
+                         std::vector<KeyValue*> input_props,
+                         std::vector<T*> output_data_bufs,
+                         size_t chunk_size)
+{
+  off_t offset = 0;
+
+  assert(index_bufs.size() == input_bufs.size());
+  assert(input_props.size() == input_bufs.size());
+  assert(index_bufs.size() >= n_outputs);
+  assert(output_data_bufs.size() == n_data);
+
+  reset_stats_dec();
+
+  Vec<T> words(gf, code_len);
+  Vec<T> fragments_ids(gf, code_len);
+  Vec<T> output(gf, n_data);
+
+  int i, j;
+  for (i = 0; i < chunk_size; i++) {
+    words.zero_fill();
+    // get first n_data chunks
+    for (j = 0; j < n_data; j++) {
+      words.set(j, input_bufs[j][i]);
+      fragments_ids.set(j, index_bufs[j]);
+    }
+
+    timeval t1 = tick();
+    uint64_t start = rdtsc();
+    decode(&output, input_props, offset, &fragments_ids, &words);
+    uint64_t end = rdtsc();
+    uint64_t t2 = hrtime_usec(t1);
+
+    total_dec_usec += t2;
+    total_decode_cycles += end - start;
+    n_decode_ops++;
+
+    for (j = 0; j < n_data; j++) {
+      output_data_bufs[j][i] = output.get(j);
     }
 
     offset += word_size;
