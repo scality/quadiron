@@ -4,6 +4,9 @@
 template<typename T>
 class Vec;
 
+template<typename T>
+class Vecp;
+
 /**
  * Generic class for the Ring of integers modulo N
  *
@@ -34,6 +37,12 @@ public:
   T exp_naive(T base, T exponent);
   T exp_quick(T base, T exponent);
   T log_naive(T base, T exponent);
+  virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len);
+  virtual void mul_vec_to_vecp(Vec<T>* u, Vecp<T>* v);
+  virtual void add_two_bufs(T* src, T* dest, size_t len);
+  virtual void add_vecp_to_vecp(Vecp<T>* src, Vecp<T>* dest);
+  virtual void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len);
+  virtual void sub_vecp_to_vecp(Vecp<T>* veca, Vecp<T>* vecb, Vecp<T>* res);
   void compute_factors_of_order();
   bool is_quadratic_residue(T q);
   virtual void compute_omegas(Vec<T> *W, int n, T w);
@@ -271,6 +280,77 @@ T RN<T>::log_naive(T base, T exponent)
 
   // not found
   throw NTL_EX_NOT_FOUND;
+}
+
+/*
+ * For each i, dest[i] = a * src[i]
+ */
+template <typename T>
+void RN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) {
+  size_t i;
+  DoubleT<T> coef = DoubleT<T>(a);
+  for (i = 0; i < len; i++) {
+    // perform multiplication
+    dest[i] = T((coef * src[i]) % this->_card);
+  }
+}
+
+template <typename T>
+void RN<T>::mul_vec_to_vecp(Vec<T>* u, Vecp<T>* v) {
+  assert(u->get_n() == v->get_n());
+  int i;
+  int n = u->get_n();
+  size_t len = v->get_size();
+  for (i = 0; i < n; i++) {
+    this->mul_coef_to_buf(u->get(i), v->get(i), v->get(i), len);
+  }
+}
+
+template <typename T>
+void RN<T>::add_two_bufs(T* src, T* dest, size_t len) {
+  size_t i;
+  for (i = 0; i < len; i++) {
+    // perform addition
+    dest[i] = (src[i] + dest[i]) % this->_card;
+  }
+}
+
+template <typename T>
+void RN<T>::add_vecp_to_vecp(Vecp<T>* src, Vecp<T>* dest) {
+  assert(src->get_n() == dest->get_n());
+  assert(src->get_size() == dest->get_size());
+  int i;
+  int n = src->get_n();
+  size_t len = src->get_size();
+  for (i = 0; i < n; i++) {
+    this->add_two_bufs(src->get(i), dest->get(i), len);
+  }
+}
+
+template <typename T>
+void RN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) {
+  size_t i;
+  T result;
+  for (i = 0; i < len; i++) {
+    if (bufa[i] >= bufb[i]) {
+      result = bufa[i] - bufb[i];
+    } else {
+      result = this->_card - (bufb[i] - bufa[i]);
+    }
+    res[i] = result;
+  }
+}
+
+template <typename T>
+void RN<T>::sub_vecp_to_vecp(Vecp<T>* veca, Vecp<T>* vecb, Vecp<T>* res) {
+  assert(veca->get_n() == vecb->get_n());
+  assert(veca->get_size() == vecb->get_size());
+  int i;
+  int n = veca->get_n();
+  size_t len = veca->get_size();
+  for (i = 0; i < n; i++) {
+    this->sub_two_bufs(veca->get(i), vecb->get(i), res->get(i), len);
+  }
 }
 
 template <typename T>
