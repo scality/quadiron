@@ -55,7 +55,7 @@ char *xstrdup(const char *str)
  *
  */
 template <typename T>
-void create_coding_files(FEC<T> *fec)
+void create_coding_files(FEC<T> *fec, bool operation_on_packet = false)
 {
   char filename[1024];
   std::vector<std::istream*> d_files(fec->n_data, nullptr);
@@ -83,7 +83,10 @@ void create_coding_files(FEC<T> *fec)
     c_props[i] = new KeyValue();
   }
 
-  fec->encode_bufs(d_files, c_files, c_props);
+  if (operation_on_packet)
+    fec->encode_packet(d_files, c_files, c_props);
+  else
+    fec->encode_bufs(d_files, c_files, c_props);
 
   for (int i = 0; i < fec->n_data; i++) {
     (static_cast<std::ifstream*>(d_files[i]))->close();
@@ -316,7 +319,8 @@ template <typename T>
 void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
 {
   FECFNTRS<T> *fec;
-  fec = new FECFNTRS<T>(word_size, n_data, n_parities);
+  size_t pkt_size = 1024;
+  fec = new FECFNTRS<T>(word_size, n_data, n_parities, pkt_size);
 
   if (tflag) {
     print_fec_type<T>(fec);
@@ -327,7 +331,7 @@ void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
       exit(1);
     }
   }
-  create_coding_files<T>(fec);
+  create_coding_files<T>(fec, true);
   print_stats<T>(fec);
   delete fec;
 }
