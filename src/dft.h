@@ -13,6 +13,7 @@ class DFT
   GF<T> *gf;
   int n;
   T inv_n_mod_p;
+  Vec<T> *vec_inv_n = nullptr;
   DFT(GF<T> *gf, int n);
  public:
   virtual ~DFT();
@@ -29,11 +30,17 @@ DFT<T>::DFT(GF<T> *gf, int n)
   this->gf = gf;
   this->n = n;
   this->inv_n_mod_p = gf->inv(n) % gf->get_sub_field()->card();
+
+  this->vec_inv_n = new Vec<T>(this->gf, n);
+  for (int i = 0; i < n; i++) {
+    this->vec_inv_n->set(i, this->inv_n_mod_p);
+  }
 }
 
 template <typename T>
 DFT<T>::~DFT()
 {
+  if (vec_inv_n != nullptr) delete vec_inv_n;
 }
 
 template <typename T>
