@@ -408,7 +408,7 @@ bool NGFF4<T>::check(T a)
 template <typename T>
 void NGFF4<T>::compute_omegas(Vec<T> *W, int n, T w)
 {
-  for (int i = 0; i <= n; i++) {
+  for (int i = 0; i < n; i++) {
     W->set(i, this->exp(w, replicate(i)));
   }
 }

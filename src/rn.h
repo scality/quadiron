@@ -398,14 +398,14 @@ bool RN<T>::is_quadratic_residue(T q)
 /**
  * Compute the different powers of the root of unity into a vector
  *
- * @param W output vector (must be of length n+1)
+ * @param W output vector (must be of length n)
  * @param n
  * @param w n-th root of unity
  */
 template <typename T>
 void RN<T>::compute_omegas(Vec<T> *W, int n, T w)
 {
-  for (int i = 0; i <= n; i++) {
+  for (int i = 0; i < n; i++) {
     W->set(i, this->exp(w, i));
   }
 }
@@ -417,7 +417,7 @@ void RN<T>::compute_omegas(Vec<T> *W, int n, T w)
  *
  * @note XXX not reentrant
  *
- * @param W output vector (must be of length n+1)
+ * @param W output vector (must be of length n)
  * @param n
  * @param w n-th root of unity
  */
@@ -431,7 +431,7 @@ void RN<T>::compute_omegas_cached(Vec<T> *W, int n, T w)
   if (-1 == access(filename.str().c_str(), F_OK)) {
     std::ofstream file;
     file.open(filename.str().c_str(), std::ios::out);
-    for (int i = 0; i <= n; i++) {
+    for (int i = 0; i < n; i++) {
       W->set(i, this->exp(w, i));
       file << W->get(i) << "\n";
     }
@@ -444,7 +444,7 @@ void RN<T>::compute_omegas_cached(Vec<T> *W, int n, T w)
       W->set(i, tmp);
       i++;
     }
-    assert(i == n + 1);
+    assert(i == n);
   }
 }
 
