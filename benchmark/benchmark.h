@@ -121,6 +121,8 @@ struct Params_t
   int word_size = 2;
   int k = 3;
   int m = 2;
+  bool operation_on_packet = true;
+  size_t pkt_size = 1024;
   size_t chunk_size = 512;
   uint32_t samples_nb = 100;
   int extra_param = -1;
@@ -135,7 +137,9 @@ struct Params_t
     std::cout << "Word size:            " << word_size << std::endl;
     std::cout << "Number of data:       " << k << std::endl;
     std::cout << "Number of parity:     " << m << std::endl;
+    std::cout << "Packet size           " << pkt_size << std::endl;
     std::cout << "Chunk size:           " << chunk_size << std::endl;
+    std::cout << "Operations on packet: " << operation_on_packet << std::endl;
     std::cout << "Number of samples:    " << samples_nb << std::endl;
     std::cout << "Number of threads:    " << threads_nb << std::endl;
     if (sizeof_T > -1)
@@ -176,7 +180,9 @@ class Benchmark
   int n_c;
   int word_size;
   ec_type fec_type;
+  bool operation_on_packet;
   int extra_param;
+  size_t pkt_size;
   size_t chunk_size;
   uint32_t samples_nb;
   PRNG *prng = nullptr;
