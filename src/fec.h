@@ -395,7 +395,7 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
     // std::cout << "output: "; output.dump();
 
     total_enc_usec += t2;
-    total_encode_cycles += end - start;
+    total_encode_cycles += (end - start) / word_size;
     n_encode_ops++;
 
     for (int i = 0; i < n_outputs; i++) {
@@ -462,7 +462,7 @@ void FEC<T>::encode_packet(std::vector<std::istream*> input_data_bufs,
     uint64_t t2 = hrtime_usec(t1);
 
     total_enc_usec += t2;
-    total_encode_cycles += end - start;
+    total_encode_cycles += (end - start) / buf_size;
     n_encode_ops++;
 
     if (!full_word_size)
@@ -592,7 +592,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     uint64_t t2 = hrtime_usec(t1);
 
     total_dec_usec += t2;
-    total_decode_cycles += end - start;
+    total_decode_cycles += (end - start) / word_size;
     n_decode_ops++;
 
     for (int i = 0; i < n_data; i++) {
