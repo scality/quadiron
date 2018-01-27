@@ -56,6 +56,8 @@ typedef enum
 #include "vec.h"
 #include "vvec.h"
 #include "v2vec.h"
+#include "vecp.h"
+#include "vvecp.h"
 #include "vcvec.h"
 #include "vmvec.h"
 #include "mat.h"

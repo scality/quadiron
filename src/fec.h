@@ -3,6 +3,9 @@
 
 #include <sys/time.h>
 
+template<typename T>
+class Vecp;
+
 static inline timeval tick()
 {
   struct timeval tv;
@@ -15,6 +18,118 @@ static inline uint64_t hrtime_usec(timeval begin)
   struct timeval tv;
   gettimeofday(&tv, nullptr);
   return 1000000 * (tv.tv_sec - begin.tv_sec) + tv.tv_usec - begin.tv_usec;
+}
+
+/*
+ * Get and cast mem of Vecp<Ts> to a vector of Td*
+ */
+template<typename Ts, typename Td>
+std::vector<Td*> * cast_mem_of_vecp(Vecp<Ts> *s)
+{
+  int i;
+  int n = s->get_n();
+
+  // std::cout << "\ninput: "; s->dump();
+
+  std::vector<Ts*> *mem_s = s->get_mem();
+  std::vector<Td*> *mem_d = new std::vector<Td*>(n, nullptr);
+  for (i = 0; i < n; i++) {
+    mem_d->at(i) = static_cast<Td*>(static_cast<void*>(mem_s->at(i)));
+  }
+
+  return mem_d;
+}
+
+template<typename Ts, typename Td, typename Tw>
+inline void pack_next(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
+  size_t size)
+{
+  int i;
+  std::vector<Tw*> tmp(n, nullptr);
+  for (i = 0; i < n; i++) {
+    tmp[i] = static_cast<Tw*>(static_cast<void*>(src->at(i)));
+    std::copy_n(tmp[i], size, dest->at(i));
+  }
+}
+
+/*
+ * Cast buffers of source to a type corresponding to 'word_size'
+ * Copy casted elements to buffers of destination
+ *
+ *  sizeof(Ts) <= sizeof(Td)
+ *
+ * @param src: source vector
+ * @param dest: destination vector
+ * @param n: number of buffers per vector
+ * @param size: number of elements per destination buffer
+ * @param word_size: number of bytes used to store data in each element of
+ *  destination buffers
+ * @return
+ */
+template<typename Ts, typename Td>
+inline void pack(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
+  size_t size, int word_size)
+{
+  assert(sizeof(Td) >= word_size);
+  assert(word_size % sizeof(Ts) == 0);
+  // get only word_size bytes from each element
+  if (word_size == 1) {
+    pack_next<Ts, Td, uint8_t>(src, dest, n, size);
+  } else if (word_size == 2) {
+    pack_next<Ts, Td, uint16_t>(src, dest, n, size);
+  } else if (word_size == 4) {
+    pack_next<Ts, Td, uint32_t>(src, dest, n, size);
+  } else if (word_size == 8) {
+    pack_next<Ts, Td, uint64_t>(src, dest, n, size);
+  } else if (word_size == 16) {
+    pack_next<Ts, Td, __uint128_t>(src, dest, n, size);
+  }
+}
+
+template<typename Ts, typename Td, typename Tw>
+inline void unpack_next(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
+  size_t size)
+{
+  int i;
+  std::vector<Tw*> tmp(n, nullptr);
+  for (i = 0; i < n; i++) {
+    tmp[i] = static_cast<Tw*>(static_cast<void*>(dest->at(i)));
+    std::copy_n(src->at(i), size, tmp[i]);
+  }
+}
+
+/*
+ * Cast buffers of destination to a type corresponding to 'word_size'
+ * Copy elements from source buffers to casted buffers
+ *
+ *  sizeof(Ts) >= sizeof(Td)
+ *
+ * @param src: source vector
+ * @param dest: destination vector
+ * @param n: number of buffers per vector
+ * @param size: number of elements per source buffer
+ * @param word_size: number of bytes used to store data in each element of
+ *  source buffers
+ * @return
+ */
+template<typename Ts, typename Td>
+inline void unpack(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
+  size_t size, int word_size)
+{
+  assert(sizeof(Ts) >= word_size);
+  assert(word_size % sizeof(Td) == 0);
+  // get only word_size bytes from each element
+  if (word_size == 1) {
+    unpack_next<Ts, Td, uint8_t>(src, dest, n, size);
+  } else if (word_size == 2) {
+    unpack_next<Ts, Td, uint16_t>(src, dest, n, size);
+  } else if (word_size == 4) {
+    unpack_next<Ts, Td, uint32_t>(src, dest, n, size);
+  } else if (word_size == 8) {
+    unpack_next<Ts, Td, uint64_t>(src, dest, n, size);
+  } else if (word_size == 16) {
+    unpack_next<Ts, Td, __uint128_t>(src, dest, n, size);
+  }
 }
 
 /**
@@ -37,6 +152,8 @@ class FEC
   u_int n_parities;
   u_int code_len;
   u_int n_outputs;
+  size_t pkt_size;  // packet size, i.e. number of words per packet
+  size_t buf_size;  // packet size in bytes
 
   uint64_t total_encode_cycles = 0;
   uint64_t n_encode_ops = 0;
@@ -50,7 +167,8 @@ class FEC
   GF<T> *gf;
 
  public:
-  FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities);
+  FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities,
+    size_t pkt_size = 8);
   virtual ~FEC();
   /**
    * Return the number actual parities for TYPE_1 it is exactly n_parities, for
@@ -60,6 +178,8 @@ class FEC
   virtual int get_n_outputs() = 0;
   virtual void encode(Vec<T> *output, std::vector<KeyValue*> props,
     off_t offset, Vec<T> *words) = 0;
+  virtual void encode(Vecp<T> *output, std::vector<KeyValue*> props,
+    off_t offset, Vecp<T> *words) {};
   virtual void decode_add_data(int fragment_index, int row) = 0;
   virtual void decode_add_parities(int fragment_index, int row) = 0;
   virtual void decode_build(void) = 0;
@@ -79,9 +199,16 @@ class FEC
   bool readw(T *ptr, std::istream *stream);
   bool writew(T val, std::ostream *stream);
 
+  bool read_pkt(char *pkt, std::istream *stream);
+  bool write_pkt(char *pkt, std::ostream *stream);
+
   void encode_bufs(std::vector<std::istream*> input_data_bufs,
                    std::vector<std::ostream*> output_parities_bufs,
                    std::vector<KeyValue*> output_parities_props);
+
+  void encode_packet(std::vector<std::istream*> input_data_bufs,
+                  std::vector<std::ostream*> output_parities_bufs,
+                  std::vector<KeyValue*> output_parities_props);
 
   bool decode_bufs(std::vector<std::istream*> input_data_bufs,
                    std::vector<std::istream*> input_parities_bufs,
@@ -113,7 +240,8 @@ class FEC
  * @param n_parities
  */
 template <typename T>
-FEC<T>::FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities)
+FEC<T>::FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities,
+  size_t pkt_size)
 {
   assert(type == TYPE_1 || type == TYPE_2);
 
@@ -123,6 +251,8 @@ FEC<T>::FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities)
   this->n_parities = n_parities;
   this->code_len = n_data + n_parities;
   this->n_outputs = (type == TYPE_1) ? this->n_parities : this->code_len;
+  this->pkt_size = pkt_size;
+  this->buf_size = pkt_size * word_size;
 }
 
 template <typename T>
@@ -198,6 +328,23 @@ inline bool FEC<T>::writew(T val, std::ostream *stream)
   return false;
 }
 
+template <typename T>
+inline bool FEC<T>::read_pkt(char *pkt, std::istream *stream)
+{
+  if (stream->read(pkt, buf_size)) {
+    return true;
+  }
+  return false;
+}
+
+template <typename T>
+inline bool FEC<T>::write_pkt(char *pkt, std::ostream *stream)
+{
+  if (stream->write(pkt, buf_size))
+    return true;
+  return false;
+}
+
 /**
  * Encode buffers
  *
@@ -237,11 +384,15 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
     if (!cont)
       break;
 
+    // std::cout << "words at " << offset << ": "; words.dump();
+
     timeval t1 = tick();
     uint64_t start = rdtsc();
     encode(&output, output_parities_props, offset, &words);
     uint64_t end = rdtsc();
     uint64_t t2 = hrtime_usec(t1);
+
+    // std::cout << "output: "; output.dump();
 
     total_enc_usec += t2;
     total_encode_cycles += end - start;
@@ -252,6 +403,76 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
       writew(tmp, output_parities_bufs[i]);
     }
     offset += word_size;
+  }
+}
+
+template <typename T>
+void FEC<T>::encode_packet(std::vector<std::istream*> input_data_bufs,
+                         std::vector<std::ostream*> output_parities_bufs,
+                         std::vector<KeyValue*> output_parities_props)
+{
+  assert(input_data_bufs.size() == n_data);
+  assert(output_parities_bufs.size() == n_outputs);
+  assert(output_parities_props.size() == n_outputs);
+
+  bool cont = true;
+  off_t offset = 0;
+  bool full_word_size = (word_size == sizeof(T));
+
+  Vecp<uint8_t> words_char(n_data, buf_size);
+  std::vector<uint8_t*> *words_mem_char = words_char.get_mem();
+  std::vector<T*> *words_mem_T = nullptr;
+  if (full_word_size)
+    words_mem_T = cast_mem_of_vecp<uint8_t, T>(&words_char);
+  Vecp<T> words(n_data, pkt_size, words_mem_T);
+  words_mem_T = words.get_mem();
+
+  int output_len = get_n_outputs();
+
+  Vecp<T> output(output_len, pkt_size);
+  std::vector<T*> *output_mem_T = output.get_mem();
+  std::vector<uint8_t*> *output_mem_char = nullptr;
+  if (full_word_size)
+    output_mem_char = cast_mem_of_vecp<T, uint8_t>(&output);
+  Vecp<uint8_t> output_char(output_len, buf_size, output_mem_char);
+  output_mem_char = output_char.get_mem();
+
+  reset_stats_enc();
+
+  while (true) {
+    // TODO: get number of read bytes -> true buf size
+    // words.zero_fill();
+    for (int i = 0; i < n_data; i++) {
+      if (!read_pkt((char*)(words_mem_char->at(i)), input_data_bufs[i])) {
+        cont = false;
+        break;
+      }
+    }
+    if (!cont)
+      break;
+
+    if (!full_word_size)
+      pack<uint8_t, T>(words_mem_char, words_mem_T, n_data, pkt_size,
+        word_size);
+
+    timeval t1 = tick();
+    uint64_t start = rdtsc();
+    encode(&output, output_parities_props, offset, &words);
+    uint64_t end = rdtsc();
+    uint64_t t2 = hrtime_usec(t1);
+
+    total_enc_usec += t2;
+    total_encode_cycles += end - start;
+    n_encode_ops++;
+
+    if (!full_word_size)
+      unpack<T, uint8_t>(output_mem_T, output_mem_char, output_len, pkt_size,
+        word_size);
+
+    for (int i = 0; i < n_outputs; i++) {
+      write_pkt((char*)(output_mem_char->at(i)), output_parities_bufs[i]);
+    }
+    offset += buf_size;
   }
 }
 
