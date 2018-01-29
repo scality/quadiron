@@ -37,7 +37,7 @@ template <typename T>
 VVecp<T>::~VVecp()
 {
   if (zero_chunk != nullptr) {
-    delete zero_chunk;
+    delete[] zero_chunk;
   }
   delete this->mem;
 }
