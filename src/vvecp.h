@@ -39,5 +39,6 @@ VVecp<T>::~VVecp()
   if (zero_chunk != nullptr) {
     delete[] zero_chunk;
   }
+  this->mem->shrink_to_fit();
   delete this->mem;
 }

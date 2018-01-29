@@ -121,11 +121,8 @@ Vecp<T>::Vecp(Vecp<T>* vec, int begin, int end)
   this->size = vec->get_size();
   this->mem_len = this->n*this->size;
   this->mem_alloc_case = 1;
-
-  typename std::vector<T*>::const_iterator first =
-    vec->get_mem()->begin() + begin;
-  typename std::vector<T*>::const_iterator last = vec->get_mem()->begin() + end;
-  this->mem = new std::vector<T*>(first, last);
+  this->mem = new std::vector<T*>(vec->get_mem()->begin() + begin,
+                                  vec->get_mem()->begin() + end);
 }
 
 template <typename T>
@@ -137,6 +134,7 @@ Vecp<T>::~Vecp()
         delete[] this->mem->at(i);
       }
     }
+    this->mem->shrink_to_fit();
     delete this->mem;
   }
 }
@@ -221,6 +219,7 @@ void Vecp<T>::separate_even_odd()
   for (i = 0; i < n; i++) {
     mem->at(i) = _mem[i];
   }
+  _mem.shrink_to_fit();
 }
 
 template <typename T>
