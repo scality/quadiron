@@ -11,7 +11,13 @@ template<typename T>
 class Vecp
 {
  private:
-  bool new_mem = true;
+  /* Three cases of allocating memory
+   * 0: fully allocate memory including a vector of pointers each for a memory
+   *    of `size` elements
+   * 1: allocate only a vector of pointers each points to an allocated memory
+   * 2: do not allocate any memory
+   */
+  int mem_alloc_case = 0;
  protected:
   std::vector<T*> *mem = nullptr;
   int mem_len;
@@ -20,6 +26,7 @@ class Vecp
  public:
   Vecp(int n, size_t size, std::vector<T*> *mem=nullptr);
   Vecp(Vecp<T>* vec, int n = 0);
+  Vecp(Vecp<T>* vec, int begin, int end);
   virtual ~Vecp();
   virtual int get_n(void);
   virtual size_t get_size(void);
@@ -30,13 +37,19 @@ class Vecp
   std::vector<T*>* get_mem();
   void set_mem(std::vector<T*> *mem);
   void copy(Vecp<T> *v);
-  Vecp<T>* slice(int begin, int end);
   void separate_even_odd();
   void separate_even_odd(Vecp<T> *even, Vecp<T> *odd);
   bool eq(Vecp<T> *v);
   virtual void dump(void);
 };
 
+/**
+ * Constructor of Vecp
+ *
+ * @param n - size of vector of pointers, stored in `mem`
+ * @param size - number of elements of each memory pointed by a pointer of `mem`
+ * @param mem - null pointer or a pointer to a vector of buffers
+ */
 template<typename T>
 Vecp<T>::Vecp(int n, size_t size, std::vector<T*> *mem)
 {
@@ -49,11 +62,17 @@ Vecp<T>::Vecp(int n, size_t size, std::vector<T*> *mem)
       this->mem->at(i) = new T[size];
     }
   } else {
-    new_mem = false;
+    this->mem_alloc_case = 2;
     this->mem = mem;
   }
 }
 
+/**
+ * Constructor of Vecp by cloning partly from a given vector
+ *
+ * @param vec - a given Vecp instance
+ * @param n - number of buffers pointed by the constructed vector
+ */
 template<typename T>
 Vecp<T>::Vecp(Vecp<T>* vec, int n)
 {
@@ -64,6 +83,7 @@ Vecp<T>::Vecp(Vecp<T>* vec, int n)
   this->size = vec->get_size();
   this->n = (n == 0) ? vec_n : n;
   this->mem = new std::vector<T*>(this->n, nullptr);
+  this->mem_len = n*size;
 
   for (i = 0; i < this->n; i++) {
     this->mem->at(i) = new T[this->size];
@@ -81,12 +101,41 @@ Vecp<T>::Vecp(Vecp<T>* vec, int n)
   }
 }
 
+/**
+ * Constructor of Vecp by slicing from a given vector. Buffers are sliced from
+ *  `begin` (inclusive) to `end` (exclusive)
+ *
+ * @param vec - a given Vecp instance
+ * @param begin - index of buffer pointed by vec, that is the 1st buffer
+ *                pointed by the output Vecp
+ * @param end - index of buffer pointed by vec, that limits buffers
+ *                pointed by the output Vecp
+ */
+template<typename T>
+Vecp<T>::Vecp(Vecp<T>* vec, int begin, int end)
+{
+  assert(begin >= 0 && begin < end);
+  assert(end <= vec->get_n());
+
+  this->n = end - begin;
+  this->size = vec->get_size();
+  this->mem_len = this->n*this->size;
+  this->mem_alloc_case = 1;
+
+  typename std::vector<T*>::const_iterator first =
+    vec->get_mem()->begin() + begin;
+  typename std::vector<T*>::const_iterator last = vec->get_mem()->begin() + end;
+  this->mem = new std::vector<T*>(first, last);
+}
+
 template <typename T>
 Vecp<T>::~Vecp()
 {
-  if (new_mem && (this->mem != nullptr)) {
-    for (int i = 0; i < n; i++) {
-      delete[] this->mem->at(i);
+  if (this->mem_alloc_case < 2 && this->mem != nullptr) {
+    if (this->mem_alloc_case == 0) {
+      for (int i = 0; i < n; i++) {
+        delete[] this->mem->at(i);
+      }
     }
     delete this->mem;
   }
@@ -122,7 +171,7 @@ inline void Vecp<T>::set(int i, T* buf)
 {
   assert(i >= 0 && i < n);
 
-  if (new_mem && this->mem->at(i) != nullptr)
+  if ((mem_alloc_case == 0) && (this->mem->at(i) != nullptr))
     delete[] this->mem->at(i);
 
   this->mem->at(i) = buf;
@@ -155,18 +204,6 @@ void Vecp<T>::copy(Vecp<T> *v)
   size_t v_size = v->get_size();
   for (int i = 0; i < n; i++)
     std::copy_n(v->get(i), v_size, this->mem->at(i));
-}
-
-template <typename T>
-Vecp<T>* Vecp<T>::slice(int begin, int end)
-{
-  assert(begin >= 0 && begin < end);
-  assert(end <= n);
-  typename std::vector<T*>::const_iterator first = mem->begin() + begin;
-  typename std::vector<T*>::const_iterator last = mem->begin() + end;
-  std::vector<T*> *sliced_mem = new std::vector<T*>(first, last);
-  Vecp<T> *new_vec = new Vecp<T>(end - begin, size, sliced_mem);
-  return new_vec;
 }
 
 template <typename T>
