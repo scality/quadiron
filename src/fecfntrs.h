@@ -16,8 +16,9 @@ class FECFNTRS : public FEC<T>
  public:
   T n;
   T r;
-  FECFNTRS(u_int word_size, u_int n_data, u_int n_parities) :
-    FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
+  FECFNTRS(u_int word_size, u_int n_data, u_int n_parities,
+    size_t pkt_size = 8) :
+    FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities, pkt_size)
   {
     assert(word_size < 4);
     // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
@@ -71,6 +72,28 @@ class FECFNTRS : public FEC<T>
         assert(nullptr != props[i]);
         props[i]->insert(std::make_pair(buf, "@"));
         output->set(i, 0);
+      }
+    }
+  }
+
+  void encode(Vecp<T> *output, std::vector<KeyValue*> props, off_t offset,
+    Vecp<T> *words)
+  {
+    VVecp<T> vwords(words, n);
+    fft->fft(output, &vwords);
+    // check for out of range value in output
+    int size = output->get_size();
+    T thres = (fft->get_gf()->card() - 1);
+    for (int i = 0; i < this->code_len; i++) {
+      T *chunk = output->get(i);
+      for (int j = 0; j < size; j++) {
+        if (chunk[j] == thres) {
+          char buf[256];
+          snprintf(buf, sizeof (buf), "%zd:%d", offset + j*this->word_size, i);
+          assert(nullptr != props[i]);
+          props[i]->insert(std::make_pair(buf, "@"));
+          chunk[j] = 0;
+        }
       }
     }
   }

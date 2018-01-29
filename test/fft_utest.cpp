@@ -231,6 +231,13 @@ class FFTUtest
 
   void test_fft2k()
   {
+    std::cout << "test_fft2k\n";
+    test_fft2k_vec();
+    test_fft2k_vecp();
+  }
+
+  void test_fft2k_vec()
+  {
     u_int n;
     u_int q = 65537;
     GFP<T> gf = GFP<T>(q);
@@ -238,7 +245,7 @@ class FFTUtest
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    std::cout << "test_fft2k\n";
+    std::cout << "test_fft2k_vec\n";
 
     assert(_jacobi<T>(R, q) == -1);
 
@@ -261,6 +268,48 @@ class FFTUtest
       fft.ifft(&v2, &_v);
       // v2.dump();
       assert(v.eq(&v2));
+    }
+  }
+
+  void test_fft2k_vecp()
+  {
+    u_int n;
+    u_int q = 65537;
+    GFP<T> gf = GFP<T>(q);
+    u_int R = gf.get_prime_root();  // primitive root
+    u_int n_data = 3;
+    u_int n_parities = 3;
+    size_t size = 4;
+
+    std::cout << "test_fft2k_vecp\n";
+
+    assert(_jacobi<T>(R, q) == -1);
+
+    // with this encoder we cannot exactly satisfy users request, we need to pad
+    // n = minimal divisor of (q-1) that is at least (n_parities + n_data)
+    n = gf.get_code_len(n_parities + n_data);
+
+    // std::cerr << "n=" << n << "\n";
+
+    FFT2K<T> fft = FFT2K<T>(&gf, n);
+
+    int vec_n = fft.get_n();
+
+    Vecp<T> v(n_data, size), v2(vec_n, size), _v2(vec_n, size);
+    VVecp<T> _v(&v, vec_n);
+    for (int j = 0; j < 100000; j++) {
+      for (int i = 0; i < n_data; i++) {
+        T* mem = v.get(i);
+        for (int u = 0; u < size; u++) {
+          mem[u] = gf.weak_rand();
+        }
+      }
+      // _v.dump();
+      fft.fft(&v2, &_v);
+      // v2.dump();
+      fft.ifft(&_v2, &v2);
+      // _v2.dump();
+      assert(_v.eq(&_v2));
     }
   }
 

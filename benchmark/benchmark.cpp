@@ -10,6 +10,8 @@ Benchmark<T>::Benchmark(Params_t params) {
   this->m = params.m;
   this->n = params.k + params.m;
   this->n_c = this->n;  // if systematic, it will be updated in init()
+  this->operation_on_packet = params.operation_on_packet;
+  this->pkt_size = params.pkt_size;
   this->chunk_size = params.chunk_size;
   this->samples_nb = params.samples_nb;
   if (params.extra_param > -1) {
@@ -133,7 +135,7 @@ int Benchmark<T>::init() {
       fec = new FECNGFF4RS<T>(word_size, k, m);
       break;
     case EC_TYPE_FNTRS:
-      fec = new FECFNTRS<T>(word_size, k, m);
+      fec = new FECFNTRS<T>(word_size, k, m, pkt_size);
       break;
     default:
       return ERR_FEC_TYPE_NOT_SUPPORTED;
@@ -259,8 +261,9 @@ int Benchmark<T>::check_params() {
   }
 
   // adjust chunk_size
-  if (chunk_size % word_size > 0)
-    chunk_size = ((chunk_size - 1)/word_size + 1)*word_size;
+  if (chunk_size % (pkt_size * word_size) > 0)
+    chunk_size = ((chunk_size - 1)/(pkt_size * word_size) + 1)
+                  * (pkt_size * word_size);
 
   return 1;
 }
@@ -279,8 +282,10 @@ void Benchmark<T>::gen_data() {
 template<typename T>
 bool Benchmark<T>::check(std::vector<uint8_t*> *chunks) {
   for (std::vector<int>::size_type i = 0; i < chunks->size(); i++) {
-    if (!prng->check_chunk(chunks->at(i), chunk_size))
+    if (!prng->check_chunk(chunks->at(i), chunk_size)) {
+      // dump_chunk("failed check chunk", chunks->at(i));
       return false;
+    }
   }
   return true;
 }
@@ -407,7 +412,11 @@ template<typename T>
 bool Benchmark<T>::encode() {
   // this operation is done per trail
   reset_d_streams();
-  fec->encode_bufs(*d_streams, *c_streams, *c_propos);
+
+  if (operation_on_packet)
+    fec->encode_packet(*d_streams, *c_streams, *c_propos);
+  else
+    fec->encode_bufs(*d_streams, *c_streams, *c_propos);
 
   // update stats
   enc_stats->add(fec->total_enc_usec);
@@ -623,7 +632,7 @@ int main(int argc, char **argv)
   Params_t params;
   int opt;
 
-  while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:g:")) != -1) {
+  while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:g:p:")) != -1) {
     switch (opt) {
     case 't':
       params.sizeof_T = atoi(optarg);
@@ -654,6 +663,9 @@ int main(int argc, char **argv)
     case 'c':
       params.chunk_size = atoi(optarg);
       break;
+    case 'p':
+      params.pkt_size = atoi(optarg);
+      break;
     case 'n':
       params.samples_nb = atoi(optarg);
       break;
@@ -668,6 +680,9 @@ int main(int argc, char **argv)
     }
   }
 
+  if (params.pkt_size <= 0) {
+    params.operation_on_packet = false;
+  }
   params.print();
 
   std::vector<std::thread> threads;
