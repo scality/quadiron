@@ -64,9 +64,11 @@ class FECFNTRS : public FEC<T>
   {
     VVec<T> vwords(words, n);
     fft->fft(output, &vwords);
+    // max_value = 2^x
+    T thres = fft->get_gf()->card() - 1;
     // check for out of range value in output
     for (int i = 0; i < this->code_len; i++) {
-      if (output->get(i) == (fft->get_gf()->card() - 1)) {
+      if (output->get(i) & thres) {
         char buf[256];
         snprintf(buf, sizeof (buf), "%zd:%d", offset, i);
         assert(nullptr != props[i]);
@@ -87,7 +89,7 @@ class FECFNTRS : public FEC<T>
     for (int i = 0; i < this->code_len; i++) {
       T *chunk = output->get(i);
       for (int j = 0; j < size; j++) {
-        if (chunk[j] == thres) {
+        if (chunk[j] & thres) {
           char buf[256];
           snprintf(buf, sizeof (buf), "%zd:%d", offset + j*this->word_size, i);
           assert(nullptr != props[i]);
