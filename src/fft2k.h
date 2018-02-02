@@ -27,9 +27,7 @@ class FFT2K : public DFT<T>
   T w;
   T inv_w;
   Vec<T> *W = nullptr;
-  Vec<T> *W_half = nullptr;
   Vec<T> *inv_W = nullptr;
-  Vec<T> *inv_W_half = nullptr;
 
   FFT2<T> *fft2 = nullptr;
   FFT2K<T> *fftk = nullptr;
@@ -81,13 +79,6 @@ FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : DFT<T>(gf, n)
     gf->compute_omegas(W, n, w);
     gf->compute_omegas(inv_W, n, inv_w);
 
-    W_half = new Vec<T>(gf, k);
-    inv_W_half = new Vec<T>(gf, k);
-    for (int i = 0; i < k; i++) {
-      W_half->set(i, W->get(i));
-      inv_W_half->set(i, inv_W->get(i));
-    }
-
     this->fftk = new FFT2K<T>(gf, k, this->N);
 
     this->even = new Vec<T>(this->gf, k);
@@ -111,8 +102,6 @@ FFT2K<T>::~FFT2K()
     if (fftk != nullptr) delete fftk;
     if (W != nullptr) delete W;
     if (inv_W != nullptr) delete inv_W;
-    if (W_half != nullptr) delete W_half;
-    if (inv_W_half != nullptr) delete inv_W_half;
     if (even != nullptr) delete even;
     if (_even != nullptr) delete _even;
     if (odd != nullptr) delete odd;
@@ -206,23 +195,19 @@ void FFT2K<T>::_fftp(Vecp<T> *output, Vecp<T> *input, bool inv)
   }
 
   /*
-   * output[i] = even[i] + w * odd[i] for 0 <= i < n/2
-   * output[i] = even[i] - w * odd[i] otherwise
+   * output[i] = even[i] + w * odd[i]
    */
-  // tmp vec to store o_odd
-  Vecp<T> _o_odd(&o_odd);
-
-  // multiply _o_odd by w or inv_w
+  // store input as w * odd[i]
+  V2Vecp<T> v2_o_odd(&o_odd);
   if (inv)
-    this->gf->mul_vec_to_vecp(inv_W_half, &_o_odd);
+    this->gf->mul_vec_to_vecp(inv_W, &v2_o_odd, input);
   else
-    this->gf->mul_vec_to_vecp(W_half, &_o_odd);
+    this->gf->mul_vec_to_vecp(W, &v2_o_odd, input);
+
   // set o_odd = o_even to set two halves of output = o_even
   o_odd.copy(&o_even);
-  // add _o_odd to o_even to get: even + w * odd
-  this->gf->add_vecp_to_vecp(&_o_odd, &o_even);
-  // substract o_odd by _o_odd to get: even - w * odd
-  this->gf->sub_vecp_to_vecp(&o_odd, &_o_odd, &o_odd);
+  // add input to output to get: even + w * odd
+  this->gf->add_vecp_to_vecp(input, output);
 }
 
 template <typename T>
