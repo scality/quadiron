@@ -680,6 +680,11 @@ int main(int argc, char **argv)
     }
   }
 
+  // Currently support operating on packet:FNTRS
+  if (params.fec_type != EC_TYPE_FNTRS) {
+      params.operation_on_packet = false;
+  }
+
   if (params.pkt_size <= 0) {
     params.operation_on_packet = false;
   }
