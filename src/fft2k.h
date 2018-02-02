@@ -26,9 +26,10 @@ class FFT2K : public DFT<T>
   int N;
   T w;
   T inv_w;
+  size_t pkt_size;
   Vec<T> *W = nullptr;
-  Vec<T> *W_half = nullptr;
   Vec<T> *inv_W = nullptr;
+  Vec<T> *W_half = nullptr;
   Vec<T> *inv_W_half = nullptr;
 
   FFT2<T> *fft2 = nullptr;
@@ -40,8 +41,10 @@ class FFT2K : public DFT<T>
   Vec<T> *_odd = nullptr;
   V2Vec<T> *veven = nullptr;
   V2Vec<T> *vodd = nullptr;
+
+  Vecp<T> *tmp_buf = nullptr;
  public:
-  FFT2K(GF<T> *gf, int n, int N = 0);
+  FFT2K(GF<T> *gf, int n, size_t pkt_size = 0, int N = 0);
   ~FFT2K();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
@@ -59,15 +62,18 @@ class FFT2K : public DFT<T>
  *
  * @param gf
  * @param n for now must be a power of 2
+ * @param pkt_size size of packet, i.e. number of symbols per chunk will be
+ *  received and processed at a time
  * @param N original length
  *
  * @return
  */
 template <typename T>
-FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : DFT<T>(gf, n)
+FFT2K<T>::FFT2K(GF<T> *gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
 {
   w = gf->get_nth_root(n);
   inv_w = gf->inv(w);
+  this->pkt_size = pkt_size;
   this->N = N;
   if (this->N == 0)
     this->N = n;
@@ -88,7 +94,7 @@ FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : DFT<T>(gf, n)
       inv_W_half->set(i, inv_W->get(i));
     }
 
-    this->fftk = new FFT2K<T>(gf, k, this->N);
+    this->fftk = new FFT2K<T>(gf, k, pkt_size, this->N);
 
     this->even = new Vec<T>(this->gf, k);
     this->_even = new Vec<T>(this->gf, k);
@@ -96,6 +102,9 @@ FFT2K<T>::FFT2K(GF<T> *gf, int n, int N) : DFT<T>(gf, n)
     this->odd = new Vec<T>(this->gf, k);
     this->_odd = new Vec<T>(this->gf, k);
     this->vodd = new V2Vec<T>(this->_odd);
+
+    if (this->pkt_size > 0)
+      this->tmp_buf = new Vecp<T>(k, pkt_size);
   } else {
     bypass = true;
     this->fft2 = new FFT2<T>(gf);
@@ -119,6 +128,7 @@ FFT2K<T>::~FFT2K()
     if (_odd != nullptr) delete _odd;
     if (veven != nullptr) delete veven;
     if (vodd != nullptr) delete vodd;
+    if (pkt_size > 0 && tmp_buf != nullptr) delete tmp_buf;
   }
 }
 
@@ -209,20 +219,26 @@ void FFT2K<T>::_fftp(Vecp<T> *output, Vecp<T> *input, bool inv)
    * output[i] = even[i] + w * odd[i] for 0 <= i < n/2
    * output[i] = even[i] - w * odd[i] otherwise
    */
-  // tmp vec to store o_odd
-  Vecp<T> _o_odd(&o_odd);
+  // prepare tm_buf
+  Vecp<T> *_o_odd = nullptr;
+  if (this->pkt_size == 0) {
+    _o_odd = new Vecp<T>(half, size);
+    tmp_buf = _o_odd;
+  }
 
-  // multiply _o_odd by w or inv_w
+  // set tmp_buf = w * o_odd
   if (inv)
-    this->gf->mul_vec_to_vecp(inv_W_half, &_o_odd);
+    this->gf->mul_vec_to_vecp(inv_W_half, &o_odd, tmp_buf);
   else
-    this->gf->mul_vec_to_vecp(W_half, &_o_odd);
-  // set o_odd = o_even to set two halves of output = o_even
-  o_odd.copy(&o_even);
-  // add _o_odd to o_even to get: even + w * odd
-  this->gf->add_vecp_to_vecp(&_o_odd, &o_even);
-  // substract o_odd by _o_odd to get: even - w * odd
-  this->gf->sub_vecp_to_vecp(&o_odd, &_o_odd, &o_odd);
+    this->gf->mul_vec_to_vecp(W_half, &o_odd, tmp_buf);
+
+  // substract o_even by tmp_buf and store in o_dd: o_even - w * o_odd
+  this->gf->sub_vecp_to_vecp(&o_even, tmp_buf, &o_odd);
+  // add tmp_buf to o_even to get: o_even + w * o_odd
+  this->gf->add_vecp_to_vecp(tmp_buf, &o_even);
+
+  if (_o_odd != nullptr)
+    delete _o_odd;
 }
 
 template <typename T>
