@@ -83,5 +83,5 @@ void FFT2<T>::ifft(Vecp<T> *output, Vecp<T> *input)
 {
   fft_inv(output, input);
   if (this->inv_n_mod_p > 1)
-    this->gf->mul_vec_to_vecp(this->vec_inv_n, output);
+    this->gf->mul_vec_to_vecp(this->vec_inv_n, output, output);
 }
