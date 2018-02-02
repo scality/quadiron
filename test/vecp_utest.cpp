@@ -46,16 +46,16 @@ class VECPUtest
     std::vector<T*> *mem1 = vec1->get_mem();
     // vec1->dump();
 
-    Vecp<T> *vec2 = vec1->slice(begin, end);
-    std::vector<T*> *mem2 = vec2->get_mem();
-    assert(vec2->get_n() == end - begin);
-    assert(vec2->get_size() == vec1->get_size());
+    Vecp<T> vec2(vec1, begin, end);
+    std::vector<T*> *mem2 = vec2.get_mem();
+    assert(vec2.get_n() == end - begin);
+    assert(vec2.get_size() == vec1->get_size());
     for (i = 0; i < end - begin; i++) {
       for (j = 0; j < size; j++) {
         mem2->at(i)[j] = mem1->at(i + begin)[j];
       }
     }
-    // vec2->dump();
+    // vec2.dump();
 
     std::vector<T*> mem3(end - begin, nullptr);
     for (int i = 0; i < end - begin; i++) {
@@ -64,10 +64,9 @@ class VECPUtest
     Vecp<T> vec3(end - begin, size, &mem3);
     // vec3.dump();
 
-    assert(vec2->eq(&vec3));
+    assert(vec2.eq(&vec3));
 
     delete vec1;
-    delete vec2;
   }
 
   void vecp_utest2()
@@ -93,8 +92,10 @@ class VECPUtest
     vec1->separate_even_odd();
     // vec1->dump();
 
-    assert(i_even->eq(vec1->slice(0, half)));
-    assert(i_odd->eq(vec1->slice(half, n)));
+    Vecp<T> _i_even(vec1, 0, half);
+    Vecp<T> _i_odd(vec1, half, n);
+    assert(i_even->eq(&_i_even));
+    assert(i_odd->eq(&_i_odd));
 
     // vec2.dump();
 
@@ -134,10 +135,10 @@ class VECPUtest
     Vecp<T> vec1(vec, n1);
     Vecp<T> vec2(vec, n2);
 
-    Vecp<T> *_vec1 = vec->slice(0, n1);
+    Vecp<T> _vec1(vec, 0, n1);
     Vecp<T> *_vec2 = new VVecp<T>(vec, n2);
 
-    assert(vec1.eq(_vec1));
+    assert(vec1.eq(&_vec1));
     assert(vec2.eq(_vec2));
 
     delete vec;
@@ -145,7 +146,6 @@ class VECPUtest
     Vecp<T> vec3(&vec2, n1);
     assert(vec3.eq(&vec1));
 
-    delete _vec1;
     delete _vec2;
   }
 

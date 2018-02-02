@@ -50,6 +50,7 @@ inline void pack_next(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
     tmp[i] = static_cast<Tw*>(static_cast<void*>(src->at(i)));
     std::copy_n(tmp[i], size, dest->at(i));
   }
+  tmp.shrink_to_fit();
 }
 
 /*
@@ -96,6 +97,7 @@ inline void unpack_next(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
     tmp[i] = static_cast<Tw*>(static_cast<void*>(dest->at(i)));
     std::copy_n(src->at(i), size, tmp[i]);
   }
+  tmp.shrink_to_fit();
 }
 
 /*

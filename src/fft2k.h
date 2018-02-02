@@ -194,15 +194,15 @@ void FFT2K<T>::_fftp(Vecp<T> *output, Vecp<T> *input, bool inv)
   // separate even and odd elements of input
   input->separate_even_odd(&i_even, &i_odd);
 
-  Vecp<T> *o_even = output->slice(0, half);
-  Vecp<T> *o_odd = output->slice(half, this->n);
+  Vecp<T> o_even(output, 0, half);
+  Vecp<T> o_odd(output, half, this->n);
 
   if (inv) {
-    fftk->fft_inv(o_even, &i_even);
-    fftk->fft_inv(o_odd, &i_odd);
+    fftk->fft_inv(&o_even, &i_even);
+    fftk->fft_inv(&o_odd, &i_odd);
   } else {
-    fftk->fft(o_even, &i_even);
-    fftk->fft(o_odd, &i_odd);
+    fftk->fft(&o_even, &i_even);
+    fftk->fft(&o_odd, &i_odd);
   }
 
   /*
@@ -210,7 +210,7 @@ void FFT2K<T>::_fftp(Vecp<T> *output, Vecp<T> *input, bool inv)
    * output[i] = even[i] - w * odd[i] otherwise
    */
   // tmp vec to store o_odd
-  Vecp<T> _o_odd(o_odd);
+  Vecp<T> _o_odd(&o_odd);
 
   // multiply _o_odd by w or inv_w
   if (inv)
@@ -218,14 +218,11 @@ void FFT2K<T>::_fftp(Vecp<T> *output, Vecp<T> *input, bool inv)
   else
     this->gf->mul_vec_to_vecp(W_half, &_o_odd);
   // set o_odd = o_even to set two halves of output = o_even
-  o_odd->copy(o_even);
+  o_odd.copy(&o_even);
   // add _o_odd to o_even to get: even + w * odd
-  this->gf->add_vecp_to_vecp(&_o_odd, o_even);
+  this->gf->add_vecp_to_vecp(&_o_odd, &o_even);
   // substract o_odd by _o_odd to get: even - w * odd
-  this->gf->sub_vecp_to_vecp(o_odd, &_o_odd, o_odd);
-
-  delete o_even;
-  delete o_odd;
+  this->gf->sub_vecp_to_vecp(&o_odd, &_o_odd, &o_odd);
 }
 
 template <typename T>
