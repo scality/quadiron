@@ -252,5 +252,5 @@ void FFT2K<T>::ifft(Vecp<T> *output, Vecp<T> *input)
    * We need to divide output to `N` for the inverse formular
    */
   if ((this->k == this->N / 2) && (this->inv_n_mod_p > 1))
-      this->gf->mul_vec_to_vecp(this->vec_inv_n, output);
+      this->gf->mul_vec_to_vecp(this->vec_inv_n, output, output);
 }
