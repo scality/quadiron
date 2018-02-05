@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECGF2NRS_H__
+#define __NTL_FECGF2NRS_H__
 
 /**
  * GF_2^n based RS (Cauchy or Vandermonde)
@@ -91,3 +92,5 @@ class FECGF2NRS : public FEC<T>
     decode_mat->mul(output, words);
   }
 };
+
+#endif

@@ -1,7 +1,6 @@
-
 /* -*- mode: c++ -*- */
-
-#pragma once
+#ifndef __NTL_FFTCT_H__
+#define __NTL_FFTCT_H__
 
 /**
  * Cooley-Tukey FFT algorithm
@@ -207,3 +206,5 @@ void FFTCT<T>::ifft(Vec<T> *output, Vec<T> *input)
       output->mul_scalar(this->inv_n_mod_p);
   }
 }
+
+#endif

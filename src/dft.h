@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-
-#pragma once
+#ifndef __NTL_DFT_H__
+#define __NTL_DFT_H__
 
 /*
  * DFT over the field gf and over vectors of size n with w as n-th
@@ -54,3 +54,5 @@ GF<T> *DFT<T>::get_gf()
 {
   return gf;
 }
+
+#endif

@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-
-#pragma once
+#ifndef __NTL_POLY_H__
+#define __NTL_POLY_H__
 
 template<typename T>
 class Vec;
@@ -493,3 +493,5 @@ void Poly<T>::dump()
   dump(std::cout);
   std::cout << "\n";
 }
+
+#endif

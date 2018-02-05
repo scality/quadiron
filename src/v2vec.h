@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_V2VEC_H__
+#define __NTL_V2VEC_H__
 
 /**
  * Virtual (v->get_n()*2) x 1 vertical vector for the need of
@@ -57,3 +58,5 @@ T V2Vec<T>::get(int i)
   else
     return vec->get(i - vec_n);
 }
+
+#endif

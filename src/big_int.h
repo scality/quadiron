@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_BIG_INT_H__
+#define __NTL_BIG_INT_H__
 
 #include <inttypes.h>
 #include <unistd.h>
@@ -77,3 +78,5 @@ struct int256_t
     return lo;
   }
 };
+
+#endif

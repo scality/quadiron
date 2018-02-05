@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_NETL_BENCH_PRNG_H__
+#define __NTL_NETL_BENCH_PRNG_H__
 
 // CRC-32C (iSCSI) polynomial in reversed bit order
 #define POLY 0x82f63b78
@@ -88,3 +89,5 @@ public:
     return true;
   }
 };
+
+#endif

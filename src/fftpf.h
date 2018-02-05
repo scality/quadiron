@@ -1,7 +1,6 @@
-
 /* -*- mode: c++ -*- */
-
-#pragma once
+#ifndef __NTL_FFTPF_H__
+#define __NTL_FFTPF_H__
 
 /**
  * Prime-factor FFT algorithm
@@ -200,3 +199,5 @@ void FFTPF<T>::ifft(Vec<T> *output, Vec<T> *input)
     output->mul_scalar(this->inv_n_mod_p);
   }
 }
+
+#endif

@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECNGFF4_H__
+#define __NTL_FECNGFF4_H__
 
 #include <string>
 
@@ -207,3 +208,5 @@ class FECNGFF4RS : public FEC<T>
     //std::cout << "decoded"; output->dump();
   }
 };
+
+#endif

@@ -1,7 +1,6 @@
-
 /* -*- mode: c++ -*- */
-
-#pragma once
+#ifndef __NTL_FFTADD_H__
+#define __NTL_FFTADD_H__
 
 /**
  * Additive FFT algorithm of length n = 2^m (arbitrary m)
@@ -602,3 +601,5 @@ void FFTADD<T>::inv_taylor_expand(Vec<T> *output, Vec<T> *input, int t) {
     output->add_mutual(&hi);
   }
 }
+
+#endif

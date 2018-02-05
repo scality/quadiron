@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_VECP_H__
+#define __NTL_VECP_H__
 
 /*
  * Wrapper of a vector of `n` buffers each of `size` elements of type T
@@ -265,3 +266,5 @@ void Vecp<T>::dump(void)
   }
   std::cout << "\n)\n";
 }
+
+#endif

@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECGF2NFFTADDRS_H__
+#define __NTL_FECGF2NFFTADDRS_H__
 
 /**
  * GF_2^n based RS using additive FFT transformation
@@ -173,3 +174,5 @@ class FECGF2NFFTADDRS : public FEC<T>
       output->set(i, S.get(i));
   }
 };
+
+#endif

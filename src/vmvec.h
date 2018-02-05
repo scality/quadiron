@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_VMVEC_H__
+#define __NTL_VMVEC_H__
 
 /**
  * Virtual vector on a base vector from an offset
@@ -65,3 +66,5 @@ int VmVec<T>::get_offset()
 {
   return this->offset;
 }
+
+#endif

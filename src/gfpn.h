@@ -1,5 +1,7 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_GFPN_H__
+#define __NTL_GFPN_H__
+
 #include "ntl.h"
 
 template<typename T>
@@ -221,3 +223,5 @@ T GFPN<T>::weak_rand(void)
 
   return num;
 }
+
+#endif

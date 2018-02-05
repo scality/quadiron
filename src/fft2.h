@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-
-#pragma once
+#ifndef __NTL_FFT2_H__
+#define __NTL_FFT2_H__
 
 /**
  * Algorithm for FFT(n=2)
@@ -85,3 +85,5 @@ void FFT2<T>::ifft(Vecp<T> *output, Vecp<T> *input)
   if (this->inv_n_mod_p > 1)
     this->gf->mul_vec_to_vecp(this->vec_inv_n, output);
 }
+
+#endif

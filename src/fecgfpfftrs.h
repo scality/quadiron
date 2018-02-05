@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECGFPFFTRS_H__
+#define __NTL_FECGFPFFTRS_H__
 
 /**
  * GFP(p) based RS
@@ -206,3 +207,5 @@ class FECGFPFFTRS : public FEC<T>
       output->set(i, S.get(i));
   }
 };
+
+#endif

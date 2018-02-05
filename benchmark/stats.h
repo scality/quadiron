@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_NETL_BENCH_STATS_H__
+#define __NTL_NETL_BENCH_STATS_H__
 
 class Stats_t {
 public:
@@ -43,3 +44,5 @@ private:
   size_t work_load;
   std::string name;
 };
+
+#endif

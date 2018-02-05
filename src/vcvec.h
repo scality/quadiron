@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_VCVEC_H__
+#define __NTL_VCVEC_H__
 
 /**
  * Virtual vector on a base vector from an offset and a step
@@ -81,3 +82,5 @@ void VcVec<T>::set(int i, T val)
   T loc = (offset + step * i) % this->N;
   vec->set(loc, val);
 }
+
+#endif

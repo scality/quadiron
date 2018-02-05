@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_GF_H__
+#define __NTL_GF_H__
 
 template<typename T>
 class GFP;
@@ -68,3 +69,5 @@ int GF<T>::get_n()
 {
   return n;
 }
+
+#endif

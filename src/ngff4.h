@@ -1,5 +1,7 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_NGFF4_H__
+#define __NTL_NGFF4_H__
+
 #include "ntl.h"
 
 #define MASK16  0xFFFF
@@ -418,3 +420,5 @@ GF<uint32_t> *NGFF4<T>::get_sub_field()
 {
   return sub_field;
 }
+
+#endif

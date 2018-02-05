@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_RN_H__
+#define __NTL_RN_H__
 
 template<typename T>
 class Vec;
@@ -712,3 +713,5 @@ T RN<T>::get_code_len_high_compo(T n)
   }
   return _get_code_len_high_compo<T>(this->all_primes_factors, n);
 }
+
+#endif

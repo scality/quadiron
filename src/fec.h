@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FEC_H__
+#define __NTL_FEC_H__
 
 #include <sys/time.h>
 
@@ -609,3 +610,5 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 
   return true;
 }
+
+#endif

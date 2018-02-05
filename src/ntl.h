@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_NTL_H__
+#define __NTL_NTL_H__
 
 #include <iostream>
 #include <math.h>
@@ -79,3 +80,5 @@ typedef enum
 #include "fecgf2nfftrs.h"
 #include "fecgf2nfftaddrs.h"
 #include "fecgfpfftrs.h"
+
+#endif

@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECFNTRS_H__
+#define __NTL_FECFNTRS_H__
 
 /**
  * GF_2^2^k+1 based RS (Fermat Number Transform)
@@ -198,3 +199,5 @@ class FECFNTRS : public FEC<T>
       output->set(i, S.get(i));
   }
 };
+
+#endif

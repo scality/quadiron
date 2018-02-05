@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_GF2N_H__
+#define __NTL_GF2N_H__
 
 #include <climits>
 #include "gf.h"
@@ -485,3 +486,5 @@ T GF2N<T>::_inv_ext_gcd(T x)
   }
   return g[a];
 }
+
+#endif

@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_ARITH_H__
+#define __NTL_ARITH_H__
 
 template<typename T>
 using DoubleT = typename Double<T>::T;
@@ -793,3 +794,5 @@ void _get_prime_factors_final(std::vector<T> *primes,
       output->push_back(primes->at(i));
     }
 }
+
+#endif
