@@ -142,8 +142,7 @@ void FFTADD<T>::compute_beta_m_powers()
 template <typename T>
 void FFTADD<T>::compute_basis()
 {
-  int i;
-  for (i = 0; i < m-1; i++) {
+  for (T i = 0; i < m-1; i++) {
     T gamma = betas->get(i);
     if (beta_m > 1)
       gamma = this->gf->mul(inv_beta_m, betas->get(i));

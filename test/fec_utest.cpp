@@ -21,7 +21,7 @@ class FECUtest
     u_int n_data = 3;
     u_int n_parities = 3;
 
-    for (u_int i = 1; i < _log2<T>(sizeof(T)); i++) {
+    for (int i = 1; i < _log2<T>(sizeof(T)); i++) {
       u_int word_size = 1 << i;
       std::cout << "test_fecngff4rs with word_size=" << word_size << "\n";
       FECNGFF4RS<T> fec = FECNGFF4RS<T>(word_size, n_data, n_parities);
@@ -31,7 +31,7 @@ class FECUtest
 
   void test_fecgf2nfftrs() {
     std::cout << "test_fecgf2nfftrs with sizeof(T)=" << sizeof(T) << "\n";
-    for (int wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
+    for (size_t wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
       test_fecgf2nfftrs_with_wordsize(wordsize);
   }
   void test_fecgf2nfftrs_with_wordsize(int wordsize)
@@ -47,7 +47,7 @@ class FECUtest
 
   void test_fecgf2nfftaddrs() {
     std::cout << "test_fecgf2nfftaddrs with sizeof(T)=" << sizeof(T) << "\n";
-    for (int wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
+    for (size_t wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
       test_fecgf2nfftaddrs_with_wordsize(wordsize);
   }
   void test_fecgf2nfftaddrs_with_wordsize(int wordsize)
@@ -63,7 +63,7 @@ class FECUtest
 
   void test_fecgfpfftrs() {
     std::cout << "test_fecgfpfftrs with sizeof(T)=" << sizeof(T) << "\n";
-    for (int word_size = 1; word_size <= 4 && word_size < sizeof(T);
+    for (size_t word_size = 1; word_size <= 4 && word_size < sizeof(T);
       word_size *= 2)
       test_fecgfpfftrs_with_word_size(word_size);
   }

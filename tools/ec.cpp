@@ -63,14 +63,14 @@ void create_coding_files(FEC<T> *fec, bool operation_on_packet = false)
   std::vector<std::ostream*> c_props_files(fec->n_outputs, nullptr);
   std::vector<KeyValue*> c_props(fec->n_outputs, nullptr);
 
-  for (int i = 0; i < fec->n_data; i++) {
+  for (unsigned i = 0; i < fec->n_data; i++) {
     snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
     if (vflag)
       std::cerr << "create: opening data " << filename << "\n";
     d_files[i] = new std::ifstream(filename);
   }
 
-  for (int i = 0; i < fec->n_outputs; i++) {
+  for (unsigned i = 0; i < fec->n_outputs; i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
       std::cerr<< "create: opening coding for writing " << filename << "\n";
@@ -88,12 +88,12 @@ void create_coding_files(FEC<T> *fec, bool operation_on_packet = false)
   else
     fec->encode_bufs(d_files, c_files, c_props);
 
-  for (int i = 0; i < fec->n_data; i++) {
+  for (unsigned i = 0; i < fec->n_data; i++) {
     (static_cast<std::ifstream*>(d_files[i]))->close();
     delete d_files[i];
   }
 
-  for (int i = 0; i < fec->n_outputs; i++) {
+  for (unsigned i = 0; i < fec->n_outputs; i++) {
     *(c_props_files[i]) << *(c_props[i]);
 
     (static_cast<std::ofstream*>(c_props_files[i]))->close();
@@ -120,7 +120,7 @@ bool repair_data_files(FEC<T> *fec)
   std::vector<std::ostream*> r_files(fec->n_data, nullptr);
 
   // re-read data
-  for (int i = 0; i < fec->n_data; i++) {
+  for (unsigned i = 0; i < fec->n_data; i++) {
     snprintf(filename, sizeof (filename), "%s.d%d", prefix, i);
     if (vflag)
       std::cerr << "repair: checking data " << filename << "\n";
@@ -135,7 +135,7 @@ bool repair_data_files(FEC<T> *fec)
     }
   }
 
-  for (int i = 0; i < fec->n_outputs; i++) {
+  for (unsigned i = 0; i < fec->n_outputs; i++) {
     snprintf(filename, sizeof (filename), "%s.c%d", prefix, i);
     if (vflag)
       std::cerr << "repair: checking coding " << filename << "\n";
@@ -162,14 +162,14 @@ bool repair_data_files(FEC<T> *fec)
 
   fec->decode_bufs(d_files, c_files, c_props, r_files);
 
-  for (int i = 0; i < fec->n_data; i++) {
+  for (unsigned i = 0; i < fec->n_data; i++) {
     if (nullptr != d_files[i]) {
       (static_cast<std::ifstream*>(d_files[i]))->close();
       delete d_files[i];
     }
   }
 
-  for (int i = 0; i < fec->n_outputs; i++) {
+  for (unsigned i = 0; i < fec->n_outputs; i++) {
     if (nullptr != c_props_files[i]) {
       (static_cast<std::ifstream*>(c_props_files[i]))->close();
       delete c_props_files[i];
@@ -184,7 +184,7 @@ bool repair_data_files(FEC<T> *fec)
     }
   }
 
-  for (int i = 0; i < fec->n_data; i++) {
+  for (unsigned i = 0; i < fec->n_data; i++) {
     if (nullptr != r_files[i]) {
       (static_cast<std::ofstream*>(r_files[i]))->close();
       delete r_files[i];

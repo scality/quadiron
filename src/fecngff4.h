@@ -69,14 +69,14 @@ class FECNGFF4RS : public FEC<T>
     Vec<T> *words)
   {
     //std::cout << "words:"; words->dump();
-    for (int i = 0; i < this->n_data; i++) {
+    for (unsigned i = 0; i < this->n_data; i++) {
       words->set(i, ngff4->pack(words->get(i)));
     }
     //std::cout << "pack words:"; words->dump();
     VVec<T> vwords(words, n);
     fft->fft(output, &vwords);
     //std::cout << "encoded:"; output->dump();
-    for (int i = 0; i < this->code_len; i++) {
+    for (unsigned i = 0; i < this->code_len; i++) {
       T val = output->get(i);
       compT<T> true_val = ngff4->unpack(val);
       if (true_val.flag > 0) {
@@ -192,7 +192,7 @@ class FECNGFF4RS : public FEC<T>
     // using Taylor series we rewrite the expression into
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
     Poly<T> S(ngff4);
-    for (int i = 0; i <= n-1; i++) {
+    for (T i = 0; i <= n-1; i++) {
       T val = ngff4->replicate(sub_field->inv(sub_field->exp(r, i+1)));
       S.set(i, N_p.eval(val));
     }
@@ -202,7 +202,7 @@ class FECNGFF4RS : public FEC<T>
     //std::cout << "S="; S.dump();
     // No need to mod x^n since only last n_data coefs are obtained
     // output is n_data length
-    for (int i = 0; i < this->n_data; i++)
+    for (unsigned i = 0; i < this->n_data; i++)
       output->set(i, ngff4->unpack(S.get(i)).val);
     //std::cout << "decoded"; output->dump();
   }

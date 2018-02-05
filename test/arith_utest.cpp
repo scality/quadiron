@@ -12,7 +12,7 @@ class ArithUtest
       max = std::numeric_limits<T>::max();
     else {
       max = 0;
-      for (int i = 0; i < sizeof(T)*8; i++)
+      for (size_t i = 0; i < sizeof(T)*8; i++)
         max += (T)1 << i;
     }
   }

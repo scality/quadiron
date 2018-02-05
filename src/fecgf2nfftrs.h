@@ -139,14 +139,14 @@ class FECGF2NFFTRS : public FEC<T>
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
 
     Poly<T> S(this->gf);
-    for (int i = 0; i <= n-1; i++) {
+    for (T i = 0; i <= n-1; i++) {
       T val = this->gf->inv(this->gf->exp(r, i+1));
       S.set(i, N_p.eval(val));
     }
     S.mul(&A);
 
     // output is n_data length
-    for (int i = 0; i < this->n_data; i++)
+    for (unsigned i = 0; i < this->n_data; i++)
       output->set(i, S.get(i));
   }
 };

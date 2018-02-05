@@ -69,7 +69,7 @@ inline void pack_next(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
  */
 template<typename Ts, typename Td>
 inline void pack(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
-  size_t size, int word_size)
+  size_t size, size_t word_size)
 {
   assert(sizeof(Td) >= word_size);
   assert(word_size % sizeof(Ts) == 0);
@@ -116,7 +116,7 @@ inline void unpack_next(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
  */
 template<typename Ts, typename Td>
 inline void unpack(std::vector<Ts*> *src, std::vector<Td*> *dest, int n,
-  size_t size, int word_size)
+  size_t size, size_t word_size)
 {
   assert(sizeof(Ts) >= word_size);
   assert(word_size % sizeof(Td) == 0);
@@ -375,7 +375,7 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
 
   while (true) {
     words.zero_fill();
-    for (int i = 0; i < n_data; i++) {
+    for (unsigned i = 0; i < n_data; i++) {
       T tmp;
       if (!readw(&tmp, input_data_bufs[i])) {
         cont = false;
@@ -400,7 +400,7 @@ void FEC<T>::encode_bufs(std::vector<std::istream*> input_data_bufs,
     total_encode_cycles += (end - start) / word_size;
     n_encode_ops++;
 
-    for (int i = 0; i < n_outputs; i++) {
+    for (unsigned i = 0; i < n_outputs; i++) {
       T tmp = output.get(i);
       writew(tmp, output_parities_bufs[i]);
     }
@@ -444,7 +444,7 @@ void FEC<T>::encode_packet(std::vector<std::istream*> input_data_bufs,
   while (true) {
     // TODO: get number of read bytes -> true buf size
     // words.zero_fill();
-    for (int i = 0; i < n_data; i++) {
+    for (unsigned i = 0; i < n_data; i++) {
       if (!read_pkt((char*)(words_mem_char->at(i)), input_data_bufs[i])) {
         cont = false;
         break;
@@ -471,7 +471,7 @@ void FEC<T>::encode_packet(std::vector<std::istream*> input_data_bufs,
       unpack<T, uint8_t>(output_mem_T, output_mem_char, output_len, pkt_size,
         word_size);
 
-    for (int i = 0; i < n_outputs; i++) {
+    for (unsigned i = 0; i < n_outputs; i++) {
       write_pkt((char*)(output_mem_char->at(i)), output_parities_bufs[i]);
     }
     offset += buf_size;
@@ -510,7 +510,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
   reset_stats_dec();
 
   if (type == TYPE_1) {
-    for (int i = 0; i < n_data; i++) {
+    for (unsigned i = 0; i < n_data; i++) {
       if (input_data_bufs[i] != nullptr) {
         decode_add_data(fragment_index, i);
         fragment_index++;
@@ -523,7 +523,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
 
   if (fragment_index < n_data) {
     // finish with parities available
-    for (int i = 0; i < code_len; i++) {
+    for (unsigned i = 0; i < code_len; i++) {
       if (input_parities_bufs[i] != nullptr) {
         decode_add_parities(fragment_index, i);
         fragment_index++;
@@ -551,7 +551,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     words.zero_fill();
     fragment_index = 0;
     if (type == TYPE_1) {
-      for (int i = 0; i < n_data; i++) {
+      for (unsigned i = 0; i < n_data; i++) {
         if (input_data_bufs[i] != nullptr) {
           T tmp;
           if (!readw(&tmp, input_data_bufs[i])) {
@@ -569,7 +569,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
       if (fragment_index == n_data)
         break;
     }
-    for (int i = 0; i < n_outputs; i++) {
+    for (unsigned i = 0; i < n_outputs; i++) {
       if (input_parities_bufs[i] != nullptr) {
         T tmp;
         if (!readw(&tmp, input_parities_bufs[i])) {
@@ -597,7 +597,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
     total_decode_cycles += (end - start) / word_size;
     n_decode_ops++;
 
-    for (int i = 0; i < n_data; i++) {
+    for (unsigned i = 0; i < n_data; i++) {
       if (output_data_bufs[i] != nullptr) {
         T tmp = output.get(i);
         writew(tmp, output_data_bufs[i]);
