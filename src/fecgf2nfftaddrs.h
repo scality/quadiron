@@ -101,12 +101,11 @@ class FECGF2NFFTADDRS : public FEC<T>
   void decode(Vec<T> *output, std::vector<KeyValue*> props, off_t offset,
     Vec<T> *fragments_ids, Vec<T> *words)
   {
-    int i, j;
     int vx_zero = -1;
     int k = this->n_data;  // number of fragments received
     // vector x=(x_0, x_1, ..., x_k-1)
     Vec<T> vx(this->gf, k);
-    for (i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
       int _vx = this->betas->get(fragments_ids->get(i));
       vx.set(i, _vx);
       if (_vx == 0)
@@ -134,7 +133,7 @@ class FECGF2NFFTADDRS : public FEC<T>
 
     // evaluate n_i=v_i/A'_i(x_i)
     Vec<T> _n(this->gf, k);
-    for (i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
       _n.set(i,
              this->gf->div(words->get(i),
                            _A.eval(vx.get(i))));
@@ -145,9 +144,9 @@ class FECGF2NFFTADDRS : public FEC<T>
     // using Taylor series we rewrite the expression into
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
     Poly<T> S(this->gf);
-    for (j = 0; j <= n-1; j++) {
+    for (T j = 0; j <= n-1; j++) {
       T val = 0;
-      for (i = 0; i <= k-1; i++) {
+      for (int i = 0; i <= k-1; i++) {
         if (i == vx_zero)
           continue;
         // perform Taylor series at 0
@@ -163,14 +162,14 @@ class FECGF2NFFTADDRS : public FEC<T>
       // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x
       //  as S(x) does not include the term of vx_zero
       int deg = A.degree();
-      for (i = 1; i <= deg; i++)
+      for (int i = 1; i <= deg; i++)
         S.set(i-1, this->gf->add(S.get(i-1),
                                  this->gf->mul(_n.get(vx_zero), A.get(i))));
     }
     // S.dump();
 
     // output is n_data length
-    for (int i = 0; i < this->n_data; i++)
+    for (unsigned i = 0; i < this->n_data; i++)
       output->set(i, S.get(i));
   }
 };

@@ -16,7 +16,7 @@ private:
   T q;
   T h;
   GF<uint32_t> *sub_field;
-  bool check_n(int n);
+  bool check_n(unsigned n);
   void init(void);
 
   T expand16(uint16_t *arr);
@@ -25,7 +25,7 @@ private:
   void show_arr(uint32_t *arr);
 
 public:
-  explicit NGFF4(int n);
+  explicit NGFF4(unsigned n);
   ~NGFF4();
   T card(void);
   T card_minus_one(void);
@@ -51,7 +51,7 @@ public:
 };
 
 template <typename T>
-NGFF4<T>::NGFF4(int n) : GF<T>(65537, n)
+NGFF4<T>::NGFF4(unsigned n) : GF<T>(65537, n)
 {
   sub_field = new GFP<uint32_t>(65537);
 
@@ -77,7 +77,7 @@ NGFF4<T>::~NGFF4()
  * Hence, n <= sizeof(T) / 4
  */
 template <typename T>
-bool NGFF4<T>::check_n(int n)
+bool NGFF4<T>::check_n(unsigned n)
 {
   return (n <= sizeof(T) / 4);
 }

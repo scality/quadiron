@@ -118,7 +118,7 @@ std::map<int, std::string> sce_desc = {
 struct Params_t
 {
   ec_type fec_type = EC_TYPE_ALL;
-  int word_size = 2;
+  size_t word_size = 2;
   int k = 3;
   int m = 2;
   bool operation_on_packet = true;
@@ -178,7 +178,7 @@ class Benchmark
   int m;
   int n;
   int n_c;
-  int word_size;
+  size_t word_size;
   ec_type fec_type;
   bool operation_on_packet;
   int extra_param;

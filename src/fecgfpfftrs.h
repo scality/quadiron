@@ -97,7 +97,7 @@ class FECGFPFFTRS : public FEC<T>
     VVec<T> vwords(words, n);
     fft->fft(output, &vwords);
     // check for out of range value in output
-    for (int i = 0; i < this->code_len; i++) {
+    for (unsigned i = 0; i < this->code_len; i++) {
       if (output->get(i) >= this->limit_value) {
         char buf[256];
         snprintf(buf, sizeof (buf), "%zd:%d", offset, i);
@@ -194,7 +194,7 @@ class FECGFPFFTRS : public FEC<T>
     // using Taylor series we rewrite the expression into
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
     Poly<T> S(this->gf);
-    for (int i = 0; i <= n-1; i++) {
+    for (T i = 0; i <= n-1; i++) {
       T val = this->gf->inv(this->gf->exp(r, i+1));
       S.set(i, N_p.eval(val));
     }
@@ -202,7 +202,7 @@ class FECGFPFFTRS : public FEC<T>
     S.mul(&A);
     // No need to mod x^n since only last n_data coefs are obtained
     // output is n_data length
-    for (int i = 0; i < this->n_data; i++)
+    for (unsigned i = 0; i < this->n_data; i++)
       output->set(i, S.get(i));
   }
 };

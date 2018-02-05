@@ -245,7 +245,7 @@ bool Vecp<T>::eq(Vecp<T> *v)
   for (int i = 0; i < n; i++) {
     T *a = get(i);
     T *b = v->get(i);
-    for (int j = 0; j < size; j++) {
+    for (size_t j = 0; j < size; j++) {
       if (a[j] != b[j])
         return false;
     }
@@ -259,7 +259,7 @@ void Vecp<T>::dump(void)
 {
   for (int i = 0; i < n; i++) {
     std::cout << "\n\t" << i << ": ";
-    for (int j = 0; j < size; j++) {
+    for (size_t j = 0; j < size; j++) {
       std::cout << unsigned((get(i))[j]) << "-";
     }
   }

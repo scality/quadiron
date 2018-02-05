@@ -417,7 +417,7 @@ class GFUtest
   {
     T max_n = 8 * sizeof(T);
     std::cout << "gf_utest_2_n for max_n=" << max_n << "\n";
-    for (int i = 8; i <=max_n; i *= 2)
+    for (T i = 8; i <=max_n; i *= 2)
       gf_utest_2_bign(i);
   }
 };

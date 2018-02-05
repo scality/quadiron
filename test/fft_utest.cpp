@@ -218,7 +218,7 @@ class FFTUtest
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
       v.zero_fill();
-      for (int i = 0; i < n_data; i++)
+      for (u_int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
       // v.dump();
       fft.fft(&_v, &v);
@@ -260,7 +260,7 @@ class FFTUtest
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
       v.zero_fill();
-      for (int i = 0; i < n_data; i++)
+      for (u_int i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
       // v.dump();
       fft.fft(&_v, &v);
@@ -298,9 +298,9 @@ class FFTUtest
     Vecp<T> v(n_data, size), v2(vec_n, size), _v2(vec_n, size);
     VVecp<T> _v(&v, vec_n);
     for (int j = 0; j < 100000; j++) {
-      for (int i = 0; i < n_data; i++) {
+      for (unsigned i = 0; i < n_data; i++) {
         T* mem = v.get(i);
-        for (int u = 0; u < size; u++) {
+        for (size_t u = 0; u < size; u++) {
           mem[u] = gf.weak_rand();
         }
       }
@@ -333,7 +333,7 @@ class FFTUtest
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 10000; j++) {
       v.zero_fill();
-      for (int i = 0; i < n_data; i++)
+      for (T i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
         // v.dump();
       fft.fft(&_v, &v);
@@ -365,7 +365,7 @@ class FFTUtest
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 10000; j++) {
       v.zero_fill();
-      for (int i = 0; i < n_data; i++)
+      for (T i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
         // v.dump();
       fft.fft(&_v, &v);
@@ -381,7 +381,7 @@ class FFTUtest
     T n;
     T n_data = 3;
     T n_parities = 3;
-    for (int gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
+    for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
       GF2N<T> gf = GF2N<T>(gf_n);
 
       std::cout << "test_fftct_gf2n=" << gf_n << "\n";
@@ -397,7 +397,7 @@ class FFTUtest
       Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
       for (int j = 0; j < 10000; j++) {
         v.zero_fill();
-        for (int i = 0; i < n_data; i++)
+        for (T i = 0; i < n_data; i++)
           v.set(i, gf.weak_rand());
           // v.dump();
         fft.fft(&_v, &v);
@@ -478,7 +478,7 @@ class FFTUtest
     int n, m;
     int n_data = 3;
     int n_parities = 3;
-    for (int gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
+    for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
       GF2N<T> gf = GF2N<T>(gf_n);
       std::cout << "test_fftadd_with_n=" << gf_n << "\n";
       // n is power of 2 and at least n_data + n_parities
@@ -512,7 +512,7 @@ class FFTUtest
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
       v.zero_fill();
-      for (int i = 0; i < n_data; i++)
+      for (T i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
         // v.dump();
       fft.fft(&_v, &v);
@@ -550,7 +550,7 @@ class FFTUtest
 
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     v.zero_fill();
-    for (int i = 0; i < n_data; i++)
+    for (T i = 0; i < n_data; i++)
       v.set(i, gf.weak_rand());
     v.set(0, 27746);
     v.set(1, 871);
@@ -573,7 +573,7 @@ class FFTUtest
 
   void test_fft_gf2n()
   {
-    for (int n = 4; n <= 128 && n <= 8 * sizeof(T); n *= 2)
+    for (size_t n = 4; n <= 128 && n <= 8 * sizeof(T); n *= 2)
       test_fft_gf2n_with_n(n);
   }
 
@@ -603,7 +603,7 @@ class FFTUtest
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (T i = 0; i < 100000; i++) {
       v.zero_fill();
-      for (int i = 0; i < n_data; i++)
+      for (T i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
       // v.dump();
       fft.fft(&_v, &v);

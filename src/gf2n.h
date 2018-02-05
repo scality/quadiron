@@ -105,7 +105,7 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
       this->my_card = std::numeric_limits<T>::max();
     else {
       this->my_card = 0;
-      for (int i = 0; i < n; i++)
+      for (T i = 0; i < n; i++)
         this->my_card += this->mask[i];
     }
   } else
@@ -318,7 +318,7 @@ T GF2N<T>::_mul_log(T a, T b)
   assert(check(a));
   assert(check(b));
 
-  int sum_log;
+  T sum_log;
 
   if (a == 0 || b == 0)
     return 0;

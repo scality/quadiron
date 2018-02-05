@@ -255,7 +255,7 @@ int Benchmark<T>::check_params() {
     }
   }
 
-  int wordsize_limit = _log2<T>(n) + 1;
+  size_t wordsize_limit = _log2<T>(n) + 1;
   if (wordsize_limit > 8 * word_size) {
     return ERR_COMPT_CODE_LEN_T;
   }
@@ -468,7 +468,7 @@ bool Benchmark<T>::enc_only() {
   // this operation is done once per benchmark
   gen_data();
 
-  for (int i = 0; i < samples_nb; i++) {
+  for (uint32_t i = 0; i < samples_nb; i++) {
     if (!encode())
       return false;
   }
@@ -490,7 +490,7 @@ bool Benchmark<T>::dec_only() {
   if (!encode())
     return false;
 
-  for (int i = 0; i < samples_nb; i++) {
+  for (uint32_t i = 0; i < samples_nb; i++) {
     if (!decode())
       return false;
   }
@@ -511,7 +511,7 @@ bool Benchmark<T>::enc_dec() {
   // this operation is done once per benchmark
   gen_data();
 
-  for (int i = 0; i < samples_nb; i++) {
+  for (uint32_t i = 0; i < samples_nb; i++) {
     if (!encode())
       return false;
     if (!decode())
