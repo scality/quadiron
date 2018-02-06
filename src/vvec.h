@@ -2,6 +2,8 @@
 #ifndef __NTL_VVEC_H__
 #define __NTL_VVEC_H__
 
+#include "vec.h"
+
 /**
  * Virtual vector that returns 0 beyond managed vector length
  */

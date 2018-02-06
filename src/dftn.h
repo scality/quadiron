@@ -2,6 +2,9 @@
 #ifndef __NTL_DFTN_H__
 #define __NTL_DFTN_H__
 
+#include "dft.h"
+#include "mat.h"
+
 /**
  * Algorithm for very small n
  */

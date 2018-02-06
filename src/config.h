@@ -2,6 +2,10 @@
 #ifndef __NTL_CONFIG_H__
 #define __NTL_CONFIG_H__
 
+#include <iosfwd>
+#include <string>
+#include <map>
+
 struct KeyValue: std::map <std::string, std::string>
 {
   bool is_key(const std::string &s) const

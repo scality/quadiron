@@ -2,6 +2,11 @@
 #ifndef __NTL_FFTCT_H__
 #define __NTL_FFTCT_H__
 
+#include "dft.h"
+#include "dftn.h"
+#include "fft2.h"
+#include "vcvec.h"
+
 /**
  * Cooley-Tukey FFT algorithm
  *  Implementation based on S.K. Matra's slides

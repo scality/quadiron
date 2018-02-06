@@ -2,6 +2,9 @@
 #ifndef __NTL_NETL_BENCH_IOSTREAMBUF_H__
 #define __NTL_NETL_BENCH_IOSTREAMBUF_H__
 
+#include <ios>
+#include <streambuf>
+
 template <typename CharT>
 class ostreambuf : public std::basic_streambuf<CharT>
 {

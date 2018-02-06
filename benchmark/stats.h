@@ -2,6 +2,10 @@
 #ifndef __NTL_NETL_BENCH_STATS_H__
 #define __NTL_NETL_BENCH_STATS_H__
 
+#include <cmath>
+#include <iostream>
+#include <string>
+
 class Stats_t {
 public:
   Stats_t(const std::string& str, size_t work_load) {

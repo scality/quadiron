@@ -2,6 +2,12 @@
 #ifndef __NTL_GF_H__
 #define __NTL_GF_H__
 
+#include <vector>
+
+#include "arith.h"
+#include "core.h"
+#include "rn.h"
+
 template<typename T>
 class GFP;
 

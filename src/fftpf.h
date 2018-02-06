@@ -2,6 +2,14 @@
 #ifndef __NTL_FFTPF_H__
 #define __NTL_FFTPF_H__
 
+#include "dft.h"
+#include "dftn.h"
+#include "fft2.h"
+#include "fft2k.h"
+#include "fftct.h"
+#include "vcvec.h"
+#include "vec.h"
+
 /**
  * Prime-factor FFT algorithm
  *  https://en.wikipedia.org/wiki/Prime-factor_FFT_algorithm

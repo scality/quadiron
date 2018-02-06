@@ -2,6 +2,9 @@
 #ifndef __NTL_VCVEC_H__
 #define __NTL_VCVEC_H__
 
+#include "rn.h"
+#include "vec.h"
+
 /**
  * Virtual vector on a base vector from an offset and a step
  *

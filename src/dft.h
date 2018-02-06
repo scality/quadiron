@@ -2,6 +2,9 @@
 #ifndef __NTL_DFT_H__
 #define __NTL_DFT_H__
 
+#include "gf.h"
+#include "vec.h"
+
 /*
  * DFT over the field gf and over vectors of size n with w as n-th
  * root of unity

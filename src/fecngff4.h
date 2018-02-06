@@ -4,6 +4,13 @@
 
 #include <string>
 
+#include "fec.h"
+#include "fft2k.h"
+#include "ngff4.h"
+#include "poly.h"
+#include "vec.h"
+#include "vvec.h"
+
 /**
  * GF_2^2^k+1 based RS (Fermat Number Transform)
  * As suggested by the paper:

@@ -2,6 +2,9 @@
 #ifndef __NTL_FFT2_H__
 #define __NTL_FFT2_H__
 
+#include "dft.h"
+#include "vec.h"
+
 /**
  * Algorithm for FFT(n=2)
  *  Since w^2 = 1 => w = -1 or w = 1 (we exclude)

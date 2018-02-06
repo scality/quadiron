@@ -2,6 +2,10 @@
 #ifndef __NTL_MAT_H__
 #define __NTL_MAT_H__
 
+#include <iostream>
+
+#include "rn.h"
+
 /*
  * mat[n_rows][n_cols]:
  * mat[0][0] mat[0][1] ... mat[0][n_cols]

@@ -2,10 +2,18 @@
 #ifndef __NTL_FEC_H__
 #define __NTL_FEC_H__
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <vector>
+
 #include <sys/time.h>
 
-template<typename T>
-class Vecp;
+#include "config.h"
+#include "gf.h"
+#include "misc.h"
+#include "vec.h"
+#include "vecp.h"
 
 static inline timeval tick()
 {

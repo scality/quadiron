@@ -2,6 +2,15 @@
 #ifndef __NTL_RN_H__
 #define __NTL_RN_H__
 
+#include <fstream>
+#include <sstream>
+#include <vector>
+
+#include <unistd.h>
+
+#include "arith.h"
+#include "core.h"
+
 template<typename T>
 class Vec;
 

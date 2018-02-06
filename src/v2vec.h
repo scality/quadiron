@@ -2,6 +2,9 @@
 #ifndef __NTL_V2VEC_H__
 #define __NTL_V2VEC_H__
 
+#include "rn.h"
+#include "vec.h"
+
 /**
  * Virtual (v->get_n()*2) x 1 vertical vector for the need of
  * Cooley-Tukey algorithm

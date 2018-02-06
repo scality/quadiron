@@ -2,6 +2,10 @@
 #ifndef __NTL_FFTADD_H__
 #define __NTL_FFTADD_H__
 
+#include "dft.h"
+#include "vec.h"
+#include "vmvec.h"
+
 /**
  * Additive FFT algorithm of length n = 2^m (arbitrary m)
  *  Algorithm 2 in the paper of Shuhong Gao and Todd Mateer:

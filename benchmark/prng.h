@@ -2,6 +2,9 @@
 #ifndef __NTL_NETL_BENCH_PRNG_H__
 #define __NTL_NETL_BENCH_PRNG_H__
 
+#include <cstdint>
+#include <cstdlib>
+
 // CRC-32C (iSCSI) polynomial in reversed bit order
 #define POLY 0x82f63b78
 

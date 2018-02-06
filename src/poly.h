@@ -2,6 +2,11 @@
 #ifndef __NTL_POLY_H__
 #define __NTL_POLY_H__
 
+#include <map>
+
+#include "core.h"
+#include "gf.h"
+
 template<typename T>
 class Vec;
 

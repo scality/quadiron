@@ -2,9 +2,8 @@
 #ifndef __NTL_BIG_INT_H__
 #define __NTL_BIG_INT_H__
 
-#include <inttypes.h>
-#include <unistd.h>
-#include <cstdint>
+#include <iostream>
+
 
 std::ostream& operator<<(std::ostream& dest, __uint128_t value);
 std::ostream& operator<<(std::ostream& dest, __int128_t value);

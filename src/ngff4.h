@@ -2,7 +2,8 @@
 #ifndef __NTL_NGFF4_H__
 #define __NTL_NGFF4_H__
 
-#include "ntl.h"
+#include "gf.h"
+#include "gfp.h"
 
 #define MASK16  0xFFFF
 #define MASK32  0xFFFFFFFF

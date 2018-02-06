@@ -2,6 +2,13 @@
 #ifndef __NTL_ARITH_H__
 #define __NTL_ARITH_H__
 
+#include <cassert>
+#include <cstdlib>
+#include <vector>
+
+#include "big_int.h"
+#include "core.h"
+
 template<typename T>
 using DoubleT = typename Double<T>::T;
 

@@ -2,6 +2,10 @@
 #ifndef __NTL_FECGF2NRS_H__
 #define __NTL_FECGF2NRS_H__
 
+#include "fec.h"
+#include "gf2n.h"
+#include "mat.h"
+
 /**
  * GF_2^n based RS (Cauchy or Vandermonde)
  */

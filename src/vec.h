@@ -2,8 +2,19 @@
 #ifndef __NTL_VEC_H__
 #define __NTL_VEC_H__
 
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+
+#include "v2vec.h"
+
 template<typename T>
 class Poly;
+
+template<typename T>
+class RN;
 
 template<typename T>
 class V2Vec;

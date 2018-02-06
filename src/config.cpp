@@ -1,4 +1,6 @@
-#include "./ntl.h"
+#include <iostream>
+
+#include "config.h"
 
 std::istream& operator >>(std::istream& ins, KeyValue& d)
 {

@@ -2,6 +2,8 @@
 #ifndef __NTL_VVECP_H__
 #define __NTL_VVECP_H__
 
+#include "vec.h"
+
 /**
  * Virtual vector that padds zero_chunk beyond managed vector length
  */

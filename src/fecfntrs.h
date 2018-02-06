@@ -2,6 +2,12 @@
 #ifndef __NTL_FECFNTRS_H__
 #define __NTL_FECFNTRS_H__
 
+#include "fec.h"
+#include "fft2k.h"
+#include "poly.h"
+#include "vvec.h"
+#include "vvecp.h"
+
 /**
  * GF_2^2^k+1 based RS (Fermat Number Transform)
  * As suggested by the paper:

@@ -2,6 +2,9 @@
 #ifndef __NTL_FFT2K_H__
 #define __NTL_FFT2K_H__
 
+#include "dft.h"
+#include "fft2.h"
+
 /**
  * Cooley-Tukey Algorithm
  *

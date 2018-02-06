@@ -2,6 +2,13 @@
 #ifndef __NTL_FECGFPFFTRS_H__
 #define __NTL_FECGFPFFTRS_H__
 
+#include "dft.h"
+#include "fec.h"
+#include "fft2k.h"
+#include "fftct.h"
+#include "vec.h"
+#include "vvec.h"
+
 /**
  * GFP(p) based RS
  *

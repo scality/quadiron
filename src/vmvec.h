@@ -2,6 +2,8 @@
 #ifndef __NTL_VMVEC_H__
 #define __NTL_VMVEC_H__
 
+#include "vec.h"
+
 /**
  * Virtual vector on a base vector from an offset
  *  vmvec[i] = base[i + offset]

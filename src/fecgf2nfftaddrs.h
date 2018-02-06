@@ -2,6 +2,12 @@
 #ifndef __NTL_FECGF2NFFTADDRS_H__
 #define __NTL_FECGF2NFFTADDRS_H__
 
+#include "fec.h"
+#include "fftadd.h"
+#include "gf2n.h"
+#include "vec.h"
+#include "vvec.h"
+
 /**
  * GF_2^n based RS using additive FFT transformation
  */
