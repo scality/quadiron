@@ -48,7 +48,7 @@ public:
   T exp_quick(T base, T exponent);
   T log_naive(T base, T exponent);
   virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len);
-  virtual void mul_vec_to_vecp(Vec<T>* u, Vecp<T>* v);
+  virtual void mul_vec_to_vecp(Vec<T>* u, Vecp<T>* src, Vecp<T>* dest);
   virtual void add_two_bufs(T* src, T* dest, size_t len);
   virtual void add_vecp_to_vecp(Vecp<T>* src, Vecp<T>* dest);
   virtual void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len);
@@ -306,13 +306,13 @@ void RN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) {
 }
 
 template <typename T>
-void RN<T>::mul_vec_to_vecp(Vec<T>* u, Vecp<T>* v) {
-  assert(u->get_n() == v->get_n());
+void RN<T>::mul_vec_to_vecp(Vec<T>* u, Vecp<T>* src, Vecp<T>* dest) {
+  assert(u->get_n() == src->get_n());
   int i;
   int n = u->get_n();
-  size_t len = v->get_size();
+  size_t len = src->get_size();
   for (i = 0; i < n; i++) {
-    this->mul_coef_to_buf(u->get(i), v->get(i), v->get(i), len);
+    this->mul_coef_to_buf(u->get(i), src->get(i), dest->get(i), len);
   }
 }
 
