@@ -24,7 +24,7 @@ template class FECGFPFFTRS<uint64_t>;
 
 int vflag = 0;
 int tflag = 0;
-char *prefix = NULL;
+char *prefix = nullptr;
 
 void xusage()
 {
@@ -45,7 +45,7 @@ char *xstrdup(const char *str)
 {
   char *n;
 
-  if (NULL == (n = strdup(str)))
+  if (nullptr == (n = strdup(str)))
     xperror("malloc");
   return n;
 }
@@ -456,7 +456,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  if (-1 == n_data || -1 == n_parities || NULL == prefix)
+  if (-1 == n_data || -1 == n_parities || nullptr == prefix)
     xusage();
 
   if (eflag == EC_TYPE_FNTRS) {

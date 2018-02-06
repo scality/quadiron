@@ -22,8 +22,8 @@ class FECGF2NRS : public FEC<T>
   FECGF2NRSType type;
 
  private:
-  Mat<T> *mat = NULL;
-  Mat<T> *decode_mat = NULL;
+  Mat<T> *mat = nullptr;
+  Mat<T> *decode_mat = nullptr;
 
  public:
   FECGF2NRS(unsigned word_size, unsigned n_data, unsigned n_parities,

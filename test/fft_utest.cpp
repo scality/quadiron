@@ -14,7 +14,7 @@ class FFTUtest
     int i;
     for (i = 0; i < 100; i++) {
       T x = gf->weak_rand();
-      assert(1 == _extended_gcd<T>(97, x, bezout, NULL));
+      assert(1 == _extended_gcd<T>(97, x, bezout, nullptr));
       // std::cerr << bezout[0] << "*" << 97 << " " << bezout[1] << "*";
       // stdd:cerr << x << "=1\n";
       T y = gf->inv(x);

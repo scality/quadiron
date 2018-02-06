@@ -146,7 +146,7 @@ int Benchmark<T>::init() {
     this->n_c = this->m;
   }
 
-  this->prng = new PRNG(time(NULL));
+  this->prng = new PRNG(time(nullptr));
 
   // Allocate memory for data
   int i;

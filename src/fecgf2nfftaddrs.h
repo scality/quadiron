@@ -15,8 +15,8 @@ template<typename T>
 class FECGF2NFFTADDRS : public FEC<T>
 {
  private:
-  FFTADD<T> *fft = NULL;
-  Vec<T> *betas = NULL;
+  FFTADD<T> *fft = nullptr;
+  Vec<T> *betas = nullptr;
 
  public:
   T n;

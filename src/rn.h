@@ -72,10 +72,10 @@ public:
   T get_code_len_high_compo(T n);
  private:
   bool compute_factors_of_order_done = false;
-  std::vector<T>* primes = NULL;
-  std::vector<int>* exponent = NULL;
-  std::vector<T>* all_primes_factors = NULL;
-  std::vector<T>* proper_divisors = NULL;
+  std::vector<T>* primes = nullptr;
+  std::vector<int>* exponent = nullptr;
+  std::vector<T>* all_primes_factors = nullptr;
+  std::vector<T>* proper_divisors = nullptr;
 };
 
 template <typename T>
@@ -186,7 +186,7 @@ T RN<T>::inv_bezout(T a)
   SignedDoubleT<T> n = this->_card;
   SignedDoubleT<T> bezout[2];
 
-  _extended_gcd<T>(x, n, bezout, NULL);
+  _extended_gcd<T>(x, n, bezout, nullptr);
   if (bezout[0] < 0)
     bezout[0] = this->_card + bezout[0];
   return bezout[0];

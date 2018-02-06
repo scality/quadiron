@@ -40,7 +40,7 @@ GF<T>::GF(T p, int n) : RN<T>(_exp<T>(p, n))
   this->p = p;
   this->n = n;
   if (n == 1)
-    this->sub_field = NULL;
+    this->sub_field = nullptr;
   else
     this->sub_field = new GFP<T>(p);
 }

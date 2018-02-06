@@ -179,7 +179,7 @@ T GFPN<T>::inv(T a)
   bezout[1] = &_b2;
   Poly<T> _gcd(sub_field);
 
-  _gcd._extended_gcd(&_u, &_v, bezout, NULL, &_gcd);
+  _gcd._extended_gcd(&_u, &_v, bezout, nullptr, &_gcd);
 
   assert(_gcd.degree() == 0);
   _gcd.set(0, sub_field->inv(_gcd.get(0)));

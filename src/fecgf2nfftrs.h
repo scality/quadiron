@@ -16,7 +16,7 @@ template<typename T>
 class FECGF2NFFTRS : public FEC<T>
 {
  private:
-  FFTCT<T> *fft = NULL;
+  FFTCT<T> *fft = nullptr;
 
  public:
   T n;

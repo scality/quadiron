@@ -23,19 +23,19 @@ class FFTADD : public DFT<T>
   T k, deg0, deg1, deg2;
   T beta_1, inv_beta_1;
   T beta_m, inv_beta_m;
-  Vec<T> *betas = NULL;
-  Vec<T> *gammas = NULL;
-  Vec<T> *deltas = NULL;
-  Vec<T> *beta_m_powers = NULL;
-  Vec<T> *G = NULL;
-  Vec<T> *g0 = NULL;
-  Vec<T> *g1 = NULL;
-  Vec<T> *u = NULL;
-  Vec<T> *v = NULL;
-  Vec<T> *mem = NULL;
-  FFTADD<T> *fft_add = NULL;
+  Vec<T> *betas = nullptr;
+  Vec<T> *gammas = nullptr;
+  Vec<T> *deltas = nullptr;
+  Vec<T> *beta_m_powers = nullptr;
+  Vec<T> *G = nullptr;
+  Vec<T> *g0 = nullptr;
+  Vec<T> *g1 = nullptr;
+  Vec<T> *u = nullptr;
+  Vec<T> *v = nullptr;
+  Vec<T> *mem = nullptr;
+  FFTADD<T> *fft_add = nullptr;
  public:
-  FFTADD(GF<T> *gf, T m, Vec<T>* betas = NULL);
+  FFTADD(GF<T> *gf, T m, Vec<T>* betas = nullptr);
   ~FFTADD();
   void compute_basis();
   void compute_beta_m_powers();
@@ -72,7 +72,7 @@ FFTADD<T>::FFTADD(GF<T> *gf, T m, Vec<T>* betas) :
   assert(m >= 1);
   this->m = m;
   create_betas = false;
-  if (betas == NULL) {
+  if (betas == nullptr) {
     // it supports only GF2N
     assert(gf->get_sub_field()->card() == 2);
 

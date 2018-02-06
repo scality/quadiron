@@ -30,7 +30,7 @@ class Vec
   int n;
  public:
   RN<T> *rn;
-  Vec(RN<T> *rn, int n, T* mem=NULL, int mem_len=0);
+  Vec(RN<T> *rn, int n, T* mem=nullptr, int mem_len=0);
   virtual ~Vec();
   virtual int get_n(void);
   int get_mem_len(void);
@@ -64,7 +64,7 @@ Vec<T>::Vec(RN<T> *rn, int n, T* mem, int mem_len)
 {
   this->rn = rn;
   this->n = n;
-  if (mem == NULL) {
+  if (mem == nullptr) {
     this->mem = new T[n];
     this->mem_len = n;
     this->new_mem = true;

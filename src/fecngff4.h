@@ -21,7 +21,7 @@ template<typename T>
 class FECNGFF4RS : public FEC<T>
 {
  private:
-  FFT2K<T> *fft = NULL;
+  FFT2K<T> *fft = nullptr;
   GF<uint32_t> *sub_field;
   NGFF4<T> *ngff4;
   int gf_n;
