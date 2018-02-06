@@ -39,6 +39,18 @@ public:
     std::cout << "\t\tThroughput " << work_load/avg << " (MB/s)" << std::endl;
   }
 
+  double get_avg() {
+    return avg;
+  }
+
+  double get_std_dev() {
+    return std_dev;
+  }
+
+  double get_thrpt() {
+    return (double)work_load/avg;
+  }
+
 private:
   uint64_t nb;
   uint64_t sum;

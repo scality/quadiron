@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <thread>
+#include <iomanip>
 
 #include "ntl.h"
 
@@ -56,6 +57,17 @@ std::map<int, std::string> ec_desc = {
   { EC_TYPE_FNTRS, "Reed-solomon codes over GF(p = Fermat number) using FFT" },
   { EC_TYPE_NGFF4RS,
     "Reed-solomon codes over GF(65537) using FFT on pack of codewords" },
+};
+
+std::map<int, std::string> ec_desc_short = {
+  { EC_TYPE_ALL, "all" },
+  { EC_TYPE_GF2NRSV, "gf2nrsv" },
+  { EC_TYPE_GF2NRSC, "gf2nrsc" },
+  { EC_TYPE_GF2NFFTRS, "gf2nfftrs" },
+  { EC_TYPE_GF2NFFTADDRS, "gf2nfftaddrs"},
+  { EC_TYPE_GFPFFTRS, "gfpfftrs" },
+  { EC_TYPE_FNTRS, "fntrs" },
+  { EC_TYPE_NGFF4RS, "ngff4rs" },
 };
 
 enum gf2nrs_type {
@@ -114,6 +126,12 @@ std::map<int, std::string> sce_desc = {
   { ENC_DEC, "Encodings and decodings" },
 };
 
+std::map<int, std::string> sce_desc_short = {
+  { ENC_ONLY, "enc" },
+  { DEC_ONLY, "dec" },
+  { ENC_DEC, "enc & dec" },
+};
+
 struct Params_t
 {
   ec_type fec_type = EC_TYPE_ALL;
@@ -128,6 +146,11 @@ struct Params_t
   int sizeof_T = -1;
   scenario_type sce_type = ENC_DEC;
   uint32_t threads_nb = 4;
+  // 0: show only params + speed
+  // 1: show header + params + speed
+  // 2: full show
+  int compact_print = 1;
+  std::string *header = nullptr;
 
   void print() {
     std::cout << "\n--------------- Parameters ----------------\n";
@@ -148,6 +171,70 @@ struct Params_t
     std::cout << "-------------------------------------------\n";
   }
 
+  void show_ec_desc() {
+    std::cout << "\nBenchmarking for " << ec_desc[fec_type] << std::endl;
+  }
+
+  std::string* get_header() {
+    if (header != nullptr)
+      return header;
+
+    std::string begin("| ");
+    std::string end(" |\n");
+
+    std::string content = begin +
+      "         FEC" +
+      "| scenario  " +
+      "|       k" +
+      "|       m" +
+      "|       w" +
+      "| T size " +
+      "| chunk size  " +
+      "| packet size " +
+      "| #samples " +
+      "| #threads " +
+      "| Encoding   lat (us)       throuput (MB/s) " +
+      "| Decoding   lat (us)       throuput (MB/s) " +
+      end;
+
+    std::string bare(content.length() - begin.length() - end.length(), '-');
+    bare = begin + bare + end;
+
+    header = new std::string();
+    header->append(bare + content + bare);
+
+    return header;
+  }
+
+  void show_header() {
+    std::cout << get_header()->c_str();
+  }
+
+  void show_params() {
+    std::cout << "  " << std::setw(12) << ec_desc_short[fec_type];
+    std::cout << "  " << std::setw(10) << sce_desc_short[sce_type];
+    std::cout << "  " << std::setw(7) << k;
+    std::cout << "  " << std::setw(7) << m;
+    std::cout << "  " << std::setw(7) << word_size;
+    std::cout << "  " << std::setw(7) << sizeof_T;
+    std::cout << "  " << std::setw(12) << chunk_size;
+    if (operation_on_packet)
+      std::cout << "  " << std::setw(12) << pkt_size;
+    else
+      std::cout << "  " << std::setw(12) << "-";
+    std::cout << "  " << std::setw(9) << samples_nb;
+    std::cout << "  " << std::setw(9) << threads_nb;
+  }
+
+  void show_speed(double avg, double std_dev, double thrput) {
+    std::cout << "  " << std::setw(8) << avg << "+/-" << std::setw(8) << std_dev
+      << std::setw(20) << thrput;
+  }
+
+  void show_end() {
+    std::cout << "\n";
+  }
+
   void get_sizeof_T() {
     if (sizeof_T == -1) {
       if (fec_type == EC_TYPE_NGFF4RS) {
@@ -157,7 +244,6 @@ struct Params_t
       } else {
         sizeof_T = (((word_size-1) / 4) + 1) * 4;
       }
-      std::cout << "Size of integer type: " << sizeof_T << std::endl;
     }
   }
 };
@@ -166,7 +252,7 @@ template<typename T>
 class Benchmark
 {
  public:
-  Benchmark(Params_t params);
+  Benchmark(Params_t *params);
   ~Benchmark();
   bool enc_only();
   bool dec_only();
@@ -186,6 +272,7 @@ class Benchmark
   uint32_t samples_nb;
   PRNG *prng = nullptr;
   FEC<T> *fec = nullptr;
+  Params_t *params = nullptr;
 
   bool systematic_ec = false;
 
@@ -230,4 +317,6 @@ class Benchmark
                        std::vector<KeyValue*> *avail_c_props);
   bool encode();
   bool decode();
+  void show(Stats_t *stats);
+  void show(Stats_t *stats1, Stats_t *stats2);
 };
