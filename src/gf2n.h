@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_GF2N_H__
+#define __NTL_GF2N_H__
 
 #include <climits>
 #include "gf.h"
@@ -14,10 +15,10 @@ class GF2N : public GF<T>
   T prim_poly;
   T first_bit;
   T tab_nb;
-  T *gflog = NULL;
-  T *gfilog = NULL;
-  T ***gfsplit = NULL;  // (n/4-1)*256*256 elements
-  T *mask = NULL;
+  T *gflog = nullptr;
+  T *gfilog = nullptr;
+  T ***gfsplit = nullptr;  // (n/4-1)*256*256 elements
+  T *mask = nullptr;
   bool restricted = false;
   T _mul_log(T a, T b);
   T _mul_split(T a, T b);
@@ -129,9 +130,9 @@ GF2N<T>::GF2N(T n) : GF<T>(2, n)
 template <typename T>
 GF2N<T>::~GF2N()
 {
-  if (gflog != NULL) delete[] gflog;
-  if (gfilog != NULL) delete[] gfilog;
-  if (gfsplit != NULL) {
+  if (gflog != nullptr) delete[] gflog;
+  if (gfilog != nullptr) delete[] gfilog;
+  if (gfsplit != nullptr) {
     for (T t = 0; t < tab_nb; t++) {
       for (T i = 0; i < 256; i++) {
         delete[] gfsplit[t][i];
@@ -485,3 +486,5 @@ T GF2N<T>::_inv_ext_gcd(T x)
   }
   return g[a];
 }
+
+#endif

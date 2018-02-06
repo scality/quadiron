@@ -1,7 +1,14 @@
-
 /* -*- mode: c++ -*- */
+#ifndef __NTL_FFTPF_H__
+#define __NTL_FFTPF_H__
 
-#pragma once
+#include "dft.h"
+#include "dftn.h"
+#include "fft2.h"
+#include "fft2k.h"
+#include "fftct.h"
+#include "vcvec.h"
+#include "vec.h"
 
 /**
  * Prime-factor FFT algorithm
@@ -43,15 +50,16 @@ class FFTPF : public DFT<T>
   T n2;
   T w, w1, w2;
   T a, b, c, d;
-  Vec<T> *G = NULL;
-  VcVec<T> *Y = NULL;
-  VcVec<T> *X = NULL;
-  DFT<T> *dft_outer = NULL;
-  DFT<T> *dft_inner = NULL;
-  std::vector<T>* prime_factors = NULL;
+  Vec<T> *G = nullptr;
+  VcVec<T> *Y = nullptr;
+  VcVec<T> *X = nullptr;
+  DFT<T> *dft_outer = nullptr;
+  DFT<T> *dft_inner = nullptr;
+  std::vector<T>* prime_factors = nullptr;
 
  public:
-  FFTPF(GF<T> *gf, T n, int id = 0, std::vector<T>* factors = NULL, T _w = 0);
+  FFTPF(GF<T> *gf, T n, int id = 0, std::vector<T>* factors = nullptr,
+        T _w = 0);
   ~FFTPF();
   void fft(Vec<T> *output, Vec<T> *input);
   void ifft(Vec<T> *output, Vec<T> *input);
@@ -74,7 +82,7 @@ template <typename T>
 FFTPF<T>::FFTPF(GF<T> *gf, T n, int id, std::vector<T>* factors, T _w) :
   DFT<T>(gf, n)
 {
-  if (factors == NULL) {
+  if (factors == nullptr) {
     this->prime_factors = new std::vector<T>();
     first_layer_fft = true;
     _get_coprime_factors<T>(n, this->prime_factors);
@@ -200,3 +208,5 @@ void FFTPF<T>::ifft(Vec<T> *output, Vec<T> *input)
     output->mul_scalar(this->inv_n_mod_p);
   }
 }
+
+#endif

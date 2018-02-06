@@ -1,5 +1,10 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_MAT_H__
+#define __NTL_MAT_H__
+
+#include <iostream>
+
+#include "rn.h"
 
 /*
  * mat[n_rows][n_cols]:
@@ -413,3 +418,5 @@ void Mat<T>::dump(void)
     std::cout << "\n";
   }
 }
+
+#endif

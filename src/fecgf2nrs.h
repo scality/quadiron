@@ -1,5 +1,10 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECGF2NRS_H__
+#define __NTL_FECGF2NRS_H__
+
+#include "fec.h"
+#include "gf2n.h"
+#include "mat.h"
 
 /**
  * GF_2^n based RS (Cauchy or Vandermonde)
@@ -17,11 +22,11 @@ class FECGF2NRS : public FEC<T>
   FECGF2NRSType type;
 
  private:
-  Mat<T> *mat = NULL;
-  Mat<T> *decode_mat = NULL;
+  Mat<T> *mat = nullptr;
+  Mat<T> *decode_mat = nullptr;
 
  public:
-  FECGF2NRS(u_int word_size, u_int n_data, u_int n_parities,
+  FECGF2NRS(unsigned word_size, unsigned n_data, unsigned n_parities,
     FECGF2NRSType type) :
     FEC<T>(FEC<T>::TYPE_1, word_size, n_data, n_parities)
   {
@@ -29,7 +34,7 @@ class FECGF2NRS : public FEC<T>
 
     if (word_size > 16)
       assert(false);  // not support yet
-    u_int gf_n = 8*word_size;
+    unsigned gf_n = 8*word_size;
     this->gf = new GF2N<T>(gf_n);
 
     this->mat = new Mat<T>(this->gf, n_parities, n_data);
@@ -91,3 +96,5 @@ class FECGF2NRS : public FEC<T>
     decode_mat->mul(output, words);
   }
 };
+
+#endif

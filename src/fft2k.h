@@ -1,7 +1,9 @@
-
 /* -*- mode: c++ -*- */
+#ifndef __NTL_FFT2K_H__
+#define __NTL_FFT2K_H__
 
-#pragma once
+#include "dft.h"
+#include "fft2.h"
 
 /**
  * Cooley-Tukey Algorithm
@@ -254,3 +256,5 @@ void FFT2K<T>::ifft(Vecp<T> *output, Vecp<T> *input)
   if ((this->k == this->N / 2) && (this->inv_n_mod_p > 1))
       this->gf->mul_vec_to_vecp(this->vec_inv_n, output);
 }
+
+#endif

@@ -1,6 +1,9 @@
 /* -*- mode: c++ -*- */
+#ifndef __NTL_DFTN_H__
+#define __NTL_DFTN_H__
 
-#pragma once
+#include "dft.h"
+#include "mat.h"
 
 /**
  * Algorithm for very small n
@@ -89,3 +92,5 @@ void DFTN<T>::ifft(Vec<T> *output, Vec<T> *input)
   if (this->inv_n_mod_p > 1)
     output->mul_scalar(this->inv_n_mod_p);
 }
+
+#endif

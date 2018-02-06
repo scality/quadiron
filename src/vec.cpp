@@ -1,4 +1,6 @@
-#include "./ntl.h"
+#include "vec.h"
+
+
 
 void _vec_hadamard_mul_257(int n,
                            uint32_t *x,

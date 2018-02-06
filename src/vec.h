@@ -1,8 +1,20 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_VEC_H__
+#define __NTL_VEC_H__
+
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+
+#include "v2vec.h"
 
 template<typename T>
 class Poly;
+
+template<typename T>
+class RN;
 
 template<typename T>
 class V2Vec;
@@ -18,7 +30,7 @@ class Vec
   int n;
  public:
   RN<T> *rn;
-  Vec(RN<T> *rn, int n, T* mem=NULL, int mem_len=0);
+  Vec(RN<T> *rn, int n, T* mem=nullptr, int mem_len=0);
   virtual ~Vec();
   virtual int get_n(void);
   int get_mem_len(void);
@@ -52,7 +64,7 @@ Vec<T>::Vec(RN<T> *rn, int n, T* mem, int mem_len)
 {
   this->rn = rn;
   this->n = n;
-  if (mem == NULL) {
+  if (mem == nullptr) {
     this->mem = new T[n];
     this->mem_len = n;
     this->new_mem = true;
@@ -344,3 +356,5 @@ void Vec<T>::dump(void)
     std::cout << get(i) << " ";
   std::cout << ")\n";
 }
+
+#endif

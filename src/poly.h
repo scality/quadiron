@@ -1,6 +1,11 @@
 /* -*- mode: c++ -*- */
+#ifndef __NTL_POLY_H__
+#define __NTL_POLY_H__
 
-#pragma once
+#include <map>
+
+#include "core.h"
+#include "gf.h"
 
 template<typename T>
 class Vec;
@@ -216,7 +221,7 @@ void Poly<T>::_div(Poly<T> *q, Poly<T> *r, Poly<T> *n, Poly<T> *d)
  * 
  * @param u 
  * @param v 
- * @param gcd cannot be NULL
+ * @param gcd cannot be nullptr
  */
 template <typename T>
 void Poly<T>::_gcd(Poly<T> *u, Poly<T> *v, Poly<T> *gcd)
@@ -248,9 +253,9 @@ void Poly<T>::_gcd(Poly<T> *u, Poly<T> *v, Poly<T> *gcd)
  * 
  * @param a (e.g. the polynomial that define the field)
  * @param b (e.g. the element of the extension field)
- * @param bezout_coef can be NULL
- * @param quotient_gcd can be NULL
- * @param gcd can be NULL
+ * @param bezout_coef can be nullptr
+ * @param quotient_gcd can be nullptr
+ * @param gcd can be nullptr
  */
 template <typename T>
 void Poly<T>::_extended_gcd(Poly<T> *a, Poly<T> *b,
@@ -274,7 +279,7 @@ void Poly<T>::_extended_gcd(Poly<T> *a, Poly<T> *b,
 
   while (!r.is_zero()) {
    
-    _div(&quotient, NULL, &old_r, &r);
+    _div(&quotient, nullptr, &old_r, &r);
 
     tmp.copy(&r);
     tmp2.copy(&quotient);
@@ -372,7 +377,7 @@ void Poly<T>::div(Poly<T> *b)
 {
   Poly<T> a(gf);
   a.copy(this);
-  _div(this, NULL, &a, b);
+  _div(this, nullptr, &a, b);
 }
 
 template <typename T>
@@ -380,7 +385,7 @@ void Poly<T>::mod(Poly<T> *b)
 {
   Poly<T> a(gf);
   a.copy(this);
-  _div(NULL, this, &a, b);
+  _div(nullptr, this, &a, b);
 }
 
 template <typename T>
@@ -493,3 +498,5 @@ void Poly<T>::dump()
   dump(std::cout);
   std::cout << "\n";
 }
+
+#endif

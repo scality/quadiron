@@ -169,11 +169,11 @@ class ArithUtest
     SignedDoubleT<T> bezout[2];
 
     // not explicitely related to GF(97)
-    assert(2 == _extended_gcd<T>(240, 46, NULL, NULL));
-    assert(6 == _extended_gcd<T>(54, 24, NULL, NULL));
-    assert(15 == _extended_gcd<T>(210, 45, NULL, NULL));
+    assert(2 == _extended_gcd<T>(240, 46, nullptr, nullptr));
+    assert(6 == _extended_gcd<T>(54, 24, nullptr, nullptr));
+    assert(15 == _extended_gcd<T>(210, 45, nullptr, nullptr));
     //
-    assert(1 == _extended_gcd<T>(97, 20, bezout, NULL));
+    assert(1 == _extended_gcd<T>(97, 20, bezout, nullptr));
     assert(bezout[0] == -7 && bezout[1] == 34);
   }
 

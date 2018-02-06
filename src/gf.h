@@ -1,5 +1,12 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_GF_H__
+#define __NTL_GF_H__
+
+#include <vector>
+
+#include "arith.h"
+#include "core.h"
+#include "rn.h"
 
 template<typename T>
 class GFP;
@@ -33,7 +40,7 @@ GF<T>::GF(T p, int n) : RN<T>(_exp<T>(p, n))
   this->p = p;
   this->n = n;
   if (n == 1)
-    this->sub_field = NULL;
+    this->sub_field = nullptr;
   else
     this->sub_field = new GFP<T>(p);
 }
@@ -68,3 +75,5 @@ int GF<T>::get_n()
 {
   return n;
 }
+
+#endif

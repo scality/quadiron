@@ -1,5 +1,4 @@
 /* -*- mode: c++ -*- */
-// #pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>

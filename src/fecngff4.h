@@ -1,7 +1,15 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECNGFF4_H__
+#define __NTL_FECNGFF4_H__
 
 #include <string>
+
+#include "fec.h"
+#include "fft2k.h"
+#include "ngff4.h"
+#include "poly.h"
+#include "vec.h"
+#include "vvec.h"
 
 /**
  * GF_2^2^k+1 based RS (Fermat Number Transform)
@@ -13,7 +21,7 @@ template<typename T>
 class FECNGFF4RS : public FEC<T>
 {
  private:
-  FFT2K<T> *fft = NULL;
+  FFT2K<T> *fft = nullptr;
   GF<uint32_t> *sub_field;
   NGFF4<T> *ngff4;
   int gf_n;
@@ -21,7 +29,7 @@ class FECNGFF4RS : public FEC<T>
  public:
   T n;
   T r;
-  FECNGFF4RS(u_int word_size, u_int n_data, u_int n_parities) :
+  FECNGFF4RS(unsigned word_size, unsigned n_data, unsigned n_parities) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     assert(word_size >= 2);
@@ -207,3 +215,5 @@ class FECNGFF4RS : public FEC<T>
     //std::cout << "decoded"; output->dump();
   }
 };
+
+#endif

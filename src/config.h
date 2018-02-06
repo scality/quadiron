@@ -1,5 +1,10 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_CONFIG_H__
+#define __NTL_CONFIG_H__
+
+#include <iosfwd>
+#include <string>
+#include <map>
 
 struct KeyValue: std::map <std::string, std::string>
 {
@@ -11,3 +16,5 @@ struct KeyValue: std::map <std::string, std::string>
 
 std::istream& operator >>(std::istream& ins, KeyValue& d);
 std::ostream& operator << (std::ostream& outs, const KeyValue& d);
+
+#endif

@@ -1,5 +1,12 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECFNTRS_H__
+#define __NTL_FECFNTRS_H__
+
+#include "fec.h"
+#include "fft2k.h"
+#include "poly.h"
+#include "vvec.h"
+#include "vvecp.h"
 
 /**
  * GF_2^2^k+1 based RS (Fermat Number Transform)
@@ -11,12 +18,12 @@ template<typename T>
 class FECFNTRS : public FEC<T>
 {
  private:
-  FFT2K<T> *fft = NULL;
+  FFT2K<T> *fft = nullptr;
 
  public:
   T n;
   T r;
-  FECFNTRS(u_int word_size, u_int n_data, u_int n_parities,
+  FECFNTRS(unsigned word_size, unsigned n_data, unsigned n_parities,
     size_t pkt_size = 8) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities, pkt_size)
   {
@@ -198,3 +205,5 @@ class FECFNTRS : public FEC<T>
       output->set(i, S.get(i));
   }
 };
+
+#endif

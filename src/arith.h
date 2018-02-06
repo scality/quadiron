@@ -1,5 +1,13 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_ARITH_H__
+#define __NTL_ARITH_H__
+
+#include <cassert>
+#include <cstdlib>
+#include <vector>
+
+#include "big_int.h"
+#include "core.h"
 
 template<typename T>
 using DoubleT = typename Double<T>::T;
@@ -229,8 +237,8 @@ int _exp2(int x)
  *
  * @param a
  * @param b
- * @param bezout_coef[output] computed bezout coefficients, might be NULL
- * @param quotient_gcd[output] computed quotient by the GCD, might be NULL
+ * @param bezout_coef[output] computed bezout coefficients, might be nullptr
+ * @param quotient_gcd[output] computed quotient by the GCD, might be nullptr
  *
  * XXX take care of the signs of input
  *
@@ -306,7 +314,7 @@ T _chinese_remainder(int n_mod, T a[], T n[])
     SignedDoubleT<T> bezout[2];
 
     N[i] = _N / n[i];
-    _extended_gcd<T>(N[i], n[i], bezout, NULL);
+    _extended_gcd<T>(N[i], n[i], bezout, nullptr);
     M[i] = bezout[0];  // XXX % n[i];
   }
 
@@ -533,7 +541,7 @@ template<class T>
 void _get_proper_divisors(T nb, std::vector<T> *primes,
   std::vector<T> *output)
 {
-  assert(primes != NULL);
+  assert(primes != nullptr);
   typename std::vector<T>::iterator it;
   // std::cout << "nb: " << nb << std::endl;
   for (it = primes->begin(); it != primes->end(); ++it) {
@@ -718,7 +726,7 @@ T _get_code_len_high_compo(T order, T n)
 template <class T>
 T _get_code_len_high_compo(std::vector<T> *factors, T n)
 {
-  assert(factors != NULL);
+  assert(factors != nullptr);
 
   T x = 1;
   typename std::vector<T>::size_type i, j;
@@ -793,3 +801,5 @@ void _get_prime_factors_final(std::vector<T> *primes,
       output->push_back(primes->at(i));
     }
 }
+
+#endif

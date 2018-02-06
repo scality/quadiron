@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_MISC_H__
+#define __NTL_MISC_H__
 
 #if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)
@@ -15,4 +16,6 @@ static __inline__ unsigned long long rdtsc(void)
   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
   return ( (unsigned long long)lo)|(((unsigned long long)hi) << 32);
 }
+#endif
+
 #endif

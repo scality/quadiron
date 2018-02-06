@@ -1,5 +1,7 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_GFP_H__
+#define __NTL_GFP_H__
+
 #include "gf.h"
 
 template<typename T>
@@ -29,3 +31,5 @@ T GFP<T>::inv_exp(T a)
 
   return this->exp(a, this->p - 2);
 }
+
+#endif

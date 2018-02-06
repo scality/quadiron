@@ -1,5 +1,13 @@
 /* -*- mode: c++ -*- */
-#pragma once
+#ifndef __NTL_FECGF2NFFTRS_H__
+#define __NTL_FECGF2NFFTRS_H__
+
+#include "fec.h"
+#include "fftct.h"
+#include "gf2n.h"
+#include "poly.h"
+#include "vec.h"
+#include "vvec.h"
 
 /**
  * GF_2^n based RS using FFT transformation
@@ -8,18 +16,18 @@ template<typename T>
 class FECGF2NFFTRS : public FEC<T>
 {
  private:
-  FFTCT<T> *fft = NULL;
+  FFTCT<T> *fft = nullptr;
 
  public:
   T n;
   T r;
   // NOTE: only type2 is supported now
-  FECGF2NFFTRS(u_int word_size, u_int n_data, u_int n_parities) :
+  FECGF2NFFTRS(unsigned word_size, unsigned n_data, unsigned n_parities) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     if (word_size > 16)
       assert(false);  // not support yet
-    u_int gf_n = 8*word_size;
+    unsigned gf_n = 8*word_size;
     this->gf = new GF2N<T>(gf_n);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad
@@ -150,3 +158,5 @@ class FECGF2NFFTRS : public FEC<T>
       output->set(i, S.get(i));
   }
 };
+
+#endif

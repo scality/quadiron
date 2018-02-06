@@ -1,6 +1,10 @@
 /* -*- mode: c++ -*- */
+#ifndef __NTL_FFTLN_H__
+#define __NTL_FFTLN_H__
 
-#pragma once
+#include "dft.h"
+#include "mat.h"
+#include "vec.h"
 
 /**
  * Algorithm for very large n=2^l
@@ -212,3 +216,5 @@ void FFTLN<T>::ifft(Vec<T> *output, Vec<T> *input)
   if (this->inv_n_mod_p > 1)
     output->mul_scalar(this->inv_n_mod_p);
 }
+
+#endif

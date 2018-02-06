@@ -24,7 +24,7 @@ struct test {
   {"poly", poly_utest},
   {"fft", fft_utest},
   {"fec", fec_utest},
-  {NULL, NULL}
+  {nullptr, nullptr}
 };
 
 int main(int argc, char **argv)
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     std::string token;
 
     while(std::getline(ss, token, ',')) {
-      for (p = tests;NULL != p->name;p++) {
+      for (p = tests;nullptr != p->name;p++) {
         std::string s(p->name);
         if (s == token) {
           std::cout << p->name << "\n";
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
       }
     }
   } else {
-    for (p = tests;NULL != p->name;p++) {
+    for (p = tests;nullptr != p->name;p++) {
       std::cout << p->name << "\n";
       p->func();
     }
