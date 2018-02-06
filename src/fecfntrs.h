@@ -37,7 +37,7 @@ class FECFNTRS : public FEC<T>
     // std::cerr << "n=" << n << "\n";
     // std::cerr << "r=" << r << "\n";
 
-    this->fft = new FFT2K<T>(this->gf, n);
+    this->fft = new FFT2K<T>(this->gf, n, pkt_size);
   }
 
   ~FECFNTRS()
