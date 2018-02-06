@@ -1,4 +1,6 @@
 /* -*- mode: c++ -*- */
+#ifndef __NTL_NETL_BENCH_BENCHMARK_H__
+#define __NTL_NETL_BENCH_BENCHMARK_H__
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -320,3 +322,5 @@ class Benchmark
   void show(Stats_t *stats);
   void show(Stats_t *stats1, Stats_t *stats2);
 };
+
+#endif

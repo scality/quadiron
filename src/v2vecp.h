@@ -1,4 +1,6 @@
 /* -*- mode: c++ -*- */
+#ifndef __NTL_V2VECP_H__
+#define __NTL_V2VECP_H__
 
 #include "vecp.h"
 
@@ -43,3 +45,5 @@ T* V2Vecp<T>::get(int i)
   else
     return vec->get(i - vec_n);
 }
+
+#endif
