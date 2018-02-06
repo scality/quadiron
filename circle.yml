@@ -1,6 +1,13 @@
 machine:
   pre:
     - pip install cpplint
+    - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+    - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    - sudo add-apt-repository -y "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main"
+    - sudo apt-get update
+    - sudo apt-get -y --no-install-recommends install clang-5.0 clang-tidy-5.0
+    - sudo ln -s /usr/bin/clang++-5.0 /usr/bin/clang++
+    - sudo ln -s /usr/bin/clang-tidy-5.0 /usr/bin/clang-tidy
 
 compile:
   override:
@@ -13,6 +20,7 @@ compile:
 test:
   override:
     - ./lint.sh
+    - ./lint.rb
     # - cd test; valgrind  --leak-check=full -v --show-leak-kinds=all ./tests
     - cd test; ./tests
     - cd benchmark; sh run.sh
