@@ -3,19 +3,20 @@
 #include "benchmark.h"
 
 template<typename T>
-Benchmark<T>::Benchmark(Params_t params) {
-  this->fec_type = params.fec_type;
-  this->word_size = params.word_size;
-  this->k = params.k;
-  this->m = params.m;
-  this->n = params.k + params.m;
+Benchmark<T>::Benchmark(Params_t *params) {
+  this->params = params;
+  this->fec_type = params->fec_type;
+  this->word_size = params->word_size;
+  this->k = params->k;
+  this->m = params->m;
+  this->n = params->k + params->m;
   this->n_c = this->n;  // if systematic, it will be updated in init()
-  this->operation_on_packet = params.operation_on_packet;
-  this->pkt_size = params.pkt_size;
-  this->chunk_size = params.chunk_size;
-  this->samples_nb = params.samples_nb;
-  if (params.extra_param > -1) {
-    this->extra_param = params.extra_param;
+  this->operation_on_packet = params->operation_on_packet;
+  this->pkt_size = params->pkt_size;
+  this->chunk_size = params->chunk_size;
+  this->samples_nb = params->samples_nb;
+  if (params->extra_param > -1) {
+    this->extra_param = params->extra_param;
   }
 
   int error;
@@ -463,6 +464,35 @@ bool Benchmark<T>::decode() {
 }
 
 template<typename T>
+void Benchmark<T>::show(Stats_t *stats) {
+  if (params->compact_print == 2) {
+    params->show_ec_desc();
+    stats->show();
+  } else {
+    params->show_params();
+    params->show_speed(stats->get_avg(), stats->get_std_dev(),
+      stats->get_thrpt());
+    params->show_end();
+  }
+}
+
+template<typename T>
+void Benchmark<T>::show(Stats_t *stats1, Stats_t *stats2) {
+  if (params->compact_print == 2) {
+    params->show_ec_desc();
+    stats1->show();
+    stats2->show();
+  } else {
+    params->show_params();
+    params->show_speed(stats1->get_avg(), stats1->get_std_dev(),
+      stats1->get_thrpt());
+    params->show_speed(stats2->get_avg(), stats2->get_std_dev(),
+      stats2->get_thrpt());
+    params->show_end();
+  }
+}
+
+template<typename T>
 bool Benchmark<T>::enc_only() {
   enc_stats->begin();
   // this operation is done once per benchmark
@@ -474,7 +504,7 @@ bool Benchmark<T>::enc_only() {
   }
 
   enc_stats->end();
-  enc_stats->show();
+  show(enc_stats);
 
   return true;
 }
@@ -496,9 +526,8 @@ bool Benchmark<T>::dec_only() {
   }
 
   enc_stats->end();
-  enc_stats->show();
   dec_stats->end();
-  dec_stats->show();
+  show(enc_stats, dec_stats);
 
   return true;
 }
@@ -519,9 +548,8 @@ bool Benchmark<T>::enc_dec() {
   }
 
   enc_stats->end();
-  enc_stats->show();
   dec_stats->end();
-  dec_stats->show();
+  show(enc_stats, dec_stats);
   return true;
 }
 
@@ -555,8 +583,8 @@ void xusage()
 }
 
 template <typename T>
-void run(Benchmark<T> *bench, Params_t params) {
-  switch (params.sce_type) {
+void run(Benchmark<T> *bench, Params_t *params) {
+  switch (params->sce_type) {
     case ENC_ONLY:
       bench->enc_only();
       break;
@@ -569,11 +597,11 @@ void run(Benchmark<T> *bench, Params_t params) {
   }
 }
 
-void run_scenario(Params_t params) {
+void run_scenario(Params_t *params) {
   // get sizeof_T if necessary
-  params.get_sizeof_T();
+  params->get_sizeof_T();
 
-  switch (params.sizeof_T) {
+  switch (params->sizeof_T) {
     case 4: {
       try {
         Benchmark<uint32_t> bench(params);
@@ -603,17 +631,15 @@ void run_scenario(Params_t params) {
     }
     default:
       std::cerr << errors_desc[ERR_T_NOT_SUPPORTED] <<
-        " T: " << params.sizeof_T << std::endl;
+        " T: " << params->sizeof_T << std::endl;
       exit(0);
   }
 }
 
-void run_benchmark(Params_t params) {
-  if (params.fec_type == EC_TYPE_ALL) {
+void run_benchmark(Params_t *params) {
+  if (params->fec_type == EC_TYPE_ALL) {
     for (int type = EC_TYPE_ALL + 1; type < EC_TYPE_END; type++) {
-      params.fec_type = (ec_type)type;
-      std::cout << "\nBenchmarking for " <<
-        ec_desc[params.fec_type] << std::endl;
+      params->fec_type = (ec_type)type;
       run_scenario(params);
     }
   } else {
@@ -629,51 +655,55 @@ void do_join(std::thread& t)
 int main(int argc, char **argv)
 {
   PRNG prng;
-  Params_t params;
+  Params_t *params;
   int opt;
 
-  while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:g:p:")) != -1) {
+  params = new Params_t();
+  while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:g:p:f:")) != -1) {
     switch (opt) {
     case 't':
-      params.sizeof_T = atoi(optarg);
+      params->sizeof_T = atoi(optarg);
       break;
     case 'e':
       if (fec_type_map.find(optarg) == fec_type_map.end()) {
         std::cerr << errors_desc[ERR_FEC_TYPE_NOT_SUPPORTED] << std::endl;
         xusage();
       }
-      params.fec_type = fec_type_map[optarg];
+      params->fec_type = fec_type_map[optarg];
       break;
     case 's':
       if (sce_type_map.find(optarg) == sce_type_map.end()) {
         std::cerr << errors_desc[ERR_SCENARIO_TYPE_NOT_SUPPORTED] << std::endl;
         xusage();
       }
-      params.sce_type = sce_type_map[optarg];
+      params->sce_type = sce_type_map[optarg];
       break;
     case 'w':
-      params.word_size = atoi(optarg);
+      params->word_size = atoi(optarg);
       break;
     case 'k':
-      params.k = atoi(optarg);
+      params->k = atoi(optarg);
       break;
     case 'm':
-      params.m = atoi(optarg);
+      params->m = atoi(optarg);
       break;
     case 'c':
-      params.chunk_size = atoi(optarg);
+      params->chunk_size = atoi(optarg);
       break;
     case 'p':
-      params.pkt_size = atoi(optarg);
+      params->pkt_size = atoi(optarg);
       break;
     case 'n':
-      params.samples_nb = atoi(optarg);
+      params->samples_nb = atoi(optarg);
       break;
     case 'x':
-      params.extra_param = atoi(optarg);
+      params->extra_param = atoi(optarg);
       break;
     case 'g':
-      params.threads_nb = atoi(optarg);
+      params->threads_nb = atoi(optarg);
+      break;
+    case 'f':
+      params->compact_print = atoi(optarg);
       break;
     default:
       xusage();
@@ -681,20 +711,24 @@ int main(int argc, char **argv)
   }
 
   // Currently support operating on packet:FNTRS
-  if (params.fec_type != EC_TYPE_FNTRS) {
-      params.operation_on_packet = false;
+  if (params->fec_type != EC_TYPE_FNTRS) {
+      params->operation_on_packet = false;
   }
 
-  if (params.pkt_size <= 0) {
-    params.operation_on_packet = false;
+  if (params->pkt_size <= 0) {
+    params->operation_on_packet = false;
   }
-  params.print();
+  if (params->compact_print == 2)
+    params->print();
+  else if (params->compact_print == 1)
+    params->show_header();
 
   std::vector<std::thread> threads;
-  for (uint32_t thr = 0; thr < params.threads_nb; thr++) {
+  for (uint32_t thr = 0; thr < params->threads_nb; thr++) {
     threads.push_back(std::thread(run_benchmark, params));
   }
   std::for_each(threads.begin(), threads.end(), do_join);
 
+  delete params;
   return 0;
 }
