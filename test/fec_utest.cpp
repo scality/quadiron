@@ -8,8 +8,8 @@ class FECUtest
   void test_fecfntrs()
   {
     std::cout << "test_fecfntrs\n";
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
 
     FECFNTRS<T> fec = FECFNTRS<T>(2, n_data, n_parities);
     run_test(&fec, fec.n, n_data, n_data+n_parities, true);
@@ -18,11 +18,11 @@ class FECUtest
   void test_fecngff4rs()
   {
     std::cout << "test_fecngff4rs\n";
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
 
     for (int i = 1; i < _log2<T>(sizeof(T)); i++) {
-      u_int word_size = 1 << i;
+      unsigned word_size = 1 << i;
       std::cout << "test_fecngff4rs with word_size=" << word_size << "\n";
       FECNGFF4RS<T> fec = FECNGFF4RS<T>(word_size, n_data, n_parities);
       run_test(&fec, fec.n, n_data, n_data+n_parities, true);
@@ -38,8 +38,8 @@ class FECUtest
   {
     std::cout << "test_fecgf2nfftrs_with_wordsize=" << wordsize << "\n";
 
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
 
     FECGF2NFFTRS<T> fec = FECGF2NFFTRS<T>(wordsize, n_data, n_parities);
     run_test(&fec, fec.n, n_data, n_data+n_parities);
@@ -54,8 +54,8 @@ class FECUtest
   {
     std::cout << "test_fecgf2nfftaddrs_with_wordsize=" << wordsize << "\n";
 
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
 
     FECGF2NFFTADDRS<T> fec = FECGF2NFFTADDRS<T>(wordsize, n_data, n_parities);
     run_test(&fec, fec.n, n_data, n_data+n_parities);
@@ -71,8 +71,8 @@ class FECUtest
   {
     std::cout << "test_fecgfpfftrs_with_word_size=" << word_size << "\n";
 
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
 
     FECGFPFFTRS<T> fec = FECGFPFFTRS<T>(word_size, n_data, n_parities);
     run_test(&fec, fec.n, n_data, n_data+n_parities, true);

@@ -38,7 +38,7 @@ class FECGFPFFTRS : public FEC<T>
   T n;
   T r;
 
-  FECGFPFFTRS(u_int word_size, u_int n_data, u_int n_parities) :
+  FECGFPFFTRS(unsigned word_size, unsigned n_data, unsigned n_parities) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!

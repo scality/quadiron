@@ -22,12 +22,12 @@ class FECGF2NFFTRS : public FEC<T>
   T n;
   T r;
   // NOTE: only type2 is supported now
-  FECGF2NFFTRS(u_int word_size, u_int n_data, u_int n_parities) :
+  FECGF2NFFTRS(unsigned word_size, unsigned n_data, unsigned n_parities) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     if (word_size > 16)
       assert(false);  // not support yet
-    u_int gf_n = 8*word_size;
+    unsigned gf_n = 8*word_size;
     this->gf = new GF2N<T>(gf_n);
 
     // with this encoder we cannot exactly satisfy users request, we need to pad

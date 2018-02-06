@@ -158,11 +158,11 @@ class FEC
   };
 
   FECType type;
-  u_int word_size;
-  u_int n_data;
-  u_int n_parities;
-  u_int code_len;
-  u_int n_outputs;
+  unsigned word_size;
+  unsigned n_data;
+  unsigned n_parities;
+  unsigned code_len;
+  unsigned n_outputs;
   size_t pkt_size;  // packet size, i.e. number of words per packet
   size_t buf_size;  // packet size in bytes
 
@@ -178,7 +178,7 @@ class FEC
   GF<T> *gf;
 
  public:
-  FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities,
+  FEC(FECType type, unsigned word_size, unsigned n_data, unsigned n_parities,
     size_t pkt_size = 8);
   virtual ~FEC();
   /**
@@ -251,8 +251,8 @@ class FEC
  * @param n_parities
  */
 template <typename T>
-FEC<T>::FEC(FECType type, u_int word_size, u_int n_data, u_int n_parities,
-  size_t pkt_size)
+FEC<T>::FEC(FECType type, unsigned word_size, unsigned n_data,
+            unsigned n_parities, size_t pkt_size)
 {
   assert(type == TYPE_1 || type == TYPE_2);
 
@@ -275,25 +275,25 @@ template <typename T>
 inline bool FEC<T>::readw(T *ptr, std::istream *stream)
 {
   if (word_size == 1) {
-    u_char c;
+    uint8_t c;
     if (stream->read((char *) &c, 1)) {
       *ptr = c;
       return true;
     }
   } else if (word_size == 2) {
-    u_short s;
+    uint16_t s;
     if (stream->read((char *) &s, 2)) {
       *ptr = s;
       return true;
     }
   } else if (word_size == 4) {
-    u_int s;
+    uint32_t s;
     if (stream->read((char *) &s, 4)) {
       *ptr = s;
       return true;
     }
   } else if (word_size == 8) {
-    u_long s;
+    uint64_t s;
     if (stream->read((char *) &s, 8)) {
       *ptr = s;
       return true;
@@ -314,19 +314,19 @@ template <typename T>
 inline bool FEC<T>::writew(T val, std::ostream *stream)
 {
   if (word_size == 1) {
-    u_char c = val;
+    uint8_t c = val;
     if (stream->write((char *) &c, 1))
       return true;
   } else if (word_size == 2) {
-    u_short s = val;
+    uint16_t s = val;
     if (stream->write((char *) &s, 2))
       return true;
   } else if (word_size == 4) {
-    u_int s = val;
+    uint32_t s = val;
     if (stream->write((char *) &s, 4))
       return true;
   } else if (word_size == 8) {
-    u_long s = val;
+    uint64_t s = val;
     if (stream->write((char *) &s, 8))
       return true;
   } else if (word_size == 16) {
@@ -508,7 +508,7 @@ bool FEC<T>::decode_bufs(std::vector<std::istream*> input_data_bufs,
   off_t offset = 0;
   bool cont = true;
 
-  u_int fragment_index = 0;
+  unsigned fragment_index = 0;
 
   if (type == TYPE_1)
     assert(input_data_bufs.size() == n_data);

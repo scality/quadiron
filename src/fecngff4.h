@@ -29,7 +29,7 @@ class FECNGFF4RS : public FEC<T>
  public:
   T n;
   T r;
-  FECNGFF4RS(u_int word_size, u_int n_data, u_int n_parities) :
+  FECNGFF4RS(unsigned word_size, unsigned n_data, unsigned n_parities) :
     FEC<T>(FEC<T>::TYPE_2, word_size, n_data, n_parities)
   {
     assert(word_size >= 2);

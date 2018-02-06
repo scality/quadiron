@@ -191,13 +191,13 @@ class FFTUtest
 
   void test_fftn()
   {
-    u_int n;
-    u_int r;
+    unsigned n;
+    unsigned r;
     T q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = gf.get_prime_root();  // primitive root
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned R = gf.get_prime_root();  // primitive root
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
 
     std::cout << "test_fftn\n";
 
@@ -218,7 +218,7 @@ class FFTUtest
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
       v.zero_fill();
-      for (u_int i = 0; i < n_data; i++)
+      for (unsigned i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
       // v.dump();
       fft.fft(&_v, &v);
@@ -238,12 +238,12 @@ class FFTUtest
 
   void test_fft2k_vec()
   {
-    u_int n;
-    u_int q = 65537;
+    unsigned n;
+    unsigned q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = gf.get_prime_root();  // primitive root
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned R = gf.get_prime_root();  // primitive root
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
 
     std::cout << "test_fft2k_vec\n";
 
@@ -260,7 +260,7 @@ class FFTUtest
     Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()), v2(&gf, fft.get_n());
     for (int j = 0; j < 100000; j++) {
       v.zero_fill();
-      for (u_int i = 0; i < n_data; i++)
+      for (unsigned i = 0; i < n_data; i++)
         v.set(i, gf.weak_rand());
       // v.dump();
       fft.fft(&_v, &v);
@@ -273,12 +273,12 @@ class FFTUtest
 
   void test_fft2k_vecp()
   {
-    u_int n;
-    u_int q = 65537;
+    unsigned n;
+    unsigned q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = gf.get_prime_root();  // primitive root
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned R = gf.get_prime_root();  // primitive root
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
     size_t size = 4;
 
     std::cout << "test_fft2k_vecp\n";
@@ -525,13 +525,13 @@ class FFTUtest
 
   void test_fft2()
   {
-    u_int n;
-    u_int r;
-    u_int q = 65537;
+    unsigned n;
+    unsigned r;
+    unsigned q = 65537;
     GFP<T> gf = GFP<T>(q);
-    u_int R = gf.get_prime_root();  // primitive root
-    u_int n_data = 3;
-    u_int n_parities = 3;
+    unsigned R = gf.get_prime_root();  // primitive root
+    unsigned n_data = 3;
+    unsigned n_parities = 3;
 
     std::cout << "test_fft2\n";
 
