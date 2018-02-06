@@ -1,5 +1,6 @@
 /* -*- mode: c++ -*- */
-#pragma once
+
+#include "vecp.h"
 
 /**
  * Virtual (v->get_n()*2) x 1 vertical vector for the need of
