@@ -17,3 +17,4 @@ make
 
 - `ntl_shared`: build the NTL shared library
 - `ntl_static`: build the NTL static library
+- `tools`: build the NTL tools
