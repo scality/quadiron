@@ -133,3 +133,5 @@ include_directories(SYSTEM ${GMPXX_INCLUDE_DIRS})
 add_subdirectory(src)
 # Tools
 add_subdirectory(tools)
+# Benchmark
+add_subdirectory(benchmark)
