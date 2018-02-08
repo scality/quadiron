@@ -15,6 +15,7 @@ make
 
 ### Targets
 
+- `doc`: build the documentation using Doxygen
 - `ntl_bench`: build the NTL benchmark (build mode "Release" is recommended)
 - `ntl_shared`: build the NTL shared library
 - `ntl_static`: build the NTL static library

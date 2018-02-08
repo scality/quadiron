@@ -138,6 +138,8 @@ include_directories(SYSTEM ${GMPXX_INCLUDE_DIRS})
 
 # NTL
 add_subdirectory(src)
+# Documentation
+add_subdirectory(documentation)
 # Tools
 add_subdirectory(tools)
 # Tests
