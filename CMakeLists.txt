@@ -127,6 +127,8 @@ endforeach(flag)
 # NTL build
 ###########
 
+find_package(codecov)
+
 # Dependencies.
 find_package(GMPXX REQUIRED)
 include_directories(SYSTEM ${GMPXX_INCLUDE_DIRS})
@@ -139,3 +141,5 @@ add_subdirectory(tools)
 add_subdirectory(test)
 # Benchmark
 add_subdirectory(benchmark)
+
+coverage_evaluate()

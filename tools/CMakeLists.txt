@@ -18,6 +18,7 @@ set(EC_BIN_NAME ec)
 add_executable(${EC_BIN_NAME}
   ${CMAKE_CURRENT_SOURCE_DIR}/ec.cpp
 )
+add_coverage(${EC_BIN_NAME})
 
 # Link librairies.
 target_link_libraries(${EC_BIN_NAME}

@@ -25,6 +25,7 @@ set(TEST_DRIVER ${CMAKE_PROJECT_NAME}_test)
 add_executable(${TEST_DRIVER}
   ${TEST_SRC}
 )
+add_coverage(${TEST_DRIVER})
 
 include_directories(${SOURCE_DIR})
 

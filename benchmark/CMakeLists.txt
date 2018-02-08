@@ -26,6 +26,7 @@ set(BENCH_DRIVER ${PROJECT_NAME}_bench)
 add_executable(${BENCH_DRIVER}
   ${BENCH_SRC}
 )
+add_coverage(${BENCH_DRIVER})
 
 # Link librairies.
 target_link_libraries(${BENCH_DRIVER}

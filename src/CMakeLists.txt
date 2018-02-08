@@ -19,6 +19,7 @@ configure_file(${SOURCE_DIR}/build_info.in ${GENERATE_DIR}/build_info.h @ONLY)
 
 # Build an Object Library (can be reused for both static and dynamic libs).
 add_library(${OBJECT_LIB} OBJECT ${LIB_SRC})
+add_coverage(${OBJECT_LIB})
 set_property(TARGET ${OBJECT_LIB} PROPERTY POSITION_INDEPENDENT_CODE 1)
 
 # Dynamic library.
