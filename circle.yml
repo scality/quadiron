@@ -20,7 +20,7 @@ compile:
 test:
   override:
     - ./lint.sh
-    - ./lint.rb
+    - cd build && make check-lint
     # - cd test; valgrind  --leak-check=full -v --show-leak-kinds=all ./tests
     - cd test; ./tests
     - cd benchmark; sh run.sh

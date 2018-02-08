@@ -39,6 +39,7 @@ set(PACKAGE ${CMAKE_PROJECT_NAME})
 # Paths
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(SCRIPT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 set(GENERATE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/${CMAKE_BUILD_TYPE})
 
@@ -145,3 +146,40 @@ add_subdirectory(test)
 add_subdirectory(benchmark)
 
 coverage_evaluate()
+
+########
+# Linter
+########
+
+set(CLANG_LINTS_LIST
+  android-*
+  boost-*
+  clang-analyzer-*
+  mpi-*
+)
+string(REPLACE ";" "," CLANG_LINTS "${CLANG_LINTS_LIST}")
+
+add_custom_target(lint
+  COMMAND ${SCRIPT_DIR}/run-clang-tidy.py -checks=${CLANG_LINTS} -header-filter=.*
+  COMMENT "run the linter"
+)
+add_dependencies(lint ${OBJECT_LIB})
+
+add_custom_target(fix-lint
+  COMMAND ${SCRIPT_DIR}/run-clang-tidy.py -fix -checks=${CLANG_LINTS} -header-filter=.*
+  COMMENT "run the linter and apply proposed fixes"
+)
+add_dependencies(fix-lint ${OBJECT_LIB})
+
+####################
+# Targets for the CI
+####################
+
+# clang-tidy returns 0, even if there are lint errors, so we have to be hackish.
+# Should be no longer needed when https://reviews.llvm.org/D39105 is merged…
+set(LINT_ERROR_PATTERN "'(error|warning):'")
+add_custom_target(check-lint
+  COMMAND test `${SCRIPT_DIR}/run-clang-tidy.py -checks=${CLANG_LINTS} -header-filter=.* | grep -Pc ${LINT_ERROR_PATTERN}` -eq 0
+  COMMENT "check for lint errors"
+)
+add_dependencies(check-lint ${OBJECT_LIB})
