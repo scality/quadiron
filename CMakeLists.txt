@@ -44,9 +44,11 @@ set(GENERATE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/${CMAKE_BUILD_TYPE})
 
 # Targets
-set(OBJECT_LIB ${CMAKE_PROJECT_NAME}_object)
-set(SHARED_LIB ${CMAKE_PROJECT_NAME}_shared)
-set(STATIC_LIB ${CMAKE_PROJECT_NAME}_static)
+set(OBJECT_LIB  ${CMAKE_PROJECT_NAME}_object)
+set(SHARED_LIB  ${CMAKE_PROJECT_NAME}_shared)
+set(STATIC_LIB  ${CMAKE_PROJECT_NAME}_static)
+set(TEST_DRIVER ${CMAKE_PROJECT_NAME}_test)
+set(NTL_TOOLS   ${CMAKE_PROJECT_NAME}_tools)
 
 include_directories(${SOURCE_DIR})
 
@@ -148,6 +150,13 @@ add_subdirectory(test)
 add_subdirectory(benchmark)
 
 coverage_evaluate()
+
+# Be sure to recompile the test driver if needed before running the test suite.
+add_custom_target(check
+  COMMAND ${CMAKE_CTEST_COMMAND}
+  DEPENDS ${TEST_DRIVER}
+  DEPENDS ${NTL_TOOLS}
+)
 
 ########
 # Linter

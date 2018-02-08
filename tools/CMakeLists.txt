@@ -32,11 +32,20 @@ target_link_libraries(${EC_BIN_NAME}
 # Root target
 #############
 
-add_custom_target(tools
+add_custom_target(${NTL_TOOLS}
   COMMENT "build the NTL tools"
 )
 
 #TODO: add find_pminus1_compo, is_prime and find_primes targets as dependencies.
-add_dependencies(tools
+add_dependencies(${NTL_TOOLS}
   ${EC_BIN_NAME}
+)
+
+#######
+# Tests
+#######
+
+add_test(
+  NAME ec_test
+  COMMAND ${SCRIPT_DIR}/test_ec.sh "$<TARGET_FILE:${EC_BIN_NAME}>"
 )

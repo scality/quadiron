@@ -13,15 +13,11 @@ machine:
 
 compile:
   override:
-    - mkdir build && cd build && cmake -G 'Unix Makefiles' .. && make
+    - mkdir build && cd build && cmake -G 'Unix Makefiles' .. -DCMAKE_BUILD_TYPE=Release 'Unix Makefiles' .. && make
 
 test:
   override:
     - ./lint.sh
     - cd build && make check-lint
     - cd build && make check
-    - cd tools; ./test_ec.sh
-    # Compile in release for the benchmark
-    - cd build && cmake -G 'Unix Makefiles' .. -DCMAKE_BUILD_TYPE=Release 'Unix Makefiles' .. && make
     - cd build && make benchmark
-    # - cd tools; valgrind  --leak-check=full -v --show-leak-kinds=all ./test_ec.sh

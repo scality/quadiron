@@ -21,7 +21,6 @@ set(TEST_SRC
   FORCE
 )
 
-set(TEST_DRIVER ${CMAKE_PROJECT_NAME}_test)
 add_executable(${TEST_DRIVER}
   ${TEST_SRC}
 )
@@ -40,10 +39,4 @@ add_definitions(-UNDEBUG)
 add_test(
   NAME unit_test
   COMMAND ${TEST_DRIVER}
-)
-
-# Be sure to recompile the test driver if needed before running the test suite.
-add_custom_target(check
-  COMMAND ${CMAKE_CTEST_COMMAND}
-  DEPENDS ${TEST_DRIVER}
 )

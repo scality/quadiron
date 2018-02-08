@@ -5,9 +5,15 @@
 #valgrind=valgrind
 #valgrind="gdb --args"
 
-bin=./ec
+bin=$1
 bs=50K
-#bs=1M
+
+if [ -z $1 ]
+then
+    1>&2 echo "error: missing argument"
+    echo "usage: $0 PATH_TO_EC"
+    exit 1;
+fi
 
 checkfail()
 {
