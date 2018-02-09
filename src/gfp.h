@@ -4,12 +4,11 @@
 
 #include "gf.h"
 
-template<typename T>
-class GFP : public GF<T>
-{
- public:
-  explicit GFP(T p);
-  T inv_exp(T a);
+template <typename T>
+class GFP : public GF<T> {
+  public:
+    explicit GFP(T p);
+    T inv_exp(T a);
 };
 
 template <typename T>
@@ -27,9 +26,9 @@ GFP<T>::GFP(T p) : GF<T>(p, 1)
 template <typename T>
 T GFP<T>::inv_exp(T a)
 {
-  assert(this->check(a));
+    assert(this->check(a));
 
-  return this->exp(a, this->p - 2);
+    return this->exp(a, this->p - 2);
 }
 
 #endif
