@@ -294,7 +294,7 @@ void run_FECGF2NFFTADDRS(int word_size, int n_data, int n_parities, int rflag)
 }
 
 template <typename T>
-void run_FECGFPFFTRS(int word_size, int n_data, int n_parities, int rflag)
+void run_FECGFPFFTRS(unsigned word_size, int n_data, int n_parities, int rflag)
 {
   assert(sizeof(T) > word_size);
 
@@ -387,7 +387,7 @@ int main(int argc, char **argv)
   int uflag = 0;
   ec_type eflag = EC_TYPE_UNDEF;
   gf2nrs_type mflag = VANDERMONDE;
-  int word_size = 0;
+  unsigned word_size = 0;
 
   n_data = n_parities = -1;
   while ((opt = getopt(argc, argv, "n:m:p:cruve:w:t")) != -1) {

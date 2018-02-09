@@ -3,6 +3,7 @@
 #define __NTL_NTL_H__
 
 #include "core.h"
+#include "build_info.h"
 #include "arith.h"
 #include "misc.h"
 #include "rn.h"
