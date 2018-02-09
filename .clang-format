@@ -1,0 +1,46 @@
+---
+Language:      Cpp
+Standard:      Cpp11
+BasedOnStyle:  LLVM
+
+# Basic settings
+UseTab: Never
+ColumnLimit: 80
+IndentWidth: 4
+TabWidth:    4
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth:           4
+
+# Try to preserve merge-friendly diff.
+AlignAfterOpenBracket: AlwaysBreak
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine:  Empty
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations:   true
+BinPackArguments:  false
+BinPackParameters: false
+
+# Breaking style
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: WebKit
+
+# Include
+IncludeCategories:
+  - Regex:           '^<.*[^h]>'
+    Priority:        -2  # Standard header firsts.
+  - Regex:           '^<.*'
+    Priority:        -1  # "System" header next.
+  - Regex:           '^".*'
+    Priority:        0   # Local header last.
+IncludeIsMainRegex: '(test_)?$'
+
+# Macros
+# To update if we ever use macros that acts as block/foreach.
+ForEachMacros:   []
+MacroBlockBegin: ''
+MacroBlockEnd:   ''
+
+# Misc.
+KeepEmptyLinesAtTheStartOfBlocks: false
+PointerAlignment: Left
+...

@@ -158,9 +158,30 @@ add_custom_target(check
   DEPENDS ${NTL_TOOLS}
 )
 
-########
-# Linter
-########
+#####################
+# Formatting & Linter
+#####################
+
+file(GLOB_RECURSE ALL_HEADERS
+  ${CMAKE_CURRENT_SOURCE_DIR}/benchmark/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/test/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/*.h
+)
+
+set(ALL_SRCS
+  ${BENCH_SRC}
+  ${LIB_SRC}
+  ${TEST_SRC}
+  ${TOOLS_SRC}
+  ${ALL_HEADERS}
+)
+
+add_custom_target(format
+  COMMAND clang-format -i ${ALL_SRCS}
+  COMMENT "fix code formatting"
+)
+add_dependencies(format ${OBJECT_LIB})
 
 set(CLANG_LINTS_LIST
   android-*
@@ -194,3 +215,9 @@ add_custom_target(check-lint
   COMMENT "check for lint errors"
 )
 add_dependencies(check-lint ${OBJECT_LIB})
+
+add_custom_target(check-format
+  COMMAND test `clang-format -output-replacements-xml ${ALL_SRCS} ${TEST_SRC} | grep -c offset` -eq 0
+  COMMENT "check code formatting"
+)
+add_dependencies(check-format ${OBJECT_LIB})
