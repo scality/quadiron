@@ -215,3 +215,9 @@ add_custom_target(check-lint
   COMMENT "check for lint errors"
 )
 add_dependencies(check-lint ${OBJECT_LIB})
+
+add_custom_target(check-format
+  COMMAND test `clang-format -output-replacements-xml ${ALL_SRCS} ${TEST_SRC} | grep -c offset` -eq 0
+  COMMENT "check code formatting"
+)
+add_dependencies(check-format ${OBJECT_LIB})

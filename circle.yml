@@ -5,9 +5,10 @@ machine:
     - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
     - sudo add-apt-repository -y "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main"
     - sudo apt-get update
-    - sudo apt-get -y --no-install-recommends install clang-5.0 clang-tidy-5.0 valgrind
+    - sudo apt-get -y --no-install-recommends install clang-5.0 clang-tidy-5.0 clang-format-5.0 valgrind
     - sudo ln -s /usr/bin/clang++-5.0 /usr/bin/clang++
     - sudo ln -s /usr/bin/clang-tidy-5.0 /usr/bin/clang-tidy
+    - sudo ln -s /usr/bin/clang-format-5.0 /usr/bin/clang-format
     - wget https://cmake.org/files/v3.5/cmake-3.5.0-Linux-x86_64.sh
     - sudo sh cmake-3.5.0-Linux-x86_64.sh --prefix=/usr/local --exclude-subdir
 
@@ -18,6 +19,7 @@ compile:
 test:
   override:
     - ./lint.sh
+    - cd build && make check-format
     - cd build && make check-lint
     - cd build && make check
     - cd build && make benchmark
