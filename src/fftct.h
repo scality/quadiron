@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_FFTCT_H__
-#define __NTL_FFTCT_H__
+#ifndef __NTTEC_FFTCT_H__
+#define __NTTEC_FFTCT_H__
 
 #include "dft.h"
 #include "dftn.h"

@@ -1,5 +1,4 @@
-
-#include "ntl.h"
+#include "nttec.h"
 
 template <typename T>
 class GFUtest {
@@ -87,7 +86,7 @@ class GFUtest {
             // std::cout << "x=" << x << "\n";
             try {
                 y = gf->inv(x);
-            } catch (NtlException e) {
+            } catch (NttecException e) {
                 continue;
             }
             // std::cout << "inv(x)=" << y << "\n";
@@ -111,7 +110,7 @@ class GFUtest {
             // std::cout << "x=" << x << "\n";
             try {
                 y = gf->inv(x);
-            } catch (NtlException e) {
+            } catch (NttecException e) {
                 continue;
             }
             // std::cout << "inv(x)=" << y << "\n";

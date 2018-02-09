@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_ARITH_H__
-#define __NTL_ARITH_H__
+#ifndef __NTTEC_ARITH_H__
+#define __NTTEC_ARITH_H__
 
 #include <cassert>
 #include <cstdlib>
@@ -202,7 +202,7 @@ int _log2(int x)
     int result = 0;
 
     if (x == 0)
-        throw NTL_EX_INVAL;
+        throw NTTEC_EX_INVAL;
 
     if (x == 1)
         return 0;
@@ -299,7 +299,7 @@ SignedDoubleT<T> _extended_gcd(
  * XXX check if there is a solution
  *
  * @return the solution
- * @throw NTL_EX_NO_SOLUTION
+ * @throw NTTEC_EX_NO_SOLUTION
  */
 template <class T>
 T _chinese_remainder(int n_mod, T a[], T n[])
@@ -359,11 +359,11 @@ int _jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m)
 
     // m must be odd
     if ((m % 2) == 0)
-        throw NTL_EX_INVAL;
+        throw NTTEC_EX_INVAL;
 
     // m must be positive
     if (m < 0)
-        throw NTL_EX_INVAL;
+        throw NTTEC_EX_INVAL;
 
     jac = 1;
     while (m != 1) {

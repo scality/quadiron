@@ -32,12 +32,12 @@ target_link_libraries(${EC_BIN_NAME}
 # Root target
 #############
 
-add_custom_target(${NTL_TOOLS}
-  COMMENT "build the NTL tools"
+add_custom_target(${NTTEC_TOOLS}
+  COMMENT "build the NTTEC tools"
 )
 
 #TODO: add find_pminus1_compo, is_prime and find_primes targets as dependencies.
-add_dependencies(${NTL_TOOLS}
+add_dependencies(${NTTEC_TOOLS}
   ${EC_BIN_NAME}
 )
 

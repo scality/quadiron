@@ -1,4 +1,4 @@
-# NTL
+# NTTEC
 
 stuff
 
@@ -16,13 +16,13 @@ make
 ### Targets
 
 - `doc`: build the documentation using Doxygen
-- `ntl_bench`: build the NTL benchmark (build mode "Release" is recommended)
-- `ntl_shared`: build the NTL shared library
-- `ntl_static`: build the NTL static library
-- `ntl_test`: build the test driver.
+- `nttec_bench`: build the NTTEC benchmark (build mode "Release" is recommended)
+- `nttec_shared`: build the NTTEC shared library
+- `nttec_static`: build the NTTEC static library
+- `nttec_test`: build the test driver.
 - `check`: run the test suite
-- `tools`: build the NTL tools
-- `benchmark`: run the NTL benchmark (build mode "Release" is recommended)
+- `tools`: build the NTTEC tools
+- `benchmark`: run the NTTEC benchmark (build mode "Release" is recommended)
 
 ### Code coverage
 

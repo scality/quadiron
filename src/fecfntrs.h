@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_FECFNTRS_H__
-#define __NTL_FECFNTRS_H__
+#ifndef __NTTEC_FECFNTRS_H__
+#define __NTTEC_FECFNTRS_H__
 
 #include "fec.h"
 #include "fft2k.h"

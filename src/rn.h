@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_RN_H__
-#define __NTL_RN_H__
+#ifndef __NTTEC_RN_H__
+#define __NTTEC_RN_H__
 
 #include <fstream>
 #include <sstream>
@@ -281,7 +281,7 @@ T RN<T>::exp_quick(T base, T exponent)
  * @param base
  * @param exponent
  *
- * @throw NTL_EX_NOT_FOUND if result is not found
+ * @throw NTTEC_EX_NOT_FOUND if result is not found
  *
  * return
  */
@@ -296,7 +296,7 @@ T RN<T>::log_naive(T base, T exponent)
     }
 
     // not found
-    throw NTL_EX_NOT_FOUND;
+    throw NTTEC_EX_NOT_FOUND;
 }
 
 /*

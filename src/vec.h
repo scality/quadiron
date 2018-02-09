@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_VEC_H__
-#define __NTL_VEC_H__
+#ifndef __NTTEC_VEC_H__
+#define __NTTEC_VEC_H__
 
 #include <algorithm>
 #include <cassert>

@@ -1,5 +1,5 @@
-#ifndef __NTL_CORE_H__
-#define __NTL_CORE_H__
+#ifndef __NTTEC_CORE_H__
+#define __NTTEC_CORE_H__
 
 #include <cstdint>
 
@@ -54,12 +54,12 @@ struct compT {
 };
 
 typedef enum {
-    NTL_EX_NOT_FOUND,
-    NTL_EX_MAT_NOT_INVERTIBLE,
-    NTL_EX_INVAL,
-    NTL_EX_OVERFLOW,
-    NTL_EX_IO,
-    NTL_EX_DIV_BY_ZERO,
-} NtlException;
+    NTTEC_EX_NOT_FOUND,
+    NTTEC_EX_MAT_NOT_INVERTIBLE,
+    NTTEC_EX_INVAL,
+    NTTEC_EX_OVERFLOW,
+    NTTEC_EX_IO,
+    NTTEC_EX_DIV_BY_ZERO,
+} NttecException;
 
 #endif

@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_GF2N_H__
-#define __NTL_GF2N_H__
+#ifndef __NTTEC_GF2N_H__
+#define __NTTEC_GF2N_H__
 
 #include <climits>
 #include "gf.h"
@@ -448,7 +448,7 @@ T GF2N<T>::log(T a, T b)
     }
 
     // not found
-    throw NTL_EX_NOT_FOUND;
+    throw NTTEC_EX_NOT_FOUND;
 }
 
 template <typename T>

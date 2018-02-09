@@ -1,5 +1,4 @@
-
-#include "ntl.h"
+#include "nttec.h"
 
 extern void arith_utest();
 extern void gf_utest();

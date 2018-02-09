@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_V2VEC_H__
-#define __NTL_V2VEC_H__
+#ifndef __NTTEC_V2VEC_H__
+#define __NTTEC_V2VEC_H__
 
 #include "rn.h"
 #include "vec.h"

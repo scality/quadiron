@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_MAT_H__
-#define __NTL_MAT_H__
+#ifndef __NTTEC_MAT_H__
+#define __NTTEC_MAT_H__
 
 #include <iostream>
 
@@ -212,7 +212,7 @@ void Mat<T>::inv(void)
     for (i = 0; i < n_rows; i++) {
         for (j = 0; j < n_cols; j++) {
             if (tmp.get(i, j) != (i == j) ? 1 : 0)
-                throw NTL_EX_MAT_NOT_INVERTIBLE;
+                throw NTTEC_EX_MAT_NOT_INVERTIBLE;
         }
     }
 

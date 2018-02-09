@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_NGFF4_H__
-#define __NTL_NGFF4_H__
+#ifndef __NTTEC_NGFF4_H__
+#define __NTTEC_NGFF4_H__
 
 #include "gf.h"
 #include "gfp.h"
