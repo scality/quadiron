@@ -5,6 +5,11 @@
 #include "gf.h"
 #include "vec.h"
 
+namespace nttec {
+
+/** Various Fast Fourier Transform implementations. */
+namespace fft {
+
 /*
  * DFT over the field gf and over vectors of size n with w as n-th
  * root of unity
@@ -12,29 +17,29 @@
 template <typename T>
 class DFT {
   protected:
-    GF<T>* gf;
+    gf::GF<T>* gf;
     int n;
     T inv_n_mod_p;
-    Vec<T>* vec_inv_n = nullptr;
-    DFT(GF<T>* gf, int n);
+    vec::Vec<T>* vec_inv_n = nullptr;
+    DFT(gf::GF<T>* gf, int n);
 
   public:
     virtual ~DFT();
     int get_n();
-    GF<T>* get_gf();
-    virtual void fft(Vec<T>* output, Vec<T>* input) = 0;
-    virtual void ifft(Vec<T>* output, Vec<T>* input) = 0;
-    virtual void fft_inv(Vec<T>* output, Vec<T>* input) = 0;
+    gf::GF<T>* get_gf();
+    virtual void fft(vec::Vec<T>* output, vec::Vec<T>* input) = 0;
+    virtual void ifft(vec::Vec<T>* output, vec::Vec<T>* input) = 0;
+    virtual void fft_inv(vec::Vec<T>* output, vec::Vec<T>* input) = 0;
 };
 
 template <typename T>
-DFT<T>::DFT(GF<T>* gf, int n)
+DFT<T>::DFT(gf::GF<T>* gf, int n)
 {
     this->gf = gf;
     this->n = n;
     this->inv_n_mod_p = gf->inv(n) % gf->get_sub_field()->card();
 
-    this->vec_inv_n = new Vec<T>(this->gf, n);
+    this->vec_inv_n = new vec::Vec<T>(this->gf, n);
     for (int i = 0; i < n; i++) {
         this->vec_inv_n->set(i, this->inv_n_mod_p);
     }
@@ -54,9 +59,12 @@ int DFT<T>::get_n()
 }
 
 template <typename T>
-GF<T>* DFT<T>::get_gf()
+gf::GF<T>* DFT<T>::get_gf()
 {
     return gf;
 }
+
+} // namespace fft
+} // namespace nttec
 
 #endif

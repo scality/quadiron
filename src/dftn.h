@@ -5,6 +5,9 @@
 #include "dft.h"
 #include "mat.h"
 
+namespace nttec {
+namespace fft {
+
 /**
  * Algorithm for very small n
  */
@@ -16,18 +19,18 @@ class DFTN : public DFT<T> {
     Mat<T>* W;
     Mat<T>* inv_W;
     void compute_W(Mat<T>* _W, T _w);
-    void _fft(Vec<T>* output, Vec<T>* input, Mat<T>* _W);
+    void _fft(vec::Vec<T>* output, vec::Vec<T>* input, Mat<T>* _W);
 
   public:
-    DFTN(GF<T>* gf, int n, T w);
+    DFTN(gf::GF<T>* gf, int n, T w);
     ~DFTN();
-    void fft(Vec<T>* output, Vec<T>* input);
-    void ifft(Vec<T>* output, Vec<T>* input);
-    void fft_inv(Vec<T>* output, Vec<T>* input);
+    void fft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void ifft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void fft_inv(vec::Vec<T>* output, vec::Vec<T>* input);
 };
 
 template <typename T>
-DFTN<T>::DFTN(GF<T>* gf, int n, T w) : DFT<T>(gf, n)
+DFTN<T>::DFTN(gf::GF<T>* gf, int n, T w) : DFT<T>(gf, n)
 {
     this->w = w;
     this->inv_w = gf->inv(w);
@@ -63,13 +66,13 @@ void DFTN<T>::compute_W(Mat<T>* _W, T _w)
 }
 
 template <typename T>
-void DFTN<T>::_fft(Vec<T>* output, Vec<T>* input, Mat<T>* _W)
+void DFTN<T>::_fft(vec::Vec<T>* output, vec::Vec<T>* input, Mat<T>* _W)
 {
     _W->mul(output, input);
 }
 
 template <typename T>
-void DFTN<T>::fft(Vec<T>* output, Vec<T>* input)
+void DFTN<T>::fft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     _fft(output, input, W);
 }
@@ -80,17 +83,20 @@ void DFTN<T>::fft(Vec<T>* output, Vec<T>* input)
  *
  */
 template <typename T>
-void DFTN<T>::fft_inv(Vec<T>* output, Vec<T>* input)
+void DFTN<T>::fft_inv(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     _fft(output, input, inv_W);
 }
 
 template <typename T>
-void DFTN<T>::ifft(Vec<T>* output, Vec<T>* input)
+void DFTN<T>::ifft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     _fft(output, input, inv_W);
     if (this->inv_n_mod_p > 1)
         output->mul_scalar(this->inv_n_mod_p);
 }
+
+} // namespace fft
+} // namespace nttec
 
 #endif

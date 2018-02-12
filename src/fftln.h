@@ -6,6 +6,9 @@
 #include "mat.h"
 #include "vec.h"
 
+namespace nttec {
+namespace fft {
+
 /**
  * Algorithm for very large n=2^l
  */
@@ -15,35 +18,35 @@ class FFTLN : public DFT<T> {
     int l;
     T w;
     T inv_w;
-    Vec<T>* W;
-    Vec<T>* inv_W;
+    vec::Vec<T>* W;
+    vec::Vec<T>* inv_W;
     Mat<T>* tmp2;
     Mat<T>* tmp3;
     Mat<T>* tmp4;
-    Vec<T>* tmp5;
+    vec::Vec<T>* tmp5;
     int _get_p(int i, int j);
     int _get_p0(int i, int j, int s);
     int _get_p1(int i, int j, int s);
     void _pre_compute_consts();
-    void _fft(Vec<T>* output, Vec<T>* input, Vec<T>* _W);
+    void _fft(vec::Vec<T>* output, vec::Vec<T>* input, vec::Vec<T>* _W);
 
   public:
-    FFTLN(GF<T>* gf, int l, T w);
+    FFTLN(gf::GF<T>* gf, int l, T w);
     ~FFTLN();
-    void fft(Vec<T>* output, Vec<T>* input);
-    void ifft(Vec<T>* output, Vec<T>* input);
-    void fft_inv(Vec<T>* output, Vec<T>* input);
+    void fft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void ifft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void fft_inv(vec::Vec<T>* output, vec::Vec<T>* input);
 };
 
 template <typename T>
-FFTLN<T>::FFTLN(GF<T>* gf, int l, T w) : DFT<T>(gf, _exp2<T>(l))
+FFTLN<T>::FFTLN(gf::GF<T>* gf, int l, T w) : DFT<T>(gf, arith::_exp2<T>(l))
 {
     this->l = l;
     this->w = w;
     this->inv_w = gf->inv(w);
 
-    this->W = new Vec<T>(gf, this->n + 1);
-    this->inv_W = new Vec<T>(gf, this->n + 1);
+    this->W = new vec::Vec<T>(gf, this->n + 1);
+    this->inv_W = new vec::Vec<T>(gf, this->n + 1);
     gf->compute_omegas_cached(W, this->n, w);
     gf->compute_omegas_cached(inv_W, this->n, inv_w);
 
@@ -136,7 +139,7 @@ void FFTLN<T>::_pre_compute_consts()
     tmp2 = new Mat<T>(this->gf, this->l + 1, this->n);
     tmp3 = new Mat<T>(this->gf, this->l + 1, this->n);
     tmp4 = new Mat<T>(this->gf, this->l + 1, this->n);
-    tmp5 = new Vec<T>(this->gf, this->n);
+    tmp5 = new vec::Vec<T>(this->gf, this->n);
 
     tmp2->zero_fill();
     tmp3->zero_fill();
@@ -147,19 +150,21 @@ void FFTLN<T>::_pre_compute_consts()
         for (int j = 0; j <= this->n - 1; j++) {
             T _tmp1 = 0;
             for (int k = 1; k <= i; k++)
-                _tmp1 += _get_p(j, this->l - i + k) * _exp2<T>(i - k);
+                _tmp1 += _get_p(j, this->l - i + k) * arith::_exp2<T>(i - k);
 
             T _tmp2 = 0;
             for (int k = 1; k <= this->l; k++)
-                _tmp2 += _get_p0(j, k, this->l - i + 1) * _exp2<T>(k - 1);
+                _tmp2 +=
+                    _get_p0(j, k, this->l - i + 1) * arith::_exp2<T>(k - 1);
             tmp2->set(i, j, _tmp2);
 
             T _tmp3 = 0;
             for (int k = 1; k <= this->l; k++)
-                _tmp3 += _get_p1(j, k, this->l - i + 1) * _exp2<T>(k - 1);
+                _tmp3 +=
+                    _get_p1(j, k, this->l - i + 1) * arith::_exp2<T>(k - 1);
             tmp3->set(i, j, _tmp3);
 
-            T _tmp4 = _tmp1 * _exp2<T>(this->l - i);
+            T _tmp4 = _tmp1 * arith::_exp2<T>(this->l - i);
             tmp4->set(i, j, _tmp4);
         }
     }
@@ -167,13 +172,13 @@ void FFTLN<T>::_pre_compute_consts()
     for (int i = 0; i <= this->n - 1; i++) {
         T _tmp5 = 0;
         for (int k = 1; k <= this->l; k++)
-            _tmp5 += _get_p(i, this->l - k + 1) * _exp2<T>(k - 1);
+            _tmp5 += _get_p(i, this->l - k + 1) * arith::_exp2<T>(k - 1);
         tmp5->set(i, _tmp5);
     }
 }
 
 template <typename T>
-void FFTLN<T>::_fft(Vec<T>* output, Vec<T>* input, Vec<T>* _W)
+void FFTLN<T>::_fft(vec::Vec<T>* output, vec::Vec<T>* input, vec::Vec<T>* _W)
 {
     Mat<T> phi(this->gf, this->l + 1, this->n);
 
@@ -197,23 +202,26 @@ void FFTLN<T>::_fft(Vec<T>* output, Vec<T>* input, Vec<T>* _W)
 }
 
 template <typename T>
-void FFTLN<T>::fft(Vec<T>* output, Vec<T>* input)
+void FFTLN<T>::fft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     _fft(output, input, W);
 }
 
 template <typename T>
-void FFTLN<T>::fft_inv(Vec<T>* output, Vec<T>* input)
+void FFTLN<T>::fft_inv(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     _fft(output, input, inv_W);
 }
 
 template <typename T>
-void FFTLN<T>::ifft(Vec<T>* output, Vec<T>* input)
+void FFTLN<T>::ifft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     fft_inv(output, input);
     if (this->inv_n_mod_p > 1)
         output->mul_scalar(this->inv_n_mod_p);
 }
+
+} // namespace fft
+} // namespace nttec
 
 #endif

@@ -6,6 +6,9 @@
 #include "vec.h"
 #include "vmvec.h"
 
+namespace nttec {
+namespace fft {
+
 /**
  * Additive FFT algorithm of length n = 2^m (arbitrary m)
  *  Algorithm 2 in the paper of Shuhong Gao and Todd Mateer:
@@ -22,41 +25,41 @@ class FFTADD : public DFT<T> {
     T k, deg0, deg1, deg2;
     T beta_1, inv_beta_1;
     T beta_m, inv_beta_m;
-    Vec<T>* betas = nullptr;
-    Vec<T>* gammas = nullptr;
-    Vec<T>* deltas = nullptr;
-    Vec<T>* beta_m_powers = nullptr;
-    Vec<T>* G = nullptr;
-    Vec<T>* g0 = nullptr;
-    Vec<T>* g1 = nullptr;
-    Vec<T>* u = nullptr;
-    Vec<T>* v = nullptr;
-    Vec<T>* mem = nullptr;
+    vec::Vec<T>* betas = nullptr;
+    vec::Vec<T>* gammas = nullptr;
+    vec::Vec<T>* deltas = nullptr;
+    vec::Vec<T>* beta_m_powers = nullptr;
+    vec::Vec<T>* G = nullptr;
+    vec::Vec<T>* g0 = nullptr;
+    vec::Vec<T>* g1 = nullptr;
+    vec::Vec<T>* u = nullptr;
+    vec::Vec<T>* v = nullptr;
+    vec::Vec<T>* mem = nullptr;
     FFTADD<T>* fft_add = nullptr;
 
   public:
-    FFTADD(GF<T>* gf, T m, Vec<T>* betas = nullptr);
+    FFTADD(gf::GF<T>* gf, T m, vec::Vec<T>* betas = nullptr);
     ~FFTADD();
     void compute_basis();
     void compute_beta_m_powers();
     void compute_G();
-    void compute_B(Vec<T>* B);
-    void compute_subspace(Vec<T>* basis, Vec<T>* subspace);
-    void fft(Vec<T>* output, Vec<T>* input);
-    void ifft(Vec<T>* output, Vec<T>* input);
-    void fft_inv(Vec<T>* output, Vec<T>* input);
-    void taylor_expand_t2(Vec<T>* input, int n, bool do_copy = false);
-    void taylor_expand(Vec<T>* output, Vec<T>* input, int n, int t);
-    void inv_taylor_expand_t2(Vec<T>* output);
-    void inv_taylor_expand(Vec<T>* output, Vec<T>* input, int t);
+    void compute_B(vec::Vec<T>* B);
+    void compute_subspace(vec::Vec<T>* basis, vec::Vec<T>* subspace);
+    void fft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void ifft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void fft_inv(vec::Vec<T>* output, vec::Vec<T>* input);
+    void taylor_expand_t2(vec::Vec<T>* input, int n, bool do_copy = false);
+    void taylor_expand(vec::Vec<T>* output, vec::Vec<T>* input, int n, int t);
+    void inv_taylor_expand_t2(vec::Vec<T>* output);
+    void inv_taylor_expand(vec::Vec<T>* output, vec::Vec<T>* input, int t);
 
   private:
     int find_k(int n, int t);
-    void _taylor_expand_t2(Vec<T>* input, int n, int k, int start);
-    void _taylor_expand(Vec<T>* input, int n, int t);
-    void mul_xt_x(Vec<T>* vec, int t);
-    void _fft(Vec<T>* output, Vec<T>* input);
-    void _ifft(Vec<T>* output, Vec<T>* input);
+    void _taylor_expand_t2(vec::Vec<T>* input, int n, int k, int start);
+    void _taylor_expand(vec::Vec<T>* input, int n, int t);
+    void mul_xt_x(vec::Vec<T>* vec, int t);
+    void _fft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void _ifft(vec::Vec<T>* output, vec::Vec<T>* input);
 };
 
 /**
@@ -67,7 +70,8 @@ class FFTADD : public DFT<T> {
  * @return
  */
 template <typename T>
-FFTADD<T>::FFTADD(GF<T>* gf, T m, Vec<T>* betas) : DFT<T>(gf, _exp2<T>(m))
+FFTADD<T>::FFTADD(gf::GF<T>* gf, T m, vec::Vec<T>* betas)
+    : DFT<T>(gf, arith::_exp2<T>(m))
 {
     assert(m >= 1);
     this->m = m;
@@ -77,7 +81,7 @@ FFTADD<T>::FFTADD(GF<T>* gf, T m, Vec<T>* betas) : DFT<T>(gf, _exp2<T>(m))
         assert(gf->get_sub_field()->card() == 2);
 
         create_betas = true;
-        betas = new Vec<T>(gf, m);
+        betas = new vec::Vec<T>(gf, m);
         T beta = this->gf->get_prime_root();
         betas->set(0, beta);
         for (T i = 1; i < m - 1; i++) {
@@ -91,23 +95,23 @@ FFTADD<T>::FFTADD(GF<T>* gf, T m, Vec<T>* betas) : DFT<T>(gf, _exp2<T>(m))
     this->beta_m = betas->get(m - 1);
     this->inv_beta_m = gf->inv(this->beta_m);
 
-    this->beta_m_powers = new Vec<T>(gf, this->n);
+    this->beta_m_powers = new vec::Vec<T>(gf, this->n);
     this->compute_beta_m_powers();
     if (m > 1) {
-        this->k = _exp2<T>(m - 1);
+        this->k = arith::_exp2<T>(m - 1);
 
         // compute gammas and deltas
-        this->gammas = new Vec<T>(gf, m - 1);
-        this->deltas = new Vec<T>(gf, m - 1);
-        this->G = new Vec<T>(gf, this->k);
+        this->gammas = new vec::Vec<T>(gf, m - 1);
+        this->deltas = new vec::Vec<T>(gf, m - 1);
+        this->G = new vec::Vec<T>(gf, this->k);
         this->compute_basis();
 
-        this->u = new Vec<T>(gf, this->k);
-        this->v = new Vec<T>(gf, this->k);
-        this->g0 = new Vec<T>(gf, this->k);
-        this->g1 = new Vec<T>(gf, this->k);
+        this->u = new vec::Vec<T>(gf, this->k);
+        this->v = new vec::Vec<T>(gf, this->k);
+        this->g0 = new vec::Vec<T>(gf, this->k);
+        this->g1 = new vec::Vec<T>(gf, this->k);
 
-        this->mem = new Vec<T>(gf, this->n);
+        this->mem = new vec::Vec<T>(gf, this->n);
         this->fft_add = new FFTADD(gf, m - 1, this->deltas);
     }
 }
@@ -179,7 +183,7 @@ void FFTADD<T>::compute_G()
  * Compute subspace spanned by betas
  */
 template <typename T>
-void FFTADD<T>::compute_B(Vec<T>* B)
+void FFTADD<T>::compute_B(vec::Vec<T>* B)
 {
     compute_subspace(betas, B);
 }
@@ -194,26 +198,26 @@ void FFTADD<T>::compute_B(Vec<T>* B)
  * @param subspace: output, a vector of 2^dim length
  */
 template <typename T>
-void FFTADD<T>::compute_subspace(Vec<T>* basis, Vec<T>* subspace)
+void FFTADD<T>::compute_subspace(vec::Vec<T>* basis, vec::Vec<T>* subspace)
 {
     int i, j;
     int size = 1;
     int dim = basis->get_n();
     T val = 0;
-    assert(subspace->get_n() == _exp2<T>(dim));
+    assert(subspace->get_n() == arith::_exp2<T>(dim));
     // index of element in G
     std::vector<int> ids;
     // create sequence 2^i
-    Vec<T> powers2(this->gf, dim);
+    vec::Vec<T> powers2(this->gf, dim);
     for (i = 0; i < dim; i++)
-        powers2.set(i, _exp2<T>(i));
+        powers2.set(i, arith::_exp2<T>(i));
 
     ids.push_back(0);
     subspace->set(0, 0);
     for (i = 0; i < dim; i++) {
         for (j = size - 1; j >= 0; j--) {
             int id = this->gf->add(ids.at(j), powers2.get(i));
-            int diff = _log2<T>(this->gf->add(id, ids.back()));
+            int diff = arith::_log2<T>(this->gf->add(id, ids.back()));
             val = this->gf->add(val, basis->get(diff));
             subspace->set(id, val);
             // for next i
@@ -225,7 +229,7 @@ void FFTADD<T>::compute_subspace(Vec<T>* basis, Vec<T>* subspace)
 }
 
 template <typename T>
-void FFTADD<T>::_fft(Vec<T>* output, Vec<T>* input)
+void FFTADD<T>::_fft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     mem->copy(input, this->n);
     if (beta_m > 1)
@@ -251,14 +255,14 @@ void FFTADD<T>::_fft(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFTADD<T>::_ifft(Vec<T>* output, Vec<T>* input)
+void FFTADD<T>::_ifft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     output->zero_fill();
     /*
      * input = (w0, w1)
      * calculate u, v s.t. v = w1 - w0, u = w0 - G * v
      */
-    VmVec<T> w0(input, k);
+    vec::VmVec<T> w0(input, k);
     // v = w_1
     v->copy(input, k, 0, k);
     // v = w0 + w1
@@ -312,7 +316,7 @@ void FFTADD<T>::_ifft(Vec<T>* output, Vec<T>* input)
  * @param input: input polynomial f(x)
  */
 template <typename T>
-void FFTADD<T>::fft(Vec<T>* output, Vec<T>* input)
+void FFTADD<T>::fft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     if (m > 1)
         _fft(output, input);
@@ -327,7 +331,7 @@ void FFTADD<T>::fft(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFTADD<T>::fft_inv(Vec<T>* output, Vec<T>* input)
+void FFTADD<T>::fft_inv(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     if (m > 1)
         return _ifft(output, input);
@@ -373,7 +377,7 @@ void FFTADD<T>::fft_inv(Vec<T>* output, Vec<T>* input)
  * @param input: input polynomial f(x)
  */
 template <typename T>
-void FFTADD<T>::ifft(Vec<T>* output, Vec<T>* input)
+void FFTADD<T>::ifft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     fft_inv(output, input);
 }
@@ -394,7 +398,7 @@ void FFTADD<T>::ifft(Vec<T>* output, Vec<T>* input)
  *  modify input vector
  */
 template <typename T>
-void FFTADD<T>::taylor_expand_t2(Vec<T>* input, int n, bool do_copy)
+void FFTADD<T>::taylor_expand_t2(vec::Vec<T>* input, int n, bool do_copy)
 {
     assert(n >= 1);
     assert(input->get_n() <= n);
@@ -402,9 +406,9 @@ void FFTADD<T>::taylor_expand_t2(Vec<T>* input, int n, bool do_copy)
     // find k s.t. t2^k < n <= 2 *t2^k
     int _k = find_k(n, 2);
 
-    Vec<T>* _input;
+    vec::Vec<T>* _input;
     if (do_copy) {
-        _input = new Vec<T>(this->gf, input->get_n());
+        _input = new vec::Vec<T>(this->gf, input->get_n());
         _input->copy(input, input->get_n());
     } else
         _input = input;
@@ -438,19 +442,19 @@ void FFTADD<T>::taylor_expand_t2(Vec<T>* input, int n, bool do_copy)
  * @param s_deg: start degree of g0 and g1
  */
 template <typename T>
-void FFTADD<T>::_taylor_expand_t2(Vec<T>* input, int n, int _k, int s_deg)
+void FFTADD<T>::_taylor_expand_t2(vec::Vec<T>* input, int n, int _k, int s_deg)
 {
-    int deg2 = _exp2<T>(_k);
+    int deg2 = arith::_exp2<T>(_k);
     int deg0 = 2 * deg2;
     int deg1 = deg0 - deg2;
 
-    VmVec<T> _g0(input, deg0);
-    VmVec<T> _g1(input, n - deg0, deg0);
+    vec::VmVec<T> _g0(input, deg0);
+    vec::VmVec<T> _g1(input, n - deg0, deg0);
 
     // find f0, f1, f2 s.t.
     // f = f0 + x^(t2^k)( f1 + x^( (t-1)2^k) f2 )
     // NOTE: f0 === g0
-    VmVec<T> f2(input, deg2, deg0 + deg1);
+    vec::VmVec<T> f2(input, deg2, deg0 + deg1);
 
     // since deg1 >= deg2, add f2 into f1 to perform h === f1
     // that is also actually g1
@@ -480,7 +484,7 @@ void FFTADD<T>::_taylor_expand_t2(Vec<T>* input, int n, int _k, int s_deg)
  *            The polynomial is of degree at most (n-t*2^k)
  */
 template <typename T>
-void FFTADD<T>::inv_taylor_expand_t2(Vec<T>* output)
+void FFTADD<T>::inv_taylor_expand_t2(vec::Vec<T>* output)
 {
     assert(g0->get_n() == g1->get_n());
     output->zero_fill();
@@ -499,7 +503,7 @@ void FFTADD<T>::inv_taylor_expand_t2(Vec<T>* output)
 
 // multiply vec as f(x) to (x^t + x)
 template <typename T>
-void FFTADD<T>::mul_xt_x(Vec<T>* vec, int t)
+void FFTADD<T>::mul_xt_x(vec::Vec<T>* vec, int t)
 {
     int i;
     // f_i = f_{i-1} + f_{i-t} for i >= t
@@ -548,7 +552,11 @@ inline int FFTADD<T>::find_k(int n, int t)
  * @param t
  */
 template <typename T>
-void FFTADD<T>::taylor_expand(Vec<T>* output, Vec<T>* input, int n, int t)
+void FFTADD<T>::taylor_expand(
+    vec::Vec<T>* output,
+    vec::Vec<T>* input,
+    int n,
+    int t)
 {
     assert(n >= 1);
     assert(t > 1);
@@ -563,24 +571,24 @@ void FFTADD<T>::taylor_expand(Vec<T>* output, Vec<T>* input, int n, int t)
 }
 
 template <typename T>
-void FFTADD<T>::_taylor_expand(Vec<T>* input, int n, int t)
+void FFTADD<T>::_taylor_expand(vec::Vec<T>* input, int n, int t)
 {
     // find k s.t. t2^k < n <= 2 *t2^k
     int k = find_k(n, t);
-    int deg2 = _exp2<T>(k);
+    int deg2 = arith::_exp2<T>(k);
     int deg0 = t * deg2;
     int deg1 = deg0 - deg2;
     int g1deg = n - deg0;
     int hdeg = deg1;
     if (g1deg < hdeg)
         hdeg = g1deg;
-    VmVec<T> _g0(input, deg0);
-    VmVec<T> _g1(input, g1deg, deg0);
+    vec::VmVec<T> _g0(input, deg0);
+    vec::VmVec<T> _g1(input, g1deg, deg0);
 
     // find f0, f1, f2 s.t.
     // f = f0 + x^(t2^k)( f1 + x^( (t-1)2^k) f2 )
     // NOTE: f0 is stored by _g0, f1 is stored by _g1
-    VmVec<T> f2(input, deg2, deg0 + deg1);
+    vec::VmVec<T> f2(input, deg2, deg0 + deg1);
 
     // since deg1 >= deg2, add f2 into f1 to perform h == f1 + f2
     // that is also actually g1
@@ -608,12 +616,15 @@ void FFTADD<T>::_taylor_expand(Vec<T>* input, int n, int t)
  * @param t
  */
 template <typename T>
-void FFTADD<T>::inv_taylor_expand(Vec<T>* output, Vec<T>* input, int t)
+void FFTADD<T>::inv_taylor_expand(
+    vec::Vec<T>* output,
+    vec::Vec<T>* input,
+    int t)
 {
     output->zero_fill();
 
     int i = input->get_n() - t;
-    VmVec<T> hi(input, t, i);
+    vec::VmVec<T> hi(input, t, i);
     output->add_mutual(&hi);
     while (i >= t) {
         i -= t;
@@ -623,5 +634,8 @@ void FFTADD<T>::inv_taylor_expand(Vec<T>* output, Vec<T>* input, int t)
         output->add_mutual(&hi);
     }
 }
+
+} // namespace fft
+} // namespace nttec
 
 #endif

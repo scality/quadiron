@@ -9,11 +9,16 @@
 #include "big_int.h"
 #include "core.h"
 
+namespace nttec {
+
 template <typename T>
 using DoubleT = typename Double<T>::T;
 
 template <typename T>
 using SignedDoubleT = typename SignedDouble<T>::T;
+
+/** Base/core arithmetical functions of NTTEC. */
+namespace arith {
 
 template <class T>
 T _sqrt(T n);
@@ -810,5 +815,8 @@ void _get_prime_factors_final(
             output->push_back(primes->at(i));
         }
 }
+
+} // namespace arith
+} // namespace nttec
 
 #endif

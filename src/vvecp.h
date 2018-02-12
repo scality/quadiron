@@ -4,6 +4,9 @@
 
 #include "vec.h"
 
+namespace nttec {
+namespace vec {
+
 /**
  * Virtual vector that padds zero_chunk beyond managed vector length
  */
@@ -45,5 +48,8 @@ VVecp<T>::~VVecp()
     this->mem->shrink_to_fit();
     delete this->mem;
 }
+
+} // namespace vec
+} // namespace nttec
 
 #endif

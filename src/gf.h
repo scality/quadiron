@@ -8,6 +8,11 @@
 #include "core.h"
 #include "rn.h"
 
+namespace nttec {
+
+/** Galois Fields handling. */
+namespace gf {
+
 template <typename T>
 class GFP;
 
@@ -33,7 +38,7 @@ class GF : public RN<T> {
 };
 
 template <typename T>
-GF<T>::GF(T p, int n) : RN<T>(_exp<T>(p, n))
+GF<T>::GF(T p, int n) : RN<T>(arith::_exp<T>(p, n))
 {
     // XXX shall check that p is prime
     this->p = p;
@@ -75,5 +80,8 @@ int GF<T>::get_n()
 {
     return n;
 }
+
+} // namespace gf
+} // namespace nttec
 
 #endif

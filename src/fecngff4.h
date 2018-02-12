@@ -11,6 +11,9 @@
 #include "vec.h"
 #include "vvec.h"
 
+namespace nttec {
+namespace fec {
+
 /**
  * GF_2^2^k+1 based RS (Fermat Number Transform)
  * As suggested by the paper:
@@ -20,9 +23,9 @@
 template <typename T>
 class FECNGFF4RS : public FEC<T> {
   private:
-    FFT2K<T>* fft = nullptr;
-    GF<uint32_t>* sub_field;
-    NGFF4<T>* ngff4;
+    fft::FFT2K<T>* fft = nullptr;
+    gf::GF<uint32_t>* sub_field;
+    gf::NGFF4<T>* ngff4;
     int gf_n;
 
   public:
@@ -35,7 +38,7 @@ class FECNGFF4RS : public FEC<T> {
         assert(word_size <= 8);
         gf_n = word_size / 2;
 
-        ngff4 = new NGFF4<T>(gf_n);
+        ngff4 = new gf::NGFF4<T>(gf_n);
         this->gf = ngff4;
 
         sub_field = ngff4->get_sub_field();
@@ -51,7 +54,7 @@ class FECNGFF4RS : public FEC<T> {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        this->fft = new FFT2K<T>(ngff4, n);
+        this->fft = new fft::FFT2K<T>(ngff4, n);
     }
 
     ~FECNGFF4RS()
@@ -74,17 +77,17 @@ class FECNGFF4RS : public FEC<T> {
      * @param words must be n_data
      */
     void encode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* words)
+        vec::Vec<T>* words)
     {
         // std::cout << "words:"; words->dump();
         for (unsigned i = 0; i < this->n_data; i++) {
             words->set(i, ngff4->pack(words->get(i)));
         }
         // std::cout << "pack words:"; words->dump();
-        VVec<T> vwords(words, n);
+        vec::VVec<T> vwords(words, n);
         fft->fft(output, &vwords);
         // std::cout << "encoded:"; output->dump();
         for (unsigned i = 0; i < this->code_len; i++) {
@@ -134,15 +137,15 @@ class FECNGFF4RS : public FEC<T> {
      * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
      */
     void decode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* fragments_ids,
-        Vec<T>* words)
+        vec::Vec<T>* fragments_ids,
+        vec::Vec<T>* words)
     {
         int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        Vec<T> vx(ngff4, k);
+        vec::Vec<T> vx(ngff4, k);
         for (int i = 0; i < k; i++) {
             vx.set(
                 i,
@@ -192,7 +195,7 @@ class FECNGFF4RS : public FEC<T> {
         // std::cout << "A'(x)="; _A.dump();
 
         // evaluate n_i=v_i/A'_i(x_i)
-        Vec<T> _n(ngff4, k);
+        vec::Vec<T> _n(ngff4, k);
         for (int i = 0; i < k; i++) {
             _n.set(i, ngff4->div(words->get(i), _A.eval(vx.get(i))));
         }
@@ -225,5 +228,8 @@ class FECNGFF4RS : public FEC<T> {
         // std::cout << "decoded"; output->dump();
     }
 };
+
+} // namespace fec
+} // namespace nttec
 
 #endif

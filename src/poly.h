@@ -7,20 +7,26 @@
 #include "core.h"
 #include "gf.h"
 
+namespace nttec {
+
+namespace vec {
+
 template <typename T>
 class Vec;
+
+} // namespace vec
 
 template <typename T>
 class Poly {
   private:
     struct Term : std::map<int, T> {
     };
-    GF<T>* gf;
-    GF<T>* sub_field;
+    gf::GF<T>* gf;
+    gf::GF<T>* sub_field;
     Term terms;
 
   public:
-    explicit Poly(GF<T>* gf);
+    explicit Poly(gf::GF<T>* gf);
     void clear();
     void copy(Poly<T>* src);
     void copy(Poly<T>* src, T offset);
@@ -51,7 +57,7 @@ class Poly {
     void derivative();
     T eval(T x);
     bool equal(Poly<T>* f);
-    void to_vec(Vec<T>* vec);
+    void to_vec(vec::Vec<T>* vec);
     T to_num();
     void from_num(T x, int max_deg);
     void dump(std::ostream& dest);
@@ -59,7 +65,7 @@ class Poly {
 };
 
 template <typename T>
-Poly<T>::Poly(GF<T>* gf)
+Poly<T>::Poly(gf::GF<T>* gf)
 {
     this->gf = gf;
     this->sub_field = gf->get_sub_field();
@@ -421,7 +427,7 @@ bool Poly<T>::equal(Poly<T>* f)
 }
 
 template <typename T>
-void Poly<T>::to_vec(Vec<T>* vec)
+void Poly<T>::to_vec(vec::Vec<T>* vec)
 {
     T deg = degree();
     assert(vec->get_n() > deg);
@@ -445,7 +451,7 @@ T Poly<T>::to_num()
     T result = 0;
 
     while (i >= 0) {
-        result += get(i) * _exp<T>(gf->card(), i);
+        result += get(i) * arith::_exp<T>(gf->card(), i);
         i--;
     }
     return result;
@@ -461,7 +467,7 @@ void Poly<T>::from_num(T x, int max_deg)
 {
     clear(); // XXX
     for (int i = max_deg; i >= 0; i--) {
-        T tmp = _exp<T>(gf->card(), i);
+        T tmp = arith::_exp<T>(gf->card(), i);
         T tmp2 = x / tmp;
         if (tmp2 != 0)
             set(i, tmp2);
@@ -499,5 +505,7 @@ void Poly<T>::dump()
     dump(std::cout);
     std::cout << "\n";
 }
+
+} // namespace nttec
 
 #endif

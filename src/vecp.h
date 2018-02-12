@@ -8,6 +8,9 @@
 #include <iostream>
 #include <vector>
 
+namespace nttec {
+namespace vec {
+
 /*
  * Wrapper of a vector of `n` buffers each of `size` elements of type T
  *  std::vector<T*> vec(n)
@@ -273,5 +276,8 @@ void Vecp<T>::dump(void)
     }
     std::cout << "\n)\n";
 }
+
+} // namespace vec
+} // namespace nttec
 
 #endif

@@ -4,6 +4,9 @@
 
 #include "vec.h"
 
+namespace nttec {
+namespace vec {
+
 /**
  * Virtual vector on a base vector from an offset
  *  vmvec[i] = base[i + offset]
@@ -77,5 +80,8 @@ int VmVec<T>::get_offset()
 {
     return this->offset;
 }
+
+} // namespace vec
+} // namespace nttec
 
 #endif

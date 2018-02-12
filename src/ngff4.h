@@ -8,8 +8,12 @@
 #define MASK16 0xFFFF
 #define MASK32 0xFFFFFFFF
 
+namespace nttec {
+
 template <typename T>
 class Poly;
+
+namespace gf {
 
 template <typename T>
 class NGFF4 : public GF<T> {
@@ -48,7 +52,7 @@ class NGFF4 : public GF<T> {
     T pack(T a, uint32_t flag);
     compT<T> unpack(T a);
     T get_nth_root(T n);
-    void compute_omegas(Vec<T>* W, int n, T w);
+    void compute_omegas(vec::Vec<T>* W, int n, T w);
     GF<uint32_t>* get_sub_field();
 };
 
@@ -408,7 +412,7 @@ bool NGFF4<T>::check(T a)
  * @param w n-th root of unity
  */
 template <typename T>
-void NGFF4<T>::compute_omegas(Vec<T>* W, int n, T w)
+void NGFF4<T>::compute_omegas(vec::Vec<T>* W, int n, T w)
 {
     for (int i = 0; i < n; i++) {
         W->set(i, this->exp(w, replicate(i)));
@@ -420,5 +424,8 @@ GF<uint32_t>* NGFF4<T>::get_sub_field()
 {
     return sub_field;
 }
+
+} // namespace gf
+} // namespace nttec
 
 #endif

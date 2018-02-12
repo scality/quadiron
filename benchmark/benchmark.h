@@ -13,30 +13,6 @@
 #include "prng.h"
 #include "stats.h"
 
-template class FECGF2NRS<uint32_t>;
-template class FECGF2NRS<uint64_t>;
-template class FECGF2NRS<__uint128_t>;
-
-template class FECGF2NFFTRS<uint32_t>;
-template class FECGF2NFFTRS<uint64_t>;
-template class FECGF2NFFTRS<__uint128_t>;
-
-template class FECGF2NFFTADDRS<uint32_t>;
-template class FECGF2NFFTADDRS<uint64_t>;
-template class FECGF2NFFTADDRS<__uint128_t>;
-
-template class FECGFPFFTRS<uint32_t>;
-template class FECGFPFFTRS<uint64_t>;
-template class FECGFPFFTRS<__uint128_t>;
-
-template class FECFNTRS<uint32_t>;
-template class FECFNTRS<uint64_t>;
-template class FECFNTRS<__uint128_t>;
-
-template class FECNGFF4RS<uint32_t>;
-template class FECNGFF4RS<uint64_t>;
-template class FECNGFF4RS<__uint128_t>;
-
 enum ec_type {
     EC_TYPE_ALL = 0,
     EC_TYPE_FNTRS,
@@ -274,7 +250,7 @@ class Benchmark {
     size_t chunk_size;
     uint32_t samples_nb;
     PRNG* prng = nullptr;
-    FEC<T>* fec = nullptr;
+    nttec::fec::FEC<T>* fec = nullptr;
     Params_t* params = nullptr;
 
     bool systematic_ec = false;
@@ -302,7 +278,7 @@ class Benchmark {
     // streams of repair chunks
     std::vector<std::ostream*>* r_streams = nullptr;
     // propos vector
-    std::vector<KeyValue*>* c_propos = nullptr;
+    std::vector<nttec::KeyValue*>* c_propos = nullptr;
 
     int init();
     int check_params();
@@ -318,7 +294,7 @@ class Benchmark {
     void get_avail_chunks(
         std::vector<std::istream*>* avail_d_chunks,
         std::vector<std::istream*>* avail_c_chunks,
-        std::vector<KeyValue*>* avail_c_props);
+        std::vector<nttec::KeyValue*>* avail_c_props);
     bool encode();
     bool decode();
     void show(Stats_t* stats);

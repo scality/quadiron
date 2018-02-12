@@ -6,6 +6,9 @@
 #include "gf2n.h"
 #include "mat.h"
 
+namespace nttec {
+namespace fec {
+
 /**
  * GF_2^n based RS (Cauchy or Vandermonde)
  */
@@ -36,7 +39,7 @@ class FECGF2NRS : public FEC<T> {
         if (word_size > 16)
             assert(false); // not support yet
         unsigned gf_n = 8 * word_size;
-        this->gf = new GF2N<T>(gf_n);
+        this->gf = new gf::GF2N<T>(gf_n);
 
         this->mat = new Mat<T>(this->gf, n_parities, n_data);
         if (type == CAUCHY) {
@@ -62,10 +65,10 @@ class FECGF2NRS : public FEC<T> {
     }
 
     void encode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* words)
+        vec::Vec<T>* words)
     {
         mat->mul(output, words);
     }
@@ -95,14 +98,17 @@ class FECGF2NRS : public FEC<T> {
     }
 
     void decode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* fragments_ids,
-        Vec<T>* words)
+        vec::Vec<T>* fragments_ids,
+        vec::Vec<T>* words)
     {
         decode_mat->mul(output, words);
     }
 };
+
+} // namespace fec
+} // namespace nttec
 
 #endif

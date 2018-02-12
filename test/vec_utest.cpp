@@ -7,10 +7,10 @@ class VECUtest {
     {
         std::cout << "vec_utest1\n";
 
-        GFP<T> gfp(65537);
-        Vec<T> vec1(&gfp, 16);
-        Vec<T> vec2(&gfp, 8);
-        V2Vec<T> v2vec2(&vec2);
+        nttec::gf::GFP<T> gfp(65537);
+        nttec::vec::Vec<T> vec1(&gfp, 16);
+        nttec::vec::Vec<T> vec2(&gfp, 8);
+        nttec::vec::V2Vec<T> v2vec2(&vec2);
 
         vec1.set(0, 1);
         vec1.set(1, 64);
@@ -62,10 +62,10 @@ class VECUtest {
     {
         std::cout << "vec_utest2\n";
 
-        GFP<T> gfp(65537);
-        Vec<T> vec1(&gfp, 8);
-        Vec<T> vec2(&gfp, 4);
-        V2Vec<T> v2vec2(&vec2);
+        nttec::gf::GFP<T> gfp(65537);
+        nttec::vec::Vec<T> vec1(&gfp, 8);
+        nttec::vec::Vec<T> vec2(&gfp, 4);
+        nttec::vec::V2Vec<T> v2vec2(&vec2);
 
         vec1.set(0, 5459);
         vec1.set(1, 11947);
@@ -97,9 +97,9 @@ class VECUtest {
     {
         std::cout << "vec_utest3\n";
 
-        GFP<T> gfp(65537);
+        nttec::gf::GFP<T> gfp(65537);
         int len = 20;
-        Vec<T> base_vec(&gfp, len);
+        nttec::vec::Vec<T> base_vec(&gfp, len);
         for (int i = 0; i < len; i++)
             base_vec.set(i, gfp.weak_rand());
         int len1 = 7;
@@ -110,11 +110,11 @@ class VECUtest {
         if (offset2 + len2 > len1)
             len3 = len1 - offset2;
         // vmvec1 = base_vec[offset1, .., offset1 + len1 - 1]
-        VmVec<T> vmvec1(&base_vec, len1, offset1);
+        nttec::vec::VmVec<T> vmvec1(&base_vec, len1, offset1);
         // vmvec2 = vmvec1[offset2, .., min(offset2 + len2 - 1, len1 - 1)]
-        VmVec<T> vmvec2(&vmvec1, len2, offset2);
+        nttec::vec::VmVec<T> vmvec2(&vmvec1, len2, offset2);
         // vmvec3 = base_vec[offset1 + offset2, .., offset1 + len1 - 1]
-        VmVec<T> vmvec3(&base_vec, len3, offset1 + offset2);
+        nttec::vec::VmVec<T> vmvec3(&base_vec, len3, offset1 + offset2);
         assert(vmvec3.eq(&vmvec2));
     }
 
@@ -127,16 +127,6 @@ class VECUtest {
         vec_utest3();
     }
 };
-
-template class GF<uint32_t>;
-template class GFP<uint32_t>;
-template class GF2N<uint32_t>;
-template class Vec<uint32_t>;
-
-template class GF<uint64_t>;
-template class GFP<uint64_t>;
-template class GF2N<uint64_t>;
-template class Vec<uint64_t>;
 
 void vec_utest()
 {

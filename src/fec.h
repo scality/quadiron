@@ -15,6 +15,11 @@
 #include "vec.h"
 #include "vecp.h"
 
+namespace nttec {
+
+/** Forward Error Correction implementations. */
+namespace fec {
+
 static inline timeval tick()
 {
     struct timeval tv;
@@ -33,7 +38,7 @@ static inline uint64_t hrtime_usec(timeval begin)
  * Get and cast mem of Vecp<Ts> to a vector of Td*
  */
 template <typename Ts, typename Td>
-std::vector<Td*>* cast_mem_of_vecp(Vecp<Ts>* s)
+std::vector<Td*>* cast_mem_of_vecp(vec::Vecp<Ts>* s)
 {
     int i;
     int n = s->get_n();
@@ -47,108 +52,6 @@ std::vector<Td*>* cast_mem_of_vecp(Vecp<Ts>* s)
     }
 
     return mem_d;
-}
-
-template <typename Ts, typename Td, typename Tw>
-inline void
-pack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
-{
-    int i;
-    std::vector<Tw*> tmp(n, nullptr);
-    for (i = 0; i < n; i++) {
-        tmp[i] = static_cast<Tw*>(static_cast<void*>(src->at(i)));
-        std::copy_n(tmp[i], size, dest->at(i));
-    }
-    tmp.shrink_to_fit();
-}
-
-/*
- * Cast buffers of source to a type corresponding to 'word_size'
- * Copy casted elements to buffers of destination
- *
- *  sizeof(Ts) <= sizeof(Td)
- *
- * @param src: source vector
- * @param dest: destination vector
- * @param n: number of buffers per vector
- * @param size: number of elements per destination buffer
- * @param word_size: number of bytes used to store data in each element of
- *  destination buffers
- * @return
- */
-template <typename Ts, typename Td>
-inline void pack(
-    std::vector<Ts*>* src,
-    std::vector<Td*>* dest,
-    int n,
-    size_t size,
-    size_t word_size)
-{
-    assert(sizeof(Td) >= word_size);
-    assert(word_size % sizeof(Ts) == 0);
-    // get only word_size bytes from each element
-    if (word_size == 1) {
-        pack_next<Ts, Td, uint8_t>(src, dest, n, size);
-    } else if (word_size == 2) {
-        pack_next<Ts, Td, uint16_t>(src, dest, n, size);
-    } else if (word_size == 4) {
-        pack_next<Ts, Td, uint32_t>(src, dest, n, size);
-    } else if (word_size == 8) {
-        pack_next<Ts, Td, uint64_t>(src, dest, n, size);
-    } else if (word_size == 16) {
-        pack_next<Ts, Td, __uint128_t>(src, dest, n, size);
-    }
-}
-
-template <typename Ts, typename Td, typename Tw>
-inline void
-unpack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
-{
-    int i;
-    std::vector<Tw*> tmp(n, nullptr);
-    for (i = 0; i < n; i++) {
-        tmp[i] = static_cast<Tw*>(static_cast<void*>(dest->at(i)));
-        std::copy_n(src->at(i), size, tmp[i]);
-    }
-    tmp.shrink_to_fit();
-}
-
-/*
- * Cast buffers of destination to a type corresponding to 'word_size'
- * Copy elements from source buffers to casted buffers
- *
- *  sizeof(Ts) >= sizeof(Td)
- *
- * @param src: source vector
- * @param dest: destination vector
- * @param n: number of buffers per vector
- * @param size: number of elements per source buffer
- * @param word_size: number of bytes used to store data in each element of
- *  source buffers
- * @return
- */
-template <typename Ts, typename Td>
-inline void unpack(
-    std::vector<Ts*>* src,
-    std::vector<Td*>* dest,
-    int n,
-    size_t size,
-    size_t word_size)
-{
-    assert(sizeof(Ts) >= word_size);
-    assert(word_size % sizeof(Td) == 0);
-    // get only word_size bytes from each element
-    if (word_size == 1) {
-        unpack_next<Ts, Td, uint8_t>(src, dest, n, size);
-    } else if (word_size == 2) {
-        unpack_next<Ts, Td, uint16_t>(src, dest, n, size);
-    } else if (word_size == 4) {
-        unpack_next<Ts, Td, uint32_t>(src, dest, n, size);
-    } else if (word_size == 8) {
-        unpack_next<Ts, Td, uint64_t>(src, dest, n, size);
-    } else if (word_size == 16) {
-        unpack_next<Ts, Td, __uint128_t>(src, dest, n, size);
-    }
 }
 
 /**
@@ -182,7 +85,7 @@ class FEC {
     uint64_t total_dec_usec = 0;
 
   protected:
-    GF<T>* gf;
+    gf::GF<T>* gf;
 
   public:
     FEC(FECType type,
@@ -198,15 +101,15 @@ class FEC {
      */
     virtual int get_n_outputs() = 0;
     virtual void encode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* words) = 0;
+        vec::Vec<T>* words) = 0;
     virtual void encode(
-        Vecp<T>* output,
+        vec::Vecp<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vecp<T>* words){};
+        vec::Vecp<T>* words){};
     virtual void decode_add_data(int fragment_index, int row) = 0;
     virtual void decode_add_parities(int fragment_index, int row) = 0;
     virtual void decode_build(void) = 0;
@@ -221,11 +124,11 @@ class FEC {
      *  if TYPE_2 get_n_outputs()
      */
     virtual void decode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* fragments_ids,
-        Vec<T>* words) = 0;
+        vec::Vec<T>* fragments_ids,
+        vec::Vec<T>* words) = 0;
 
     bool readw(T* ptr, std::istream* stream);
     bool writew(T val, std::ostream* stream);
@@ -249,7 +152,7 @@ class FEC {
         std::vector<KeyValue*> input_parities_props,
         std::vector<std::ostream*> output_data_bufs);
 
-    GF<T>* get_gf()
+    gf::GF<T>* get_gf()
     {
         return this->gf;
     }
@@ -410,8 +313,8 @@ void FEC<T>::encode_bufs(
     assert(output_parities_bufs.size() == n_outputs);
     assert(output_parities_props.size() == n_outputs);
 
-    Vec<T> words = Vec<T>(gf, n_data);
-    Vec<T> output = Vec<T>(gf, get_n_outputs());
+    vec::Vec<T> words(gf, n_data);
+    vec::Vec<T> output(gf, get_n_outputs());
 
     reset_stats_enc();
 
@@ -464,22 +367,22 @@ void FEC<T>::encode_packet(
     off_t offset = 0;
     bool full_word_size = (word_size == sizeof(T));
 
-    Vecp<uint8_t> words_char(n_data, buf_size);
+    vec::Vecp<uint8_t> words_char(n_data, buf_size);
     std::vector<uint8_t*>* words_mem_char = words_char.get_mem();
     std::vector<T*>* words_mem_T = nullptr;
     if (full_word_size)
         words_mem_T = cast_mem_of_vecp<uint8_t, T>(&words_char);
-    Vecp<T> words(n_data, pkt_size, words_mem_T);
+    vec::Vecp<T> words(n_data, pkt_size, words_mem_T);
     words_mem_T = words.get_mem();
 
     int output_len = get_n_outputs();
 
-    Vecp<T> output(output_len, pkt_size);
+    vec::Vecp<T> output(output_len, pkt_size);
     std::vector<T*>* output_mem_T = output.get_mem();
     std::vector<uint8_t*>* output_mem_char = nullptr;
     if (full_word_size)
         output_mem_char = cast_mem_of_vecp<T, uint8_t>(&output);
-    Vecp<uint8_t> output_char(output_len, buf_size, output_mem_char);
+    vec::Vecp<uint8_t> output_char(output_len, buf_size, output_mem_char);
     output_mem_char = output_char.get_mem();
 
     reset_stats_enc();
@@ -497,7 +400,7 @@ void FEC<T>::encode_packet(
             break;
 
         if (!full_word_size)
-            pack<uint8_t, T>(
+            vec::pack<uint8_t, T>(
                 words_mem_char, words_mem_T, n_data, pkt_size, word_size);
 
         timeval t1 = tick();
@@ -511,7 +414,7 @@ void FEC<T>::encode_packet(
         n_encode_ops++;
 
         if (!full_word_size)
-            unpack<T, uint8_t>(
+            vec::unpack<T, uint8_t>(
                 output_mem_T, output_mem_char, output_len, pkt_size, word_size);
 
         for (unsigned i = 0; i < n_outputs; i++) {
@@ -592,9 +495,9 @@ bool FEC<T>::decode_bufs(
     if (type == TYPE_1)
         n_words = n_data;
 
-    Vec<T> words(gf, n_words);
-    Vec<T> fragments_ids(gf, n_words);
-    Vec<T> output(gf, n_data);
+    vec::Vec<T> words(gf, n_words);
+    vec::Vec<T> fragments_ids(gf, n_words);
+    vec::Vec<T> output(gf, n_data);
 
     while (true) {
         words.zero_fill();
@@ -658,5 +561,8 @@ bool FEC<T>::decode_bufs(
 
     return true;
 }
+
+} // namespace fec
+} // namespace nttec
 
 #endif

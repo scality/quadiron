@@ -2,6 +2,8 @@
 
 #include "misc.h"
 
+namespace std {
+
 std::ostream& operator<<(std::ostream& dest, __uint128_t value)
 {
     std::ostream::sentry s(dest);
@@ -46,3 +48,5 @@ std::ostream& operator<<(std::ostream& dest, __int128_t value)
     }
     return dest;
 }
+
+} // namespace std

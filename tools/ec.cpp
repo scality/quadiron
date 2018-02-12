@@ -1,26 +1,9 @@
-
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "nttec.h"
 
-template class GF<uint32_t>;
-template class GFP<uint32_t>;
-template class GF2N<uint32_t>;
-template class GF2N<uint64_t>;
-template class Mat<uint32_t>;
-template class Vec<uint32_t>;
-template class FEC<uint32_t>;
-template class FECGF2NRS<uint32_t>;
-template class FECGF2NRS<uint64_t>;
-template class FECFNTRS<uint32_t>;
-template class FECGF2NFFTRS<uint32_t>;
-template class FECGF2NFFTRS<uint64_t>;
-template class FECGF2NFFTADDRS<uint32_t>;
-template class FECGF2NFFTADDRS<uint64_t>;
-template class FECGF2NFFTADDRS<__uint128_t>;
-template class FECGFPFFTRS<uint64_t>;
+#include "nttec.h"
 
 int vflag = 0;
 int tflag = 0;
@@ -55,13 +38,15 @@ char* xstrdup(const char* str)
  *
  */
 template <typename T>
-void create_coding_files(FEC<T>* fec, bool operation_on_packet = false)
+void create_coding_files(
+    nttec::fec::FEC<T>* fec,
+    bool operation_on_packet = false)
 {
     char filename[1024];
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
     std::vector<std::ostream*> c_files(fec->n_outputs, nullptr);
     std::vector<std::ostream*> c_props_files(fec->n_outputs, nullptr);
-    std::vector<KeyValue*> c_props(fec->n_outputs, nullptr);
+    std::vector<nttec::KeyValue*> c_props(fec->n_outputs, nullptr);
 
     for (unsigned i = 0; i < fec->n_data; i++) {
         snprintf(filename, sizeof(filename), "%s.d%d", prefix, i);
@@ -81,7 +66,7 @@ void create_coding_files(FEC<T>* fec, bool operation_on_packet = false)
             std::cerr << "create: opening coding props for writing " << filename
                       << "\n";
         c_props_files[i] = new std::ofstream(filename);
-        c_props[i] = new KeyValue();
+        c_props[i] = new nttec::KeyValue();
     }
 
     if (operation_on_packet)
@@ -111,13 +96,13 @@ void create_coding_files(FEC<T>* fec, bool operation_on_packet = false)
  *
  */
 template <typename T>
-bool repair_data_files(FEC<T>* fec)
+bool repair_data_files(nttec::fec::FEC<T>* fec)
 {
     char filename[1024];
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
     std::vector<std::istream*> c_files(fec->n_outputs, nullptr);
     std::vector<std::istream*> c_props_files(fec->n_outputs, nullptr);
-    std::vector<KeyValue*> c_props(fec->n_outputs, nullptr);
+    std::vector<nttec::KeyValue*> c_props(fec->n_outputs, nullptr);
     std::vector<std::ostream*> r_files(fec->n_data, nullptr);
 
     // re-read data
@@ -156,7 +141,7 @@ bool repair_data_files(FEC<T>* fec)
             c_props[i] = nullptr;
         } else {
             c_props_files[i] = new std::ifstream(filename);
-            c_props[i] = new KeyValue();
+            c_props[i] = new nttec::KeyValue();
             *(c_props_files[i]) >> *(c_props[i]);
         }
     }
@@ -196,7 +181,7 @@ bool repair_data_files(FEC<T>* fec)
 }
 
 template <typename T>
-void print_stats(FEC<T>* fec)
+void print_stats(nttec::fec::FEC<T>* fec)
 {
     std::cerr << "enc,"
               << (fec->n_encode_ops != 0
@@ -211,13 +196,13 @@ void print_stats(FEC<T>* fec)
 }
 
 template <typename T>
-void print_fec_type(FEC<T>* fec)
+void print_fec_type(nttec::fec::FEC<T>* fec)
 {
     switch (fec->type) {
-    case FEC<T>::TYPE_1:
+    case nttec::fec::FEC<T>::TYPE_1:
         std::cout << "type_1\n";
         break;
-    case FEC<T>::TYPE_2:
+    case nttec::fec::FEC<T>::TYPE_2:
         std::cout << "type_2\n";
         break;
     default:
@@ -239,14 +224,15 @@ void run_FECGF2NRS(
     gf2nrs_type mflag,
     int rflag)
 {
-    FECGF2NRS<T>* fec;
-    typename FECGF2NRS<T>::FECGF2NRSType gf2nrs_type;
+    nttec::fec::FECGF2NRS<T>* fec;
+    typename nttec::fec::FECGF2NRS<T>::FECGF2NRSType gf2nrs_type;
     ;
     if (mflag == VANDERMONDE)
-        gf2nrs_type = FECGF2NRS<T>::VANDERMONDE;
+        gf2nrs_type = nttec::fec::FECGF2NRS<T>::VANDERMONDE;
     else
-        gf2nrs_type = FECGF2NRS<T>::CAUCHY;
-    fec = new FECGF2NRS<T>(word_size, n_data, n_parities, gf2nrs_type);
+        gf2nrs_type = nttec::fec::FECGF2NRS<T>::CAUCHY;
+    fec = new nttec::fec::FECGF2NRS<T>(
+        word_size, n_data, n_parities, gf2nrs_type);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -265,8 +251,8 @@ void run_FECGF2NRS(
 template <typename T>
 void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
 {
-    FECGF2NFFTRS<T>* fec;
-    fec = new FECGF2NFFTRS<T>(word_size, n_data, n_parities);
+    nttec::fec::FECGF2NFFTRS<T>* fec;
+    fec = new nttec::fec::FECGF2NFFTRS<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -285,8 +271,8 @@ void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
 template <typename T>
 void run_FECGF2NFFTADDRS(int word_size, int n_data, int n_parities, int rflag)
 {
-    FECGF2NFFTADDRS<T>* fec;
-    fec = new FECGF2NFFTADDRS<T>(word_size, n_data, n_parities);
+    nttec::fec::FECGF2NFFTADDRS<T>* fec;
+    fec = new nttec::fec::FECGF2NFFTADDRS<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -307,8 +293,8 @@ void run_FECGFPFFTRS(unsigned word_size, int n_data, int n_parities, int rflag)
 {
     assert(sizeof(T) > word_size);
 
-    FECGFPFFTRS<T>* fec;
-    fec = new FECGFPFFTRS<T>(word_size, n_data, n_parities);
+    nttec::fec::FECGFPFFTRS<T>* fec;
+    fec = new nttec::fec::FECGFPFFTRS<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -327,9 +313,9 @@ void run_FECGFPFFTRS(unsigned word_size, int n_data, int n_parities, int rflag)
 template <typename T>
 void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
 {
-    FECFNTRS<T>* fec;
+    nttec::fec::FECFNTRS<T>* fec;
     size_t pkt_size = 1024;
-    fec = new FECFNTRS<T>(word_size, n_data, n_parities, pkt_size);
+    fec = new nttec::fec::FECFNTRS<T>(word_size, n_data, n_parities, pkt_size);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -348,8 +334,8 @@ void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
 template <typename T>
 void run_FECNGFF4RS(int word_size, int n_data, int n_parities, int rflag)
 {
-    FECNGFF4RS<T>* fec;
-    fec = new FECNGFF4RS<T>(word_size, n_data, n_parities);
+    nttec::fec::FECNGFF4RS<T>* fec;
+    fec = new nttec::fec::FECNGFF4RS<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);

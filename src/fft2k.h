@@ -5,6 +5,9 @@
 #include "dft.h"
 #include "fft2.h"
 
+namespace nttec {
+namespace fft {
+
 /**
  * Cooley-Tukey Algorithm
  *
@@ -28,36 +31,36 @@ class FFT2K : public DFT<T> {
     T w;
     T inv_w;
     size_t pkt_size;
-    Vec<T>* W = nullptr;
-    Vec<T>* inv_W = nullptr;
-    Vec<T>* W_half = nullptr;
-    Vec<T>* inv_W_half = nullptr;
+    vec::Vec<T>* W = nullptr;
+    vec::Vec<T>* inv_W = nullptr;
+    vec::Vec<T>* W_half = nullptr;
+    vec::Vec<T>* inv_W_half = nullptr;
 
     FFT2<T>* fft2 = nullptr;
     FFT2K<T>* fftk = nullptr;
 
-    Vec<T>* even = nullptr;
-    Vec<T>* _even = nullptr;
-    Vec<T>* odd = nullptr;
-    Vec<T>* _odd = nullptr;
-    V2Vec<T>* veven = nullptr;
-    V2Vec<T>* vodd = nullptr;
+    vec::Vec<T>* even = nullptr;
+    vec::Vec<T>* _even = nullptr;
+    vec::Vec<T>* odd = nullptr;
+    vec::Vec<T>* _odd = nullptr;
+    vec::V2Vec<T>* veven = nullptr;
+    vec::V2Vec<T>* vodd = nullptr;
 
-    Vecp<T>* tmp_buf = nullptr;
+    vec::Vecp<T>* tmp_buf = nullptr;
 
   public:
-    FFT2K(GF<T>* gf, int n, size_t pkt_size = 0, int N = 0);
+    FFT2K(gf::GF<T>* gf, int n, size_t pkt_size = 0, int N = 0);
     ~FFT2K();
-    void fft(Vec<T>* output, Vec<T>* input);
-    void ifft(Vec<T>* output, Vec<T>* input);
-    void fft_inv(Vec<T>* output, Vec<T>* input);
-    void fft(Vecp<T>* output, Vecp<T>* input);
-    void ifft(Vecp<T>* output, Vecp<T>* input);
-    void fft_inv(Vecp<T>* output, Vecp<T>* input);
+    void fft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void ifft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void fft_inv(vec::Vec<T>* output, vec::Vec<T>* input);
+    void fft(vec::Vecp<T>* output, vec::Vecp<T>* input);
+    void ifft(vec::Vecp<T>* output, vec::Vecp<T>* input);
+    void fft_inv(vec::Vecp<T>* output, vec::Vecp<T>* input);
 
   private:
-    void _fftp(Vecp<T>* output, Vecp<T>* input, bool inv);
-    void _fft(Vec<T>* output, Vec<T>* input, bool inv);
+    void _fftp(vec::Vecp<T>* output, vec::Vecp<T>* input, bool inv);
+    void _fft(vec::Vec<T>* output, vec::Vec<T>* input, bool inv);
 };
 
 /**
@@ -72,7 +75,7 @@ class FFT2K : public DFT<T> {
  * @return
  */
 template <typename T>
-FFT2K<T>::FFT2K(GF<T>* gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
+FFT2K<T>::FFT2K(gf::GF<T>* gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
 {
     w = gf->get_nth_root(n);
     inv_w = gf->inv(w);
@@ -85,13 +88,13 @@ FFT2K<T>::FFT2K(GF<T>* gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
         bypass = false;
         k = n / 2;
 
-        W = new Vec<T>(gf, n);
-        inv_W = new Vec<T>(gf, n);
+        W = new vec::Vec<T>(gf, n);
+        inv_W = new vec::Vec<T>(gf, n);
         gf->compute_omegas(W, n, w);
         gf->compute_omegas(inv_W, n, inv_w);
 
-        W_half = new Vec<T>(gf, k);
-        inv_W_half = new Vec<T>(gf, k);
+        W_half = new vec::Vec<T>(gf, k);
+        inv_W_half = new vec::Vec<T>(gf, k);
         for (int i = 0; i < k; i++) {
             W_half->set(i, W->get(i));
             inv_W_half->set(i, inv_W->get(i));
@@ -99,15 +102,15 @@ FFT2K<T>::FFT2K(GF<T>* gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
 
         this->fftk = new FFT2K<T>(gf, k, pkt_size, this->N);
 
-        this->even = new Vec<T>(this->gf, k);
-        this->_even = new Vec<T>(this->gf, k);
-        this->veven = new V2Vec<T>(this->_even);
-        this->odd = new Vec<T>(this->gf, k);
-        this->_odd = new Vec<T>(this->gf, k);
-        this->vodd = new V2Vec<T>(this->_odd);
+        this->even = new vec::Vec<T>(this->gf, k);
+        this->_even = new vec::Vec<T>(this->gf, k);
+        this->veven = new vec::V2Vec<T>(this->_even);
+        this->odd = new vec::Vec<T>(this->gf, k);
+        this->_odd = new vec::Vec<T>(this->gf, k);
+        this->vodd = new vec::V2Vec<T>(this->_odd);
 
         if (this->pkt_size > 0)
-            this->tmp_buf = new Vecp<T>(k, pkt_size);
+            this->tmp_buf = new vec::Vecp<T>(k, pkt_size);
     } else {
         bypass = true;
         this->fft2 = new FFT2<T>(gf);
@@ -149,7 +152,7 @@ FFT2K<T>::~FFT2K()
 }
 
 template <typename T>
-void FFT2K<T>::_fft(Vec<T>* output, Vec<T>* input, bool inv)
+void FFT2K<T>::_fft(vec::Vec<T>* output, vec::Vec<T>* input, bool inv)
 {
     for (int i = 0; i < this->n; i++) {
         if (i % 2 == 0)
@@ -176,7 +179,7 @@ void FFT2K<T>::_fft(Vec<T>* output, Vec<T>* input, bool inv)
 }
 
 template <typename T>
-void FFT2K<T>::fft(Vec<T>* output, Vec<T>* input)
+void FFT2K<T>::fft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     // input->dump();
 
@@ -187,7 +190,7 @@ void FFT2K<T>::fft(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFT2K<T>::fft_inv(Vec<T>* output, Vec<T>* input)
+void FFT2K<T>::fft_inv(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     if (bypass)
         return fft2->fft_inv(output, input);
@@ -196,7 +199,7 @@ void FFT2K<T>::fft_inv(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFT2K<T>::ifft(Vec<T>* output, Vec<T>* input)
+void FFT2K<T>::ifft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     fft_inv(output, input);
 
@@ -208,20 +211,20 @@ void FFT2K<T>::ifft(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFT2K<T>::_fftp(Vecp<T>* output, Vecp<T>* input, bool inv)
+void FFT2K<T>::_fftp(vec::Vecp<T>* output, vec::Vecp<T>* input, bool inv)
 {
     int half = this->n / 2;
     size_t size = input->get_size();
     std::vector<T*> even_mem(half, nullptr);
     std::vector<T*> odd_mem(half, nullptr);
-    Vecp<T> i_even(half, size, &even_mem);
-    Vecp<T> i_odd(half, size, &odd_mem);
+    vec::Vecp<T> i_even(half, size, &even_mem);
+    vec::Vecp<T> i_odd(half, size, &odd_mem);
 
     // separate even and odd elements of input
     input->separate_even_odd(&i_even, &i_odd);
 
-    Vecp<T> o_even(output, 0, half);
-    Vecp<T> o_odd(output, half, this->n);
+    vec::Vecp<T> o_even(output, 0, half);
+    vec::Vecp<T> o_odd(output, half, this->n);
 
     if (inv) {
         fftk->fft_inv(&o_even, &i_even);
@@ -236,9 +239,9 @@ void FFT2K<T>::_fftp(Vecp<T>* output, Vecp<T>* input, bool inv)
      * output[i] = even[i] - w * odd[i] otherwise
      */
     // prepare tm_buf
-    Vecp<T>* _o_odd = nullptr;
+    vec::Vecp<T>* _o_odd = nullptr;
     if (this->pkt_size == 0) {
-        _o_odd = new Vecp<T>(half, size);
+        _o_odd = new vec::Vecp<T>(half, size);
         tmp_buf = _o_odd;
     }
 
@@ -258,7 +261,7 @@ void FFT2K<T>::_fftp(Vecp<T>* output, Vecp<T>* input, bool inv)
 }
 
 template <typename T>
-void FFT2K<T>::fft(Vecp<T>* output, Vecp<T>* input)
+void FFT2K<T>::fft(vec::Vecp<T>* output, vec::Vecp<T>* input)
 {
     if (bypass)
         return fft2->fft(output, input);
@@ -267,7 +270,7 @@ void FFT2K<T>::fft(Vecp<T>* output, Vecp<T>* input)
 }
 
 template <typename T>
-void FFT2K<T>::fft_inv(Vecp<T>* output, Vecp<T>* input)
+void FFT2K<T>::fft_inv(vec::Vecp<T>* output, vec::Vecp<T>* input)
 {
     if (bypass)
         return fft2->fft_inv(output, input);
@@ -276,7 +279,7 @@ void FFT2K<T>::fft_inv(Vecp<T>* output, Vecp<T>* input)
 }
 
 template <typename T>
-void FFT2K<T>::ifft(Vecp<T>* output, Vecp<T>* input)
+void FFT2K<T>::ifft(vec::Vecp<T>* output, vec::Vecp<T>* input)
 {
     fft_inv(output, input);
 
@@ -286,5 +289,8 @@ void FFT2K<T>::ifft(Vecp<T>* output, Vecp<T>* input)
     if ((this->k == this->N / 2) && (this->inv_n_mod_p > 1))
         this->gf->mul_vec_to_vecp(this->vec_inv_n, output, output);
 }
+
+} // namespace fft
+} // namespace nttec
 
 #endif

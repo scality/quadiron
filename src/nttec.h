@@ -2,6 +2,11 @@
 #ifndef __NTTEC_NTTEC_H__
 #define __NTTEC_NTTEC_H__
 
+/** @namespace nttec
+ *
+ * The root namespace of the NTTEC library.
+ */
+
 #include "arith.h"
 #include "build_info.h"
 #include "config.h"

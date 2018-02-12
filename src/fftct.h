@@ -7,6 +7,9 @@
 #include "fft2.h"
 #include "vcvec.h"
 
+namespace nttec {
+namespace fft {
+
 /**
  * Cooley-Tukey FFT algorithm
  *  Implementation based on S.K. Matra's slides
@@ -44,9 +47,9 @@ class FFTCT : public DFT<T> {
     T n1;
     T n2;
     T w, w1, w2, inv_w;
-    Vec<T>* G = nullptr;
-    VcVec<T>* Y = nullptr;
-    VcVec<T>* X = nullptr;
+    vec::Vec<T>* G = nullptr;
+    vec::VcVec<T>* Y = nullptr;
+    vec::VcVec<T>* X = nullptr;
     DFT<T>* dft_outer = nullptr;
     DFT<T>* dft_inner = nullptr;
     std::vector<T>* prime_factors = nullptr;
@@ -54,18 +57,18 @@ class FFTCT : public DFT<T> {
 
   public:
     FFTCT(
-        GF<T>* gf,
+        gf::GF<T>* gf,
         T n,
         int id = 0,
         std::vector<T>* factors = nullptr,
         T _w = 0);
     ~FFTCT();
-    void fft(Vec<T>* output, Vec<T>* input);
-    void ifft(Vec<T>* output, Vec<T>* input);
-    void fft_inv(Vec<T>* output, Vec<T>* input);
+    void fft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void ifft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void fft_inv(vec::Vec<T>* output, vec::Vec<T>* input);
 
   private:
-    void _fft(Vec<T>* output, Vec<T>* input, bool inv);
+    void _fft(vec::Vec<T>* output, vec::Vec<T>* input, bool inv);
 };
 
 /**
@@ -78,13 +81,13 @@ class FFTCT : public DFT<T> {
  * @return
  */
 template <typename T>
-FFTCT<T>::FFTCT(GF<T>* gf, T n, int id, std::vector<T>* factors, T _w)
+FFTCT<T>::FFTCT(gf::GF<T>* gf, T n, int id, std::vector<T>* factors, T _w)
     : DFT<T>(gf, n)
 {
     if (factors == nullptr) {
         this->prime_factors = new std::vector<T>();
         first_layer_fft = true;
-        _get_prime_factors<T>(n, this->prime_factors);
+        arith::_get_prime_factors<T>(n, this->prime_factors);
         // w is of order-n
         w = gf->get_nth_root(n);
     } else {
@@ -112,9 +115,9 @@ FFTCT<T>::FFTCT(GF<T>* gf, T n, int id, std::vector<T>* factors, T _w)
         // else
         this->dft_inner =
             new FFTCT<T>(gf, _n2, id + 1, this->prime_factors, w2);
-        this->G = new Vec<T>(this->gf, this->n);
-        this->Y = new VcVec<T>(this->G);
-        this->X = new VcVec<T>(this->G);
+        this->G = new vec::Vec<T>(this->gf, this->n);
+        this->Y = new vec::VcVec<T>(this->G);
+        this->X = new vec::VcVec<T>(this->G);
     } else
         loop = false;
 }
@@ -160,7 +163,7 @@ void FFTCT<T>::mul_twiddle_factors(bool inv)
 }
 
 template <typename T>
-void FFTCT<T>::_fft(Vec<T>* output, Vec<T>* input, bool inv)
+void FFTCT<T>::_fft(vec::Vec<T>* output, vec::Vec<T>* input, bool inv)
 {
     X->set_vec(input);
     X->set_len(n2);
@@ -195,7 +198,7 @@ void FFTCT<T>::_fft(Vec<T>* output, Vec<T>* input, bool inv)
 }
 
 template <typename T>
-void FFTCT<T>::fft(Vec<T>* output, Vec<T>* input)
+void FFTCT<T>::fft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     if (!loop)
         return dft_outer->fft(output, input);
@@ -204,7 +207,7 @@ void FFTCT<T>::fft(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFTCT<T>::fft_inv(Vec<T>* output, Vec<T>* input)
+void FFTCT<T>::fft_inv(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     if (!loop)
         dft_outer->fft_inv(output, input);
@@ -213,7 +216,7 @@ void FFTCT<T>::fft_inv(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFTCT<T>::ifft(Vec<T>* output, Vec<T>* input)
+void FFTCT<T>::ifft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     fft_inv(output, input);
 
@@ -225,5 +228,8 @@ void FFTCT<T>::ifft(Vec<T>* output, Vec<T>* input)
         output->mul_scalar(this->inv_n_mod_p);
     }
 }
+
+} // namespace fft
+} // namespace nttec
 
 #endif
