@@ -201,7 +201,7 @@ T RN<T>::inv_bezout(T a)
     SignedDoubleT<T> n = this->_card;
     SignedDoubleT<T> bezout[2];
 
-    arith::_extended_gcd<T>(x, n, bezout, nullptr);
+    arith::extended_gcd<T>(x, n, bezout, nullptr);
     if (bezout[0] < 0)
         bezout[0] = this->_card + bezout[0];
     return bezout[0];
@@ -399,14 +399,14 @@ void RN<T>::compute_factors_of_order()
     T h = this->card_minus_one();
     // prime factorisation of order, i.e. order = p_i^e_i where
     //  p_i, e_i are ith element of this->primes and this->exponent
-    arith::_factor_prime<T>(h, this->primes, this->exponent);
+    arith::factor_prime<T>(h, this->primes, this->exponent);
     // store all primes in a vector. A prime is replicated according to its
     //  exponent
-    arith::_get_prime_factors_final<T>(
+    arith::get_prime_factors_final<T>(
         this->primes, this->exponent, this->all_primes_factors);
     // calculate all proper divisor of order. A proper divisor = order/p_i for
     //  each prime divisor of order.
-    arith::_get_proper_divisors<T>(h, this->primes, this->proper_divisors);
+    arith::get_proper_divisors<T>(h, this->primes, this->proper_divisors);
 
     this->compute_factors_of_order_done = true;
 }
@@ -489,7 +489,7 @@ void RN<T>::compute_omegas_cached(vec::Vec<T>* W, int n, T w)
 template <typename T>
 T RN<T>::weak_rand(void)
 {
-    return arith::_weak_rand<T>(this->card());
+    return arith::weak_rand<T>(this->card());
 }
 
 /*
@@ -648,7 +648,7 @@ T RN<T>::get_order(T x)
         return 1;
     T h = this->card_minus_one();
     if (!this->compute_factors_of_order_done)
-        arith::_factor_prime<T>(h, this->primes, this->exponent);
+        arith::factor_prime<T>(h, this->primes, this->exponent);
     std::vector<T> _primes(*primes);
     std::vector<int> _exponent(*exponent);
     T order = do_step_get_order(x, h, &_primes, &_exponent);
@@ -700,7 +700,7 @@ template <typename T>
 T RN<T>::get_nth_root(T n)
 {
     T q_minus_one = this->card_minus_one();
-    T d = arith::_gcd<T>(n, q_minus_one);
+    T d = arith::gcd<T>(n, q_minus_one);
     if (!this->root)
         this->find_prime_root();
     T nth_root = this->exp(this->root, q_minus_one / d);
@@ -736,7 +736,7 @@ T RN<T>::get_code_len(T n)
     if (nb < n)
         assert(false);
 
-    return arith::_get_code_len<T>(nb, n);
+    return arith::get_code_len<T>(nb, n);
 }
 
 /**
@@ -759,7 +759,7 @@ T RN<T>::get_code_len_high_compo(T n)
     if (!this->compute_factors_of_order_done) {
         this->compute_factors_of_order();
     }
-    return arith::_get_code_len_high_compo<T>(this->all_primes_factors, n);
+    return arith::get_code_len_high_compo<T>(this->all_primes_factors, n);
 }
 
 } // namespace nttec

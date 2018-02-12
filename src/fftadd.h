@@ -71,7 +71,7 @@ class FFTADD : public DFT<T> {
  */
 template <typename T>
 FFTADD<T>::FFTADD(gf::GF<T>* gf, T m, vec::Vec<T>* betas)
-    : DFT<T>(gf, arith::_exp2<T>(m))
+    : DFT<T>(gf, arith::exp2<T>(m))
 {
     assert(m >= 1);
     this->m = m;
@@ -98,7 +98,7 @@ FFTADD<T>::FFTADD(gf::GF<T>* gf, T m, vec::Vec<T>* betas)
     this->beta_m_powers = new vec::Vec<T>(gf, this->n);
     this->compute_beta_m_powers();
     if (m > 1) {
-        this->k = arith::_exp2<T>(m - 1);
+        this->k = arith::exp2<T>(m - 1);
 
         // compute gammas and deltas
         this->gammas = new vec::Vec<T>(gf, m - 1);
@@ -204,20 +204,20 @@ void FFTADD<T>::compute_subspace(vec::Vec<T>* basis, vec::Vec<T>* subspace)
     int size = 1;
     int dim = basis->get_n();
     T val = 0;
-    assert(subspace->get_n() == arith::_exp2<T>(dim));
+    assert(subspace->get_n() == arith::exp2<T>(dim));
     // index of element in G
     std::vector<int> ids;
     // create sequence 2^i
     vec::Vec<T> powers2(this->gf, dim);
     for (i = 0; i < dim; i++)
-        powers2.set(i, arith::_exp2<T>(i));
+        powers2.set(i, arith::exp2<T>(i));
 
     ids.push_back(0);
     subspace->set(0, 0);
     for (i = 0; i < dim; i++) {
         for (j = size - 1; j >= 0; j--) {
             int id = this->gf->add(ids.at(j), powers2.get(i));
-            int diff = arith::_log2<T>(this->gf->add(id, ids.back()));
+            int diff = arith::log2<T>(this->gf->add(id, ids.back()));
             val = this->gf->add(val, basis->get(diff));
             subspace->set(id, val);
             // for next i
@@ -444,7 +444,7 @@ void FFTADD<T>::taylor_expand_t2(vec::Vec<T>* input, int n, bool do_copy)
 template <typename T>
 void FFTADD<T>::_taylor_expand_t2(vec::Vec<T>* input, int n, int _k, int s_deg)
 {
-    int deg2 = arith::_exp2<T>(_k);
+    int deg2 = arith::exp2<T>(_k);
     int deg0 = 2 * deg2;
     int deg1 = deg0 - deg2;
 
@@ -575,7 +575,7 @@ void FFTADD<T>::_taylor_expand(vec::Vec<T>* input, int n, int t)
 {
     // find k s.t. t2^k < n <= 2 *t2^k
     int k = find_k(n, t);
-    int deg2 = arith::_exp2<T>(k);
+    int deg2 = arith::exp2<T>(k);
     int deg0 = t * deg2;
     int deg1 = deg0 - deg2;
     int g1deg = n - deg0;

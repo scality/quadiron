@@ -264,7 +264,7 @@ int Benchmark<T>::check_params()
         }
     }
 
-    size_t wordsize_limit = nttec::arith::_log2<T>(n) + 1;
+    size_t wordsize_limit = nttec::arith::log2<T>(n) + 1;
     if (wordsize_limit > 8 * word_size) {
         return ERR_COMPT_CODE_LEN_T;
     }

@@ -38,7 +38,7 @@ class FECFNTRS : public FEC<T> {
         this->gf = new gf::GFP<T>(gf_p);
 
         assert(
-            arith::_jacobi<T>(this->gf->get_prime_root(), this->gf->card())
+            arith::jacobi<T>(this->gf->get_prime_root(), this->gf->card())
             == -1);
 
         // with this encoder we cannot exactly satisfy users request, we need to

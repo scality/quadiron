@@ -38,7 +38,7 @@ class GF : public RN<T> {
 };
 
 template <typename T>
-GF<T>::GF(T p, int n) : RN<T>(arith::_exp<T>(p, n))
+GF<T>::GF(T p, int n) : RN<T>(arith::exp<T>(p, n))
 {
     // XXX shall check that p is prime
     this->p = p;

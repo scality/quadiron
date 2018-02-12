@@ -62,7 +62,7 @@ class FECGFPFFTRS : public FEC<T> {
 
         this->gf = new gf::GFP<T>(gf_p);
         assert(
-            arith::_jacobi<T>(this->gf->get_prime_root(), this->gf->card())
+            arith::jacobi<T>(this->gf->get_prime_root(), this->gf->card())
             == -1);
 
         // with this encoder we cannot exactly satisfy users request, we need to
@@ -78,7 +78,7 @@ class FECGFPFFTRS : public FEC<T> {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        if (arith::_is_power_of_2<T>(n))
+        if (arith::is_power_of_2<T>(n))
             this->fft = new fft::FFT2K<T>(this->gf, n);
         else
             this->fft = new fft::FFTCT<T>(this->gf, n);

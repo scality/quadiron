@@ -19,7 +19,7 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        for (int i = 1; i < nttec::arith::_log2<T>(sizeof(T)); i++) {
+        for (int i = 1; i < nttec::arith::log2<T>(sizeof(T)); i++) {
             unsigned word_size = 1 << i;
             std::cout << "test_fecngff4rs with word_size=" << word_size << "\n";
             nttec::fec::FECNGFF4RS<T> fec(word_size, n_data, n_parities);

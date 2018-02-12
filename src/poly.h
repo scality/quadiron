@@ -451,7 +451,7 @@ T Poly<T>::to_num()
     T result = 0;
 
     while (i >= 0) {
-        result += get(i) * arith::_exp<T>(gf->card(), i);
+        result += get(i) * arith::exp<T>(gf->card(), i);
         i--;
     }
     return result;
@@ -467,7 +467,7 @@ void Poly<T>::from_num(T x, int max_deg)
 {
     clear(); // XXX
     for (int i = max_deg; i >= 0; i--) {
-        T tmp = arith::_exp<T>(gf->card(), i);
+        T tmp = arith::exp<T>(gf->card(), i);
         T tmp2 = x / tmp;
         if (tmp2 != 0)
             set(i, tmp2);

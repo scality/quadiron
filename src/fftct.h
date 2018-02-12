@@ -87,7 +87,7 @@ FFTCT<T>::FFTCT(gf::GF<T>* gf, T n, int id, std::vector<T>* factors, T _w)
     if (factors == nullptr) {
         this->prime_factors = new std::vector<T>();
         first_layer_fft = true;
-        arith::_get_prime_factors<T>(n, this->prime_factors);
+        arith::get_prime_factors<T>(n, this->prime_factors);
         // w is of order-n
         w = gf->get_nth_root(n);
     } else {

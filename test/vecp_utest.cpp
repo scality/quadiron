@@ -157,8 +157,8 @@ class VECPUtest {
         int i;
         int word_size;
 
-        for (i = 0; i <= nttec::arith::_log2<T>(sizeof(T)); i++) {
-            word_size = nttec::arith::_exp2<T>(i);
+        for (i = 0; i <= nttec::arith::log2<T>(sizeof(T)); i++) {
+            word_size = nttec::arith::exp2<T>(i);
             pack_unpack(word_size);
         }
     }
