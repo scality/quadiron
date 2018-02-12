@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_POLY_H__
-#define __NTL_POLY_H__
+#ifndef __NTTEC_POLY_H__
+#define __NTTEC_POLY_H__
 
 #include <map>
 
@@ -194,7 +194,7 @@ void Poly<T>::_div(Poly<T>* q, Poly<T>* r, Poly<T>* n, Poly<T>* d)
     Poly<T> _q(gf), _r(gf);
 
     if (d->is_zero())
-        throw NTL_EX_DIV_BY_ZERO;
+        throw NTTEC_EX_DIV_BY_ZERO;
 
     _q.clear();
     _r.copy(n);
@@ -305,7 +305,7 @@ void Poly<T>::_extended_gcd(
     if (old_r.degree() > 0) {
         // the primitive polynomial is not irreducible or
         // the element is multiple of the primitive polynomial
-        throw(NTL_EX_INVAL);
+        throw(NTTEC_EX_INVAL);
     }
 
     if (bezout_coef) {

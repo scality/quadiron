@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_MISC_H__
-#define __NTL_MISC_H__
+#ifndef __NTTEC_MISC_H__
+#define __NTTEC_MISC_H__
 
 #if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)

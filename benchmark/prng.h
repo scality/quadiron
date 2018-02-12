@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_NETL_BENCH_PRNG_H__
-#define __NTL_NETL_BENCH_PRNG_H__
+#ifndef __NTTEC_BENCH_PRNG_H__
+#define __NTTEC_BENCH_PRNG_H__
 
 #include <cstdint>
 #include <cstdlib>

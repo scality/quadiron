@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_NTL_H__
-#define __NTL_NTL_H__
+#ifndef __NTTEC_NTTEC_H__
+#define __NTTEC_NTTEC_H__
 
 #include "arith.h"
 #include "build_info.h"

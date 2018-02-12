@@ -1,7 +1,7 @@
-#ifndef __NTL_BUILD_INFO_H__
-#define __NTL_BUILD_INFO_H__
+#ifndef __NTTEC_BUILD_INFO_H__
+#define __NTTEC_BUILD_INFO_H__
 
 #cmakedefine PACKAGE "@PACKAGE@"
 #cmakedefine VERSION "@VERSION@"
 
-#endif // __NTL_BUILD_INFO_H__
+#endif // __NTTEC_BUILD_INFO_H__

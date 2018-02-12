@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_DFT_H__
-#define __NTL_DFT_H__
+#ifndef __NTTEC_DFT_H__
+#define __NTTEC_DFT_H__
 
 #include "gf.h"
 #include "vec.h"

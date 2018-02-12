@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_GF_H__
-#define __NTL_GF_H__
+#ifndef __NTTEC_GF_H__
+#define __NTTEC_GF_H__
 
 #include <vector>
 

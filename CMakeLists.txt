@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 # Project informations
 ######################
 
-project(ntl CXX)
+project(nttec CXX)
 
 enable_testing()
 
@@ -48,7 +48,7 @@ set(OBJECT_LIB  ${CMAKE_PROJECT_NAME}_object)
 set(SHARED_LIB  ${CMAKE_PROJECT_NAME}_shared)
 set(STATIC_LIB  ${CMAKE_PROJECT_NAME}_static)
 set(TEST_DRIVER ${CMAKE_PROJECT_NAME}_test)
-set(NTL_TOOLS   ${CMAKE_PROJECT_NAME}_tools)
+set(NTTEC_TOOLS ${CMAKE_PROJECT_NAME}_tools)
 
 include_directories(${SOURCE_DIR})
 
@@ -128,9 +128,9 @@ foreach(flag -O3 -flto -DNDEBUG)
   endif(has_flag_${flag})
 endforeach(flag)
 
-###########
-# NTL build
-###########
+#############
+# NTTEC build
+#############
 
 find_package(codecov)
 
@@ -138,7 +138,7 @@ find_package(codecov)
 find_package(GMPXX REQUIRED)
 include_directories(SYSTEM ${GMPXX_INCLUDE_DIRS})
 
-# NTL
+# NTTEC
 add_subdirectory(src)
 # Documentation
 add_subdirectory(documentation)
@@ -155,7 +155,7 @@ coverage_evaluate()
 add_custom_target(check
   COMMAND ${CMAKE_CTEST_COMMAND}
   DEPENDS ${TEST_DRIVER}
-  DEPENDS ${NTL_TOOLS}
+  DEPENDS ${NTTEC_TOOLS}
 )
 
 #####################

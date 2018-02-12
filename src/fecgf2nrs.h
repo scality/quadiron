@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_FECGF2NRS_H__
-#define __NTL_FECGF2NRS_H__
+#ifndef __NTTEC_FECGF2NRS_H__
+#define __NTTEC_FECGF2NRS_H__
 
 #include "fec.h"
 #include "gf2n.h"

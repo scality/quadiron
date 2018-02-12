@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_FEC_H__
-#define __NTL_FEC_H__
+#ifndef __NTTEC_FEC_H__
+#define __NTTEC_FEC_H__
 
 #include <algorithm>
 #include <cassert>

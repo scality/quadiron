@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_BIG_INT_H__
-#define __NTL_BIG_INT_H__
+#ifndef __NTTEC_BIG_INT_H__
+#define __NTTEC_BIG_INT_H__
 
 #include <iostream>
 

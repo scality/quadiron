@@ -1,5 +1,4 @@
-
-#include "ntl.h"
+#include "nttec.h"
 
 template class GF<uint32_t>;
 template class GFP<uint32_t>;

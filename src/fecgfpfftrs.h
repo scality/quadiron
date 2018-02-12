@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_FECGFPFFTRS_H__
-#define __NTL_FECGFPFFTRS_H__
+#ifndef __NTTEC_FECGFPFFTRS_H__
+#define __NTTEC_FECGFPFFTRS_H__
 
 #include "dft.h"
 #include "fec.h"

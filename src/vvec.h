@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_VVEC_H__
-#define __NTL_VVEC_H__
+#ifndef __NTTEC_VVEC_H__
+#define __NTTEC_VVEC_H__
 
 #include "vec.h"
 

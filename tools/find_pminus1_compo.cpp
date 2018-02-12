@@ -1,5 +1,5 @@
 
-#include "ntl.h"
+#include "nttec.h"
 
 template class GF<mpz_class>;
 template class Arith<mpz_class>;

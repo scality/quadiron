@@ -1,5 +1,4 @@
-
-#include "ntl.h"
+#include "nttec.h"
 
 template <typename T>
 class FECUtest {

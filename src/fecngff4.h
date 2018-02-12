@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_FECNGFF4_H__
-#define __NTL_FECNGFF4_H__
+#ifndef __NTTEC_FECNGFF4_H__
+#define __NTTEC_FECNGFF4_H__
 
 #include <string>
 

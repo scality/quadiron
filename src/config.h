@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_CONFIG_H__
-#define __NTL_CONFIG_H__
+#ifndef __NTTEC_CONFIG_H__
+#define __NTTEC_CONFIG_H__
 
 #include <iosfwd>
 #include <map>

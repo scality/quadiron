@@ -1,13 +1,13 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTL_NETL_BENCH_BENCHMARK_H__
-#define __NTL_NETL_BENCH_BENCHMARK_H__
+#ifndef __NTTEC_BENCH_BENCHMARK_H__
+#define __NTTEC_BENCH_BENCHMARK_H__
 
 #include <iomanip>
 #include <thread>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "ntl.h"
+#include "nttec.h"
 
 #include "iostreambuf.h"
 #include "prng.h"
