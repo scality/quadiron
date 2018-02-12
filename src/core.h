@@ -22,7 +22,7 @@ struct Double<uint64_t> {
 };
 template <>
 struct Double<__uint128_t> {
-    typedef uint256_t T;
+    typedef UInt256 T;
 };
 template <>
 struct Double<mpz_class> {
@@ -42,7 +42,7 @@ struct SignedDouble<uint64_t> {
 };
 template <>
 struct SignedDouble<__uint128_t> {
-    typedef int256_t T;
+    typedef Int256 T;
 };
 template <>
 struct SignedDouble<mpz_class> {
