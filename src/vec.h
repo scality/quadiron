@@ -10,14 +10,121 @@
 
 #include "v2vec.h"
 
+namespace nttec {
+
 template <typename T>
 class Poly;
 
 template <typename T>
 class RN;
 
+/** Low-level wrappers/helpers around memory buffer. */
+namespace vec {
+
 template <typename T>
 class V2Vec;
+
+template <typename Ts, typename Td, typename Tw>
+inline void
+pack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
+{
+    int i;
+    std::vector<Tw*> tmp(n, nullptr);
+    for (i = 0; i < n; i++) {
+        tmp[i] = static_cast<Tw*>(static_cast<void*>(src->at(i)));
+        std::copy_n(tmp[i], size, dest->at(i));
+    }
+    tmp.shrink_to_fit();
+}
+
+/*
+ * Cast buffers of source to a type corresponding to 'word_size'
+ * Copy casted elements to buffers of destination
+ *
+ *  sizeof(Ts) <= sizeof(Td)
+ *
+ * @param src: source vector
+ * @param dest: destination vector
+ * @param n: number of buffers per vector
+ * @param size: number of elements per destination buffer
+ * @param word_size: number of bytes used to store data in each element of
+ *  destination buffers
+ * @return
+ */
+template <typename Ts, typename Td>
+inline void pack(
+    std::vector<Ts*>* src,
+    std::vector<Td*>* dest,
+    int n,
+    size_t size,
+    size_t word_size)
+{
+    assert(sizeof(Td) >= word_size);
+    assert(word_size % sizeof(Ts) == 0);
+    // get only word_size bytes from each element
+    if (word_size == 1) {
+        pack_next<Ts, Td, uint8_t>(src, dest, n, size);
+    } else if (word_size == 2) {
+        pack_next<Ts, Td, uint16_t>(src, dest, n, size);
+    } else if (word_size == 4) {
+        pack_next<Ts, Td, uint32_t>(src, dest, n, size);
+    } else if (word_size == 8) {
+        pack_next<Ts, Td, uint64_t>(src, dest, n, size);
+    } else if (word_size == 16) {
+        pack_next<Ts, Td, __uint128_t>(src, dest, n, size);
+    }
+}
+
+template <typename Ts, typename Td, typename Tw>
+inline void
+unpack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
+{
+    int i;
+    std::vector<Tw*> tmp(n, nullptr);
+    for (i = 0; i < n; i++) {
+        tmp[i] = static_cast<Tw*>(static_cast<void*>(dest->at(i)));
+        std::copy_n(src->at(i), size, tmp[i]);
+    }
+    tmp.shrink_to_fit();
+}
+
+/*
+ * Cast buffers of destination to a type corresponding to 'word_size'
+ * Copy elements from source buffers to casted buffers
+ *
+ *  sizeof(Ts) >= sizeof(Td)
+ *
+ * @param src: source vector
+ * @param dest: destination vector
+ * @param n: number of buffers per vector
+ * @param size: number of elements per source buffer
+ * @param word_size: number of bytes used to store data in each element of
+ *  source buffers
+ * @return
+ */
+template <typename Ts, typename Td>
+inline void unpack(
+    std::vector<Ts*>* src,
+    std::vector<Td*>* dest,
+    int n,
+    size_t size,
+    size_t word_size)
+{
+    assert(sizeof(Ts) >= word_size);
+    assert(word_size % sizeof(Td) == 0);
+    // get only word_size bytes from each element
+    if (word_size == 1) {
+        unpack_next<Ts, Td, uint8_t>(src, dest, n, size);
+    } else if (word_size == 2) {
+        unpack_next<Ts, Td, uint16_t>(src, dest, n, size);
+    } else if (word_size == 4) {
+        unpack_next<Ts, Td, uint32_t>(src, dest, n, size);
+    } else if (word_size == 8) {
+        unpack_next<Ts, Td, uint64_t>(src, dest, n, size);
+    } else if (word_size == 16) {
+        unpack_next<Ts, Td, __uint128_t>(src, dest, n, size);
+    }
+}
 
 template <typename T>
 class Vec {
@@ -359,5 +466,8 @@ void Vec<T>::dump(void)
         std::cout << get(i) << " ";
     std::cout << ")\n";
 }
+
+} // namespace vec
+} // namespace nttec
 
 #endif

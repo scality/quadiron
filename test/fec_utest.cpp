@@ -9,7 +9,7 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        FECFNTRS<T> fec = FECFNTRS<T>(2, n_data, n_parities);
+        nttec::fec::FECFNTRS<T> fec(2, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities, true);
     }
 
@@ -19,10 +19,10 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        for (int i = 1; i < _log2<T>(sizeof(T)); i++) {
+        for (int i = 1; i < nttec::arith::log2<T>(sizeof(T)); i++) {
             unsigned word_size = 1 << i;
             std::cout << "test_fecngff4rs with word_size=" << word_size << "\n";
-            FECNGFF4RS<T> fec = FECNGFF4RS<T>(word_size, n_data, n_parities);
+            nttec::fec::FECNGFF4RS<T> fec(word_size, n_data, n_parities);
             run_test(&fec, fec.n, n_data, n_data + n_parities, true);
         }
     }
@@ -40,7 +40,7 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        FECGF2NFFTRS<T> fec = FECGF2NFFTRS<T>(wordsize, n_data, n_parities);
+        nttec::fec::FECGF2NFFTRS<T> fec(wordsize, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities);
     }
 
@@ -58,8 +58,7 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        FECGF2NFFTADDRS<T> fec =
-            FECGF2NFFTADDRS<T>(wordsize, n_data, n_parities);
+        nttec::fec::FECGF2NFFTADDRS<T> fec(wordsize, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities);
     }
 
@@ -77,30 +76,33 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        FECGFPFFTRS<T> fec = FECGFPFFTRS<T>(word_size, n_data, n_parities);
+        nttec::fec::FECGFPFFTRS<T> fec(word_size, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities, true);
     }
 
     void run_test(
-        FEC<T>* fec,
+        nttec::fec::FEC<T>* fec,
         int n,
         int n_data,
         int code_len,
         bool propos_flag = false)
     {
-        GF<T>* gf = fec->get_gf();
+        nttec::gf::GF<T>* gf = fec->get_gf();
 
-        Vec<T> v(gf, n_data), _v(gf, n), _v2(gf, n_data), f(gf, n_data),
-            v2(gf, n_data);
-        Vec<T> v_p(gf, n_data);
+        nttec::vec::Vec<T> v(gf, n_data);
+        nttec::vec::Vec<T> _v(gf, n);
+        nttec::vec::Vec<T> _v2(gf, n_data);
+        nttec::vec::Vec<T> f(gf, n_data);
+        nttec::vec::Vec<T> v2(gf, n_data);
+        nttec::vec::Vec<T> v_p(gf, n_data);
         std::vector<int> ids;
         for (int i = 0; i < code_len; i++)
             ids.push_back(i);
-        std::vector<KeyValue*> props(code_len, nullptr);
+        std::vector<nttec::KeyValue*> props(code_len, nullptr);
         for (int j = 0; j < 1000; j++) {
             if (propos_flag) {
                 for (int i = 0; i < code_len; i++)
-                    props[i] = new KeyValue();
+                    props[i] = new nttec::KeyValue();
             }
             for (int i = 0; i < n_data; i++)
                 v.set(i, gf->weak_rand());
@@ -135,46 +137,6 @@ class FECUtest {
         test_fecgfpfftrs();
     }
 };
-
-template class Mat<uint32_t>;
-template class Vec<uint32_t>;
-template class FEC<uint32_t>;
-template class FECGF2NRS<uint32_t>;
-template class FECFNTRS<uint32_t>;
-template class FECNGFF4RS<uint32_t>;
-template class FECGF2NFFTRS<uint32_t>;
-
-template class Mat<uint64_t>;
-template class Vec<uint64_t>;
-template class FEC<uint64_t>;
-template class FECGF2NRS<uint64_t>;
-template class FECFNTRS<uint64_t>;
-template class FECNGFF4RS<uint64_t>;
-template class FECGF2NFFTRS<uint64_t>;
-template class FECGFPFFTRS<uint64_t>;
-
-template class Mat<__uint128_t>;
-template class Vec<__uint128_t>;
-template class FEC<__uint128_t>;
-template class FECGF2NRS<__uint128_t>;
-// template class FECFNTRS<uint64_t>;
-template class FECNGFF4RS<__uint128_t>;
-template class FECGF2NFFTRS<__uint128_t>;
-template class FECGFPFFTRS<__uint128_t>;
-
-template class Mat<mpz_class>;
-template class Vec<mpz_class>;
-
-template class GF<uint32_t>;
-template class GFP<uint32_t>;
-template class GF2N<uint32_t>;
-
-template class GF<uint64_t>;
-template class GFP<uint64_t>;
-template class GF2N<uint64_t>;
-
-template class GF<mpz_class>;
-template class GFP<mpz_class>;
 
 void fec_utest()
 {

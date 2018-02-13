@@ -6,6 +6,8 @@
 
 #include "rn.h"
 
+namespace nttec {
+
 /*
  * mat[n_rows][n_cols]:
  * mat[0][0] mat[0][1] ... mat[0][n_cols]
@@ -23,7 +25,7 @@ class Mat {
     void set(int i, int j, T val);
     virtual T get(int i, int j);
     void inv(void);
-    void mul(Vec<T>* output, Vec<T>* v);
+    void mul(vec::Vec<T>* output, vec::Vec<T>* v);
     void vandermonde(void);
     void vandermonde_suitable_for_ec(void);
     void cauchy(void);
@@ -344,7 +346,7 @@ void Mat<T>::vandermonde_suitable_for_ec(void)
 }
 
 template <typename T>
-void Mat<T>::mul(Vec<T>* output, Vec<T>* v)
+void Mat<T>::mul(vec::Vec<T>* output, vec::Vec<T>* v)
 {
     int i, j;
 
@@ -412,5 +414,7 @@ void Mat<T>::dump(void)
         std::cout << "\n";
     }
 }
+
+} // namespace nttec
 
 #endif

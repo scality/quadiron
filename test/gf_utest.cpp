@@ -7,9 +7,9 @@ class GFUtest {
     {
         std::cout << "simple tests\n";
 
-        GFPN<T> gf256(
+        nttec::gf::GFPN<T> gf256(
             2, 8); // dumb way to declare a binary field but for sake of testing
-        Poly<T> _x(gf256.get_sub_field());
+        nttec::Poly<T> _x(gf256.get_sub_field());
         _x.set(6, 1);
         _x.set(4, 1);
         _x.set(1, 1);
@@ -26,8 +26,8 @@ class GFUtest {
         assert(_x.get(1) == 1);
         assert(_x.get(0) == 0);
 
-        GFPN<T> gf27(3, 3);
-        Poly<T> _y(gf27.get_sub_field());
+        nttec::gf::GFPN<T> gf27(3, 3);
+        nttec::Poly<T> _y(gf27.get_sub_field());
         _y.set(2, 1);
         _y.set(0, 1);
         T y = gf27.inv(_y.to_num());
@@ -38,7 +38,7 @@ class GFUtest {
         assert(_y.get(0) == 0);
     }
 
-    void test_negation(GF<T>* gf)
+    void test_negation(nttec::gf::GF<T>* gf)
     {
         int i;
 
@@ -55,7 +55,7 @@ class GFUtest {
         }
     }
 
-    void test_negation_ngff4(NGFF4<T>* gf)
+    void test_negation_ngff4(nttec::gf::NGFF4<T>* gf)
     {
         int i;
 
@@ -72,7 +72,7 @@ class GFUtest {
         }
     }
 
-    void test_reciprocal(GF<T>* gf)
+    void test_reciprocal(nttec::gf::GF<T>* gf)
     {
         int i;
         int n_found = 0;
@@ -86,7 +86,7 @@ class GFUtest {
             // std::cout << "x=" << x << "\n";
             try {
                 y = gf->inv(x);
-            } catch (NttecException e) {
+            } catch (nttec::NttecException e) {
                 continue;
             }
             // std::cout << "inv(x)=" << y << "\n";
@@ -96,7 +96,7 @@ class GFUtest {
         assert(n_found > 0);
     }
 
-    void test_reciprocal_ngff4(NGFF4<T>* gf)
+    void test_reciprocal_ngff4(nttec::gf::NGFF4<T>* gf)
     {
         int i;
         int n_found = 0;
@@ -110,7 +110,7 @@ class GFUtest {
             // std::cout << "x=" << x << "\n";
             try {
                 y = gf->inv(x);
-            } catch (NttecException e) {
+            } catch (nttec::NttecException e) {
                 continue;
             }
             // std::cout << "inv(x)=" << y << "\n";
@@ -120,7 +120,7 @@ class GFUtest {
         assert(n_found > 0);
     }
 
-    void test_log(GF<T>* gf)
+    void test_log(nttec::gf::GF<T>* gf)
     {
         int i;
         int n_found = 0;
@@ -149,13 +149,13 @@ class GFUtest {
         assert(n_found > 0);
     }
 
-    void test_pack_unpack(NGFF4<T>* gf)
+    void test_pack_unpack(nttec::gf::NGFF4<T>* gf)
     {
         int i;
 
         for (i = 0; i < 100; i++) {
             T x, y;
-            compT<T> z;
+            nttec::compT<T> z;
 
             // std::cout << "i=" << i << "\n";
 
@@ -169,14 +169,14 @@ class GFUtest {
         }
     }
 
-    void test_find_prime_root(GF<T>* gf)
+    void test_find_prime_root(nttec::gf::GF<T>* gf)
     {
         gf->find_prime_root();
         // std::cout << "root " << gf->root << std::endl;
         assert(gf->check_prime_root(gf->get_root()));
     }
 
-    void test_get_order(GF<T>* gf)
+    void test_get_order(nttec::gf::GF<T>* gf)
     {
         int i;
         T x;
@@ -192,7 +192,7 @@ class GFUtest {
         }
     }
 
-    void test_get_nth_root(GF<T>* gf)
+    void test_get_nth_root(nttec::gf::GF<T>* gf)
     {
         int i;
         T x;
@@ -211,7 +211,7 @@ class GFUtest {
     {
         std::cout << "test_negation_gf5\n";
 
-        GFP<T> gf5(5);
+        nttec::gf::GFP<T> gf5(5);
         test_negation(&gf5);
     }
 
@@ -219,7 +219,7 @@ class GFUtest {
     {
         std::cout << "test_reciprocal_gf5\n";
 
-        GFP<T> gf5(5);
+        nttec::gf::GFP<T> gf5(5);
         test_reciprocal(&gf5);
     }
 
@@ -227,7 +227,7 @@ class GFUtest {
     {
         std::cout << "test_log_gf5\n";
 
-        GFP<T> gf5(5);
+        nttec::gf::GFP<T> gf5(5);
         test_log(&gf5);
     }
 
@@ -235,7 +235,7 @@ class GFUtest {
     {
         std::cout << "test_prime_root_gf5\n";
 
-        GFP<T> gf5(5);
+        nttec::gf::GFP<T> gf5(5);
         test_find_prime_root(&gf5);
         test_get_order(&gf5);
         test_get_nth_root(&gf5);
@@ -245,7 +245,7 @@ class GFUtest {
     {
         std::cout << "test_negation_gf9\n";
 
-        GFPN<T> gf9(3, 2);
+        nttec::gf::GFPN<T> gf9(3, 2);
         test_negation(&gf9);
     }
 
@@ -253,7 +253,7 @@ class GFUtest {
     {
         std::cout << "test_reciprocal_gf9\n";
 
-        GFPN<T> gf9(3, 2);
+        nttec::gf::GFPN<T> gf9(3, 2);
         test_reciprocal(&gf9);
     }
 
@@ -261,7 +261,7 @@ class GFUtest {
     {
         std::cout << "test_log_gf9\n";
 
-        GFPN<T> gf9(3, 2);
+        nttec::gf::GFPN<T> gf9(3, 2);
         test_log(&gf9);
     }
 
@@ -269,7 +269,7 @@ class GFUtest {
     {
         std::cout << "test_prime_root_gf9\n";
 
-        GFPN<T> gf9(3, 2);
+        nttec::gf::GFPN<T> gf9(3, 2);
         test_find_prime_root(&gf9);
         test_get_order(&gf9);
         test_get_nth_root(&gf9);
@@ -279,7 +279,7 @@ class GFUtest {
     {
         std::cout << "test_negation_gf256\n";
 
-        GF2N<T> gf256(8);
+        nttec::gf::GF2N<T> gf256(8);
         test_negation(&gf256);
     }
 
@@ -287,7 +287,7 @@ class GFUtest {
     {
         std::cout << "test_reciprocal_gf256\n";
 
-        GF2N<T> gf256(8);
+        nttec::gf::GF2N<T> gf256(8);
         test_reciprocal(&gf256);
     }
 
@@ -295,7 +295,7 @@ class GFUtest {
     {
         std::cout << "test_log_gf256\n";
 
-        GF2N<T> gf256(8);
+        nttec::gf::GF2N<T> gf256(8);
         test_log(&gf256);
     }
 
@@ -303,7 +303,7 @@ class GFUtest {
     {
         std::cout << "test_prime_root_gf256\n";
 
-        GF2N<T> gf256(8);
+        nttec::gf::GF2N<T> gf256(8);
         test_find_prime_root(&gf256);
         test_get_order(&gf256);
         test_get_nth_root(&gf256);
@@ -313,7 +313,7 @@ class GFUtest {
     {
         std::cout << "test_negation_gf(2^" << n << ")\n";
 
-        GF2N<T> gf2n(n);
+        nttec::gf::GF2N<T> gf2n(n);
         test_negation(&gf2n);
     }
 
@@ -321,7 +321,7 @@ class GFUtest {
     {
         std::cout << "test_reciprocal_gf(2^" << n << ")\n";
 
-        GF2N<T> gf2n(n);
+        nttec::gf::GF2N<T> gf2n(n);
         test_reciprocal(&gf2n);
     }
 
@@ -329,7 +329,7 @@ class GFUtest {
     {
         std::cout << "test_log_gf(2^" << n << ")\n";
 
-        GF2N<T> gf2n(n);
+        nttec::gf::GF2N<T> gf2n(n);
         test_log(&gf2n);
     }
 
@@ -337,7 +337,7 @@ class GFUtest {
     {
         std::cout << "test_prime_root_gf(2^" << n << ")\n";
 
-        GF2N<T> gf2n(n);
+        nttec::gf::GF2N<T> gf2n(n);
         test_find_prime_root(&gf2n);
         test_get_order(&gf2n);
         test_get_nth_root(&gf2n);
@@ -349,7 +349,7 @@ class GFUtest {
 
         srand(time(0));
 
-        NGFF4<T> gf(n);
+        nttec::gf::NGFF4<T> gf(n);
 
         test_negation_ngff4(&gf);
         test_reciprocal_ngff4(&gf);
@@ -421,21 +421,6 @@ class GFUtest {
             gf_utest_2_bign(i);
     }
 };
-
-template class GF<uint32_t>;
-template class GFP<uint32_t>;
-template class GF2N<uint32_t>;
-template class NGFF4<uint32_t>;
-
-template class GF<uint64_t>;
-template class GFP<uint64_t>;
-template class GF2N<uint64_t>;
-template class NGFF4<uint64_t>;
-
-template class NGFF4<__uint128_t>;
-
-template class GF<mpz_class>;
-template class GFP<mpz_class>;
 
 void gf_utest()
 {

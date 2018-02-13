@@ -1,5 +1,8 @@
 #include "vec.h"
 
+namespace nttec {
+namespace vec {
+
 void _vec_hadamard_mul_257(int n, uint32_t* x, uint32_t* y)
 {
     int i;
@@ -207,3 +210,6 @@ void Vec<uint64_t>::add(V2Vec<uint64_t>* v)
     for (j = 0; i < n; i++, j++)
         mem[i] = rn->add(mem[i], src[j]);
 }
+
+} // namespace vec
+} // namespace nttec

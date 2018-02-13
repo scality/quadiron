@@ -4,8 +4,12 @@
 
 #include "gf.h"
 
+namespace nttec {
+
 template <typename T>
 class Poly;
+
+namespace gf {
 
 template <typename T>
 class GFPN : public GF<T> {
@@ -79,7 +83,7 @@ GFPN<T>::~GFPN()
 template <typename T>
 T GFPN<T>::card(void)
 {
-    return _exp<T>(this->p, this->n);
+    return arith::exp<T>(this->p, this->n);
 }
 
 template <typename T>
@@ -215,7 +219,7 @@ T GFPN<T>::weak_rand(void)
 
 retry:
     for (int i = 0; i < this->n; i++)
-        _a.set(i, _weak_rand0<T>(this->p));
+        _a.set(i, arith::weak_rand0<T>(this->p));
 
     num = _a.to_num();
     if (0 == num)
@@ -223,5 +227,8 @@ retry:
 
     return num;
 }
+
+} // namespace gf
+} // namespace nttec
 
 #endif

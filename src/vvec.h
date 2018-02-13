@@ -4,6 +4,9 @@
 
 #include "vec.h"
 
+namespace nttec {
+namespace vec {
+
 /**
  * Virtual vector that returns 0 beyond managed vector length
  */
@@ -40,5 +43,8 @@ T VVec<T>::get(int i)
 
     return (i < vec->get_n()) ? vec->get(i) : 0;
 }
+
+} // namespace vec
+} // namespace nttec
 
 #endif

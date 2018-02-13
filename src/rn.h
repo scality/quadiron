@@ -11,11 +11,17 @@
 #include "arith.h"
 #include "core.h"
 
+namespace nttec {
+
+namespace vec {
+
 template <typename T>
 class Vec;
 
 template <typename T>
 class Vecp;
+
+} // namespace vec
 
 /**
  * Generic class for the Ring of integers modulo N
@@ -47,15 +53,17 @@ class RN {
     T exp_quick(T base, T exponent);
     T log_naive(T base, T exponent);
     virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len);
-    virtual void mul_vec_to_vecp(Vec<T>* u, Vecp<T>* src, Vecp<T>* dest);
+    virtual void
+    mul_vec_to_vecp(vec::Vec<T>* u, vec::Vecp<T>* src, vec::Vecp<T>* dest);
     virtual void add_two_bufs(T* src, T* dest, size_t len);
-    virtual void add_vecp_to_vecp(Vecp<T>* src, Vecp<T>* dest);
+    virtual void add_vecp_to_vecp(vec::Vecp<T>* src, vec::Vecp<T>* dest);
     virtual void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len);
-    virtual void sub_vecp_to_vecp(Vecp<T>* veca, Vecp<T>* vecb, Vecp<T>* res);
+    virtual void
+    sub_vecp_to_vecp(vec::Vecp<T>* veca, vec::Vecp<T>* vecb, vec::Vecp<T>* res);
     void compute_factors_of_order();
     bool is_quadratic_residue(T q);
-    virtual void compute_omegas(Vec<T>* W, int n, T w);
-    void compute_omegas_cached(Vec<T>* W, int n, T w);
+    virtual void compute_omegas(vec::Vec<T>* W, int n, T w);
+    void compute_omegas_cached(vec::Vec<T>* W, int n, T w);
     virtual T weak_rand(void);
     bool is_prime_root(T nb);
     void find_prime_root();
@@ -193,7 +201,7 @@ T RN<T>::inv_bezout(T a)
     SignedDoubleT<T> n = this->_card;
     SignedDoubleT<T> bezout[2];
 
-    _extended_gcd<T>(x, n, bezout, nullptr);
+    arith::extended_gcd<T>(x, n, bezout, nullptr);
     if (bezout[0] < 0)
         bezout[0] = this->_card + bezout[0];
     return bezout[0];
@@ -314,7 +322,10 @@ void RN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len)
 }
 
 template <typename T>
-void RN<T>::mul_vec_to_vecp(Vec<T>* u, Vecp<T>* src, Vecp<T>* dest)
+void RN<T>::mul_vec_to_vecp(
+    vec::Vec<T>* u,
+    vec::Vecp<T>* src,
+    vec::Vecp<T>* dest)
 {
     assert(u->get_n() == src->get_n());
     int i;
@@ -336,7 +347,7 @@ void RN<T>::add_two_bufs(T* src, T* dest, size_t len)
 }
 
 template <typename T>
-void RN<T>::add_vecp_to_vecp(Vecp<T>* src, Vecp<T>* dest)
+void RN<T>::add_vecp_to_vecp(vec::Vecp<T>* src, vec::Vecp<T>* dest)
 {
     assert(src->get_n() == dest->get_n());
     assert(src->get_size() == dest->get_size());
@@ -364,7 +375,10 @@ void RN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len)
 }
 
 template <typename T>
-void RN<T>::sub_vecp_to_vecp(Vecp<T>* veca, Vecp<T>* vecb, Vecp<T>* res)
+void RN<T>::sub_vecp_to_vecp(
+    vec::Vecp<T>* veca,
+    vec::Vecp<T>* vecb,
+    vec::Vecp<T>* res)
 {
     assert(veca->get_n() == vecb->get_n());
     assert(veca->get_size() == vecb->get_size());
@@ -385,14 +399,14 @@ void RN<T>::compute_factors_of_order()
     T h = this->card_minus_one();
     // prime factorisation of order, i.e. order = p_i^e_i where
     //  p_i, e_i are ith element of this->primes and this->exponent
-    _factor_prime<T>(h, this->primes, this->exponent);
+    arith::factor_prime<T>(h, this->primes, this->exponent);
     // store all primes in a vector. A prime is replicated according to its
     //  exponent
-    _get_prime_factors_final<T>(
+    arith::get_prime_factors_final<T>(
         this->primes, this->exponent, this->all_primes_factors);
     // calculate all proper divisor of order. A proper divisor = order/p_i for
     //  each prime divisor of order.
-    _get_proper_divisors<T>(h, this->primes, this->proper_divisors);
+    arith::get_proper_divisors<T>(h, this->primes, this->proper_divisors);
 
     this->compute_factors_of_order_done = true;
 }
@@ -427,7 +441,7 @@ bool RN<T>::is_quadratic_residue(T q)
  * @param w n-th root of unity
  */
 template <typename T>
-void RN<T>::compute_omegas(Vec<T>* W, int n, T w)
+void RN<T>::compute_omegas(vec::Vec<T>* W, int n, T w)
 {
     for (int i = 0; i < n; i++) {
         W->set(i, this->exp(w, i));
@@ -446,7 +460,7 @@ void RN<T>::compute_omegas(Vec<T>* W, int n, T w)
  * @param w n-th root of unity
  */
 template <typename T>
-void RN<T>::compute_omegas_cached(Vec<T>* W, int n, T w)
+void RN<T>::compute_omegas_cached(vec::Vec<T>* W, int n, T w)
 {
     std::ostringstream filename;
 
@@ -475,7 +489,7 @@ void RN<T>::compute_omegas_cached(Vec<T>* W, int n, T w)
 template <typename T>
 T RN<T>::weak_rand(void)
 {
-    return _weak_rand<T>(this->card());
+    return arith::weak_rand<T>(this->card());
 }
 
 /*
@@ -634,7 +648,7 @@ T RN<T>::get_order(T x)
         return 1;
     T h = this->card_minus_one();
     if (!this->compute_factors_of_order_done)
-        _factor_prime<T>(h, this->primes, this->exponent);
+        arith::factor_prime<T>(h, this->primes, this->exponent);
     std::vector<T> _primes(*primes);
     std::vector<int> _exponent(*exponent);
     T order = do_step_get_order(x, h, &_primes, &_exponent);
@@ -686,7 +700,7 @@ template <typename T>
 T RN<T>::get_nth_root(T n)
 {
     T q_minus_one = this->card_minus_one();
-    T d = _gcd<T>(n, q_minus_one);
+    T d = arith::gcd<T>(n, q_minus_one);
     if (!this->root)
         this->find_prime_root();
     T nth_root = this->exp(this->root, q_minus_one / d);
@@ -722,7 +736,7 @@ T RN<T>::get_code_len(T n)
     if (nb < n)
         assert(false);
 
-    return _get_code_len<T>(nb, n);
+    return arith::get_code_len<T>(nb, n);
 }
 
 /**
@@ -745,7 +759,9 @@ T RN<T>::get_code_len_high_compo(T n)
     if (!this->compute_factors_of_order_done) {
         this->compute_factors_of_order();
     }
-    return _get_code_len_high_compo<T>(this->all_primes_factors, n);
+    return arith::get_code_len_high_compo<T>(this->all_primes_factors, n);
 }
+
+} // namespace nttec
 
 #endif

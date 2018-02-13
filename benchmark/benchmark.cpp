@@ -124,31 +124,33 @@ int Benchmark<T>::init()
 {
     switch (fec_type) {
     case EC_TYPE_GF2NRSV:
-        fec = new FECGF2NRS<T>(word_size, k, m, FECGF2NRS<T>::VANDERMONDE);
+        fec = new nttec::fec::FECGF2NRS<T>(
+            word_size, k, m, nttec::fec::FECGF2NRS<T>::VANDERMONDE);
         break;
     case EC_TYPE_GF2NRSC:
-        fec = new FECGF2NRS<T>(word_size, k, m, FECGF2NRS<T>::CAUCHY);
+        fec = new nttec::fec::FECGF2NRS<T>(
+            word_size, k, m, nttec::fec::FECGF2NRS<T>::CAUCHY);
         break;
     case EC_TYPE_GF2NFFTRS:
-        fec = new FECGF2NFFTRS<T>(word_size, k, m);
+        fec = new nttec::fec::FECGF2NFFTRS<T>(word_size, k, m);
         break;
     case EC_TYPE_GF2NFFTADDRS:
-        fec = new FECGF2NFFTADDRS<T>(word_size, k, m);
+        fec = new nttec::fec::FECGF2NFFTADDRS<T>(word_size, k, m);
         break;
     case EC_TYPE_GFPFFTRS:
-        fec = new FECGFPFFTRS<T>(word_size, k, m);
+        fec = new nttec::fec::FECGFPFFTRS<T>(word_size, k, m);
         break;
     case EC_TYPE_NGFF4RS:
-        fec = new FECNGFF4RS<T>(word_size, k, m);
+        fec = new nttec::fec::FECNGFF4RS<T>(word_size, k, m);
         break;
     case EC_TYPE_FNTRS:
-        fec = new FECFNTRS<T>(word_size, k, m, pkt_size);
+        fec = new nttec::fec::FECFNTRS<T>(word_size, k, m, pkt_size);
         break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
 
-    this->systematic_ec = (fec->type == FEC<T>::TYPE_1);
+    this->systematic_ec = (fec->type == nttec::fec::FEC<T>::TYPE_1);
     if (this->systematic_ec) {
         this->n_c = this->m;
     }
@@ -196,7 +198,7 @@ int Benchmark<T>::init()
     c_streams = new std::vector<std::ostream*>(n_c);
     a_streams = new std::vector<std::istream*>(n);
     r_streams = new std::vector<std::ostream*>(k);
-    c_propos = new std::vector<KeyValue*>(n_c);
+    c_propos = new std::vector<nttec::KeyValue*>(n_c);
 
     for (i = 0; i < k; i++) {
         d_streams->at(i) = new std::istream(d_istreambufs->at(i));
@@ -204,7 +206,7 @@ int Benchmark<T>::init()
 
     for (i = 0; i < n_c; i++) {
         c_streams->at(i) = new std::ostream(c_ostreambufs->at(i));
-        c_propos->at(i) = new KeyValue();
+        c_propos->at(i) = new nttec::KeyValue();
     }
 
     if (systematic_ec) {
@@ -262,7 +264,7 @@ int Benchmark<T>::check_params()
         }
     }
 
-    size_t wordsize_limit = _log2<T>(n) + 1;
+    size_t wordsize_limit = nttec::arith::log2<T>(n) + 1;
     if (wordsize_limit > 8 * word_size) {
         return ERR_COMPT_CODE_LEN_T;
     }
@@ -390,7 +392,7 @@ template <typename T>
 void Benchmark<T>::get_avail_chunks(
     std::vector<std::istream*>* avail_d_chunks,
     std::vector<std::istream*>* avail_c_chunks,
-    std::vector<KeyValue*>* avail_c_props)
+    std::vector<nttec::KeyValue*>* avail_c_props)
 {
     std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end());
 
@@ -451,7 +453,7 @@ bool Benchmark<T>::decode()
 {
     std::vector<std::istream*> d_streams_shuffled(k, nullptr);
     std::vector<std::istream*> c_streams_shuffled(n_c, nullptr);
-    std::vector<KeyValue*> c_props_shuffled(n_c, nullptr);
+    std::vector<nttec::KeyValue*> c_props_shuffled(n_c, nullptr);
 
     get_avail_chunks(
         &d_streams_shuffled, &c_streams_shuffled, &c_props_shuffled);

@@ -3,13 +3,13 @@
 template <typename T>
 class VECPUtest {
   private:
-    GFP<T>* gfp;
+    nttec::gf::GFP<T>* gfp;
     T max_val;
 
   public:
     VECPUtest()
     {
-        this->gfp = new GFP<T>(65537);
+        this->gfp = new nttec::gf::GFP<T>(65537);
         this->max_val = 65537;
     }
     ~VECPUtest()
@@ -17,10 +17,10 @@ class VECPUtest {
         delete this->gfp;
     }
 
-    Vecp<T>* gen_vecp_rand_data(int n, int size, int _max = 0)
+    nttec::vec::Vecp<T>* gen_vecp_rand_data(int n, int size, int _max = 0)
     {
         int max = (_max == 0) ? max_val : _max;
-        Vecp<T>* vec = new Vecp<T>(n, size);
+        nttec::vec::Vecp<T>* vec = new nttec::vec::Vecp<T>(n, size);
         for (int i = 0; i < n; i++) {
             T* buf = new T[size];
             for (int j = 0; j < size; j++) {
@@ -43,11 +43,11 @@ class VECPUtest {
         int size = 32;
         int i, j;
 
-        Vecp<T>* vec1 = gen_vecp_rand_data(n, size);
+        nttec::vec::Vecp<T>* vec1 = gen_vecp_rand_data(n, size);
         std::vector<T*>* mem1 = vec1->get_mem();
         // vec1->dump();
 
-        Vecp<T> vec2(vec1, begin, end);
+        nttec::vec::Vecp<T> vec2(vec1, begin, end);
         std::vector<T*>* mem2 = vec2.get_mem();
         assert(vec2.get_n() == end - begin);
         assert(vec2.get_size() == vec1->get_size());
@@ -62,7 +62,7 @@ class VECPUtest {
         for (int i = 0; i < end - begin; i++) {
             mem3[i] = mem1->at(i + begin);
         }
-        Vecp<T> vec3(end - begin, size, &mem3);
+        nttec::vec::Vecp<T> vec3(end - begin, size, &mem3);
         // vec3.dump();
 
         assert(vec2.eq(&vec3));
@@ -79,22 +79,24 @@ class VECPUtest {
         int i, j;
         int half = n / 2;
 
-        Vecp<T>* vec1 = gen_vecp_rand_data(n, size);
-        Vecp<T> vec2(n, size);
+        nttec::vec::Vecp<T>* vec1 = gen_vecp_rand_data(n, size);
+        nttec::vec::Vecp<T> vec2(n, size);
         vec2.copy(vec1);
 
         std::vector<T*>* even_mem = new std::vector<T*>(half, nullptr);
         std::vector<T*>* odd_mem = new std::vector<T*>(half, nullptr);
-        Vecp<T>* i_even = new Vecp<T>(half, size, even_mem);
-        Vecp<T>* i_odd = new Vecp<T>(half, size, odd_mem);
+        nttec::vec::Vecp<T>* i_even =
+            new nttec::vec::Vecp<T>(half, size, even_mem);
+        nttec::vec::Vecp<T>* i_odd =
+            new nttec::vec::Vecp<T>(half, size, odd_mem);
         vec1->separate_even_odd(i_even, i_odd);
 
         // vec1->dump();
         vec1->separate_even_odd();
         // vec1->dump();
 
-        Vecp<T> _i_even(vec1, 0, half);
-        Vecp<T> _i_odd(vec1, half, n);
+        nttec::vec::Vecp<T> _i_even(vec1, 0, half);
+        nttec::vec::Vecp<T> _i_odd(vec1, half, n);
         assert(i_even->eq(&_i_even));
         assert(i_odd->eq(&_i_odd));
 
@@ -131,19 +133,19 @@ class VECPUtest {
         int n1 = 4;
         int n2 = 10;
 
-        Vecp<T>* vec = gen_vecp_rand_data(n, size);
-        Vecp<T> vec1(vec, n1);
-        Vecp<T> vec2(vec, n2);
+        nttec::vec::Vecp<T>* vec = gen_vecp_rand_data(n, size);
+        nttec::vec::Vecp<T> vec1(vec, n1);
+        nttec::vec::Vecp<T> vec2(vec, n2);
 
-        Vecp<T> _vec1(vec, 0, n1);
-        Vecp<T>* _vec2 = new VVecp<T>(vec, n2);
+        nttec::vec::Vecp<T> _vec1(vec, 0, n1);
+        nttec::vec::Vecp<T>* _vec2 = new nttec::vec::VVecp<T>(vec, n2);
 
         assert(vec1.eq(&_vec1));
         assert(vec2.eq(_vec2));
 
         delete vec;
 
-        Vecp<T> vec3(&vec2, n1);
+        nttec::vec::Vecp<T> vec3(&vec2, n1);
         assert(vec3.eq(&vec1));
 
         delete _vec2;
@@ -155,8 +157,8 @@ class VECPUtest {
         int i;
         int word_size;
 
-        for (i = 0; i <= _log2<T>(sizeof(T)); i++) {
-            word_size = _exp2<T>(i);
+        for (i = 0; i <= nttec::arith::log2<T>(sizeof(T)); i++) {
+            word_size = nttec::arith::exp2<T>(i);
             pack_unpack(word_size);
         }
     }
@@ -172,12 +174,12 @@ class VECPUtest {
         T symb;
         T max = ((T)1 << word_size) + 1;
 
-        Vecp<T>* words = gen_vecp_rand_data(n, size, max);
+        nttec::vec::Vecp<T>* words = gen_vecp_rand_data(n, size, max);
         std::vector<T*>* mem_T = words->get_mem();
         // std::cout << "words:"; words->dump();
 
         // pack manually from T to uint8_t
-        Vecp<uint8_t> vec_char(n, bytes_size);
+        nttec::vec::Vecp<uint8_t> vec_char(n, bytes_size);
         std::vector<uint8_t*>* mem_char = vec_char.get_mem();
         for (i = 0; i < n; i++) {
             t = 0;
@@ -199,9 +201,9 @@ class VECPUtest {
          * pack bufs of type uint8_t to bufs of type T
          */
         // tmp vectors to store results
-        Vecp<T> vec_T_tmp(n, size);
+        nttec::vec::Vecp<T> vec_T_tmp(n, size);
         std::vector<T*>* mem_T_tmp = vec_T_tmp.get_mem();
-        pack<uint8_t, T>(mem_char, mem_T_tmp, n, size, word_size);
+        nttec::vec::pack<uint8_t, T>(mem_char, mem_T_tmp, n, size, word_size);
         // std::cout << "vec_char:"; vec_char.dump();
         // std::cout << "vec_T_tmp:"; vec_T_tmp.dump();
         // check
@@ -211,9 +213,10 @@ class VECPUtest {
          * unpack bufs of type T to bufs of type uint8_t
          */
         // tmp vectors to store results
-        Vecp<uint8_t> vec_char_tmp(n, bytes_size);
+        nttec::vec::Vecp<uint8_t> vec_char_tmp(n, bytes_size);
         std::vector<uint8_t*>* mem_char_tmp = vec_char_tmp.get_mem();
-        unpack<T, uint8_t>(mem_T_tmp, mem_char_tmp, n, size, word_size);
+        nttec::vec::unpack<T, uint8_t>(
+            mem_T_tmp, mem_char_tmp, n, size, word_size);
         // std::cout << "vec_T_tmp:"; vec_T_tmp.dump();
         // std::cout << "vec_char_tmp:"; vec_char_tmp.dump();
         // check
@@ -232,16 +235,6 @@ class VECPUtest {
         vecp_utest4();
     }
 };
-
-template class GF<uint32_t>;
-template class GFP<uint32_t>;
-template class GF2N<uint32_t>;
-template class Vec<uint32_t>;
-
-template class GF<uint64_t>;
-template class GFP<uint64_t>;
-template class GF2N<uint64_t>;
-template class Vec<uint64_t>;
 
 void vecp_utest()
 {

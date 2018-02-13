@@ -2,6 +2,8 @@
 #ifndef __NTTEC_MISC_H__
 #define __NTTEC_MISC_H__
 
+namespace nttec {
+
 #if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)
 {
@@ -17,5 +19,7 @@ static __inline__ unsigned long long rdtsc(void)
     return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
 }
 #endif
+
+} // namespace nttec
 
 #endif

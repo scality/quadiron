@@ -6,6 +6,8 @@
 #include <map>
 #include <string>
 
+namespace nttec {
+
 struct KeyValue : std::map<std::string, std::string> {
     bool is_key(const std::string& s) const
     {
@@ -15,5 +17,7 @@ struct KeyValue : std::map<std::string, std::string> {
 
 std::istream& operator>>(std::istream& ins, KeyValue& d);
 std::ostream& operator<<(std::ostream& outs, const KeyValue& d);
+
+} // namespace nttec
 
 #endif

@@ -7,6 +7,8 @@
 
 #include "big_int.h"
 
+namespace nttec {
+
 template <typename Type>
 struct Double {
 };
@@ -61,5 +63,7 @@ typedef enum {
     NTTEC_EX_IO,
     NTTEC_EX_DIV_BY_ZERO,
 } NttecException;
+
+} // namespace nttec
 
 #endif

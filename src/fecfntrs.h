@@ -8,6 +8,9 @@
 #include "vvec.h"
 #include "vvecp.h"
 
+namespace nttec {
+namespace fec {
+
 /**
  * GF_2^2^k+1 based RS (Fermat Number Transform)
  * As suggested by the paper:
@@ -17,7 +20,7 @@
 template <typename T>
 class FECFNTRS : public FEC<T> {
   private:
-    FFT2K<T>* fft = nullptr;
+    fft::FFT2K<T>* fft = nullptr;
 
   public:
     T n;
@@ -32,9 +35,11 @@ class FECFNTRS : public FEC<T> {
         assert(word_size < 4);
         // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
         T gf_p = (1ULL << (8 * word_size)) + 1;
-        this->gf = new GFP<T>(gf_p);
+        this->gf = new gf::GFP<T>(gf_p);
 
-        assert(_jacobi<T>(this->gf->get_prime_root(), this->gf->card()) == -1);
+        assert(
+            arith::jacobi<T>(this->gf->get_prime_root(), this->gf->card())
+            == -1);
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -47,7 +52,7 @@ class FECFNTRS : public FEC<T> {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        this->fft = new FFT2K<T>(this->gf, n, pkt_size);
+        this->fft = new fft::FFT2K<T>(this->gf, n, pkt_size);
     }
 
     ~FECFNTRS()
@@ -70,12 +75,12 @@ class FECFNTRS : public FEC<T> {
      * @param words must be n_data
      */
     void encode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* words)
+        vec::Vec<T>* words)
     {
-        VVec<T> vwords(words, n);
+        vec::VVec<T> vwords(words, n);
         fft->fft(output, &vwords);
         // max_value = 2^x
         T thres = fft->get_gf()->card() - 1;
@@ -92,12 +97,12 @@ class FECFNTRS : public FEC<T> {
     }
 
     void encode(
-        Vecp<T>* output,
+        vec::Vecp<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vecp<T>* words)
+        vec::Vecp<T>* words)
     {
-        VVecp<T> vwords(words, n);
+        vec::VVecp<T> vwords(words, n);
         fft->fft(output, &vwords);
         // check for out of range value in output
         int size = output->get_size();
@@ -150,15 +155,15 @@ class FECFNTRS : public FEC<T> {
      * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
      */
     void decode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* fragments_ids,
-        Vec<T>* words)
+        vec::Vec<T>* fragments_ids,
+        vec::Vec<T>* words)
     {
         int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        Vec<T> vx(this->gf, k);
+        vec::Vec<T> vx(this->gf, k);
         for (int i = 0; i < k; i++) {
             vx.set(i, this->gf->exp(r, fragments_ids->get(i)));
         }
@@ -193,7 +198,7 @@ class FECFNTRS : public FEC<T> {
         // std::cout << "A'(x)="; _A.dump();
 
         // evaluate n_i=v_i/A'_i(x_i)
-        Vec<T> _n(this->gf, k);
+        vec::Vec<T> _n(this->gf, k);
         for (int i = 0; i < k; i++) {
             _n.set(i, this->gf->div(words->get(i), _A.eval(vx.get(i))));
         }
@@ -222,5 +227,8 @@ class FECFNTRS : public FEC<T> {
             output->set(i, S.get(i));
     }
 };
+
+} // namespace fec
+} // namespace nttec
 
 #endif

@@ -5,6 +5,9 @@
 #include "rn.h"
 #include "vec.h"
 
+namespace nttec {
+namespace vec {
+
 /**
  * Virtual (v->get_n()*2) x 1 vertical vector for the need of
  * Cooley-Tukey algorithm
@@ -61,5 +64,8 @@ T V2Vec<T>::get(int i)
     else
         return vec->get(i - vec_n);
 }
+
+} // namespace vec
+} // namespace nttec
 
 #endif

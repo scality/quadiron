@@ -5,6 +5,9 @@
 #include <climits>
 #include "gf.h"
 
+namespace nttec {
+namespace gf {
+
 template <typename T>
 class GF2N : public GF<T> {
   private:
@@ -496,5 +499,8 @@ T GF2N<T>::_inv_ext_gcd(T x)
     }
     return g[a];
 }
+
+} // namespace gf
+} // namespace nttec
 
 #endif

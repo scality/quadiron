@@ -1,11 +1,5 @@
 #include "nttec.h"
 
-template class GF<uint32_t>;
-template class GFP<uint32_t>;
-template class GF2N<uint32_t>;
-template class Mat<uint32_t>;
-template class Vec<uint32_t>;
-
 /**
  * see http://web.eecs.utk.edu/~plank/plank/papers/CS-03-504.html
  */
@@ -13,8 +7,8 @@ void rs_utest1()
 {
     std::cout << "rs_utest1\n";
 
-    GF2N<uint32_t> gf16(4);
-    Mat<uint32_t> mat(&gf16, 3, 3);
+    nttec::gf::GF2N<uint32_t> gf16(4);
+    nttec::Mat<uint32_t> mat(&gf16, 3, 3);
 
     mat.vandermonde_suitable_for_ec();
     // mat.dump();
@@ -41,10 +35,10 @@ void rs_utest2()
 {
     std::cout << "rs_utest2\n";
 
-    GF2N<uint32_t> gf8(3);
-    Mat<uint32_t> mat(&gf8, 5, 3);
-    Vec<uint32_t> vec(&gf8, 3);
-    Vec<uint32_t> output(&gf8, 5);
+    nttec::gf::GF2N<uint32_t> gf8(3);
+    nttec::Mat<uint32_t> mat(&gf8, 5, 3);
+    nttec::vec::Vec<uint32_t> vec(&gf8, 3);
+    nttec::vec::Vec<uint32_t> output(&gf8, 5);
 
     mat.set(0, 0, 1);
     mat.set(0, 1, 1);
@@ -79,7 +73,7 @@ void rs_utest3()
 {
     std::cout << "rs_utest3\n";
 
-    GF2N<uint32_t> gf256(8);
+    nttec::gf::GF2N<uint32_t> gf256(8);
 
     assert(gf256.mul(3, 7) == 9);
     assert(gf256.mul(13, 10) == 114);

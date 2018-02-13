@@ -9,13 +9,16 @@
 #include "vec.h"
 #include "vvec.h"
 
+namespace nttec {
+namespace fec {
+
 /**
  * GF_2^n based RS using FFT transformation
  */
 template <typename T>
 class FECGF2NFFTRS : public FEC<T> {
   private:
-    FFTCT<T>* fft = nullptr;
+    fft::FFTCT<T>* fft = nullptr;
 
   public:
     T n;
@@ -27,7 +30,7 @@ class FECGF2NFFTRS : public FEC<T> {
         if (word_size > 16)
             assert(false); // not support yet
         unsigned gf_n = 8 * word_size;
-        this->gf = new GF2N<T>(gf_n);
+        this->gf = new gf::GF2N<T>(gf_n);
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -42,7 +45,7 @@ class FECGF2NFFTRS : public FEC<T> {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        this->fft = new FFTCT<T>(this->gf, n);
+        this->fft = new fft::FFTCT<T>(this->gf, n);
     }
 
     ~FECGF2NFFTRS()
@@ -65,12 +68,12 @@ class FECGF2NFFTRS : public FEC<T> {
      * @param words must be n_data
      */
     void encode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* words)
+        vec::Vec<T>* words)
     {
-        VVec<T> vwords(words, n);
+        vec::VVec<T> vwords(words, n);
         fft->fft(output, &vwords);
     }
 
@@ -103,15 +106,15 @@ class FECGF2NFFTRS : public FEC<T> {
      * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
      */
     void decode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* fragments_ids,
-        Vec<T>* words)
+        vec::Vec<T>* fragments_ids,
+        vec::Vec<T>* words)
     {
         int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        Vec<T> vx(this->gf, k);
+        vec::Vec<T> vx(this->gf, k);
         for (int i = 0; i < k; i++) {
             vx.set(i, this->gf->exp(r, fragments_ids->get(i)));
         }
@@ -136,7 +139,7 @@ class FECGF2NFFTRS : public FEC<T> {
         // std::cout << "A'(x)="; _A.dump();
 
         // evaluate n_i=v_i/A'_i(x_i)
-        Vec<T> _n(this->gf, k);
+        vec::Vec<T> _n(this->gf, k);
         for (int i = 0; i < k; i++) {
             _n.set(i, this->gf->div(words->get(i), _A.eval(vx.get(i))));
         }
@@ -164,5 +167,8 @@ class FECGF2NFFTRS : public FEC<T> {
             output->set(i, S.get(i));
     }
 };
+
+} // namespace fec
+} // namespace nttec
 
 #endif

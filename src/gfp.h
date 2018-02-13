@@ -4,6 +4,9 @@
 
 #include "gf.h"
 
+namespace nttec {
+namespace gf {
+
 template <typename T>
 class GFP : public GF<T> {
   public:
@@ -30,5 +33,8 @@ T GFP<T>::inv_exp(T a)
 
     return this->exp(a, this->p - 2);
 }
+
+} // namespace gf
+} // namespace nttec
 
 #endif

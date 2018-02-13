@@ -8,14 +8,17 @@
 #include "vec.h"
 #include "vvec.h"
 
+namespace nttec {
+namespace fec {
+
 /**
  * GF_2^n based RS using additive FFT transformation
  */
 template <typename T>
 class FECGF2NFFTADDRS : public FEC<T> {
   private:
-    FFTADD<T>* fft = nullptr;
-    Vec<T>* betas = nullptr;
+    fft::FFTADD<T>* fft = nullptr;
+    vec::Vec<T>* betas = nullptr;
 
   public:
     T n;
@@ -27,22 +30,22 @@ class FECGF2NFFTADDRS : public FEC<T> {
         if (word_size > 16)
             assert(false); // not support yet
         unsigned gf_n = 8 * word_size;
-        this->gf = new GF2N<T>(gf_n);
+        this->gf = new gf::GF2N<T>(gf_n);
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = smallest power of 2 and at least (n_parities + n_data)
-        n = _get_smallest_power_of_2<T>(n_data + n_parities);
-        m = _log2<T>(n);
+        n = arith::get_smallest_power_of_2<T>(n_data + n_parities);
+        m = arith::log2<T>(n);
 
         // std::cerr << "n_parities=" << n_parities << "\n";
         // std::cerr << "n_data=" << n_data << "\n";
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "m=" << m << "\n";
 
-        this->fft = new FFTADD<T>(this->gf, m);
+        this->fft = new fft::FFTADD<T>(this->gf, m);
 
         // subspace spanned by <beta_i>
-        this->betas = new Vec<T>(this->gf, n);
+        this->betas = new vec::Vec<T>(this->gf, n);
         this->fft->compute_B(this->betas);
     }
 
@@ -68,12 +71,12 @@ class FECGF2NFFTADDRS : public FEC<T> {
      * @param words must be n_data
      */
     void encode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* words)
+        vec::Vec<T>* words)
     {
-        VVec<T> vwords(words, n);
+        vec::VVec<T> vwords(words, n);
         fft->fft(output, &vwords);
     }
 
@@ -110,16 +113,16 @@ class FECGF2NFFTADDRS : public FEC<T> {
      * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
      */
     void decode(
-        Vec<T>* output,
+        vec::Vec<T>* output,
         std::vector<KeyValue*> props,
         off_t offset,
-        Vec<T>* fragments_ids,
-        Vec<T>* words)
+        vec::Vec<T>* fragments_ids,
+        vec::Vec<T>* words)
     {
         int vx_zero = -1;
         int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        Vec<T> vx(this->gf, k);
+        vec::Vec<T> vx(this->gf, k);
         for (int i = 0; i < k; i++) {
             int _vx = this->betas->get(fragments_ids->get(i));
             vx.set(i, _vx);
@@ -147,7 +150,7 @@ class FECGF2NFFTADDRS : public FEC<T> {
         // std::cout << "A'(x)="; _A.dump();
 
         // evaluate n_i=v_i/A'_i(x_i)
-        Vec<T> _n(this->gf, k);
+        vec::Vec<T> _n(this->gf, k);
         for (int i = 0; i < k; i++) {
             _n.set(i, this->gf->div(words->get(i), _A.eval(vx.get(i))));
         }
@@ -189,5 +192,8 @@ class FECGF2NFFTADDRS : public FEC<T> {
             output->set(i, S.get(i));
     }
 };
+
+} // namespace fec
+} // namespace nttec
 
 #endif

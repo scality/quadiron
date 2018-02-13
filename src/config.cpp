@@ -2,6 +2,8 @@
 
 #include "config.h"
 
+namespace nttec {
+
 std::istream& operator>>(std::istream& ins, KeyValue& d)
 {
     std::string s, key, value;
@@ -49,3 +51,5 @@ std::ostream& operator<<(std::ostream& outs, const KeyValue& d)
         outs << iter->first << " = " << iter->second << std::endl;
     return outs;
 }
+
+} // namespace nttec

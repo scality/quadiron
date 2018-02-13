@@ -10,6 +10,9 @@
 #include "vcvec.h"
 #include "vec.h"
 
+namespace nttec {
+namespace fft {
+
 /**
  * Prime-factor FFT algorithm
  *  https://en.wikipedia.org/wiki/Prime-factor_FFT_algorithm
@@ -49,27 +52,27 @@ class FFTPF : public DFT<T> {
     T n2;
     T w, w1, w2;
     T a, b, c, d;
-    Vec<T>* G = nullptr;
-    VcVec<T>* Y = nullptr;
-    VcVec<T>* X = nullptr;
+    vec::Vec<T>* G = nullptr;
+    vec::VcVec<T>* Y = nullptr;
+    vec::VcVec<T>* X = nullptr;
     DFT<T>* dft_outer = nullptr;
     DFT<T>* dft_inner = nullptr;
     std::vector<T>* prime_factors = nullptr;
 
   public:
     FFTPF(
-        GF<T>* gf,
+        gf::GF<T>* gf,
         T n,
         int id = 0,
         std::vector<T>* factors = nullptr,
         T _w = 0);
     ~FFTPF();
-    void fft(Vec<T>* output, Vec<T>* input);
-    void ifft(Vec<T>* output, Vec<T>* input);
-    void fft_inv(Vec<T>* output, Vec<T>* input);
+    void fft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void ifft(vec::Vec<T>* output, vec::Vec<T>* input);
+    void fft_inv(vec::Vec<T>* output, vec::Vec<T>* input);
 
   private:
-    void _fft(Vec<T>* output, Vec<T>* input, bool inv);
+    void _fft(vec::Vec<T>* output, vec::Vec<T>* input, bool inv);
     T _inverse_mod(T nb, T mod);
 };
 
@@ -83,13 +86,13 @@ class FFTPF : public DFT<T> {
  * @return
  */
 template <typename T>
-FFTPF<T>::FFTPF(GF<T>* gf, T n, int id, std::vector<T>* factors, T _w)
+FFTPF<T>::FFTPF(gf::GF<T>* gf, T n, int id, std::vector<T>* factors, T _w)
     : DFT<T>(gf, n)
 {
     if (factors == nullptr) {
         this->prime_factors = new std::vector<T>();
         first_layer_fft = true;
-        _get_coprime_factors<T>(n, this->prime_factors);
+        arith::get_coprime_factors<T>(n, this->prime_factors);
         // w is of order-n
         w = gf->get_nth_root(n);
     } else {
@@ -115,14 +118,14 @@ FFTPF<T>::FFTPF(GF<T>* gf, T n, int id, std::vector<T>* factors, T _w)
         loop = true;
         w2 = gf->exp(w, n1); // order of w2 = n2
         T _n2 = n / n1;
-        if (_is_power_of_2<T>(_n2))
+        if (arith::is_power_of_2<T>(_n2))
             this->dft_inner = new FFT2K<T>(gf, _n2);
         else
             this->dft_inner =
                 new FFTCT<T>(gf, _n2, id + 1, this->prime_factors, w2);
-        this->G = new Vec<T>(this->gf, this->n);
-        this->Y = new VcVec<T>(this->G);
-        this->X = new VcVec<T>(this->G);
+        this->G = new vec::Vec<T>(this->gf, this->n);
+        this->Y = new vec::VcVec<T>(this->G);
+        this->X = new vec::VcVec<T>(this->G);
     } else
         loop = false;
 }
@@ -159,7 +162,7 @@ T FFTPF<T>::_inverse_mod(T nb, T mod)
 }
 
 template <typename T>
-void FFTPF<T>::_fft(Vec<T>* output, Vec<T>* input, bool inv)
+void FFTPF<T>::_fft(vec::Vec<T>* output, vec::Vec<T>* input, bool inv)
 {
     X->set_vec(input);
     X->set_len(n2);
@@ -191,7 +194,7 @@ void FFTPF<T>::_fft(Vec<T>* output, Vec<T>* input, bool inv)
 }
 
 template <typename T>
-void FFTPF<T>::fft(Vec<T>* output, Vec<T>* input)
+void FFTPF<T>::fft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     if (!loop)
         return dft_outer->fft(output, input);
@@ -200,7 +203,7 @@ void FFTPF<T>::fft(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFTPF<T>::fft_inv(Vec<T>* output, Vec<T>* input)
+void FFTPF<T>::fft_inv(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     if (!loop)
         dft_outer->fft_inv(output, input);
@@ -209,7 +212,7 @@ void FFTPF<T>::fft_inv(Vec<T>* output, Vec<T>* input)
 }
 
 template <typename T>
-void FFTPF<T>::ifft(Vec<T>* output, Vec<T>* input)
+void FFTPF<T>::ifft(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     fft_inv(output, input);
 
@@ -220,5 +223,8 @@ void FFTPF<T>::ifft(Vec<T>* output, Vec<T>* input)
         output->mul_scalar(this->inv_n_mod_p);
     }
 }
+
+} // namespace fft
+} // namespace nttec
 
 #endif
