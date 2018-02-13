@@ -9,9 +9,9 @@
 
 #include <sys/time.h>
 
-#include "config.h"
 #include "gf.h"
 #include "misc.h"
+#include "property.h"
 #include "vec.h"
 #include "vecp.h"
 
@@ -102,12 +102,12 @@ class FEC {
     virtual int get_n_outputs() = 0;
     virtual void encode(
         vec::Vec<T>* output,
-        std::vector<KeyValue*> props,
+        std::vector<Properties>& props,
         off_t offset,
         vec::Vec<T>* words) = 0;
     virtual void encode(
         vec::Vecp<T>* output,
-        std::vector<KeyValue*> props,
+        std::vector<Properties>& props,
         off_t offset,
         vec::Vecp<T>* words){};
     virtual void decode_add_data(int fragment_index, int row) = 0;
@@ -125,7 +125,7 @@ class FEC {
      */
     virtual void decode(
         vec::Vec<T>* output,
-        std::vector<KeyValue*> props,
+        const std::vector<Properties>& props,
         off_t offset,
         vec::Vec<T>* fragments_ids,
         vec::Vec<T>* words) = 0;
@@ -139,17 +139,17 @@ class FEC {
     void encode_bufs(
         std::vector<std::istream*> input_data_bufs,
         std::vector<std::ostream*> output_parities_bufs,
-        std::vector<KeyValue*> output_parities_props);
+        std::vector<Properties>& output_parities_props);
 
     void encode_packet(
         std::vector<std::istream*> input_data_bufs,
         std::vector<std::ostream*> output_parities_bufs,
-        std::vector<KeyValue*> output_parities_props);
+        std::vector<Properties>& output_parities_props);
 
     bool decode_bufs(
         std::vector<std::istream*> input_data_bufs,
         std::vector<std::istream*> input_parities_bufs,
-        std::vector<KeyValue*> input_parities_props,
+        const std::vector<Properties>& input_parities_props,
         std::vector<std::ostream*> output_data_bufs);
 
     gf::GF<T>* get_gf()
@@ -304,7 +304,7 @@ template <typename T>
 void FEC<T>::encode_bufs(
     std::vector<std::istream*> input_data_bufs,
     std::vector<std::ostream*> output_parities_bufs,
-    std::vector<KeyValue*> output_parities_props)
+    std::vector<Properties>& output_parities_props)
 {
     bool cont = true;
     off_t offset = 0;
@@ -357,7 +357,7 @@ template <typename T>
 void FEC<T>::encode_packet(
     std::vector<std::istream*> input_data_bufs,
     std::vector<std::ostream*> output_parities_bufs,
-    std::vector<KeyValue*> output_parities_props)
+    std::vector<Properties>& output_parities_props)
 {
     assert(input_data_bufs.size() == n_data);
     assert(output_parities_bufs.size() == n_outputs);
@@ -445,7 +445,7 @@ template <typename T>
 bool FEC<T>::decode_bufs(
     std::vector<std::istream*> input_data_bufs,
     std::vector<std::istream*> input_parities_bufs,
-    std::vector<KeyValue*> input_parities_props,
+    const std::vector<Properties>& input_parities_props,
     std::vector<std::ostream*> output_data_bufs)
 {
     off_t offset = 0;

@@ -51,10 +51,8 @@ Benchmark<T>::~Benchmark()
     if (c_streams != nullptr) {
         for (int i = 0; i < n_c; i++) {
             delete c_streams->at(i);
-            delete c_propos->at(i);
         }
         delete c_streams;
-        delete c_propos;
     }
     if (a_streams != nullptr) {
         for (int i = 0; i < n; i++) {
@@ -198,7 +196,7 @@ int Benchmark<T>::init()
     c_streams = new std::vector<std::ostream*>(n_c);
     a_streams = new std::vector<std::istream*>(n);
     r_streams = new std::vector<std::ostream*>(k);
-    c_propos = new std::vector<nttec::KeyValue*>(n_c);
+    c_propos = std::vector<nttec::Properties>(n_c);
 
     for (i = 0; i < k; i++) {
         d_streams->at(i) = new std::istream(d_istreambufs->at(i));
@@ -206,7 +204,6 @@ int Benchmark<T>::init()
 
     for (i = 0; i < n_c; i++) {
         c_streams->at(i) = new std::ostream(c_ostreambufs->at(i));
-        c_propos->at(i) = new nttec::KeyValue();
     }
 
     if (systematic_ec) {
@@ -365,7 +362,7 @@ void Benchmark<T>::reset_c_streams()
     for (int i = 0; i < n_c; i++) {
         c_streams->at(i)->clear();
         c_streams->at(i)->rdbuf()->pubseekpos(0);
-        c_propos->at(i)->clear();
+        c_propos.at(i).clear();
     }
 }
 
@@ -392,7 +389,7 @@ template <typename T>
 void Benchmark<T>::get_avail_chunks(
     std::vector<std::istream*>* avail_d_chunks,
     std::vector<std::istream*>* avail_c_chunks,
-    std::vector<nttec::KeyValue*>* avail_c_props)
+    std::vector<nttec::Properties>& avail_c_props)
 {
     std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end());
 
@@ -402,7 +399,7 @@ void Benchmark<T>::get_avail_chunks(
     }
     for (i = 0; i < n_c; i++) {
         avail_c_chunks->at(i) = nullptr;
-        avail_c_props->at(i) = nullptr;
+        avail_c_props.at(i) = nttec::Properties();
     }
     if (systematic_ec) {
         int avail_d_chunks_nb = 0;
@@ -413,7 +410,7 @@ void Benchmark<T>::get_avail_chunks(
                 avail_d_chunks_nb++;
             } else {
                 avail_c_chunks->at(j - k) = a_streams->at(j);
-                avail_c_props->at(j - k) = c_propos->at(j - k);
+                avail_c_props.at(j - k) = c_propos.at(j - k);
             }
         }
         // shuffle again if all data are available
@@ -423,7 +420,7 @@ void Benchmark<T>::get_avail_chunks(
         for (i = 0; i < k; i++) {
             int j = c_chunks_id->at(i);
             avail_c_chunks->at(j) = a_streams->at(j);
-            avail_c_props->at(j) = c_propos->at(j);
+            avail_c_props.at(j) = c_propos.at(j);
         }
     }
 }
@@ -435,9 +432,9 @@ bool Benchmark<T>::encode()
     reset_d_streams();
 
     if (operation_on_packet)
-        fec->encode_packet(*d_streams, *c_streams, *c_propos);
+        fec->encode_packet(*d_streams, *c_streams, c_propos);
     else
-        fec->encode_bufs(*d_streams, *c_streams, *c_propos);
+        fec->encode_bufs(*d_streams, *c_streams, c_propos);
 
     // update stats
     enc_stats->add(fec->total_enc_usec);
@@ -453,10 +450,10 @@ bool Benchmark<T>::decode()
 {
     std::vector<std::istream*> d_streams_shuffled(k, nullptr);
     std::vector<std::istream*> c_streams_shuffled(n_c, nullptr);
-    std::vector<nttec::KeyValue*> c_props_shuffled(n_c, nullptr);
+    std::vector<nttec::Properties> c_props_shuffled(n_c);
 
     get_avail_chunks(
-        &d_streams_shuffled, &c_streams_shuffled, &c_props_shuffled);
+        &d_streams_shuffled, &c_streams_shuffled, c_props_shuffled);
 
     // this operation is done per trail
     reset_a_streams();

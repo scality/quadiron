@@ -46,7 +46,7 @@ void create_coding_files(
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
     std::vector<std::ostream*> c_files(fec->n_outputs, nullptr);
     std::vector<std::ostream*> c_props_files(fec->n_outputs, nullptr);
-    std::vector<nttec::KeyValue*> c_props(fec->n_outputs, nullptr);
+    std::vector<nttec::Properties> c_props(fec->n_outputs);
 
     for (unsigned i = 0; i < fec->n_data; i++) {
         snprintf(filename, sizeof(filename), "%s.d%d", prefix, i);
@@ -66,7 +66,6 @@ void create_coding_files(
             std::cerr << "create: opening coding props for writing " << filename
                       << "\n";
         c_props_files[i] = new std::ofstream(filename);
-        c_props[i] = new nttec::KeyValue();
     }
 
     if (operation_on_packet)
@@ -80,11 +79,10 @@ void create_coding_files(
     }
 
     for (unsigned i = 0; i < fec->n_outputs; i++) {
-        *(c_props_files[i]) << *(c_props[i]);
+        *(c_props_files[i]) << c_props[i];
 
         (static_cast<std::ofstream*>(c_props_files[i]))->close();
         delete c_props_files[i];
-        delete c_props[i];
 
         (static_cast<std::ofstream*>(c_files[i]))->close();
         delete c_files[i];
@@ -102,7 +100,7 @@ bool repair_data_files(nttec::fec::FEC<T>* fec)
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
     std::vector<std::istream*> c_files(fec->n_outputs, nullptr);
     std::vector<std::istream*> c_props_files(fec->n_outputs, nullptr);
-    std::vector<nttec::KeyValue*> c_props(fec->n_outputs, nullptr);
+    std::vector<nttec::Properties> c_props(fec->n_outputs);
     std::vector<std::ostream*> r_files(fec->n_data, nullptr);
 
     // re-read data
@@ -138,11 +136,9 @@ bool repair_data_files(nttec::fec::FEC<T>* fec)
             std::cerr << "repair: checking coding props " << filename << "\n";
         if (access(filename, F_OK)) {
             c_props_files[i] = nullptr;
-            c_props[i] = nullptr;
         } else {
             c_props_files[i] = new std::ifstream(filename);
-            c_props[i] = new nttec::KeyValue();
-            *(c_props_files[i]) >> *(c_props[i]);
+            *(c_props_files[i]) >> c_props[i];
         }
     }
 
@@ -160,9 +156,6 @@ bool repair_data_files(nttec::fec::FEC<T>* fec)
             (static_cast<std::ifstream*>(c_props_files[i]))->close();
             delete c_props_files[i];
         }
-
-        if (nullptr != c_props[i])
-            delete c_props[i];
 
         if (nullptr != c_files[i]) {
             (static_cast<std::ifstream*>(c_files[i]))->close();

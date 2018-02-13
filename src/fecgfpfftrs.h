@@ -105,7 +105,7 @@ class FECGFPFFTRS : public FEC<T> {
      */
     void encode(
         vec::Vec<T>* output,
-        std::vector<KeyValue*> props,
+        std::vector<Properties>& props,
         off_t offset,
         vec::Vec<T>* words)
     {
@@ -114,10 +114,7 @@ class FECGFPFFTRS : public FEC<T> {
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {
             if (output->get(i) >= this->limit_value) {
-                char buf[256];
-                snprintf(buf, sizeof(buf), "%zd:%d", offset, i);
-                assert(nullptr != props[i]);
-                props[i]->insert(std::make_pair(buf, "@"));
+                props[i].add(ValueLocation(offset, i), "@");
                 output->set(i, output->get(i) % this->limit_value);
             }
         }
@@ -153,7 +150,7 @@ class FECGFPFFTRS : public FEC<T> {
      */
     void decode(
         vec::Vec<T>* output,
-        std::vector<KeyValue*> props,
+        const std::vector<Properties>& props,
         off_t offset,
         vec::Vec<T>* fragments_ids,
         vec::Vec<T>* words)
@@ -166,12 +163,11 @@ class FECGFPFFTRS : public FEC<T> {
         }
 
         for (int i = 0; i < k; i++) {
-            int j = fragments_ids->get(i);
-            char buf[256];
-            snprintf(buf, sizeof(buf), "%zd:%d", offset, j);
-            if (nullptr != props[j]) {
-                if (props[j]->is_key(buf) && props[j]->at(buf) == "@")
-                    words->set(i, words->get(i) + this->limit_value);
+            const int j = fragments_ids->get(i);
+            auto data = props[j].get(ValueLocation(offset, j));
+
+            if (data && *data == "@") {
+                words->set(i, words->get(i) + this->limit_value);
             }
         }
 

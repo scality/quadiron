@@ -72,7 +72,7 @@ class FECGF2NFFTADDRS : public FEC<T> {
      */
     void encode(
         vec::Vec<T>* output,
-        std::vector<KeyValue*> props,
+        std::vector<Properties>& props,
         off_t offset,
         vec::Vec<T>* words)
     {
@@ -114,7 +114,7 @@ class FECGF2NFFTADDRS : public FEC<T> {
      */
     void decode(
         vec::Vec<T>* output,
-        std::vector<KeyValue*> props,
+        const std::vector<Properties>& props,
         off_t offset,
         vec::Vec<T>* fragments_ids,
         vec::Vec<T>* words)

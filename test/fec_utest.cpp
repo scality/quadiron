@@ -98,11 +98,11 @@ class FECUtest {
         std::vector<int> ids;
         for (int i = 0; i < code_len; i++)
             ids.push_back(i);
-        std::vector<nttec::KeyValue*> props(code_len, nullptr);
+        std::vector<nttec::Properties> props(code_len);
         for (int j = 0; j < 1000; j++) {
             if (propos_flag) {
                 for (int i = 0; i < code_len; i++)
-                    props[i] = new nttec::KeyValue();
+                    props[i] = nttec::Properties();
             }
             for (int i = 0; i < n_data; i++)
                 v.set(i, gf->weak_rand());
@@ -119,10 +119,6 @@ class FECUtest {
             fec->decode(&v2, props, 0, &f, &_v2);
             // std::cout << "v2:"; v2.dump();
             assert(v_p.eq(&v2));
-            if (propos_flag) {
-                for (int i = 0; i < code_len; i++)
-                    delete props[i];
-            }
         }
     }
 

@@ -9,7 +9,6 @@
 
 #include "arith.h"
 #include "build_info.h"
-#include "config.h"
 #include "core.h"
 #include "dft.h"
 #include "dftn.h"
@@ -34,6 +33,7 @@
 #include "misc.h"
 #include "ngff4.h"
 #include "poly.h"
+#include "property.h"
 #include "rn.h"
 #include "v2vec.h"
 #include "v2vecp.h"

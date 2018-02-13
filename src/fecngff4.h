@@ -78,7 +78,7 @@ class FECNGFF4RS : public FEC<T> {
      */
     void encode(
         vec::Vec<T>* output,
-        std::vector<KeyValue*> props,
+        std::vector<Properties>& props,
         off_t offset,
         vec::Vec<T>* words)
     {
@@ -94,11 +94,8 @@ class FECNGFF4RS : public FEC<T> {
             T val = output->get(i);
             compT<T> true_val = ngff4->unpack(val);
             if (true_val.flag > 0) {
-                char buf[256];
-                snprintf(buf, sizeof(buf), "%zd:%d", offset, i);
-                assert(nullptr != props[i]);
-                props[i]->insert(
-                    std::make_pair(buf, std::to_string(true_val.flag)));
+                props[i].add(
+                    ValueLocation(offset, i), std::to_string(true_val.flag));
                 // std::cout << "\ni:" << true_val.flag << " at buf" << buf <<
                 // std::endl; std::cout << "encode: val:" << val << " <- " <<
                 // true_val.val << std::endl;
@@ -138,7 +135,7 @@ class FECNGFF4RS : public FEC<T> {
      */
     void decode(
         vec::Vec<T>* output,
-        std::vector<KeyValue*> props,
+        const std::vector<Properties>& props,
         off_t offset,
         vec::Vec<T>* fragments_ids,
         vec::Vec<T>* words)
@@ -156,11 +153,11 @@ class FECNGFF4RS : public FEC<T> {
 
         T true_val;
         for (int i = 0; i < k; i++) {
-            int j = fragments_ids->get(i);
-            char buf[256];
-            snprintf(buf, sizeof(buf), "%zd:%d", offset, j);
-            if (nullptr != props[j] && props[j]->is_key(buf)) {
-                uint32_t flag = std::atoi(props[j]->at(buf).c_str());
+            const int j = fragments_ids->get(i);
+            auto data = props[j].get(ValueLocation(offset, j));
+
+            if (data) {
+                uint32_t flag = std::stoul(*data);
                 // std::cout << "\nflag at " << buf << ":" << flag << std::endl;
                 true_val = ngff4->pack(words->get(i), flag);
                 // std::cout << "word:" << words->get(i) << " -> " << true_val
