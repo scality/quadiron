@@ -64,6 +64,15 @@ typedef enum {
     NTTEC_EX_DIV_BY_ZERO,
 } NttecException;
 
+/** Return the version string of NTTEC.
+ *
+ * The version string has the form MAJOR.MINOR.PATCH-REVISION, where '-REVISION'
+ * is optional (only present for development version).
+ *
+ * @return the version string.
+ */
+const char* get_version();
+
 } // namespace nttec
 
 #endif

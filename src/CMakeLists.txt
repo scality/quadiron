@@ -1,5 +1,6 @@
 # Source files.
 set(LIB_SRC
+  ${SOURCE_DIR}/core.cpp
   ${SOURCE_DIR}/misc.cpp
   ${SOURCE_DIR}/property.cpp
   ${SOURCE_DIR}/vec.cpp
