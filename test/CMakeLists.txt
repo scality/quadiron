@@ -26,11 +26,8 @@ add_executable(${TEST_DRIVER}
 )
 add_coverage(${TEST_DRIVER})
 
-include_directories(${SOURCE_DIR})
-
 target_link_libraries(${TEST_DRIVER}
   ${STATIC_LIB}
-  ${GMPXX_LIBRARIES}
 )
 
 # Don't disable assert when compiling tests…

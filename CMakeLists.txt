@@ -50,14 +50,7 @@ set(STATIC_LIB  ${CMAKE_PROJECT_NAME}_static)
 set(TEST_DRIVER ${CMAKE_PROJECT_NAME}_test)
 set(NTTEC_TOOLS ${CMAKE_PROJECT_NAME}_tools)
 
-include_directories(${SOURCE_DIR})
-
 file(MAKE_DIRECTORY ${GENERATE_DIR})
-# Use SYSTEM so that our strict compilers settings are not applied to generated
-# code.
-include_directories(SYSTEM
-    ${GENERATE_DIR}
-)
 
 ####################
 # Default build type
@@ -133,10 +126,6 @@ endforeach(flag)
 #############
 
 find_package(codecov)
-
-# Dependencies.
-find_package(GMPXX REQUIRED)
-include_directories(SYSTEM ${GMPXX_INCLUDE_DIRS})
 
 # NTTEC
 add_subdirectory(src)

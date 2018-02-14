@@ -23,7 +23,6 @@ add_coverage(${EC_BIN_NAME})
 # Link librairies.
 target_link_libraries(${EC_BIN_NAME}
   ${STATIC_LIB}
-  ${GMPXX_LIBRARIES}
 )
 
 #TODO: add targets for find_pminus1_compo, is_prime and find_primes
