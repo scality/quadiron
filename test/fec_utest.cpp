@@ -85,7 +85,7 @@ class FECUtest {
         int n,
         int n_data,
         int code_len,
-        bool propos_flag = false)
+        bool props_flag = false)
     {
         nttec::gf::GF<T>* gf = fec->get_gf();
 
@@ -100,7 +100,7 @@ class FECUtest {
             ids.push_back(i);
         std::vector<nttec::Properties> props(code_len);
         for (int j = 0; j < 1000; j++) {
-            if (propos_flag) {
+            if (props_flag) {
                 for (int i = 0; i < code_len; i++)
                     props[i] = nttec::Properties();
             }

@@ -277,8 +277,8 @@ class Benchmark {
     std::vector<std::istream*>* a_streams = nullptr;
     // streams of repair chunks
     std::vector<std::ostream*>* r_streams = nullptr;
-    // propos vector
-    std::vector<nttec::Properties> c_propos;
+    // props vector
+    std::vector<nttec::Properties> c_props;
 
     int init();
     int check_params();
