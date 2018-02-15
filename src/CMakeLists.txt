@@ -10,7 +10,7 @@ set(LIB_SRC
   FORCE
 )
 
-# Generate config.h (with compile-time information).
+# Generate build_info.h (with compile-time information).
 configure_file(${SOURCE_DIR}/build_info.in ${GENERATE_DIR}/build_info.h @ONLY)
 
 ###########
