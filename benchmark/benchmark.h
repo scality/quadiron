@@ -277,8 +277,8 @@ class Benchmark {
     std::vector<std::istream*>* a_streams = nullptr;
     // streams of repair chunks
     std::vector<std::ostream*>* r_streams = nullptr;
-    // propos vector
-    std::vector<nttec::KeyValue*>* c_propos = nullptr;
+    // props vector
+    std::vector<nttec::Properties> c_props;
 
     int init();
     int check_params();
@@ -294,7 +294,7 @@ class Benchmark {
     void get_avail_chunks(
         std::vector<std::istream*>* avail_d_chunks,
         std::vector<std::istream*>* avail_c_chunks,
-        std::vector<nttec::KeyValue*>* avail_c_props);
+        std::vector<nttec::Properties>& avail_c_props);
     bool encode();
     bool decode();
     void show(Stats_t* stats);

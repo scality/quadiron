@@ -1,7 +1,7 @@
 # Source files.
 set(LIB_SRC
-  ${SOURCE_DIR}/config.cpp
   ${SOURCE_DIR}/misc.cpp
+  ${SOURCE_DIR}/property.cpp
   ${SOURCE_DIR}/vec.cpp
 
   CACHE
