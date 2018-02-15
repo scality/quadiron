@@ -13,17 +13,17 @@ std::ostream& operator<<(std::ostream& dest, __int128_t value);
 
 namespace nttec {
 
-struct uint256_t {
+struct UInt256 {
     __uint128_t lo;
     __uint128_t hi;
-    uint256_t() : lo(), hi() {}
-    uint256_t(__uint128_t x) : lo(x), hi(0) {}
+    UInt256() : lo(), hi() {}
+    UInt256(__uint128_t x) : lo(x), hi(0) {}
 
-    uint256_t operator*(__uint128_t x)
+    UInt256 operator*(__uint128_t x)
     {
         return lo * x;
     }
-    uint256_t operator%(__uint128_t x)
+    UInt256 operator%(__uint128_t x)
     {
         return lo % x;
     }
@@ -33,11 +33,11 @@ struct uint256_t {
     }
 };
 
-struct int256_t {
+struct Int256 {
     __uint128_t lo;
     __uint128_t hi;
-    int256_t() : lo(), hi() {}
-    int256_t(__uint128_t x) : lo(x), hi(0) {}
+    Int256() : lo(), hi() {}
+    Int256(__uint128_t x) : lo(x), hi(0) {}
 
     bool operator<(__uint128_t x)
     {
@@ -55,23 +55,23 @@ struct int256_t {
     {
         return (lo != (__uint128_t)x);
     }
-    int256_t operator+(__uint128_t x)
+    Int256 operator+(__uint128_t x)
     {
         return lo + x;
     }
-    int256_t operator-(int256_t x)
+    Int256 operator-(Int256 x)
     {
         return lo - x.lo;
     }
-    int256_t operator*(int256_t x)
+    Int256 operator*(Int256 x)
     {
         return lo * x.lo;
     }
-    int256_t operator/(int256_t x)
+    Int256 operator/(Int256 x)
     {
         return lo / x.lo;
     }
-    int256_t operator/(int x)
+    Int256 operator/(int x)
     {
         return lo / x;
     }
