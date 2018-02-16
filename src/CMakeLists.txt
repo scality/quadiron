@@ -52,3 +52,74 @@ foreach(lib ${SHARED_LIB} ${STATIC_LIB})
     ${GMPXX_LIBRARIES}
   )
 endforeach()
+
+##############
+# Installation
+##############
+
+include(GNUInstallDirs)
+
+install(TARGETS ${SHARED_LIB} ${STATIC_LIB}
+  COMPONENT libraries
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(DIRECTORY .
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PROJECT_NAME}
+  COMPONENT headers
+  FILES_MATCHING PATTERN "*.h"
+)
+install(FILES ${GENERATE_DIR}/build_info.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PROJECT_NAME}
+  COMPONENT headers
+)
+
+
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_NAME          "${CMAKE_PROJECT_NAME}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+  "${UPCASE_PROJECT_NAME} — NTT Based Erasure Coding Library"
+)
+set(CPACK_RESOURCE_FILE_LICENSE    "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README     "${CMAKE_SOURCE_DIR}/README.md")
+set(CPACK_PACKAGE_VERSION_MAJOR    "${VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR    "${VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH    "${VERSION_PATCH}")
+
+# Source distributions.
+set(CPACK_SOURCE_GENERATOR         TBZ2)
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${VERSION}")
+set(CPACK_SOURCE_IGNORE_FILES
+  ".swp$"
+  "/.git/"
+  "/build/"
+  "/.gitignore"
+  "${CPACK_SOURCE_IGNORE_FILES}"
+)
+
+include(CPack)
+
+cpack_add_component_group(runtime
+  DISPLAY_NAME Runtime
+  DESCRIPTION  "Components required to run softwares using ${UPCASE_PROJECT_NAME}"
+  EXPANDED
+)
+cpack_add_component_group(development
+  DISPLAY_NAME "Development"
+  DESCRIPTION  "Components required to develop softwares using ${UPCASE_PROJECT_NAME}"
+  EXPANDED
+)
+
+cpack_add_component(libraries
+  DISPLAY_NAME "${UPCASE_PROJECT_NAME} libraries"
+  DESCRIPTION  "Libraries required to run programs using ${UPCASE_PROJECT_NAME}"
+  REQUIRED
+  GROUP        runtime
+)
+cpack_add_component(headers
+  DISPLAY_NAME "${UPCASE_PROJECT_NAME} development headers"
+  DESCRIPTION  "C++ header files required to build programs using ${UPCASE_PROJECT_NAME}"
+  DISABLED
+  GROUP        development
+  DEPENDS      libraries
+)

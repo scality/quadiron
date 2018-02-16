@@ -23,6 +23,9 @@ make
 - `check`: run the test suite
 - `tools`: build the NTTEC tools
 - `benchmark`: run the NTTEC benchmark (build mode "Release" is recommended)
+- `package`: generate a binary installer
+- `package_source`: generate a source installer (a tarball with the sources)
+- `install`: install the library in `CMAKE_INSTALL_PREFIX`.
 
 ### Code coverage
 
