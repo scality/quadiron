@@ -1,3 +1,5 @@
+include(GNUInstallDirs)
+
 # Source files.
 set(LIB_SRC
   ${SOURCE_DIR}/misc.cpp
@@ -20,13 +22,17 @@ configure_file(${SOURCE_DIR}/build_info.in ${GENERATE_DIR}/build_info.h @ONLY)
 # Dependencies.
 find_package(GMPXX REQUIRED)
 
+set(INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
+
 set(OBJECT_SYS_INCLUDES
-  ${GENERATE_DIR}
+  $<BUILD_INTERFACE:${GENERATE_DIR}>
+  $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>
   ${GMPXX_INCLUDE_DIRS}
 )
 
 set(OBJECT_INCLUDES
-  ${SOURCE_DIR}
+  $<BUILD_INTERFACE:${SOURCE_DIR}>
+  $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>
 )
 
 
@@ -57,12 +63,12 @@ endforeach()
 # Installation
 ##############
 
-include(GNUInstallDirs)
-
 install(TARGETS ${SHARED_LIB} ${STATIC_LIB}
+  EXPORT ${UPCASE_PROJECT_NAME}
   COMPONENT libraries
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  INCLUDES DESTINATION ${INSTALL_INCLUDE_DIR}
 )
 install(DIRECTORY .
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PROJECT_NAME}
@@ -122,4 +128,25 @@ cpack_add_component(headers
   DISABLED
   GROUP        development
   DEPENDS      libraries
+)
+
+############################
+# Export NTTEC configuration
+############################
+include(CMakePackageConfigHelpers)
+
+install(EXPORT ${UPCASE_PROJECT_NAME}
+  NAMESPACE ${UPCASE_PROJECT_NAME}::
+  FILE ${UPCASE_PROJECT_NAME}Config.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${UPCASE_PROJECT_NAME}
+)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/${UPCASE_PROJECT_NAME}ConfigVersion.cmake
+  VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+  COMPATIBILITY SameMajorVersion
+)
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/${UPCASE_PROJECT_NAME}ConfigVersion.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${UPCASE_PROJECT_NAME}
+  COMPONENT headers
 )
