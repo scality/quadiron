@@ -21,12 +21,12 @@ set(TEST_SRC
   FORCE
 )
 
-add_executable(${TEST_DRIVER}
+add_executable(${UNIT_TESTS}
   ${TEST_SRC}
 )
-add_coverage(${TEST_DRIVER})
+add_coverage(${UNIT_TESTS})
 
-target_link_libraries(${TEST_DRIVER}
+target_link_libraries(${UNIT_TESTS}
   ${STATIC_LIB}
 )
 
@@ -35,5 +35,5 @@ add_definitions(-UNDEBUG)
 
 add_test(
   NAME unit_test
-  COMMAND ${TEST_DRIVER}
+  COMMAND ${UNIT_TESTS}
 )

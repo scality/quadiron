@@ -45,11 +45,11 @@ set(GENERATE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/${CMAKE_BUILD_TYPE})
 
 # Targets
-set(OBJECT_LIB  ${CMAKE_PROJECT_NAME}_object)
-set(SHARED_LIB  ${CMAKE_PROJECT_NAME}_shared)
-set(STATIC_LIB  ${CMAKE_PROJECT_NAME}_static)
-set(TEST_DRIVER ${CMAKE_PROJECT_NAME}_test)
-set(NTTEC_TOOLS ${CMAKE_PROJECT_NAME}_tools)
+set(OBJECT_LIB  object)
+set(SHARED_LIB  shared)
+set(STATIC_LIB  static)
+set(UNIT_TESTS  unit_tests)
+set(NTTEC_TOOLS tools)
 
 file(MAKE_DIRECTORY ${GENERATE_DIR})
 
@@ -144,7 +144,7 @@ coverage_evaluate()
 # Be sure to recompile the test driver if needed before running the test suite.
 add_custom_target(check
   COMMAND ${CMAKE_CTEST_COMMAND}
-  DEPENDS ${TEST_DRIVER}
+  DEPENDS ${UNIT_TESTS}
   DEPENDS ${NTTEC_TOOLS}
 )
 

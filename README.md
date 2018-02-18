@@ -16,10 +16,10 @@ make
 ### Targets
 
 - `doc`: build the documentation using Doxygen
-- `nttec_bench`: build the NTTEC benchmark (build mode "Release" is recommended)
-- `nttec_shared`: build the NTTEC shared library
-- `nttec_static`: build the NTTEC static library
-- `nttec_test`: build the test driver.
+- `bench`: build the NTTEC benchmark (build mode "Release" is recommended)
+- `shared`: build the NTTEC shared library
+- `static`: build the NTTEC static library
+- `unit_tests`: build the unit tests.
 - `check`: run the test suite
 - `tools`: build the NTTEC tools
 - `benchmark`: run the NTTEC benchmark (build mode "Release" is recommended)
