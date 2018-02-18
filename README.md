@@ -26,6 +26,7 @@ make
 - `package`: generate a binary installer
 - `package_source`: generate a source installer (a tarball with the sources)
 - `install`: install the library in `CMAKE_INSTALL_PREFIX`.
+- `uninstall`: uninstall the library.
 
 ### Code coverage
 
