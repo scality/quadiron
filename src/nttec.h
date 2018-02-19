@@ -8,7 +8,6 @@
  */
 
 #include "arith.h"
-#include "build_info.h"
 #include "core.h"
 #include "dft.h"
 #include "dftn.h"
