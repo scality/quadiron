@@ -21,16 +21,13 @@ set(TEST_SRC
   FORCE
 )
 
-add_executable(${TEST_DRIVER}
+add_executable(${UNIT_TESTS}
   ${TEST_SRC}
 )
-add_coverage(${TEST_DRIVER})
+add_coverage(${UNIT_TESTS})
 
-include_directories(${SOURCE_DIR})
-
-target_link_libraries(${TEST_DRIVER}
+target_link_libraries(${UNIT_TESTS}
   ${STATIC_LIB}
-  ${GMPXX_LIBRARIES}
 )
 
 # Don't disable assert when compiling tests…
@@ -38,5 +35,5 @@ add_definitions(-UNDEBUG)
 
 add_test(
   NAME unit_test
-  COMMAND ${TEST_DRIVER}
+  COMMAND ${UNIT_TESTS}
 )

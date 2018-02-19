@@ -1,3 +1,5 @@
+include(GNUInstallDirs)
+
 # Source files.
 set(LIB_SRC
   ${SOURCE_DIR}/core.cpp
@@ -18,14 +20,134 @@ configure_file(${SOURCE_DIR}/build_info.in ${GENERATE_DIR}/build_info.h @ONLY)
 # Libraries
 ###########
 
+# Dependencies.
+find_package(GMPXX REQUIRED)
+
+set(INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
+
+set(OBJECT_SYS_INCLUDES
+  $<BUILD_INTERFACE:${GENERATE_DIR}>
+  $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>
+  ${GMPXX_INCLUDE_DIRS}
+)
+
+set(OBJECT_INCLUDES
+  $<BUILD_INTERFACE:${SOURCE_DIR}>
+  $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>
+)
+
+
 # Build an Object Library (can be reused for both static and dynamic libs).
 add_library(${OBJECT_LIB} OBJECT ${LIB_SRC})
 add_coverage(${OBJECT_LIB})
 set_property(TARGET ${OBJECT_LIB} PROPERTY POSITION_INDEPENDENT_CODE 1)
+target_include_directories(${OBJECT_LIB}        PUBLIC ${OBJECT_INCLUDES})
+target_include_directories(${OBJECT_LIB} SYSTEM PUBLIC ${OBJECT_SYS_INCLUDES})
 
 # Dynamic library.
 add_library(${SHARED_LIB} SHARED $<TARGET_OBJECTS:${OBJECT_LIB}>)
-set_target_properties(${SHARED_LIB} PROPERTIES OUTPUT_NAME ${CMAKE_PROJECT_NAME})
 # Static library.
 add_library(${STATIC_LIB} STATIC $<TARGET_OBJECTS:${OBJECT_LIB}>)
-set_target_properties(${STATIC_LIB} PROPERTIES OUTPUT_NAME ${CMAKE_PROJECT_NAME})
+
+# Set properties/add dependencies.
+foreach(lib ${SHARED_LIB} ${STATIC_LIB})
+  set_target_properties(${lib} PROPERTIES OUTPUT_NAME ${CMAKE_PROJECT_NAME})
+  target_include_directories(${lib}        PUBLIC ${OBJECT_INCLUDES})
+  target_include_directories(${lib} SYSTEM PUBLIC ${OBJECT_SYS_INCLUDES})
+
+  target_link_libraries(${lib}
+    ${GMPXX_LIBRARIES}
+  )
+endforeach()
+
+##############
+# Installation
+##############
+
+install(TARGETS ${SHARED_LIB} ${STATIC_LIB}
+  EXPORT ${UPCASE_PROJECT_NAME}
+  COMPONENT libraries
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  INCLUDES DESTINATION ${INSTALL_INCLUDE_DIR}
+)
+install(DIRECTORY .
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PROJECT_NAME}
+  COMPONENT headers
+  FILES_MATCHING PATTERN "*.h"
+)
+install(FILES ${GENERATE_DIR}/build_info.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PROJECT_NAME}
+  COMPONENT headers
+)
+
+
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_NAME          "${CMAKE_PROJECT_NAME}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+  "${UPCASE_PROJECT_NAME} — NTT Based Erasure Coding Library"
+)
+set(CPACK_RESOURCE_FILE_LICENSE    "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README     "${CMAKE_SOURCE_DIR}/README.md")
+set(CPACK_PACKAGE_VERSION_MAJOR    "${VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR    "${VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH    "${VERSION_PATCH}")
+
+# Source distributions.
+set(CPACK_SOURCE_GENERATOR         TBZ2)
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${VERSION}")
+set(CPACK_SOURCE_IGNORE_FILES
+  ".swp$"
+  "/.git/"
+  "/build/"
+  "/.gitignore"
+  "${CPACK_SOURCE_IGNORE_FILES}"
+)
+
+include(CPack)
+
+cpack_add_component_group(runtime
+  DISPLAY_NAME Runtime
+  DESCRIPTION  "Components required to run softwares using ${UPCASE_PROJECT_NAME}"
+  EXPANDED
+)
+cpack_add_component_group(development
+  DISPLAY_NAME "Development"
+  DESCRIPTION  "Components required to develop softwares using ${UPCASE_PROJECT_NAME}"
+  EXPANDED
+)
+
+cpack_add_component(libraries
+  DISPLAY_NAME "${UPCASE_PROJECT_NAME} libraries"
+  DESCRIPTION  "Libraries required to run programs using ${UPCASE_PROJECT_NAME}"
+  REQUIRED
+  GROUP        runtime
+)
+cpack_add_component(headers
+  DISPLAY_NAME "${UPCASE_PROJECT_NAME} development headers"
+  DESCRIPTION  "C++ header files required to build programs using ${UPCASE_PROJECT_NAME}"
+  DISABLED
+  GROUP        development
+  DEPENDS      libraries
+)
+
+############################
+# Export NTTEC configuration
+############################
+include(CMakePackageConfigHelpers)
+
+install(EXPORT ${UPCASE_PROJECT_NAME}
+  NAMESPACE ${UPCASE_PROJECT_NAME}::
+  FILE ${UPCASE_PROJECT_NAME}Config.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${UPCASE_PROJECT_NAME}
+)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/${UPCASE_PROJECT_NAME}ConfigVersion.cmake
+  VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+  COMPATIBILITY SameMajorVersion
+)
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/${UPCASE_PROJECT_NAME}ConfigVersion.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${UPCASE_PROJECT_NAME}
+  COMPONENT headers
+)

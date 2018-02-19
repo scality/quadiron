@@ -31,7 +31,6 @@ add_coverage(${BENCH_DRIVER})
 # Link librairies.
 target_link_libraries(${BENCH_DRIVER}
   ${STATIC_LIB}
-  ${GMPXX_LIBRARIES}
   Threads::Threads
 )
 

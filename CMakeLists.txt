@@ -31,6 +31,7 @@ endif()
 
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}${VERSION_REV})
 set(PACKAGE ${CMAKE_PROJECT_NAME})
+string(TOUPPER "${CMAKE_PROJECT_NAME}" UPCASE_PROJECT_NAME)
 
 ################
 # Useful defines
@@ -44,20 +45,13 @@ set(GENERATE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/${CMAKE_BUILD_TYPE})
 
 # Targets
-set(OBJECT_LIB  ${CMAKE_PROJECT_NAME}_object)
-set(SHARED_LIB  ${CMAKE_PROJECT_NAME}_shared)
-set(STATIC_LIB  ${CMAKE_PROJECT_NAME}_static)
-set(TEST_DRIVER ${CMAKE_PROJECT_NAME}_test)
-set(NTTEC_TOOLS ${CMAKE_PROJECT_NAME}_tools)
-
-include_directories(${SOURCE_DIR})
+set(OBJECT_LIB  object)
+set(SHARED_LIB  shared)
+set(STATIC_LIB  static)
+set(UNIT_TESTS  unit_tests)
+set(NTTEC_TOOLS tools)
 
 file(MAKE_DIRECTORY ${GENERATE_DIR})
-# Use SYSTEM so that our strict compilers settings are not applied to generated
-# code.
-include_directories(SYSTEM
-    ${GENERATE_DIR}
-)
 
 ####################
 # Default build type
@@ -134,10 +128,6 @@ endforeach(flag)
 
 find_package(codecov)
 
-# Dependencies.
-find_package(GMPXX REQUIRED)
-include_directories(SYSTEM ${GMPXX_INCLUDE_DIRS})
-
 # NTTEC
 add_subdirectory(src)
 # Documentation
@@ -154,7 +144,7 @@ coverage_evaluate()
 # Be sure to recompile the test driver if needed before running the test suite.
 add_custom_target(check
   COMMAND ${CMAKE_CTEST_COMMAND}
-  DEPENDS ${TEST_DRIVER}
+  DEPENDS ${UNIT_TESTS}
   DEPENDS ${NTTEC_TOOLS}
 )
 
@@ -221,3 +211,21 @@ add_custom_target(check-format
   COMMENT "check code formatting"
 )
 add_dependencies(check-format ${OBJECT_LIB})
+
+##################
+# Uninstall target
+##################
+
+# From https://cmake.org/Wiki/CMake_FAQ#Can_I_do_.22make_uninstall.22_with_CMake.3F
+if(NOT TARGET uninstall)
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE
+    @ONLY
+  )
+
+  add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+  )
+endif()
