@@ -12,8 +12,8 @@ set(TEST_SRC
   ${CMAKE_CURRENT_SOURCE_DIR}/mat_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/poly_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/rs_utest.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/vecp_utest.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/vec_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/buffers_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/vector_utest.cpp
 
   CACHE
   INTERNAL

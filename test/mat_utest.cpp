@@ -4,8 +4,8 @@ void mat_utest1()
 {
     std::cout << "mat_utest1\n";
 
-    nttec::gf::GFP<uint32_t> gf11(11);
-    nttec::Mat<uint32_t> mat(&gf11, 3, 3);
+    nttec::gf::Prime<uint32_t> gf11(11);
+    nttec::Matrix<uint32_t> mat(&gf11, 3, 3);
 
     mat.set(0, 0, 2);
     mat.set(0, 1, 1);
@@ -34,8 +34,8 @@ void mat_utest2()
 {
     std::cout << "mat_utest2\n";
 
-    nttec::gf::GFP<uint32_t> gf29(29);
-    nttec::Mat<uint32_t> mat(&gf29, 3, 3);
+    nttec::gf::Prime<uint32_t> gf29(29);
+    nttec::Matrix<uint32_t> mat(&gf29, 3, 3);
 
     mat.set(0, 0, 22);
     mat.set(0, 1, 27);

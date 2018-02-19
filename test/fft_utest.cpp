@@ -3,9 +3,9 @@
 template <typename T>
 class FFTUtest {
   public:
-    void test_gcd1(nttec::gf::GF<T>* gf)
+    void test_gcd1(nttec::gf::Field<T>* gf)
     {
-        nttec::SignedDoubleT<T> bezout[2];
+        nttec::SignedDoubleSizeVal<T> bezout[2];
 
         assert(gf->inv(20) == 34);
         //
@@ -27,7 +27,7 @@ class FFTUtest {
     {
         std::cout << "test_gcd\n";
 
-        nttec::gf::GFP<T> gf(97);
+        nttec::gf::Prime<T> gf(97);
         test_gcd1(&gf);
     }
 
@@ -35,17 +35,17 @@ class FFTUtest {
     {
         std::cout << "test_quadratic_residues\n";
 
-        nttec::gf::GFP<T> gf32(32);
+        nttec::gf::Prime<T> gf32(32);
         int i;
         for (i = 0; i < 32; i++) {
             assert(gf32.is_quadratic_residue(gf32.exp(i, 2)));
         }
 
-        nttec::gf::GFP<T> gf7(7);
+        nttec::gf::Prime<T> gf7(7);
         assert(gf7.is_quadratic_residue(2));
         assert(!gf7.is_quadratic_residue(5));
 
-        nttec::gf::GFP<T> gf8(8);
+        nttec::gf::Prime<T> gf8(8);
         assert(gf8.is_quadratic_residue(1));
         assert(!gf8.is_quadratic_residue(3));
     }
@@ -57,11 +57,11 @@ class FFTUtest {
      *
      * @return
      */
-    nttec::vec::Vec<T>*
-    _convert_string2vec(nttec::gf::GF<T>* gf, int n, char num[])
+    nttec::vec::Vector<T>*
+    _convert_string2vec(nttec::gf::Field<T>* gf, int n, char num[])
     {
         int i;
-        nttec::vec::Vec<T>* vec = new nttec::vec::Vec<T>(gf, n);
+        nttec::vec::Vector<T>* vec = new nttec::vec::Vector<T>(gf, n);
         int len = strlen(num);
 
         for (i = 0; i < len; i++) {
@@ -141,29 +141,33 @@ class FFTUtest {
         // std::cerr << " w=" << w << "\n";
         assert(w == 25559439);
 
-        nttec::gf::GFP<T> gf_m(m);
-        nttec::fft::FFTLN<T> fft(&gf_m, l, 25559439);
+        nttec::gf::Prime<T> gf_m(m);
+        nttec::fft::Large<T> fft(&gf_m, l, 25559439);
 
         // parse the big numbers
         char X[] = "1236548787985654354598651354984132468";
         char Y[] = "745211515185321545554545854598651354984132468";
 
-        nttec::vec::Vec<T>* _X = _convert_string2vec(&gf_m, fft.get_n(), X);
+        nttec::vec::Vector<T>* _X = _convert_string2vec(&gf_m, fft.get_n(), X);
         // _X->dump();
-        nttec::vec::Vec<T>* _Y = _convert_string2vec(&gf_m, fft.get_n(), Y);
+        nttec::vec::Vector<T>* _Y = _convert_string2vec(&gf_m, fft.get_n(), Y);
         // _Y->dump();
 
-        nttec::vec::Vec<T>* sfX = new nttec::vec::Vec<T>(&gf_m, fft.get_n());
-        nttec::vec::Vec<T>* sfY = new nttec::vec::Vec<T>(&gf_m, fft.get_n());
-        nttec::vec::Vec<T>* _XY = new nttec::vec::Vec<T>(&gf_m, fft.get_n());
-        nttec::vec::Vec<T>* sfXY = new nttec::vec::Vec<T>(&gf_m, fft.get_n());
+        nttec::vec::Vector<T>* sfX =
+            new nttec::vec::Vector<T>(&gf_m, fft.get_n());
+        nttec::vec::Vector<T>* sfY =
+            new nttec::vec::Vector<T>(&gf_m, fft.get_n());
+        nttec::vec::Vector<T>* _XY =
+            new nttec::vec::Vector<T>(&gf_m, fft.get_n());
+        nttec::vec::Vector<T>* sfXY =
+            new nttec::vec::Vector<T>(&gf_m, fft.get_n());
 
         fft.fft(sfX, _X);
         fft.fft(sfY, _Y);
 
         for (int i = 0; i <= fft.get_n() - 1; i++) {
-            nttec::DoubleT<T> val =
-                nttec::DoubleT<T>(sfX->get(i)) * sfY->get(i);
+            nttec::DoubleSizeVal<T> val =
+                nttec::DoubleSizeVal<T>(sfX->get(i)) * sfY->get(i);
             _XY->set(i, val % m);
         }
 
@@ -194,17 +198,17 @@ class FFTUtest {
         delete _Y;
     }
 
-    void test_fftn()
+    void test_fft_naive()
     {
         unsigned n;
         unsigned r;
         T q = 65537;
-        nttec::gf::GFP<T> gf(q);
+        nttec::gf::Prime<T> gf(q);
         unsigned R = gf.get_prime_root(); // primitive root
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        std::cout << "test_fftn\n";
+        std::cout << "Test fft::Naive\n";
 
         assert(nttec::arith::jacobi<T>(R, q) == -1);
 
@@ -219,11 +223,11 @@ class FFTUtest {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        nttec::fft::DFTN<T> fft(&gf, n, r);
+        nttec::fft::Naive<T> fft(&gf, n, r);
 
-        nttec::vec::Vec<T> v(&gf, fft.get_n());
-        nttec::vec::Vec<T> _v(&gf, fft.get_n());
-        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        nttec::vec::Vector<T> v(&gf, fft.get_n());
+        nttec::vec::Vector<T> _v(&gf, fft.get_n());
+        nttec::vec::Vector<T> v2(&gf, fft.get_n());
         for (int j = 0; j < 100000; j++) {
             v.zero_fill();
             for (unsigned i = 0; i < n_data; i++)
@@ -237,23 +241,23 @@ class FFTUtest {
         }
     }
 
-    void test_fft2k()
+    void test_fft_2k()
     {
-        std::cout << "test_fft2k\n";
-        test_fft2k_vec();
-        test_fft2k_vecp();
+        std::cout << "Test fft::Radix2\n";
+        test_fft_2k_vec();
+        test_fft_2k_vecp();
     }
 
-    void test_fft2k_vec()
+    void test_fft_2k_vec()
     {
         unsigned n;
         unsigned q = 65537;
-        nttec::gf::GFP<T> gf(q);
+        nttec::gf::Prime<T> gf(q);
         unsigned R = gf.get_prime_root(); // primitive root
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        std::cout << "test_fft2k_vec\n";
+        std::cout << "Test fft::Radix2 vec\n";
 
         assert(nttec::arith::jacobi<T>(R, q) == -1);
 
@@ -264,11 +268,11 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        nttec::fft::FFT2K<T> fft(&gf, n);
+        nttec::fft::Radix2<T> fft(&gf, n);
 
-        nttec::vec::Vec<T> v(&gf, fft.get_n());
-        nttec::vec::Vec<T> _v(&gf, fft.get_n());
-        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        nttec::vec::Vector<T> v(&gf, fft.get_n());
+        nttec::vec::Vector<T> _v(&gf, fft.get_n());
+        nttec::vec::Vector<T> v2(&gf, fft.get_n());
         for (int j = 0; j < 100000; j++) {
             v.zero_fill();
             for (unsigned i = 0; i < n_data; i++)
@@ -282,17 +286,17 @@ class FFTUtest {
         }
     }
 
-    void test_fft2k_vecp()
+    void test_fft_2k_vecp()
     {
         unsigned n;
         unsigned q = 65537;
-        nttec::gf::GFP<T> gf(q);
+        nttec::gf::Prime<T> gf(q);
         unsigned R = gf.get_prime_root(); // primitive root
         unsigned n_data = 3;
         unsigned n_parities = 3;
         size_t size = 4;
 
-        std::cout << "test_fft2k_vecp\n";
+        std::cout << "Test fft::Radix2 vecp\n";
 
         assert(nttec::arith::jacobi<T>(R, q) == -1);
 
@@ -303,14 +307,14 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        nttec::fft::FFT2K<T> fft(&gf, n);
+        nttec::fft::Radix2<T> fft(&gf, n);
 
         int vec_n = fft.get_n();
 
-        nttec::vec::Vecp<T> v(n_data, size);
-        nttec::vec::Vecp<T> v2(vec_n, size);
-        nttec::vec::Vecp<T> _v2(vec_n, size);
-        nttec::vec::VVecp<T> _v(&v, vec_n);
+        nttec::vec::Buffers<T> v(n_data, size);
+        nttec::vec::Buffers<T> v2(vec_n, size);
+        nttec::vec::Buffers<T> _v2(vec_n, size);
+        nttec::vec::BuffersZeroExtended<T> _v(&v, vec_n);
         for (int j = 0; j < 100000; j++) {
             for (unsigned i = 0; i < n_data; i++) {
                 T* mem = v.get(i);
@@ -327,14 +331,14 @@ class FFTUtest {
         }
     }
 
-    void test_fftpf()
+    void test_fft_gt()
     {
         T n;
-        nttec::gf::GF2N<T> gf(4);
+        nttec::gf::BinExtension<T> gf(4);
         T n_data = 3;
         T n_parities = 3;
 
-        std::cout << "test_fftpf\n";
+        std::cout << "Test fft::GoodThomas\n";
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -343,11 +347,11 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        nttec::fft::FFTPF<T> fft(&gf, n);
+        nttec::fft::GoodThomas<T> fft(&gf, n);
 
-        nttec::vec::Vec<T> v(&gf, fft.get_n());
-        nttec::vec::Vec<T> _v(&gf, fft.get_n());
-        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        nttec::vec::Vector<T> v(&gf, fft.get_n());
+        nttec::vec::Vector<T> _v(&gf, fft.get_n());
+        nttec::vec::Vector<T> v2(&gf, fft.get_n());
         for (int j = 0; j < 10000; j++) {
             v.zero_fill();
             for (T i = 0; i < n_data; i++)
@@ -361,15 +365,15 @@ class FFTUtest {
         }
     }
 
-    void test_fftct_gfp()
+    void test_fft_ct_gfp()
     {
         T n;
         T q = 65537;
-        nttec::gf::GFP<T> gf(q);
+        nttec::gf::Prime<T> gf(q);
         T n_data = 3;
         T n_parities = 3;
 
-        std::cout << "test_fftct_gfp\n";
+        std::cout << "Test fft::CooleyTukey on GF(p)\n";
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -378,11 +382,11 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        nttec::fft::FFTCT<T> fft(&gf, n);
+        nttec::fft::CooleyTukey<T> fft(&gf, n);
 
-        nttec::vec::Vec<T> v(&gf, fft.get_n());
-        nttec::vec::Vec<T> _v(&gf, fft.get_n());
-        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        nttec::vec::Vector<T> v(&gf, fft.get_n());
+        nttec::vec::Vector<T> _v(&gf, fft.get_n());
+        nttec::vec::Vector<T> v2(&gf, fft.get_n());
         for (int j = 0; j < 10000; j++) {
             v.zero_fill();
             for (T i = 0; i < n_data; i++)
@@ -396,15 +400,15 @@ class FFTUtest {
         }
     }
 
-    void test_fftct_gf2n()
+    void test_fft_ct_gf2n()
     {
         T n;
         T n_data = 3;
         T n_parities = 3;
         for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
-            nttec::gf::GF2N<T> gf(gf_n);
+            nttec::gf::BinExtension<T> gf(gf_n);
 
-            std::cout << "test_fftct_gf2n=" << gf_n << "\n";
+            std::cout << "Test fft::CooleyTukey on GF(2n)=" << gf_n << "\n";
 
             // with this encoder we cannot exactly satisfy users request, we
             // need to pad n = minimal divisor of (q-1) that is at least
@@ -413,9 +417,9 @@ class FFTUtest {
 
             // std::cerr << "n=" << n << "\n";
 
-            nttec::fft::FFTCT<T> fft(&gf, n);
+            nttec::fft::CooleyTukey<T> fft(&gf, n);
 
-            nttec::vec::Vec<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()),
+            nttec::vec::Vector<T> v(&gf, fft.get_n()), _v(&gf, fft.get_n()),
                 v2(&gf, fft.get_n());
             for (int j = 0; j < 10000; j++) {
                 v.zero_fill();
@@ -431,50 +435,54 @@ class FFTUtest {
         }
     }
 
-    void run_taylor_expand(nttec::gf::GF<T>* gf, nttec::fft::FFTADD<T>* fft)
+    void
+    run_taylor_expand(nttec::gf::Field<T>* gf, nttec::fft::Additive<T>* fft)
     {
         int t = 2 + gf->weak_rand() % (fft->get_n() - 2);
         int n = t + 1 + gf->weak_rand() % (fft->get_n() - t);
-        nttec::vec::Vec<T> v1(gf, n);
+        nttec::vec::Vector<T> v1(gf, n);
         int m = n / t;
         while (m * t < n)
             m++;
-        nttec::vec::Vec<T> v2(gf, t * m);
+        nttec::vec::Vector<T> v2(gf, t * m);
         for (int i = 0; i < n; i++)
             v1.set(i, gf->weak_rand());
         // v1.dump();
         fft->taylor_expand(&v2, &v1, n, t);
-        nttec::vec::Vec<T> _v1(gf, n);
+        nttec::vec::Vector<T> _v1(gf, n);
         fft->inv_taylor_expand(&_v1, &v2, t);
         // _v1.dump();
         assert(_v1.eq(&v1));
     }
 
     // taylor expansion on (x^t - x)
-    void test_taylor_expand(nttec::gf::GF<T>* gf, nttec::fft::FFTADD<T>* fft)
+    void
+    test_taylor_expand(nttec::gf::Field<T>* gf, nttec::fft::Additive<T>* fft)
     {
         std::cout << "test_taylor_expand\n";
         for (int i = 0; i < 1000; i++)
             run_taylor_expand(gf, fft);
     }
 
-    void run_taylor_expand_t2(nttec::gf::GF<T>* gf, nttec::fft::FFTADD<T>* fft)
+    void
+    run_taylor_expand_t2(nttec::gf::Field<T>* gf, nttec::fft::Additive<T>* fft)
     {
         int n = fft->get_n();
-        nttec::vec::Vec<T> v1(gf, n);
+        nttec::vec::Vector<T> v1(gf, n);
         for (int i = 0; i < n; i++)
             v1.set(i, gf->weak_rand());
         // v1.dump();
         fft->taylor_expand_t2(&v1, n, true);
         // v1.dump();
-        nttec::vec::Vec<T> _v1(gf, n);
+        nttec::vec::Vector<T> _v1(gf, n);
         fft->inv_taylor_expand_t2(&_v1);
         // _v1.dump();
         assert(_v1.eq(&v1));
     }
 
     // taylor expansion on (x^2 - x)
-    void test_taylor_expand_t2(nttec::gf::GF<T>* gf, nttec::fft::FFTADD<T>* fft)
+    void
+    test_taylor_expand_t2(nttec::gf::Field<T>* gf, nttec::fft::Additive<T>* fft)
     {
         std::cout << "test_taylor_expand_t2\n";
         for (int i = 0; i < 1000; i++)
@@ -482,14 +490,14 @@ class FFTUtest {
     }
 
     void test_fftadd_codec(
-        nttec::gf::GF<T>* gf,
-        nttec::fft::FFTADD<T>* fft,
+        nttec::gf::Field<T>* gf,
+        nttec::fft::Additive<T>* fft,
         int n_data)
     {
         std::cout << "test_fftadd_codec\n";
-        nttec::vec::Vec<T> v(gf, fft->get_n());
-        nttec::vec::Vec<T> _v(gf, fft->get_n());
-        nttec::vec::Vec<T> v2(gf, fft->get_n());
+        nttec::vec::Vector<T> v(gf, fft->get_n());
+        nttec::vec::Vector<T> _v(gf, fft->get_n());
+        nttec::vec::Vector<T> v2(gf, fft->get_n());
         for (int j = 0; j < 10000; j++) {
             v.zero_fill();
             for (int i = 0; i < n_data; i++)
@@ -509,14 +517,14 @@ class FFTUtest {
         int n_data = 3;
         int n_parities = 3;
         for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
-            nttec::gf::GF2N<T> gf(gf_n);
+            nttec::gf::BinExtension<T> gf(gf_n);
             std::cout << "test_fftadd_with_n=" << gf_n << "\n";
             // n is power of 2 and at least n_data + n_parities
             n = nttec::arith::get_smallest_power_of_2<T>(n_data + n_parities);
             m = nttec::arith::log2<T>(n);
 
             // std::cerr << "n=" << n << "\n";
-            nttec::fft::FFTADD<T> fft(&gf, m);
+            nttec::fft::Additive<T> fft(&gf, m);
 
             test_taylor_expand(&gf, &fft);
             test_taylor_expand_t2(&gf, &fft);
@@ -524,12 +532,12 @@ class FFTUtest {
         }
     }
 
-    void test_fft2_gfp()
+    void test_fft_2_gfp()
     {
-        nttec::gf::GFP<T> gf(3);
+        nttec::gf::Prime<T> gf(3);
         T n_data = 1;
 
-        std::cout << "test_fft2_gfp\n";
+        std::cout << "Test fft::Size2 GF(p)\n";
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -537,11 +545,11 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        nttec::fft::FFT2<T> fft(&gf);
+        nttec::fft::Size2<T> fft(&gf);
 
-        nttec::vec::Vec<T> v(&gf, fft.get_n());
-        nttec::vec::Vec<T> _v(&gf, fft.get_n());
-        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        nttec::vec::Vector<T> v(&gf, fft.get_n());
+        nttec::vec::Vector<T> _v(&gf, fft.get_n());
+        nttec::vec::Vector<T> v2(&gf, fft.get_n());
         for (int j = 0; j < 100000; j++) {
             v.zero_fill();
             for (T i = 0; i < n_data; i++)
@@ -555,18 +563,18 @@ class FFTUtest {
         }
     }
 
-    void test_fft1_gfp()
+    void test_fft_single_gfp()
     {
-        nttec::gf::GFP<T> gf(39);
+        nttec::gf::Prime<T> gf(39);
 
-        std::cout << "test_fft1_gfp\n";
+        std::cout << "Test fft::Single on GF(p)\n";
 
         int n = 16;
-        nttec::fft::FFT1<T> fft(&gf, n);
+        nttec::fft::Single<T> fft(&gf, n);
 
-        nttec::vec::Vec<T> v(&gf, fft.get_n());
-        nttec::vec::Vec<T> _v(&gf, fft.get_n());
-        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        nttec::vec::Vector<T> v(&gf, fft.get_n());
+        nttec::vec::Vector<T> _v(&gf, fft.get_n());
+        nttec::vec::Vector<T> v2(&gf, fft.get_n());
         for (int j = 0; j < 100000; j++) {
             v.zero_fill();
             v.set(0, gf.weak_rand());
@@ -579,17 +587,17 @@ class FFTUtest {
         }
     }
 
-    void test_fft2()
+    void test_fft_2()
     {
         unsigned n;
         unsigned r;
         unsigned q = 65537;
-        nttec::gf::GFP<T> gf(q);
+        nttec::gf::Prime<T> gf(q);
         unsigned R = gf.get_prime_root(); // primitive root
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        std::cout << "test_fft2\n";
+        std::cout << "Test fft::Size2\n";
 
         assert(nttec::arith::jacobi<T>(R, q) == -1);
 
@@ -603,11 +611,11 @@ class FFTUtest {
 
         // std::cerr << "r=" << r << "\n";
 
-        nttec::fft::DFTN<T> fft(&gf, n, r);
+        nttec::fft::Naive<T> fft(&gf, n, r);
 
-        nttec::vec::Vec<T> v(&gf, fft.get_n());
-        nttec::vec::Vec<T> _v(&gf, fft.get_n());
-        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        nttec::vec::Vector<T> v(&gf, fft.get_n());
+        nttec::vec::Vector<T> _v(&gf, fft.get_n());
+        nttec::vec::Vector<T> v2(&gf, fft.get_n());
         v.zero_fill();
         for (T i = 0; i < n_data; i++)
             v.set(i, gf.weak_rand());
@@ -639,12 +647,12 @@ class FFTUtest {
     void test_fft_gf2n_with_n(int n)
     {
         T r;
-        nttec::gf::GF2N<T> gf(n);
+        nttec::gf::BinExtension<T> gf(n);
         T R = gf.get_prime_root();
         T n_data = 3;
         T n_parities = 3;
 
-        std::cout << "test_fft_gf2n_with_n=" << n << "\n";
+        std::cout << "Test fft::Naive on gf2n with n=" << n << "\n";
 
         assert(gf.exp(R, gf.card_minus_one()) == 1);
 
@@ -658,11 +666,11 @@ class FFTUtest {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        nttec::fft::DFTN<T> fft(&gf, n, r);
+        nttec::fft::Naive<T> fft(&gf, n, r);
 
-        nttec::vec::Vec<T> v(&gf, fft.get_n());
-        nttec::vec::Vec<T> _v(&gf, fft.get_n());
-        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        nttec::vec::Vector<T> v(&gf, fft.get_n());
+        nttec::vec::Vector<T> _v(&gf, fft.get_n());
+        nttec::vec::Vector<T> v2(&gf, fft.get_n());
         for (T i = 0; i < 100000; i++) {
             v.zero_fill();
             for (T i = 0; i < n_data; i++)
@@ -690,15 +698,15 @@ class FFTUtest {
 
         test_gcd();
         test_quadratic_residues();
-        test_fftn();
-        test_fft2k();
-        test_fftpf();
-        test_fftct_gfp();
-        test_fftct_gf2n();
+        test_fft_naive();
+        test_fft_2k();
+        test_fft_gt();
+        test_fft_ct_gfp();
+        test_fft_ct_gf2n();
         test_fftadd();
-        test_fft2();
-        test_fft2_gfp();
-        test_fft1_gfp();
+        test_fft_2();
+        test_fft_2_gfp();
+        test_fft_single_gfp();
         test_fft_gf2n();
         test_mul_bignum();
     }
