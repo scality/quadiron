@@ -68,15 +68,6 @@ struct GroupedValues {
     uint32_t flag;
 };
 
-typedef enum {
-    NTTEC_EX_NOT_FOUND,
-    NTTEC_EX_MAT_NOT_INVERTIBLE,
-    NTTEC_EX_INVAL,
-    NTTEC_EX_OVERFLOW,
-    NTTEC_EX_IO,
-    NTTEC_EX_DIV_BY_ZERO,
-} NttecException;
-
 /** Return the version string of NTTEC.
  *
  * The version string has the form MAJOR.MINOR.PATCH-REVISION, where '-REVISION'

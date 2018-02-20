@@ -223,7 +223,7 @@ void Matrix<T>::inv(void)
     for (i = 0; i < n_rows; i++) {
         for (j = 0; j < n_cols; j++) {
             if (tmp.get(i, j) != (i == j) ? 1 : 0)
-                throw NTTEC_EX_MAT_NOT_INVERTIBLE;
+                throw DomainError("non invertible matrix");
         }
     }
 

@@ -10,6 +10,7 @@
 
 #include "arith.h"
 #include "core.h"
+#include "exceptions.h"
 #include "vec_buffers.h"
 
 namespace nttec {
@@ -285,7 +286,7 @@ T RingModN<T>::exp_quick(T base, T exponent)
  * @param base
  * @param exponent
  *
- * @throw NTTEC_EX_NOT_FOUND if result is not found
+ * @throw nttec::NoSolution if no solution exists.
  *
  * return
  */
@@ -299,8 +300,7 @@ T RingModN<T>::log_naive(T base, T exponent)
             return result;
     }
 
-    // not found
-    throw NTTEC_EX_NOT_FOUND;
+    throw NoSolution("solution not found");
 }
 
 /*

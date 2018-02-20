@@ -219,9 +219,9 @@ void Polynomial<T>::_div(
 {
     Polynomial<T> _q(field), _r(field);
 
-    if (d->is_zero())
-        throw NTTEC_EX_DIV_BY_ZERO;
-
+    if (d->is_zero()) {
+        throw DomainError("divisor is zero");
+    }
     _q.clear();
     _r.copy(n);
 
@@ -329,9 +329,9 @@ void Polynomial<T>::_extended_gcd(
     }
 
     if (old_r.degree() > 0) {
-        // the primitive polynomial is not irreducible or
-        // the element is multiple of the primitive polynomial
-        throw(NTTEC_EX_INVAL);
+        throw DomainError(
+            "irreducible primitive polynomial or "
+            "multiple of the primitive polynomial");
     }
 
     if (bezout_coef) {

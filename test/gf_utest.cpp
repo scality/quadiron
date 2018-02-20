@@ -86,7 +86,7 @@ class GFUtest {
             // std::cout << "x=" << x << "\n";
             try {
                 y = gf->inv(x);
-            } catch (nttec::NttecException e) {
+            } catch (nttec::Exception e) {
                 continue;
             }
             // std::cout << "inv(x)=" << y << "\n";
@@ -110,7 +110,7 @@ class GFUtest {
             // std::cout << "x=" << x << "\n";
             try {
                 y = gf->inv(x);
-            } catch (nttec::NttecException e) {
+            } catch (nttec::Exception e) {
                 continue;
             }
             // std::cout << "inv(x)=" << y << "\n";

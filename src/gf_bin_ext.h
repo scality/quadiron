@@ -4,6 +4,7 @@
 
 #include <limits>
 
+#include "exceptions.h"
 #include "gf_base.h"
 
 namespace nttec {
@@ -191,14 +192,15 @@ inline T BinExtension<T>::_mul_by_two(T x)
 template <typename T>
 inline T BinExtension<T>::_shift_left(T x, T shift)
 {
-    if (shift == 0)
+    if (shift == 0) {
         return x;
-    else if (shift == 1)
+    } else if (shift == 1) {
         return _mul_by_two(x);
-    else if (shift > 1)
+    } else if (shift > 1) {
         return _shift_left(_mul_by_two(x), shift - 1);
-    else
-        throw "shift-left of negative nb";
+    } else {
+        throw InvalidArgument("shift-left of negative nb");
+    }
 }
 
 /**
@@ -452,8 +454,7 @@ T BinExtension<T>::log(T a, T b)
         tmp = mul(tmp, a);
     }
 
-    // not found
-    throw NTTEC_EX_NOT_FOUND;
+    throw NoSolution("solution not found");
 }
 
 template <typename T>

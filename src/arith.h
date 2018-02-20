@@ -8,6 +8,7 @@
 
 #include "big_int.h"
 #include "core.h"
+#include "exceptions.h"
 
 namespace nttec {
 
@@ -206,8 +207,9 @@ int log2(int x)
 {
     int result = 0;
 
-    if (x == 0)
-        throw NTTEC_EX_INVAL;
+    if (x == 0) {
+        throw DomainError("pole error: x is zero");
+    }
 
     if (x == 1)
         return 0;
@@ -305,7 +307,6 @@ SignedDoubleSizeVal<T> extended_gcd(
  * @todo Check if there is a solution.
  *
  * @return the solution.
- * @throw NTTEC_EX_NO_SOLUTION
  */
 template <class T>
 T chinese_remainder(int n_mod, T a[], T n[])
@@ -358,7 +359,7 @@ T chinese_remainder(int n_mod, T a[], T n[])
  * @param m
  *
  * @return the jacobi symbol
- * @throw NT_EX_INVAL if b is even or b is negative
+ * @throw DomainError if b is even or b is negative
  */
 template <class T>
 int jacobi(SignedDoubleSizeVal<T> n, SignedDoubleSizeVal<T> m)
@@ -366,13 +367,12 @@ int jacobi(SignedDoubleSizeVal<T> n, SignedDoubleSizeVal<T> m)
     SignedDoubleSizeVal<T> t;
     int jac;
 
-    // m must be odd
-    if ((m % 2) == 0)
-        throw NTTEC_EX_INVAL;
-
-    // m must be positive
-    if (m < 0)
-        throw NTTEC_EX_INVAL;
+    if ((m % 2) == 0) {
+        throw DomainError("m must be odd");
+    }
+    if (m < 0) {
+        throw DomainError("m must be positive");
+    }
 
     jac = 1;
     while (m != 1) {
