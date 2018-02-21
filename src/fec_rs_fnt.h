@@ -17,7 +17,8 @@ namespace fec {
 
 /** Reed-Solomon (RS) erasure code based on Fermat Number Transform (FNT).
  *
- * This class implements a Forward Error Correction (FEC) code based on FNT.
+ * This class implements a Forward Error Correction (FEC) code based on FNT
+ * (original idea from @cite fnt-rs).
  *
  * It works on \f$GF(2^{2^k} + 1)\f$
  */

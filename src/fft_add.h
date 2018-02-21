@@ -14,6 +14,8 @@ namespace fft {
 /** Implementation of an additive FFT algorithm.
  *
  * It works on length of 2<sup>m</sup> for arbitrary `m`.
+ *
+ * This is an implementation of the algorithm 2 in @cite fft-add.
  */
 template <typename T>
 class Additive : public FourierTransform<T> {

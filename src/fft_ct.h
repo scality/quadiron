@@ -6,12 +6,16 @@
 #include "fft_2.h"
 #include "fft_base.h"
 #include "fft_naive.h"
+#include "gf_base.h"
+#include "vec_vector.h"
 #include "vec_view.h"
 
 namespace nttec {
 namespace fft {
 
 /** FFT implementation using the Cooley–Tukey algorithm
+ *
+ * Implementation based on @cite fft-ct-mitra
  *
  * Suppose \f$n = n_1 \times n_2\f$, the DFT
  *

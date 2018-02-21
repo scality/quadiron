@@ -3,7 +3,9 @@
 #define __NTTEC_FFT_NAIVE_H__
 
 #include "fft_base.h"
+#include "gf_base.h"
 #include "matrix.h"
+#include "vec_vector.h"
 
 namespace nttec {
 namespace fft {

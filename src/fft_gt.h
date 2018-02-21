@@ -8,6 +8,7 @@
 #include "fft_base.h"
 #include "fft_ct.h"
 #include "fft_naive.h"
+#include "gf_base.h"
 #include "vec_vector.h"
 #include "vec_view.h"
 

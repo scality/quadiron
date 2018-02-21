@@ -4,6 +4,7 @@
 
 #include "arith.h"
 #include "fft_base.h"
+#include "gf_base.h"
 #include "matrix.h"
 #include "vec_vector.h"
 
