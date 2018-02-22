@@ -255,6 +255,10 @@ int Benchmark<T>::check_params()
             return ERR_COMPT_WORD_SIZE_T;
         }
     }
+    if (fec_type == EC_TYPE_FNTRS) {
+        if (word_size > 2)
+            return ERR_WORD_SIZE;
+    }
     if (fec_type == EC_TYPE_NGFF4RS) {
         if (sizeof(T) < 2 * word_size) {
             return ERR_COMPT_WORD_SIZE_T;
