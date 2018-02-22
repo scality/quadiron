@@ -267,7 +267,7 @@ int Benchmark<T>::check_params()
     }
 
     // adjust chunk_size
-    if (chunk_size % (pkt_size * word_size) > 0)
+    if (pkt_size > 0 && chunk_size % (pkt_size * word_size) > 0)
         chunk_size = ((chunk_size - 1) / (pkt_size * word_size) + 1)
                      * (pkt_size * word_size);
 
