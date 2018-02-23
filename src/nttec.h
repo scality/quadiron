@@ -18,6 +18,7 @@
 #include "fecgf2nrs.h"
 #include "fecgfpfftrs.h"
 #include "fecngff4.h"
+#include "fft1.h"
 #include "fft2.h"
 #include "fft2k.h"
 #include "fftadd.h"
