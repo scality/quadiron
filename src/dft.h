@@ -30,6 +30,9 @@ class DFT {
     virtual void fft(vec::Vec<T>* output, vec::Vec<T>* input) = 0;
     virtual void ifft(vec::Vec<T>* output, vec::Vec<T>* input) = 0;
     virtual void fft_inv(vec::Vec<T>* output, vec::Vec<T>* input) = 0;
+    virtual void fft(vec::Vecp<T>* output, vec::Vecp<T>* input){};
+    virtual void ifft(vec::Vecp<T>* output, vec::Vecp<T>* input){};
+    virtual void fft_inv(vec::Vecp<T>* output, vec::Vecp<T>* input){};
 };
 
 template <typename T>
