@@ -555,6 +555,30 @@ class FFTUtest {
         }
     }
 
+    void test_fft1_gfp()
+    {
+        nttec::gf::GFP<T> gf(39);
+
+        std::cout << "test_fft1_gfp\n";
+
+        int n = 16;
+        nttec::fft::FFT1<T> fft(&gf, n);
+
+        nttec::vec::Vec<T> v(&gf, fft.get_n());
+        nttec::vec::Vec<T> _v(&gf, fft.get_n());
+        nttec::vec::Vec<T> v2(&gf, fft.get_n());
+        for (int j = 0; j < 100000; j++) {
+            v.zero_fill();
+            v.set(0, gf.weak_rand());
+            // v.dump();
+            fft.fft(&_v, &v);
+            // _v.dump();
+            fft.ifft(&v2, &_v);
+            // v2.dump();
+            assert(v.eq(&v2));
+        }
+    }
+
     void test_fft2()
     {
         unsigned n;
@@ -674,6 +698,7 @@ class FFTUtest {
         test_fftadd();
         test_fft2();
         test_fft2_gfp();
+        test_fft1_gfp();
         test_fft_gf2n();
         test_mul_bignum();
     }
