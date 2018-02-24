@@ -52,7 +52,8 @@ class FECFNTRS : public FEC<T> {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        this->fft = new fft::FFT2K<T>(this->gf, n, pkt_size);
+        int m = arith::get_smallest_power_of_2<int>(n_data);
+        this->fft = new fft::FFT2K<T>(this->gf, n, m, pkt_size);
     }
 
     ~FECFNTRS()

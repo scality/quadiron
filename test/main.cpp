@@ -16,7 +16,7 @@ struct test {
 } tests[] = {{"arith", arith_utest},
              {"gf", gf_utest},
              {"vec", vec_utest},
-             {"vecp", vec_utest},
+             {"vecp", vecp_utest},
              {"mat", mat_utest},
              {"rs", rs_utest},
              {"poly", poly_utest},

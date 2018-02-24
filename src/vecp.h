@@ -48,6 +48,7 @@ class Vecp {
     std::vector<T*>* get_mem();
     void set_mem(std::vector<T*>* mem);
     void copy(Vecp<T>* v);
+    void copy(int i, T* buf);
     void separate_even_odd();
     void separate_even_odd(Vecp<T>* even, Vecp<T>* odd);
     bool eq(Vecp<T>* v);
@@ -213,6 +214,12 @@ void Vecp<T>::copy(Vecp<T>* v)
     size_t v_size = v->get_size();
     for (int i = 0; i < n; i++)
         std::copy_n(v->get(i), v_size, this->mem->at(i));
+}
+
+template <typename T>
+void Vecp<T>::copy(int i, T* buf)
+{
+    std::copy_n(buf, this->size, this->mem->at(i));
 }
 
 template <typename T>

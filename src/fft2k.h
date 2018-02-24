@@ -3,6 +3,7 @@
 #define __NTTEC_FFT2K_H__
 
 #include "dft.h"
+#include "fft1.h"
 #include "fft2.h"
 
 namespace nttec {
@@ -27,6 +28,7 @@ class FFT2K : public DFT<T> {
   private:
     bool bypass;
     int k;
+    int m; // number of real input elements
     int N;
     T w;
     T inv_w;
@@ -36,7 +38,7 @@ class FFT2K : public DFT<T> {
     vec::Vec<T>* W_half = nullptr;
     vec::Vec<T>* inv_W_half = nullptr;
 
-    FFT2<T>* fft2 = nullptr;
+    DFT<T>* fft_trivial = nullptr;
     FFT2K<T>* fftk = nullptr;
 
     vec::Vec<T>* even = nullptr;
@@ -49,7 +51,7 @@ class FFT2K : public DFT<T> {
     vec::Vecp<T>* tmp_buf = nullptr;
 
   public:
-    FFT2K(gf::GF<T>* gf, int n, size_t pkt_size = 0, int N = 0);
+    FFT2K(gf::GF<T>* gf, int n, int m = 0, size_t pkt_size = 0, int N = 0);
     ~FFT2K();
     void fft(vec::Vec<T>* output, vec::Vec<T>* input);
     void ifft(vec::Vec<T>* output, vec::Vec<T>* input);
@@ -75,7 +77,8 @@ class FFT2K : public DFT<T> {
  * @return
  */
 template <typename T>
-FFT2K<T>::FFT2K(gf::GF<T>* gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
+FFT2K<T>::FFT2K(gf::GF<T>* gf, int n, int m, size_t pkt_size, int N)
+    : DFT<T>(gf, n)
 {
     w = gf->get_nth_root(n);
     inv_w = gf->inv(w);
@@ -83,8 +86,18 @@ FFT2K<T>::FFT2K(gf::GF<T>* gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
     this->N = N;
     if (this->N == 0)
         this->N = n;
+    if (m > 0)
+        this->m = m;
+    else
+        this->m = n;
 
-    if (n != 2 && n % 2 == 0) {
+    if (this->m == 1) {
+        bypass = true;
+        this->fft_trivial = new FFT1<T>(gf, this->n);
+    } else if (this->n <= 2) {
+        bypass = true;
+        this->fft_trivial = new FFT2<T>(gf);
+    } else { // (this->m > 1 && this->n > 2)
         bypass = false;
         k = n / 2;
 
@@ -100,7 +113,8 @@ FFT2K<T>::FFT2K(gf::GF<T>* gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
             inv_W_half->set(i, inv_W->get(i));
         }
 
-        this->fftk = new FFT2K<T>(gf, k, pkt_size, this->N);
+        int next_m = this->m / 2;
+        this->fftk = new FFT2K<T>(gf, k, next_m, pkt_size, this->N);
 
         this->even = new vec::Vec<T>(this->gf, k);
         this->_even = new vec::Vec<T>(this->gf, k);
@@ -111,9 +125,6 @@ FFT2K<T>::FFT2K(gf::GF<T>* gf, int n, size_t pkt_size, int N) : DFT<T>(gf, n)
 
         if (this->pkt_size > 0)
             this->tmp_buf = new vec::Vecp<T>(k, pkt_size);
-    } else {
-        bypass = true;
-        this->fft2 = new FFT2<T>(gf);
     }
 }
 
@@ -121,8 +132,8 @@ template <typename T>
 FFT2K<T>::~FFT2K()
 {
     if (bypass) {
-        if (fft2 != nullptr)
-            delete fft2;
+        if (fft_trivial != nullptr)
+            delete fft_trivial;
     } else {
         if (fftk != nullptr)
             delete fftk;
@@ -184,7 +195,7 @@ void FFT2K<T>::fft(vec::Vec<T>* output, vec::Vec<T>* input)
     // input->dump();
 
     if (bypass)
-        return fft2->fft(output, input);
+        return fft_trivial->fft(output, input);
     else
         return _fft(output, input, false);
 }
@@ -193,7 +204,7 @@ template <typename T>
 void FFT2K<T>::fft_inv(vec::Vec<T>* output, vec::Vec<T>* input)
 {
     if (bypass)
-        return fft2->fft_inv(output, input);
+        return fft_trivial->fft_inv(output, input);
     else
         return _fft(output, input, true);
 }
@@ -264,7 +275,7 @@ template <typename T>
 void FFT2K<T>::fft(vec::Vecp<T>* output, vec::Vecp<T>* input)
 {
     if (bypass)
-        return fft2->fft(output, input);
+        return fft_trivial->fft(output, input);
     else
         return _fftp(output, input, false);
 }
@@ -273,7 +284,7 @@ template <typename T>
 void FFT2K<T>::fft_inv(vec::Vecp<T>* output, vec::Vecp<T>* input)
 {
     if (bypass)
-        return fft2->fft_inv(output, input);
+        return fft_trivial->fft_inv(output, input);
     else
         return _fftp(output, input, true);
 }

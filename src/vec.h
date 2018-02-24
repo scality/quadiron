@@ -143,6 +143,7 @@ class Vec {
     virtual int get_n(void);
     int get_mem_len(void);
     void zero_fill(void);
+    void fill(T val);
     virtual void set(int i, T val);
     virtual T get(int i);
     T* get_mem();
@@ -209,6 +210,15 @@ void Vec<T>::zero_fill(void)
 
     for (i = 0; i < n; i++)
         set(i, 0);
+}
+
+template <typename T>
+void Vec<T>::fill(T val)
+{
+    int i;
+
+    for (i = 0; i < n; i++)
+        mem[i] = val;
 }
 
 template <typename T>
