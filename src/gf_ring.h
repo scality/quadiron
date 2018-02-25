@@ -1,6 +1,6 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTTEC_RN_H__
-#define __NTTEC_RN_H__
+#ifndef __NTTEC_GF_RING_H__
+#define __NTTEC_GF_RING_H__
 
 #include <fstream>
 #include <sstream>
@@ -21,6 +21,8 @@ template <typename T>
 class Vector;
 
 } // namespace vec
+
+namespace gf {
 
 /** A ring of integers modulo N. */
 template <typename T>
@@ -758,6 +760,7 @@ T RingModN<T>::get_code_len_high_compo(T n)
     return arith::get_code_len_high_compo<T>(this->all_primes_factors, n);
 }
 
+} // namespace gf
 } // namespace nttec
 
 #endif

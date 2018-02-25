@@ -9,7 +9,7 @@
 #include <iostream>
 #include <vector>
 
-#include "rn.h"
+#include "gf_ring.h"
 #include "vec_doubled.h"
 
 namespace nttec {
@@ -132,8 +132,8 @@ inline void unpack(
 template <typename T>
 class Vector {
   public:
-    RingModN<T>* rn;
-    Vector(RingModN<T>* rn, int n, T* mem = nullptr, int mem_len = 0);
+    gf::RingModN<T>* rn;
+    Vector(gf::RingModN<T>* rn, int n, T* mem = nullptr, int mem_len = 0);
     virtual ~Vector();
     virtual int get_n(void);
     int get_mem_len(void);
@@ -172,7 +172,7 @@ class Vector {
 };
 
 template <typename T>
-Vector<T>::Vector(RingModN<T>* rn, int n, T* mem, int mem_len)
+Vector<T>::Vector(gf::RingModN<T>* rn, int n, T* mem, int mem_len)
 {
     this->rn = rn;
     this->n = n;

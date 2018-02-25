@@ -4,7 +4,7 @@
 
 #include "fft_base.h"
 #include "gf_base.h"
-#include "matrix.h"
+#include "vec_matrix.h"
 #include "vec_vector.h"
 
 namespace nttec {
@@ -28,10 +28,11 @@ class Naive : public FourierTransform<T> {
   private:
     T w;
     T inv_w;
-    Matrix<T>* W;
-    Matrix<T>* inv_W;
-    void compute_W(Matrix<T>* _W, T _w);
-    void _fft(vec::Vector<T>* output, vec::Vector<T>* input, Matrix<T>* _W);
+    vec::Matrix<T>* W;
+    vec::Matrix<T>* inv_W;
+    void compute_W(vec::Matrix<T>* _W, T _w);
+    void
+    _fft(vec::Vector<T>* output, vec::Vector<T>* input, vec::Matrix<T>* _W);
 };
 
 template <typename T>
@@ -39,8 +40,8 @@ Naive<T>::Naive(gf::Field<T>* gf, int n, T w) : FourierTransform<T>(gf, n)
 {
     this->w = w;
     this->inv_w = gf->inv(w);
-    this->W = new Matrix<T>(gf, this->n, this->n);
-    this->inv_W = new Matrix<T>(gf, this->n, this->n);
+    this->W = new vec::Matrix<T>(gf, this->n, this->n);
+    this->inv_W = new vec::Matrix<T>(gf, this->n, this->n);
 
     compute_W(W, w);
     compute_W(inv_W, this->inv_w);
@@ -60,7 +61,7 @@ Naive<T>::~Naive()
  * @param _w nth root of unity
  */
 template <typename T>
-void Naive<T>::compute_W(Matrix<T>* _W, T _w)
+void Naive<T>::compute_W(vec::Matrix<T>* _W, T _w)
 {
     for (int i = 0; i <= this->n - 1; i++) {
         for (int j = 0; j <= this->n - 1; j++) {
@@ -74,7 +75,7 @@ template <typename T>
 void Naive<T>::_fft(
     vec::Vector<T>* output,
     vec::Vector<T>* input,
-    Matrix<T>* _W)
+    vec::Matrix<T>* _W)
 {
     _W->mul(output, input);
 }

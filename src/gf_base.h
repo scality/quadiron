@@ -4,7 +4,7 @@
 
 #include "arith.h"
 #include "core.h"
-#include "rn.h"
+#include "gf_ring.h"
 
 namespace nttec {
 

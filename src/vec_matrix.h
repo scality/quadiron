@@ -1,13 +1,14 @@
 /* -*- mode: c++ -*- */
-#ifndef __NTTEC_MATRIX_H__
-#define __NTTEC_MATRIX_H__
+#ifndef __NTTEC_VEC_MATRIX_H__
+#define __NTTEC_VEC_MATRIX_H__
 
 #include <iostream>
 
-#include "rn.h"
+#include "gf_ring.h"
 #include "vec_vector.h"
 
 namespace nttec {
+namespace vec {
 
 /** A 2D matrix
  *
@@ -26,7 +27,7 @@ namespace nttec {
 template <typename T>
 class Matrix {
   public:
-    Matrix(RingModN<T>* rn, int n_rows, int n_cols);
+    Matrix(gf::RingModN<T>* rn, int n_rows, int n_cols);
     virtual ~Matrix();
     virtual int get_n_rows();
     virtual int get_n_cols();
@@ -42,7 +43,7 @@ class Matrix {
     void dump(void);
 
   private:
-    RingModN<T>* rn;
+    gf::RingModN<T>* rn;
     int n_rows;
     int n_cols;
     T* mem;
@@ -56,7 +57,7 @@ class Matrix {
 };
 
 template <typename T>
-Matrix<T>::Matrix(RingModN<T>* rn, int n_rows, int n_cols)
+Matrix<T>::Matrix(gf::RingModN<T>* rn, int n_rows, int n_cols)
 {
     this->rn = rn;
     this->n_rows = n_rows;
@@ -424,6 +425,7 @@ void Matrix<T>::dump(void)
     }
 }
 
+} // namespace vec
 } // namespace nttec
 
 #endif

@@ -4,7 +4,7 @@
 
 #include "fec_base.h"
 #include "gf_bin_ext.h"
-#include "matrix.h"
+#include "vec_matrix.h"
 #include "vec_vector.h"
 
 namespace nttec {
@@ -35,7 +35,7 @@ class RsGf2n : public FecCode<T> {
         unsigned gf_n = 8 * word_size;
         this->gf = new gf::BinExtension<T>(gf_n);
 
-        this->mat = new Matrix<T>(this->gf, n_parities, n_data);
+        this->mat = new vec::Matrix<T>(this->gf, n_parities, n_data);
         if (type == RsMatrixType::CAUCHY) {
             mat->cauchy();
         } else if (type == RsMatrixType::VANDERMONDE) {
@@ -44,7 +44,7 @@ class RsGf2n : public FecCode<T> {
 
         // has to be a n_data*n_data invertible square matrix
         decode_mat =
-            new Matrix<T>(this->gf, mat->get_n_cols(), mat->get_n_cols());
+            new vec::Matrix<T>(this->gf, mat->get_n_cols(), mat->get_n_cols());
     }
 
     ~RsGf2n()
@@ -103,8 +103,8 @@ class RsGf2n : public FecCode<T> {
     }
 
   private:
-    Matrix<T>* mat = nullptr;
-    Matrix<T>* decode_mat = nullptr;
+    vec::Matrix<T>* mat = nullptr;
+    vec::Matrix<T>* decode_mat = nullptr;
 };
 
 } // namespace fec

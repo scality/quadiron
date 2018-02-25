@@ -5,7 +5,7 @@
 #include "arith.h"
 #include "fft_base.h"
 #include "gf_base.h"
-#include "matrix.h"
+#include "vec_matrix.h"
 #include "vec_vector.h"
 
 namespace nttec {
@@ -30,9 +30,9 @@ class Large : public FourierTransform<T> {
     T inv_w;
     vec::Vector<T>* W;
     vec::Vector<T>* inv_W;
-    Matrix<T>* tmp2;
-    Matrix<T>* tmp3;
-    Matrix<T>* tmp4;
+    vec::Matrix<T>* tmp2;
+    vec::Matrix<T>* tmp3;
+    vec::Matrix<T>* tmp4;
     vec::Vector<T>* tmp5;
     int _get_p(int i, int j);
     int _get_p0(int i, int j, int s);
@@ -139,9 +139,9 @@ int Large<T>::_get_p1(int i, int j, int s)
 template <typename T>
 void Large<T>::_pre_compute_consts()
 {
-    tmp2 = new Matrix<T>(this->gf, this->l + 1, this->n);
-    tmp3 = new Matrix<T>(this->gf, this->l + 1, this->n);
-    tmp4 = new Matrix<T>(this->gf, this->l + 1, this->n);
+    tmp2 = new vec::Matrix<T>(this->gf, this->l + 1, this->n);
+    tmp3 = new vec::Matrix<T>(this->gf, this->l + 1, this->n);
+    tmp4 = new vec::Matrix<T>(this->gf, this->l + 1, this->n);
     tmp5 = new vec::Vector<T>(this->gf, this->n);
 
     tmp2->zero_fill();
@@ -184,7 +184,7 @@ void Large<T>::_fft(
     vec::Vector<T>* input,
     vec::Vector<T>* _W)
 {
-    Matrix<T> phi(this->gf, this->l + 1, this->n);
+    vec::Matrix<T> phi(this->gf, this->l + 1, this->n);
 
     // compute phi[0][i]
     for (int i = 0; i <= this->n - 1; i++)
