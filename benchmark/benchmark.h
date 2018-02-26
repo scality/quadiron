@@ -15,38 +15,39 @@
 
 enum ec_type {
     EC_TYPE_ALL = 0,
-    EC_TYPE_FNTRS,
-    EC_TYPE_NGFF4RS,
-    EC_TYPE_GFPFFTRS,
-    EC_TYPE_GF2NFFTADDRS,
-    EC_TYPE_GF2NRSV,
-    EC_TYPE_GF2NRSC,
-    EC_TYPE_GF2NFFTRS,
+    EC_TYPE_RS_FNT,
+    EC_TYPE_RS_NF4,
+    EC_TYPE_RS_GFP_FFT,
+    EC_TYPE_RS_GF2N_FFT_ADD,
+    EC_TYPE_RS_GF2N_V,
+    EC_TYPE_RS_GF2N_C,
+    EC_TYPE_RS_GF2N_FFT,
     EC_TYPE_END,
 };
 
-std::map<int, std::string> ec_desc = {
+std::map<ec_type, std::string> ec_desc = {
     {EC_TYPE_ALL, "All available Reed-solomon codes"},
-    {EC_TYPE_GF2NRSV, "Classical Vandermonde Reed-solomon codes over GF(2^n)"},
-    {EC_TYPE_GF2NRSC, "Classical Cauchy Reed-solomon codes over GF(2^n)"},
-    {EC_TYPE_GF2NFFTRS, "Reed-solomon codes over GF(2^n) using FFT"},
-    {EC_TYPE_GF2NFFTADDRS,
+    {EC_TYPE_RS_GF2N_V,
+     "Classical Vandermonde Reed-solomon codes over GF(2^n)"},
+    {EC_TYPE_RS_GF2N_C, "Classical Cauchy Reed-solomon codes over GF(2^n)"},
+    {EC_TYPE_RS_GF2N_FFT, "Reed-solomon codes over GF(2^n) using FFT"},
+    {EC_TYPE_RS_GF2N_FFT_ADD,
      "Reed-solomon codes over GF(2^n) using additive FFT"},
-    {EC_TYPE_GFPFFTRS, "Reed-solomon codes over GF(p) using FFT"},
-    {EC_TYPE_FNTRS, "Reed-solomon codes over GF(p = Fermat number) using FFT"},
-    {EC_TYPE_NGFF4RS,
+    {EC_TYPE_RS_GFP_FFT, "Reed-solomon codes over GF(p) using FFT"},
+    {EC_TYPE_RS_FNT, "Reed-solomon codes over GF(p = Fermat number) using FFT"},
+    {EC_TYPE_RS_NF4,
      "Reed-solomon codes over GF(65537) using FFT on pack of codewords"},
 };
 
-std::map<int, std::string> ec_desc_short = {
+std::map<ec_type, std::string> ec_desc_short = {
     {EC_TYPE_ALL, "all"},
-    {EC_TYPE_GF2NRSV, "gf2nrsv"},
-    {EC_TYPE_GF2NRSC, "gf2nrsc"},
-    {EC_TYPE_GF2NFFTRS, "gf2nfftrs"},
-    {EC_TYPE_GF2NFFTADDRS, "gf2nfftaddrs"},
-    {EC_TYPE_GFPFFTRS, "gfpfftrs"},
-    {EC_TYPE_FNTRS, "fntrs"},
-    {EC_TYPE_NGFF4RS, "ngff4rs"},
+    {EC_TYPE_RS_GF2N_V, "rs-gf2n-v"},
+    {EC_TYPE_RS_GF2N_C, "rs-gf2n-c"},
+    {EC_TYPE_RS_GF2N_FFT, "rs-gf2n-fft"},
+    {EC_TYPE_RS_GF2N_FFT_ADD, "rs-gf2n-fft-add"},
+    {EC_TYPE_RS_GFP_FFT, "rs-gfp-fft"},
+    {EC_TYPE_RS_FNT, "rs-fnt"},
+    {EC_TYPE_RS_NF4, "rs-nf4"},
 };
 
 enum gf2nrs_type {
@@ -78,13 +79,13 @@ std::map<int, std::string> errors_desc = {
 
 std::map<std::string, ec_type> fec_type_map = {
     {"all", EC_TYPE_ALL},
-    {"gf2nrsv", EC_TYPE_GF2NRSV},
-    {"gf2nrsc", EC_TYPE_GF2NRSC},
-    {"gf2nfftrs", EC_TYPE_GF2NFFTRS},
-    {"gf2nfftaddrs", EC_TYPE_GF2NFFTADDRS},
-    {"gfpfftrs", EC_TYPE_GFPFFTRS},
-    {"fntrs", EC_TYPE_FNTRS},
-    {"ngff4rs", EC_TYPE_NGFF4RS},
+    {"rs-gf2n-v", EC_TYPE_RS_GF2N_V},
+    {"rs-gf2n-c", EC_TYPE_RS_GF2N_C},
+    {"rs-gf2n-fft", EC_TYPE_RS_GF2N_FFT},
+    {"rs-gf2n-fft-add", EC_TYPE_RS_GF2N_FFT_ADD},
+    {"rs-gfp-fft", EC_TYPE_RS_GFP_FFT},
+    {"rs-fnt", EC_TYPE_RS_FNT},
+    {"rs-nf4", EC_TYPE_RS_NF4},
 };
 
 enum scenario_type {
@@ -166,9 +167,9 @@ struct Params_t {
         std::string end(" |\n");
 
         std::string content =
-            begin + "         FEC" + "| scenario  " + "|       k" + "|       m"
-            + "|       w" + "| T size " + "| chunk size  " + "| packet size "
-            + "| #samples " + "| #threads "
+            begin + "            FEC" + "| scenario  " + "|       k"
+            + "|       m" + "|       w" + "| T size " + "| chunk size  "
+            + "| packet size " + "| #samples " + "| #threads "
             + "| Encoding   lat (us)       throuput (MB/s) "
             + "| Decoding   lat (us)       throuput (MB/s) " + end;
 
@@ -188,7 +189,7 @@ struct Params_t {
 
     void show_params()
     {
-        std::cout << "  " << std::setw(12) << ec_desc_short[fec_type];
+        std::cout << "  " << std::setw(15) << ec_desc_short[fec_type];
         std::cout << "  " << std::setw(10) << sce_desc_short[sce_type];
         std::cout << "  " << std::setw(7) << k;
         std::cout << "  " << std::setw(7) << m;
@@ -217,9 +218,9 @@ struct Params_t {
     void get_sizeof_T()
     {
         if (sizeof_T == -1) {
-            if (fec_type == EC_TYPE_NGFF4RS) {
+            if (fec_type == EC_TYPE_RS_NF4) {
                 sizeof_T = (((word_size - 1) / 2) + 1) * 4;
-            } else if (fec_type == EC_TYPE_GFPFFTRS && word_size == 4) {
+            } else if (fec_type == EC_TYPE_RS_GFP_FFT && word_size == 4) {
                 sizeof_T = 8;
             } else {
                 sizeof_T = (((word_size - 1) / 4) + 1) * 4;
@@ -250,7 +251,7 @@ class Benchmark {
     size_t chunk_size;
     uint32_t samples_nb;
     PRNG* prng = nullptr;
-    nttec::fec::FEC<T>* fec = nullptr;
+    nttec::fec::FecCode<T>* fec = nullptr;
     Params_t* params = nullptr;
 
     bool systematic_ec = false;

@@ -3,8 +3,8 @@
 extern void arith_utest();
 extern void gf_utest();
 extern void rs_utest();
-extern void vec_utest();
-extern void vecp_utest();
+extern void vector_utest();
+extern void buffers_utest();
 extern void mat_utest();
 extern void fft_utest();
 extern void poly_utest();
@@ -15,8 +15,8 @@ struct test {
     void (*func)();
 } tests[] = {{"arith", arith_utest},
              {"gf", gf_utest},
-             {"vec", vec_utest},
-             {"vecp", vecp_utest},
+             {"vec", vector_utest},
+             {"vecp", buffers_utest},
              {"mat", mat_utest},
              {"rs", rs_utest},
              {"poly", poly_utest},

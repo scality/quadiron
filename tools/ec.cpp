@@ -12,7 +12,7 @@ char* prefix = nullptr;
 void xusage()
 {
     std::cerr << std::string("Usage: ") +
-    "ec [-e gf2nrsv|gf2nrsc|gf2nfftrs|gf2nfftaddrs|gfpfftrs|fntrs|ngff4rs]" +
+    "ec [-e rs-gf2n-v|rs-gf2n-c|rs-gf2n-fft|rs-gf2n-fft-add|rs-gfp-fft|rs-fnt|rs-nf4]" +
     "[-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
     exit(1);
@@ -39,7 +39,7 @@ char* xstrdup(const char* str)
  */
 template <typename T>
 void create_coding_files(
-    nttec::fec::FEC<T>* fec,
+    nttec::fec::FecCode<T>* fec,
     bool operation_on_packet = false)
 {
     char filename[1024];
@@ -94,7 +94,7 @@ void create_coding_files(
  *
  */
 template <typename T>
-bool repair_data_files(nttec::fec::FEC<T>* fec)
+bool repair_data_files(nttec::fec::FecCode<T>* fec)
 {
     char filename[1024];
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
@@ -174,7 +174,7 @@ bool repair_data_files(nttec::fec::FEC<T>* fec)
 }
 
 template <typename T>
-void print_stats(nttec::fec::FEC<T>* fec)
+void print_stats(nttec::fec::FecCode<T>* fec)
 {
     std::cerr << "enc,"
               << (fec->n_encode_ops != 0
@@ -189,14 +189,14 @@ void print_stats(nttec::fec::FEC<T>* fec)
 }
 
 template <typename T>
-void print_fec_type(nttec::fec::FEC<T>* fec)
+void print_fec_type(nttec::fec::FecCode<T>* fec)
 {
     switch (fec->type) {
-    case nttec::fec::FEC<T>::TYPE_1:
-        std::cout << "type_1\n";
+    case nttec::fec::FecType::SYSTEMATIC:
+        std::cout << "SYSTEMATIC\n";
         break;
-    case nttec::fec::FEC<T>::TYPE_2:
-        std::cout << "type_2\n";
+    case nttec::fec::FecType::NON_SYSTEMATIC:
+        std::cout << "NON_SYSTEMATIC\n";
         break;
     default:
         std::cout << "unknown\n";
@@ -204,28 +204,23 @@ void print_fec_type(nttec::fec::FEC<T>* fec)
     }
 }
 
-enum gf2nrs_type {
-    VANDERMONDE = 0,
-    CAUCHY,
-};
-
 template <typename T>
-void run_FECGF2NRS(
+void run_fec_rs_gf2n(
     int word_size,
     int n_data,
     int n_parities,
-    gf2nrs_type mflag,
+    nttec::fec::RsMatrixType mflag,
     int rflag)
 {
-    nttec::fec::FECGF2NRS<T>* fec;
-    typename nttec::fec::FECGF2NRS<T>::FECGF2NRSType gf2nrs_type;
+    nttec::fec::RsGf2n<T>* fec;
+    typename nttec::fec::RsMatrixType gf2nrs_type;
     ;
-    if (mflag == VANDERMONDE)
-        gf2nrs_type = nttec::fec::FECGF2NRS<T>::VANDERMONDE;
-    else
-        gf2nrs_type = nttec::fec::FECGF2NRS<T>::CAUCHY;
-    fec = new nttec::fec::FECGF2NRS<T>(
-        word_size, n_data, n_parities, gf2nrs_type);
+    if (mflag == nttec::fec::RsMatrixType::VANDERMONDE) {
+        gf2nrs_type = nttec::fec::RsMatrixType::VANDERMONDE;
+    } else {
+        gf2nrs_type = nttec::fec::RsMatrixType::CAUCHY;
+    }
+    fec = new nttec::fec::RsGf2n<T>(word_size, n_data, n_parities, gf2nrs_type);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -242,10 +237,10 @@ void run_FECGF2NRS(
 }
 
 template <typename T>
-void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
+void run_fec_rs_gf2n_fft(int word_size, int n_data, int n_parities, int rflag)
 {
-    nttec::fec::FECGF2NFFTRS<T>* fec;
-    fec = new nttec::fec::FECGF2NFFTRS<T>(word_size, n_data, n_parities);
+    nttec::fec::RsGf2nFft<T>* fec;
+    fec = new nttec::fec::RsGf2nFft<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -262,10 +257,14 @@ void run_FECGF2NFFTRS(int word_size, int n_data, int n_parities, int rflag)
 }
 
 template <typename T>
-void run_FECGF2NFFTADDRS(int word_size, int n_data, int n_parities, int rflag)
+void run_fec_rs_gf2n_fft_add(
+    int word_size,
+    int n_data,
+    int n_parities,
+    int rflag)
 {
-    nttec::fec::FECGF2NFFTADDRS<T>* fec;
-    fec = new nttec::fec::FECGF2NFFTADDRS<T>(word_size, n_data, n_parities);
+    nttec::fec::RsGf2nFftAdd<T>* fec;
+    fec = new nttec::fec::RsGf2nFftAdd<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -282,12 +281,16 @@ void run_FECGF2NFFTADDRS(int word_size, int n_data, int n_parities, int rflag)
 }
 
 template <typename T>
-void run_FECGFPFFTRS(unsigned word_size, int n_data, int n_parities, int rflag)
+void run_fec_rs_gfp_fft(
+    unsigned word_size,
+    int n_data,
+    int n_parities,
+    int rflag)
 {
     assert(sizeof(T) > word_size);
 
-    nttec::fec::FECGFPFFTRS<T>* fec;
-    fec = new nttec::fec::FECGFPFFTRS<T>(word_size, n_data, n_parities);
+    nttec::fec::RsGfpFft<T>* fec;
+    fec = new nttec::fec::RsGfpFft<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -304,11 +307,11 @@ void run_FECGFPFFTRS(unsigned word_size, int n_data, int n_parities, int rflag)
 }
 
 template <typename T>
-void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
+void run_fec_rs_fnt(int word_size, int n_data, int n_parities, int rflag)
 {
-    nttec::fec::FECFNTRS<T>* fec;
+    nttec::fec::RsFnt<T>* fec;
     size_t pkt_size = 1024;
-    fec = new nttec::fec::FECFNTRS<T>(word_size, n_data, n_parities, pkt_size);
+    fec = new nttec::fec::RsFnt<T>(word_size, n_data, n_parities, pkt_size);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -325,10 +328,10 @@ void run_FECFNTRS(int word_size, int n_data, int n_parities, int rflag)
 }
 
 template <typename T>
-void run_FECNGFF4RS(int word_size, int n_data, int n_parities, int rflag)
+void run_fec_rs_nf4(int word_size, int n_data, int n_parities, int rflag)
 {
-    nttec::fec::FECNGFF4RS<T>* fec;
-    fec = new nttec::fec::FECNGFF4RS<T>(word_size, n_data, n_parities);
+    nttec::fec::RsNf4<T>* fec;
+    fec = new nttec::fec::RsNf4<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -346,12 +349,12 @@ void run_FECNGFF4RS(int word_size, int n_data, int n_parities, int rflag)
 
 enum ec_type {
     EC_TYPE_UNDEF = 0,
-    EC_TYPE_GF2NRS,
-    EC_TYPE_GF2NFFTRS,
-    EC_TYPE_GF2NFFTADDRS,
-    EC_TYPE_GFPFFTRS,
-    EC_TYPE_FNTRS,
-    EC_TYPE_NGFF4RS,
+    EC_TYPE_RS_GF2N,
+    EC_TYPE_RS_GF2N_FFT,
+    EC_TYPE_RS_GF2N_FFT_ADD,
+    EC_TYPE_RS_GFP_FFT,
+    EC_TYPE_RS_FNT,
+    EC_TYPE_RS_NF4,
 };
 
 bool check(int n, int word_size, ec_type eflag)
@@ -359,7 +362,7 @@ bool check(int n, int word_size, ec_type eflag)
     // we suppose that code length is not too long, i.e. > 2^32
     if (word_size >= 4)
         return true;
-    if (eflag == EC_TYPE_FNTRS) {
+    if (eflag == EC_TYPE_RS_FNT) {
         return (n <= (1LL << (8 * word_size)) + 1);
     } else {
         return (n <= (1LL << (8 * word_size)));
@@ -373,31 +376,32 @@ int main(int argc, char** argv)
     int rflag = 0;
     int uflag = 0;
     ec_type eflag = EC_TYPE_UNDEF;
-    gf2nrs_type mflag = VANDERMONDE;
+    nttec::fec::RsMatrixType mflag = nttec::fec::RsMatrixType::VANDERMONDE;
     unsigned word_size = 0;
 
     n_data = n_parities = -1;
     while ((opt = getopt(argc, argv, "n:m:p:cruve:w:t")) != -1) {
         switch (opt) {
         case 'e':
-            if (!strcmp(optarg, "gf2nrsv")) {
-                eflag = EC_TYPE_GF2NRS;
-                mflag = VANDERMONDE;
-            } else if (!strcmp(optarg, "gf2nrsc")) {
-                eflag = EC_TYPE_GF2NRS;
-                mflag = CAUCHY;
-            } else if (!strcmp(optarg, "gf2nfftrs")) {
-                eflag = EC_TYPE_GF2NFFTRS;
-            } else if (!strcmp(optarg, "gf2nfftaddrs")) {
-                eflag = EC_TYPE_GF2NFFTADDRS;
-            } else if (!strcmp(optarg, "gfpfftrs")) {
-                eflag = EC_TYPE_GFPFFTRS;
-            } else if (!strcmp(optarg, "ngff4rs")) {
-                eflag = EC_TYPE_NGFF4RS;
-            } else if (!strcmp(optarg, "fntrs"))
-                eflag = EC_TYPE_FNTRS;
-            else
+            if (!strcmp(optarg, "rs-gf2n-v")) {
+                eflag = EC_TYPE_RS_GF2N;
+                mflag = nttec::fec::RsMatrixType::VANDERMONDE;
+            } else if (!strcmp(optarg, "rs-gf2n-c")) {
+                eflag = EC_TYPE_RS_GF2N;
+                mflag = nttec::fec::RsMatrixType::CAUCHY;
+            } else if (!strcmp(optarg, "rs-gf2n-fft")) {
+                eflag = EC_TYPE_RS_GF2N_FFT;
+            } else if (!strcmp(optarg, "rs-gf2n-fft-add")) {
+                eflag = EC_TYPE_RS_GF2N_FFT_ADD;
+            } else if (!strcmp(optarg, "rs-gfp-fft")) {
+                eflag = EC_TYPE_RS_GFP_FFT;
+            } else if (!strcmp(optarg, "rs-nf4")) {
+                eflag = EC_TYPE_RS_NF4;
+            } else if (!strcmp(optarg, "rs-fnt")) {
+                eflag = EC_TYPE_RS_FNT;
+            } else {
                 xusage();
+            }
             break;
         case 'w':
             word_size = atoi(optarg);
@@ -446,50 +450,60 @@ int main(int argc, char** argv)
     if (-1 == n_data || -1 == n_parities || nullptr == prefix)
         xusage();
 
-    if (eflag == EC_TYPE_FNTRS) {
-        if (word_size <= 4)
-            run_FECFNTRS<uint32_t>(word_size, n_data, n_parities, rflag);
-        else if (word_size <= 8)
-            run_FECFNTRS<uint64_t>(word_size, n_data, n_parities, rflag);
+    if (eflag == EC_TYPE_RS_FNT) {
+        if (word_size <= 4) {
+            run_fec_rs_fnt<uint32_t>(word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 8) {
+            run_fec_rs_fnt<uint64_t>(word_size, n_data, n_parities, rflag);
+        }
         // else if (word_size <= 16)
-        // run_FECFNTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
-    } else if (eflag == EC_TYPE_NGFF4RS) {
-        if (word_size <= 2)
-            run_FECNGFF4RS<uint32_t>(word_size, n_data, n_parities, rflag);
-        else if (word_size <= 4)
-            run_FECNGFF4RS<uint64_t>(word_size, n_data, n_parities, rflag);
-        else if (word_size <= 8)
-            run_FECNGFF4RS<__uint128_t>(word_size, n_data, n_parities, rflag);
-    } else if (eflag == EC_TYPE_GF2NRS) {
-        if (word_size <= 4)
-            run_FECGF2NRS<uint32_t>(
+        // run_fec_rs_fnt<__uint128_t>(word_size, n_data, n_parities, rflag);
+    } else if (eflag == EC_TYPE_RS_NF4) {
+        if (word_size <= 2) {
+            run_fec_rs_nf4<uint32_t>(word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 4) {
+            run_fec_rs_nf4<uint64_t>(word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 8) {
+            run_fec_rs_nf4<__uint128_t>(word_size, n_data, n_parities, rflag);
+        }
+    } else if (eflag == EC_TYPE_RS_GF2N) {
+        if (word_size <= 4) {
+            run_fec_rs_gf2n<uint32_t>(
                 word_size, n_data, n_parities, mflag, rflag);
-        else if (word_size <= 8)
-            run_FECGF2NRS<uint64_t>(
+        } else if (word_size <= 8) {
+            run_fec_rs_gf2n<uint64_t>(
                 word_size, n_data, n_parities, mflag, rflag);
-        else if (word_size <= 16)
-            run_FECGF2NRS<__uint128_t>(
+        } else if (word_size <= 16) {
+            run_fec_rs_gf2n<__uint128_t>(
                 word_size, n_data, n_parities, mflag, rflag);
-    } else if (eflag == EC_TYPE_GFPFFTRS) {
-        if (word_size <= 7)
-            run_FECGFPFFTRS<uint64_t>(word_size, n_data, n_parities, rflag);
-        else if (word_size <= 15)
-            run_FECGFPFFTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
-    } else if (eflag == EC_TYPE_GF2NFFTRS) {
-        if (word_size <= 4)
-            run_FECGF2NFFTRS<uint32_t>(word_size, n_data, n_parities, rflag);
-        else if (word_size <= 8)
-            run_FECGF2NFFTRS<uint64_t>(word_size, n_data, n_parities, rflag);
-        else if (word_size <= 16)
-            run_FECGF2NFFTRS<__uint128_t>(word_size, n_data, n_parities, rflag);
-    } else if (eflag == EC_TYPE_GF2NFFTADDRS) {
-        if (word_size <= 4)
-            run_FECGF2NFFTADDRS<uint32_t>(word_size, n_data, n_parities, rflag);
-        else if (word_size <= 8)
-            run_FECGF2NFFTADDRS<uint64_t>(word_size, n_data, n_parities, rflag);
-        else if (word_size <= 16)
-            run_FECGF2NFFTADDRS<__uint128_t>(
+        }
+    } else if (eflag == EC_TYPE_RS_GFP_FFT) {
+        if (word_size <= 7) {
+            run_fec_rs_gfp_fft<uint64_t>(word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 15) {
+            run_fec_rs_gfp_fft<__uint128_t>(
                 word_size, n_data, n_parities, rflag);
+        }
+    } else if (eflag == EC_TYPE_RS_GF2N_FFT) {
+        if (word_size <= 4) {
+            run_fec_rs_gf2n_fft<uint32_t>(word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 8) {
+            run_fec_rs_gf2n_fft<uint64_t>(word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 16) {
+            run_fec_rs_gf2n_fft<__uint128_t>(
+                word_size, n_data, n_parities, rflag);
+        }
+    } else if (eflag == EC_TYPE_RS_GF2N_FFT_ADD) {
+        if (word_size <= 4) {
+            run_fec_rs_gf2n_fft_add<uint32_t>(
+                word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 8) {
+            run_fec_rs_gf2n_fft_add<uint64_t>(
+                word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 16) {
+            run_fec_rs_gf2n_fft_add<__uint128_t>(
+                word_size, n_data, n_parities, rflag);
+        }
     }
 
     free(prefix);

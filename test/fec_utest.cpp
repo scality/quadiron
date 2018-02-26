@@ -3,98 +3,102 @@
 template <typename T>
 class FECUtest {
   public:
-    void test_fecfntrs()
+    void test_fec_rs_fnt()
     {
-        std::cout << "test_fecfntrs\n";
+        std::cout << "test fec::RsFnt\n";
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        nttec::fec::FECFNTRS<T> fec(2, n_data, n_parities);
+        nttec::fec::RsFnt<T> fec(2, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities, true);
     }
 
-    void test_fecngff4rs()
+    void test_fec_rs_nf4()
     {
-        std::cout << "test_fecngff4rs\n";
+        std::cout << "Test fec::RsNf4\n";
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
         for (int i = 1; i < nttec::arith::log2<T>(sizeof(T)); i++) {
             unsigned word_size = 1 << i;
-            std::cout << "test_fecngff4rs with word_size=" << word_size << "\n";
-            nttec::fec::FECNGFF4RS<T> fec(word_size, n_data, n_parities);
+            std::cout << "Test fec::RsNgff4 with word_size=" << word_size
+                      << '\n';
+            nttec::fec::RsNf4<T> fec(word_size, n_data, n_parities);
             run_test(&fec, fec.n, n_data, n_data + n_parities, true);
         }
     }
 
-    void test_fecgf2nfftrs()
+    void test_fec_rs_gf2n_fft()
     {
-        std::cout << "test_fecgf2nfftrs with sizeof(T)=" << sizeof(T) << "\n";
-        for (size_t wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
-            test_fecgf2nfftrs_with_wordsize(wordsize);
+        std::cout << "Test fec::RsGf2nFft with sizeof(T)=" << sizeof(T) << '\n';
+        for (size_t wordsize = 1; wordsize <= sizeof(T); wordsize *= 2) {
+            test_fec_rs_gf2n_fft_with_wordsize(wordsize);
+        }
     }
-    void test_fecgf2nfftrs_with_wordsize(int wordsize)
+    void test_fec_rs_gf2n_fft_with_wordsize(int wordsize)
     {
-        std::cout << "test_fecgf2nfftrs_with_wordsize=" << wordsize << "\n";
+        std::cout << "Test fec::RsGf2nFft with wordsize=" << wordsize << '\n';
 
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        nttec::fec::FECGF2NFFTRS<T> fec(wordsize, n_data, n_parities);
+        nttec::fec::RsGf2nFft<T> fec(wordsize, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities);
     }
 
-    void test_fecgf2nfftaddrs()
+    void test_fec_rs_gf2n_fft_add()
     {
-        std::cout << "test_fecgf2nfftaddrs with sizeof(T)=" << sizeof(T)
-                  << "\n";
+        std::cout << "Test fec::RsGf2nFftAdd with sizeof(T)=" << sizeof(T)
+                  << '\n';
         for (size_t wordsize = 1; wordsize <= sizeof(T); wordsize *= 2)
-            test_fecgf2nfftaddrs_with_wordsize(wordsize);
+            test_fec_rs_gf2n_fft_add_with_wordsize(wordsize);
     }
-    void test_fecgf2nfftaddrs_with_wordsize(int wordsize)
+    void test_fec_rs_gf2n_fft_add_with_wordsize(int wordsize)
     {
-        std::cout << "test_fecgf2nfftaddrs_with_wordsize=" << wordsize << "\n";
+        std::cout << "Test fec::RsGf2nFftAdd with wordsize=" << wordsize
+                  << '\n';
 
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        nttec::fec::FECGF2NFFTADDRS<T> fec(wordsize, n_data, n_parities);
+        nttec::fec::RsGf2nFftAdd<T> fec(wordsize, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities);
     }
 
-    void test_fecgfpfftrs()
+    void test_fec_rs_gfp_fft()
     {
-        std::cout << "test_fecgfpfftrs with sizeof(T)=" << sizeof(T) << "\n";
+        std::cout << "Test fec::RsGfpFft with sizeof(T)=" << sizeof(T) << '\n';
         for (size_t word_size = 1; word_size <= 4 && word_size < sizeof(T);
-             word_size *= 2)
-            test_fecgfpfftrs_with_word_size(word_size);
+             word_size *= 2) {
+            test_fec_rs_gfp_fft_with_word_size(word_size);
+        }
     }
-    void test_fecgfpfftrs_with_word_size(int word_size)
+    void test_fec_rs_gfp_fft_with_word_size(int word_size)
     {
-        std::cout << "test_fecgfpfftrs_with_word_size=" << word_size << "\n";
+        std::cout << "Test fec::RsGfpFft with word size=" << word_size << '\n';
 
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        nttec::fec::FECGFPFFTRS<T> fec(word_size, n_data, n_parities);
+        nttec::fec::RsGfpFft<T> fec(word_size, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities, true);
     }
 
     void run_test(
-        nttec::fec::FEC<T>* fec,
+        nttec::fec::FecCode<T>* fec,
         int n,
         int n_data,
         int code_len,
         bool props_flag = false)
     {
-        nttec::gf::GF<T>* gf = fec->get_gf();
+        nttec::gf::Field<T>* gf = fec->get_gf();
 
-        nttec::vec::Vec<T> v(gf, n_data);
-        nttec::vec::Vec<T> _v(gf, n);
-        nttec::vec::Vec<T> _v2(gf, n_data);
-        nttec::vec::Vec<T> f(gf, n_data);
-        nttec::vec::Vec<T> v2(gf, n_data);
-        nttec::vec::Vec<T> v_p(gf, n_data);
+        nttec::vec::Vector<T> v(gf, n_data);
+        nttec::vec::Vector<T> _v(gf, n);
+        nttec::vec::Vector<T> _v2(gf, n_data);
+        nttec::vec::Vector<T> f(gf, n_data);
+        nttec::vec::Vector<T> v2(gf, n_data);
+        nttec::vec::Vector<T> v_p(gf, n_data);
         std::vector<int> ids;
         for (int i = 0; i < code_len; i++)
             ids.push_back(i);
@@ -124,13 +128,13 @@ class FECUtest {
 
     void fec_utest()
     {
-        std::cout << "fec_utest\n";
+        std::cout << "Unit tests for Forward Error Correction codes\n";
 
-        test_fecfntrs();
-        test_fecngff4rs();
-        test_fecgf2nfftrs();
-        test_fecgf2nfftaddrs();
-        test_fecgfpfftrs();
+        test_fec_rs_fnt();
+        test_fec_rs_nf4();
+        test_fec_rs_gf2n_fft();
+        test_fec_rs_gf2n_fft_add();
+        test_fec_rs_gfp_fft();
     }
 };
 
@@ -141,7 +145,7 @@ void fec_utest()
     FECUtest<uint64_t> fec_utest_uint64;
     fec_utest_uint64.fec_utest();
     FECUtest<__uint128_t> fec_utest_uint128;
-    fec_utest_uint128.test_fecngff4rs();
-    // fecfntrs does not work for uint128_t
-    fec_utest_uint128.test_fecgf2nfftrs(); // it runs slowly over gf2n(128)
+    fec_utest_uint128.test_fec_rs_nf4();
+    // fec::RsFnt does not work for uint128_t
+    fec_utest_uint128.test_fec_rs_gf2n_fft(); // it runs slowly over gf2n(128)
 }

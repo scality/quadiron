@@ -10,59 +10,63 @@
 namespace nttec {
 
 template <typename Type>
-struct Double {
+struct DoubleSize {
 };
 template <>
-struct Double<uint32_t> {
+struct DoubleSize<uint32_t> {
     typedef uint64_t T;
 };
 template <>
-struct Double<uint64_t> {
+struct DoubleSize<uint64_t> {
     typedef __uint128_t T;
 };
 template <>
-struct Double<__uint128_t> {
+struct DoubleSize<__uint128_t> {
     typedef UInt256 T;
 };
 template <>
-struct Double<mpz_class> {
+struct DoubleSize<mpz_class> {
     typedef mpz_class T;
 };
 
 template <typename Type>
-struct SignedDouble {
+struct SignedDoubleSize {
 };
 template <>
-struct SignedDouble<uint32_t> {
+struct SignedDoubleSize<uint32_t> {
     typedef int64_t T;
 };
 template <>
-struct SignedDouble<uint64_t> {
+struct SignedDoubleSize<uint64_t> {
     typedef __int128_t T;
 };
 template <>
-struct SignedDouble<__uint128_t> {
+struct SignedDoubleSize<__uint128_t> {
     typedef Int256 T;
 };
 template <>
-struct SignedDouble<mpz_class> {
+struct SignedDoubleSize<mpz_class> {
     typedef mpz_class T;
 };
 
+/** A group of values stored as one.
+ *
+ * This allows faster processing, as the values can be processed as one.
+ */
 template <typename T>
-struct compT {
-    T val;
+struct GroupedValues {
+    // A group of several values.
+    T values;
+
+    /** Per-value flags.
+     *
+     * For now, only the first n bits (n being the number of values stored) are
+     * used.
+     * When the bit is set, the corresponding value should be 0 and that means
+     * that the real value is Fn-1.
+     */
     uint32_t flag;
 };
-
-typedef enum {
-    NTTEC_EX_NOT_FOUND,
-    NTTEC_EX_MAT_NOT_INVERTIBLE,
-    NTTEC_EX_INVAL,
-    NTTEC_EX_OVERFLOW,
-    NTTEC_EX_IO,
-    NTTEC_EX_DIV_BY_ZERO,
-} NttecException;
 
 /** Return the version string of NTTEC.
  *

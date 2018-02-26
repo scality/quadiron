@@ -168,7 +168,7 @@ class ArithUtest {
     void test_ext_gcd()
     {
         std::cout << "test_ext_gcd\n";
-        nttec::SignedDoubleT<T> bezout[2];
+        nttec::SignedDoubleSizeVal<T> bezout[2];
 
         // not explicitely related to GF(97)
         assert(2 == nttec::arith::extended_gcd<T>(240, 46, nullptr, nullptr));
@@ -299,9 +299,9 @@ class ArithUtest {
         }
     }
 
-    void test_compute_all_divisors()
+    void test_get_all_divisors()
     {
-        std::cout << "test_compute_all_divisors\n";
+        std::cout << "test_get_all_divisors\n";
 
         int i;
         std::vector<T> divisors;
@@ -310,7 +310,7 @@ class ArithUtest {
             // std::cout << "i=" << i << "\n";
             x = nttec::arith::weak_rand<T>(max);
             // std::cout << "x=" << x << "\n";
-            nttec::arith::compute_all_divisors<T>(x, &divisors);
+            nttec::arith::get_all_divisors<T>(x, &divisors);
             check_divisors(x, &divisors, false);
             divisors.clear();
         }
@@ -442,7 +442,7 @@ class ArithUtest {
         test_factor_distinct_prime();
         test_factor_prime();
         test_get_proper_divisors();
-        test_compute_all_divisors();
+        test_get_all_divisors();
         test_get_code_len();
         test_get_code_len_high_compo();
         test_get_coprime_factors();
@@ -461,7 +461,7 @@ class ArithUtest {
         test_factor_distinct_prime();
         test_factor_prime();
         test_get_proper_divisors();
-        test_compute_all_divisors();
+        test_get_all_divisors();
         test_get_code_len();
         test_get_code_len_high_compo();
         test_get_coprime_factors();

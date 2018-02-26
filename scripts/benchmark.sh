@@ -14,7 +14,7 @@ then
     exit 1;
 fi
 
-for ec_type in gf2nrsv gf2nrsc gf2nfftrs gf2nfftaddrs gfpfftrs fntrs ngff4rs; do
+for ec_type in rs-gf2n-v rs-gf2n-c rs-gf2n-fft rs-gf2n-fft-add rs-gfp-fft rs-fnt rs-nf4; do
   for k in 5; do
     for m in 2; do
       for word_size in 1 2 4 8; do
@@ -28,7 +28,7 @@ done
 chunk_size=51200
 sce_type=enc_only
 for word_size in 2 8; do
-  for ec_type in ngff4rs fntrs gfpfftrs; do
+  for ec_type in rs-nf4 rs-fnt rs-gfp-fft; do
     for k in 16; do
       for m in 64; do
         ${bin} -e ${ec_type} -w ${word_size} -k ${k} -m ${m} -c ${chunk_size} -s ${sce_type} -g ${threads_nb} -f ${show_type}

@@ -121,34 +121,34 @@ template <typename T>
 int Benchmark<T>::init()
 {
     switch (fec_type) {
-    case EC_TYPE_GF2NRSV:
-        fec = new nttec::fec::FECGF2NRS<T>(
-            word_size, k, m, nttec::fec::FECGF2NRS<T>::VANDERMONDE);
+    case EC_TYPE_RS_GF2N_V:
+        fec = new nttec::fec::RsGf2n<T>(
+            word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE);
         break;
-    case EC_TYPE_GF2NRSC:
-        fec = new nttec::fec::FECGF2NRS<T>(
-            word_size, k, m, nttec::fec::FECGF2NRS<T>::CAUCHY);
+    case EC_TYPE_RS_GF2N_C:
+        fec = new nttec::fec::RsGf2n<T>(
+            word_size, k, m, nttec::fec::RsMatrixType::CAUCHY);
         break;
-    case EC_TYPE_GF2NFFTRS:
-        fec = new nttec::fec::FECGF2NFFTRS<T>(word_size, k, m);
+    case EC_TYPE_RS_GF2N_FFT:
+        fec = new nttec::fec::RsGf2nFft<T>(word_size, k, m);
         break;
-    case EC_TYPE_GF2NFFTADDRS:
-        fec = new nttec::fec::FECGF2NFFTADDRS<T>(word_size, k, m);
+    case EC_TYPE_RS_GF2N_FFT_ADD:
+        fec = new nttec::fec::RsGf2nFftAdd<T>(word_size, k, m);
         break;
-    case EC_TYPE_GFPFFTRS:
-        fec = new nttec::fec::FECGFPFFTRS<T>(word_size, k, m);
+    case EC_TYPE_RS_GFP_FFT:
+        fec = new nttec::fec::RsGfpFft<T>(word_size, k, m);
         break;
-    case EC_TYPE_NGFF4RS:
-        fec = new nttec::fec::FECNGFF4RS<T>(word_size, k, m);
+    case EC_TYPE_RS_NF4:
+        fec = new nttec::fec::RsNf4<T>(word_size, k, m);
         break;
-    case EC_TYPE_FNTRS:
-        fec = new nttec::fec::FECFNTRS<T>(word_size, k, m, pkt_size);
+    case EC_TYPE_RS_FNT:
+        fec = new nttec::fec::RsFnt<T>(word_size, k, m, pkt_size);
         break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
 
-    this->systematic_ec = (fec->type == nttec::fec::FEC<T>::TYPE_1);
+    this->systematic_ec = (fec->type == nttec::fec::FecType::SYSTEMATIC);
     if (this->systematic_ec) {
         this->n_c = this->m;
     }
@@ -241,7 +241,7 @@ int Benchmark<T>::check_params()
         return ERR_WORD_SIZE;
     }
 
-    if (fec_type == EC_TYPE_NGFF4RS) {
+    if (fec_type == EC_TYPE_RS_NF4) {
         if (word_size < 2) {
             return ERR_WORD_SIZE;
         }
@@ -250,16 +250,16 @@ int Benchmark<T>::check_params()
     if (sizeof(T) < word_size) {
         return ERR_COMPT_WORD_SIZE_T;
     }
-    if (fec_type == EC_TYPE_FNTRS || fec_type == EC_TYPE_GFPFFTRS) {
+    if (fec_type == EC_TYPE_RS_FNT || fec_type == EC_TYPE_RS_GFP_FFT) {
         if (sizeof(T) <= word_size) {
             return ERR_COMPT_WORD_SIZE_T;
         }
     }
-    if (fec_type == EC_TYPE_FNTRS) {
+    if (fec_type == EC_TYPE_RS_FNT) {
         if (word_size > 2)
             return ERR_WORD_SIZE;
     }
-    if (fec_type == EC_TYPE_NGFF4RS) {
+    if (fec_type == EC_TYPE_RS_NF4) {
         if (sizeof(T) < 2 * word_size) {
             return ERR_COMPT_WORD_SIZE_T;
         }
@@ -585,29 +585,31 @@ bool Benchmark<T>::enc_dec()
 
 void xusage()
 {
-    std::cerr << std::string("Usage: benchmark [options]\n") + "Options:\n"
-                     + "\t-e \tType of Reed-Solomon codes, either\n"
-                     + "\t\t\tgf2nrsv: " + ec_desc[EC_TYPE_GF2NRSV] + "\n"
-                     + "\t\t\tgf2nrsc: " + ec_desc[EC_TYPE_GF2NRSC] + "\n"
-                     + "\t\t\tgf2nfftrs: " + ec_desc[EC_TYPE_GF2NFFTRS] + "\n"
-                     + "\t\t\tgf2nfftaddrs: " + ec_desc[EC_TYPE_GF2NFFTADDRS]
-                     + "\n" + "\t\t\tgfpfftrs: " + ec_desc[EC_TYPE_GFPFFTRS]
-                     + "\n" + "\t\t\tfntrs: " + ec_desc[EC_TYPE_FNTRS] + "\n"
-                     + "\t\t\tngff4rs: " + ec_desc[EC_TYPE_NGFF4RS] + "\n"
-                     + "\t\t\tall: All available Reed-solomon codes\n"
-                     + "\t-s \tScenario for benchmark, either\n"
-                     + "\t\t\tenc_only: Only encodings\n"
-                     + "\t\t\tdec_only: Only decodings\n"
-                     + "\t\t\tenc_dec: Encodings and decodings\n"
-                     + "\t-w \tWord size (bytes)\n"
-                     + "\t-k \tNumber of data chunks\n"
-                     + "\t-m \tNumber of parity chunks\n"
-                     + "\t-c \tChunk size (bytes)\n"
-                     + "\t-n \tNumber of samples per operation\n"
-                     + "\t-t \tSize of used integer type, either "
-                     + "4, 8, 16 for uint32_t, uint64_t, __uint128_t\n"
-                     + "\t-g \tNumber of threads\n"
-                     + "\t-x \tExtra parameter\n\n";
+    std::cerr << "Usage: benchmark [options]\n"
+              << "Options:\n"
+              << "\t-e \tType of Reed-Solomon codes, either\n"
+              << "\t\t\tgf2nrsv: " << ec_desc[EC_TYPE_RS_GF2N_V] << '\n'
+              << "\t\t\tgf2nrsc: " << ec_desc[EC_TYPE_RS_GF2N_C] << '\n'
+              << "\t\t\tgf2nfftrs: " << ec_desc[EC_TYPE_RS_GF2N_FFT] << '\n'
+              << "\t\t\tgf2nfftaddrs: " << ec_desc[EC_TYPE_RS_GF2N_FFT_ADD]
+              << '\n'
+              << "\t\t\tgfpfftrs: " << ec_desc[EC_TYPE_RS_GFP_FFT] << '\n'
+              << "\t\t\tfntrs: " << ec_desc[EC_TYPE_RS_FNT] << '\n'
+              << "\t\t\tngff4rs: " << ec_desc[EC_TYPE_RS_NF4] << '\n'
+              << "\t\t\tall: All available Reed-solomon codes\n"
+              << "\t-s \tScenario for benchmark, either\n"
+              << "\t\t\tenc_only: Only encodings\n"
+              << "\t\t\tdec_only: Only decodings\n"
+              << "\t\t\tenc_dec: Encodings and decodings\n"
+              << "\t-w \tWord size (bytes)\n"
+              << "\t-k \tNumber of data chunks\n"
+              << "\t-m \tNumber of parity chunks\n"
+              << "\t-c \tChunk size (bytes)\n"
+              << "\t-n \tNumber of samples per operation\n"
+              << "\t-t \tSize of used integer type, either "
+              << "4, 8, 16 for uint32_t, uint64_t, __uint128_t\n"
+              << "\t-g \tNumber of threads\n"
+              << "\t-x \tExtra parameter\n\n";
     exit(1);
 }
 
@@ -744,8 +746,8 @@ int main(int argc, char** argv)
         }
     }
 
-    // Currently support operating on packet:FNTRS
-    if (params->fec_type != EC_TYPE_FNTRS) {
+    // Currently support operating on packet:RS_FNT
+    if (params->fec_type != EC_TYPE_RS_FNT) {
         params->operation_on_packet = false;
     }
 

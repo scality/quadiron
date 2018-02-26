@@ -8,14 +8,15 @@
 
 #include "big_int.h"
 #include "core.h"
+#include "exceptions.h"
 
 namespace nttec {
 
 template <typename T>
-using DoubleT = typename Double<T>::T;
+using DoubleSizeVal = typename DoubleSize<T>::T;
 
 template <typename T>
-using SignedDoubleT = typename SignedDouble<T>::T;
+using SignedDoubleSizeVal = typename SignedDoubleSize<T>::T;
 
 /** Base/core arithmetical functions of NTTEC. */
 namespace arith {
@@ -35,15 +36,15 @@ int log2(int x);
 template <class T>
 int exp2(int x);
 template <class T>
-SignedDoubleT<T> extended_gcd(
-    SignedDoubleT<T> a,
-    SignedDoubleT<T> b,
-    SignedDoubleT<T> bezout_coef[2],
-    SignedDoubleT<T> quotient_gcd[2]);
+SignedDoubleSizeVal<T> extended_gcd(
+    SignedDoubleSizeVal<T> a,
+    SignedDoubleSizeVal<T> b,
+    SignedDoubleSizeVal<T> bezout_coef[2],
+    SignedDoubleSizeVal<T> quotient_gcd[2]);
 template <class T>
 T chinese_remainder(int n_mod, T a[], T n[]);
 template <class T>
-int jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m);
+int jacobi(SignedDoubleSizeVal<T> n, SignedDoubleSizeVal<T> m);
 template <class T>
 bool solovay_strassen1(T a, T n);
 template <class T>
@@ -65,7 +66,7 @@ void get_proper_divisors(T n, std::vector<T>* output);
 template <class T>
 void get_proper_divisors(T n, std::vector<T>* primes, std::vector<T>* output);
 template <class T>
-void compute_all_divisors(T nb, std::vector<T>* output);
+void get_all_divisors(T n, std::vector<T>* output);
 template <class T>
 T get_code_len(T order, T n);
 template <class T>
@@ -206,8 +207,9 @@ int log2(int x)
 {
     int result = 0;
 
-    if (x == 0)
-        throw NTTEC_EX_INVAL;
+    if (x == 0) {
+        throw DomainError("pole error: x is zero");
+    }
 
     if (x == 1)
         return 0;
@@ -250,20 +252,20 @@ int exp2(int x)
  * @return the GCD
  */
 template <class T>
-SignedDoubleT<T> extended_gcd(
-    SignedDoubleT<T> a,
-    SignedDoubleT<T> b,
-    SignedDoubleT<T> bezout_coef[2],
-    SignedDoubleT<T> quotient_gcd[2])
+SignedDoubleSizeVal<T> extended_gcd(
+    SignedDoubleSizeVal<T> a,
+    SignedDoubleSizeVal<T> b,
+    SignedDoubleSizeVal<T> bezout_coef[2],
+    SignedDoubleSizeVal<T> quotient_gcd[2])
 {
-    SignedDoubleT<T> s = 0;
-    SignedDoubleT<T> old_s = 1;
-    SignedDoubleT<T> t = 1;
-    SignedDoubleT<T> old_t = 0;
-    SignedDoubleT<T> r = b;
-    SignedDoubleT<T> old_r = a;
-    SignedDoubleT<T> quotient;
-    SignedDoubleT<T> tmp;
+    SignedDoubleSizeVal<T> s = 0;
+    SignedDoubleSizeVal<T> old_s = 1;
+    SignedDoubleSizeVal<T> t = 1;
+    SignedDoubleSizeVal<T> old_t = 0;
+    SignedDoubleSizeVal<T> r = b;
+    SignedDoubleSizeVal<T> old_r = a;
+    SignedDoubleSizeVal<T> quotient;
+    SignedDoubleSizeVal<T> tmp;
 
     while (0 != r) {
         quotient = old_r / r;
@@ -305,15 +307,14 @@ SignedDoubleT<T> extended_gcd(
  * @todo Check if there is a solution.
  *
  * @return the solution.
- * @throw NTTEC_EX_NO_SOLUTION
  */
 template <class T>
 T chinese_remainder(int n_mod, T a[], T n[])
 {
-    SignedDoubleT<T> acc;
-    SignedDoubleT<T> x;
-    SignedDoubleT<T>* N = new SignedDoubleT<T>[n_mod];
-    SignedDoubleT<T>* M = new SignedDoubleT<T>[n_mod];
+    SignedDoubleSizeVal<T> acc;
+    SignedDoubleSizeVal<T> x;
+    SignedDoubleSizeVal<T>* N = new SignedDoubleSizeVal<T>[n_mod];
+    SignedDoubleSizeVal<T>* M = new SignedDoubleSizeVal<T>[n_mod];
 
     acc = 1;
     for (int i = 0; i < n_mod; i++) {
@@ -321,7 +322,7 @@ T chinese_remainder(int n_mod, T a[], T n[])
     }
 
     for (int i = 0; i < n_mod; i++) {
-        SignedDoubleT<T> bezout[2];
+        SignedDoubleSizeVal<T> bezout[2];
 
         N[i] = acc / n[i];
         extended_gcd<T>(N[i], n[i], bezout, nullptr);
@@ -358,21 +359,20 @@ T chinese_remainder(int n_mod, T a[], T n[])
  * @param m
  *
  * @return the jacobi symbol
- * @throw NT_EX_INVAL if b is even or b is negative
+ * @throw DomainError if b is even or b is negative
  */
 template <class T>
-int jacobi(SignedDoubleT<T> n, SignedDoubleT<T> m)
+int jacobi(SignedDoubleSizeVal<T> n, SignedDoubleSizeVal<T> m)
 {
-    SignedDoubleT<T> t;
+    SignedDoubleSizeVal<T> t;
     int jac;
 
-    // m must be odd
-    if ((m % 2) == 0)
-        throw NTTEC_EX_INVAL;
-
-    // m must be positive
-    if (m < 0)
-        throw NTTEC_EX_INVAL;
+    if ((m % 2) == 0) {
+        throw DomainError("m must be odd");
+    }
+    if (m < 0) {
+        throw DomainError("m must be positive");
+    }
 
     jac = 1;
     while (m != 1) {
@@ -638,17 +638,17 @@ T gcd(T u, T v)
  *
  */
 template <class T>
-void compute_all_divisors(T nb, std::vector<T>* output)
+void get_all_divisors(T n, std::vector<T>* output)
 {
     typename std::vector<T> tmp;
 
-    T nb_sqrt = sqrt<T>(nb);
+    T nb_sqrt = sqrt<T>(n);
     for (T i = 1; i <= nb_sqrt; i++) {
         // While i divides n, get i and n/i
-        if (nb % i == 0) {
-            // std::cout << nb << ":" << i << " " << nb/i << std::endl;
+        if (n % i == 0) {
+            // std::cout << n << ":" << i << " " << n/i << std::endl;
             output->push_back(i);
-            tmp.push_back(nb / i);
+            tmp.push_back(n / i);
         }
     }
     output->insert(output->end(), tmp.rbegin(), tmp.rend());

@@ -16,6 +16,7 @@ namespace nttec {
 struct UInt256 {
     __uint128_t lo;
     __uint128_t hi;
+
     UInt256() : lo(), hi() {}
     UInt256(__uint128_t x) : lo(x), hi(0) {}
 
@@ -23,10 +24,12 @@ struct UInt256 {
     {
         return lo * x;
     }
+
     UInt256 operator%(__uint128_t x)
     {
         return lo % x;
     }
+
     operator __uint128_t()
     {
         return lo;
@@ -36,6 +39,7 @@ struct UInt256 {
 struct Int256 {
     __uint128_t lo;
     __uint128_t hi;
+
     Int256() : lo(), hi() {}
     Int256(__uint128_t x) : lo(x), hi(0) {}
 
@@ -43,38 +47,47 @@ struct Int256 {
     {
         return (lo < x);
     }
+
     bool operator<(int x)
     {
         return (lo < (__uint128_t)x);
     }
+
     bool operator!=(__uint128_t x)
     {
         return (lo != x);
     }
+
     bool operator!=(int x)
     {
         return (lo != (__uint128_t)x);
     }
+
     Int256 operator+(__uint128_t x)
     {
         return lo + x;
     }
+
     Int256 operator-(Int256 x)
     {
         return lo - x.lo;
     }
+
     Int256 operator*(Int256 x)
     {
         return lo * x.lo;
     }
+
     Int256 operator/(Int256 x)
     {
         return lo / x.lo;
     }
+
     Int256 operator/(int x)
     {
         return lo / x;
     }
+
     operator __uint128_t()
     {
         return lo;

@@ -2,9 +2,9 @@
 
 void poly_utest1()
 {
-    nttec::gf::GFP<uint32_t> gfp(1000);
+    nttec::gf::Prime<uint32_t> gfp(1000);
 
-    nttec::Poly<uint32_t> p0(&gfp);
+    nttec::Polynomial<uint32_t> p0(&gfp);
     assert(0 == p0.degree());
 }
 
@@ -15,17 +15,17 @@ void poly_utest2()
 {
     std::cout << "poly_utest2\n";
 
-    nttec::gf::GFP<uint32_t> gfp(11);
-    nttec::Poly<uint32_t> p1(&gfp);
+    nttec::gf::Prime<uint32_t> gfp(11);
+    nttec::Polynomial<uint32_t> p1(&gfp);
     p1.set(5, 1);
     p1.set(3, 3);
     p1.set(0, 4);
     // p1.dump();
-    nttec::Poly<uint32_t> p2(&gfp);
+    nttec::Polynomial<uint32_t> p2(&gfp);
     p2.set(6, 6);
     p2.set(3, 4);
     // p2.dump();
-    nttec::Poly<uint32_t> p3(&gfp);
+    nttec::Polynomial<uint32_t> p3(&gfp);
     p1._add(&p3, &p1, &p2);
     // p3.dump();
     assert(p3.degree() == 6);
@@ -39,17 +39,17 @@ void poly_utest3()
 {
     std::cout << "poly_utest3\n";
 
-    nttec::gf::GFP<uint32_t> gfp(11);
-    nttec::Poly<uint32_t> p1(&gfp);
+    nttec::gf::Prime<uint32_t> gfp(11);
+    nttec::Polynomial<uint32_t> p1(&gfp);
     p1.set(5, 1);
     p1.set(3, 3);
     p1.set(0, 4);
     // p1.dump();
-    nttec::Poly<uint32_t> p2(&gfp);
+    nttec::Polynomial<uint32_t> p2(&gfp);
     p2.set(6, 6);
     p2.set(3, 4);
     // p2.dump();
-    nttec::Poly<uint32_t> p3(&gfp);
+    nttec::Polynomial<uint32_t> p3(&gfp);
     p1._sub(&p3, &p1, &p2);
     assert(p3.degree() == 6);
     assert(p3.get(6) == 5);
@@ -62,17 +62,17 @@ void poly_utest4()
 {
     std::cout << "poly_utest4\n";
 
-    nttec::gf::GFP<uint32_t> gfp(11);
-    nttec::Poly<uint32_t> p1(&gfp);
+    nttec::gf::Prime<uint32_t> gfp(11);
+    nttec::Polynomial<uint32_t> p1(&gfp);
     p1.set(5, 1);
     p1.set(3, 3);
     p1.set(0, 4);
     // p1.dump();
-    nttec::Poly<uint32_t> p2(&gfp);
+    nttec::Polynomial<uint32_t> p2(&gfp);
     p2.set(6, 6);
     p2.set(3, 4);
     // p2.dump();
-    nttec::Poly<uint32_t> p3(&gfp);
+    nttec::Polynomial<uint32_t> p3(&gfp);
     p1._mul(&p3, &p1, &p2);
     assert(p3.degree() == 11);
     assert(p3.get(11) == 6);
@@ -85,20 +85,20 @@ void poly_utest4()
 void poly_utest5()
 {
     std::cout << "poly_utest5\n";
-    nttec::gf::GFP<uint32_t> gfp(11);
-    nttec::Poly<uint32_t> p1(&gfp);
+    nttec::gf::Prime<uint32_t> gfp(11);
+    nttec::Polynomial<uint32_t> p1(&gfp);
     p1.set(6, 3);
     p1.set(4, 7);
     p1.set(3, 4);
     p1.set(0, 5);
     // p1.dump();
-    nttec::Poly<uint32_t> p2(&gfp);
+    nttec::Polynomial<uint32_t> p2(&gfp);
     p2.set(4, 1);
     p2.set(3, 3);
     p2.set(0, 4);
     // p2.dump();
-    nttec::Poly<uint32_t> p3(&gfp);
-    nttec::Poly<uint32_t> p4(&gfp);
+    nttec::Polynomial<uint32_t> p3(&gfp);
+    nttec::Polynomial<uint32_t> p4(&gfp);
     p1._div(&p3, &p4, &p1, &p2);
     // p3.dump();
     // p4.dump();
@@ -116,12 +116,12 @@ void poly_utest5()
 void poly_utest6()
 {
     std::cout << "poly_utest6\n";
-    nttec::gf::GFP<uint32_t> gfp(11);
-    nttec::Poly<uint32_t> p1(&gfp);
+    nttec::gf::Prime<uint32_t> gfp(11);
+    nttec::Polynomial<uint32_t> p1(&gfp);
     p1.set(4, 4);
     p1.set(1, 1);
     p1.set(0, 8);
-    nttec::Poly<uint32_t> p2(&gfp);
+    nttec::Polynomial<uint32_t> p2(&gfp);
     p1._derivative(&p2, &p1);
     assert(p2.degree() == 3);
     assert(p2.get(3) == 5);
@@ -131,8 +131,8 @@ void poly_utest6()
 void poly_utest7()
 {
     std::cout << "poly_utest7\n";
-    nttec::gf::GFP<uint32_t> gfp(11);
-    nttec::Poly<uint32_t> p1(&gfp);
+    nttec::gf::Prime<uint32_t> gfp(11);
+    nttec::Polynomial<uint32_t> p1(&gfp);
     p1.set(4, 4);
     p1.set(1, 1);
     p1.set(0, 8);
@@ -143,17 +143,17 @@ void poly_utest7()
 void poly_utest8()
 {
     std::cout << "poly_utest8\n";
-    nttec::gf::GFP<uint32_t> gfp(3);
-    nttec::Poly<uint32_t> p1(&gfp);
+    nttec::gf::Prime<uint32_t> gfp(3);
+    nttec::Polynomial<uint32_t> p1(&gfp);
     p1.set(4, 1);
     // p1.dump();
-    nttec::Poly<uint32_t> p2(&gfp);
+    nttec::Polynomial<uint32_t> p2(&gfp);
     p2.set(3, 1);
     p2.set(2, 2);
     p2.set(0, 1);
     // p2.dump();
-    nttec::Poly<uint32_t> p3(&gfp);
-    nttec::Poly<uint32_t> p4(&gfp);
+    nttec::Polynomial<uint32_t> p3(&gfp);
+    nttec::Polynomial<uint32_t> p4(&gfp);
     p1._div(&p3, &p4, &p1, &p2);
     // p3.dump();
     // p4.dump();
