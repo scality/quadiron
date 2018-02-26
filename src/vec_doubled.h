@@ -29,17 +29,10 @@ class Doubled : public Vector<T> {
     explicit Doubled(Vector<T>* vec);
     int get_n(void);
     T get(int i);
-    bool is_v2vec();
 
   private:
     Vector<T>* vec;
 };
-
-template <typename T>
-bool Doubled<T>::is_v2vec()
-{
-    return true;
-}
 
 template <typename T>
 Doubled<T>::Doubled(Vector<T>* vec)
