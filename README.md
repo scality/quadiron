@@ -1,5 +1,7 @@
 # NTTEC
 
+[![CircleCI][badgepub]](https://circleci.com/gh/vrancurel/nttec)
+
 stuff
 
 # Build from source
@@ -42,3 +44,5 @@ To generate the code coverage reports:
 
 Note that, even though code coverage is supported by both Clang and GCC, result
 with GCC seems more reliable (not surprising as we are using gcov).
+
+[badgepub]: https://circleci.com/gh/vrancurel/nttec.svg?style=shield&circle-token=:circle-token
