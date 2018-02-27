@@ -172,7 +172,6 @@ class Vector {
     virtual T get(int i);
     T* get_mem();
     void set_mem(T* mem, int mem_len);
-    virtual bool is_v2vec();
     void mul_scalar(T scalar);
     void mul_beta(T beta);
     void hadamard_mul(Vector<T>* v);
@@ -282,12 +281,6 @@ inline void Vector<T>::set_mem(T* mem, int mem_len)
     new_mem = false;
     this->mem = mem;
     this->mem_len = mem_len;
-}
-
-template <typename T>
-bool Vector<T>::is_v2vec()
-{
-    return false;
 }
 
 /**
