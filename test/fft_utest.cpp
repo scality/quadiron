@@ -233,7 +233,7 @@ class FFTUtest {
         unsigned r;
         T q = 65537;
         nttec::gf::Prime<T> gf(q);
-        unsigned R = gf.get_prime_root(); // primitive root
+        unsigned R = gf.get_primitive_root();
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
@@ -282,7 +282,7 @@ class FFTUtest {
         unsigned n;
         unsigned q = 65537;
         nttec::gf::Prime<T> gf(q);
-        unsigned R = gf.get_prime_root(); // primitive root
+        unsigned R = gf.get_primitive_root();
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
@@ -320,7 +320,7 @@ class FFTUtest {
         unsigned n;
         unsigned q = 65537;
         nttec::gf::Prime<T> gf(q);
-        unsigned R = gf.get_prime_root(); // primitive root
+        unsigned R = gf.get_primitive_root();
         unsigned n_data = 3;
         unsigned n_parities = 3;
         size_t size = 4;
@@ -622,7 +622,7 @@ class FFTUtest {
         unsigned r;
         unsigned q = 65537;
         nttec::gf::Prime<T> gf(q);
-        unsigned R = gf.get_prime_root(); // primitive root
+        unsigned R = gf.get_primitive_root();
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
@@ -677,7 +677,7 @@ class FFTUtest {
     {
         T r;
         nttec::gf::BinExtension<T> gf(n);
-        T R = gf.get_prime_root();
+        T R = gf.get_primitive_root();
         T n_data = 3;
         T n_parities = 3;
 

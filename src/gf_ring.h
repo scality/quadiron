@@ -91,11 +91,11 @@ class RingModN {
     virtual void compute_omegas(vec::Vector<T>* W, int n, T w);
     void compute_omegas_cached(vec::Vector<T>* W, int n, T w);
     virtual T weak_rand(void);
-    bool is_prime_root(T nb);
-    void find_prime_root();
+    bool is_primitive_root(T nb);
+    void find_primitive_root();
     T get_root();
-    T get_prime_root();
-    bool check_prime_root(T nb);
+    T get_primitive_root();
+    bool check_primitive_root(T nb);
     bool check_order_naive(T nb, T order);
     T do_step_get_order(
         T x,
@@ -519,30 +519,55 @@ T RingModN<T>::weak_rand(void)
     return arith::weak_rand<T>(this->card());
 }
 
-/*
- * Check if a number is primitive root or not, i.e. check its
- *  order y = q - 1, i.e. x^i != 1 for every i < q-1
+/** Check if a number is primitive root or not.
  *
- * Note, order of a number must be a divisor of (q-1)
+ * A number `x` is a primitive root if its order \f$y = q - 1\f$, i.e.
+ * \f$x^{i}\neq 1\qquad (i=1, 2, 3, \dots , q-2)\f$
  *
- * Algorithm to checking whether x is primitive root or not
- *  Methodology: checking its order is not a proper divisor of (q-1)
- * 1. Prime factorization (q - 1) = p1^r1 * p2^r2 * ... pm^rm
- * 2. Get "necessary" proper divisors of (q - 1):
- *      D = {(q-1)/p1, (q-1)/p2, .., (q-1)/pm }
- * 3. x is a primitive root if for every divisor d of D:
- *                          x^d != 1
+ * Note, order of a number must be a divisor of q-1.
+ *
+ * Algorithm to checking whether `x` is primitive root or not.
+ *
+ * Methodology: checking its order is not a proper divisor of (q-1).
+ *
+ * 1. Prime factorization \f$q - 1 = p_1^{r_1} p_2^{r_2} \dots p_m^{r_m}\f$
+ * 2. Get "necessary" proper divisors of `q - 1`:
+ *    \f$ D =
+ *    \left\{
+ *      \frac{q-1}{p_1}, \frac{q-1}{p_2}, \dots, \frac{q-1}{p_m}
+ *    \right\}
+ *    \f$
+ * 3. `x` is a primitive root if for every divisor `d` of `D`: \f$x^d \neq 1\f$
+ *
  * Proof:
- *  Suppose that x satisfies the algorithm but its order is a proper divisor y
- *  of (q-1). This order can be expressed as (q-1)/y where
- *              y = (p1^s1 * p2^s2 * ... * pm^sm)
- *  and, x^((q-1)/y) = 1
- *  Withouth loss of generality, we suppose s1 >= 1. We have
- *      x^((q-1)/y) = 1 => (x^((q-1)/y))^(y/p1) = 1 <=> x^((q-1)/p1) = 1.
- *  Contradict to Step 3 of the algorith.
+ *
+ *  Suppose that `x` satisfies the algorithm but its order is a proper divisor
+ *  `y` of `q-1`.
+ *
+ *  This order can be expressed as \f$\frac{q-1}{y}\f$ where:
+ *
+ *  \f[
+ *    y = p_1^{s_1} p_2^{s_2} \dots p_m^{s_m} \text{ with } s_i \leq r_i
+ *  \f]
+ *
+ *  and
+ *
+ *  \f[
+ *    x^{\frac{q-1}{y}} = 1
+ *  \f]
+ *
+ *  Withouth loss of generality, we suppose \f$s_1 \geq 1\f$. We have
+ *
+ *  \f[
+ *    x^{\frac{q-1}{y}} = 1
+ *    \Rightarrow (x^{\frac{q-1}{y}})^{\frac{y}{p_1}} = 1
+ *    \Leftrightarrow x^{\frac{q-1}{p_1}} = 1
+ *  \f]
+ *
+ *  Contradict to Step 3 of the algorithm.
  */
 template <typename T>
-bool RingModN<T>::is_prime_root(T nb)
+bool RingModN<T>::is_primitive_root(T nb)
 {
     bool ok = true;
     typename std::vector<T>::size_type i;
@@ -563,24 +588,29 @@ bool RingModN<T>::is_prime_root(T nb)
     return ok;
 }
 
-/*
- * Find primitive root of finite field. A number x is a primitive root if its
- *  order y = q - 1, i.e. x^i != 1 for every i < q-1
+/** Find primitive root of finite field.
  *
- * Use the algorithm of checking if a number is primitive root or not
+ * A number `x` is a primitive root if its order \f$y = q - 1\f$, i.e.
+ * \f$x^{i}\neq 1\qquad (i=1, 2, 3, \dots , q-2)\f$
+ *
+ * Use the algorithm of checking if a number is primitive root or not.
  */
 template <typename T>
-void RingModN<T>::find_prime_root()
+void RingModN<T>::find_primitive_root()
 {
-    if (this->root)
+    if (this->root) {
         return;
+    }
+
     T nb = 2;
     bool ok;
     typename std::vector<T>::size_type i;
     T h = this->card_minus_one();
+
     if (!this->compute_factors_of_order_done) {
         this->compute_factors_of_order();
     }
+
     while (nb <= h) {
         ok = true;
         // check nb^divisor == 1
@@ -601,8 +631,9 @@ void RingModN<T>::find_prime_root()
         nb++;
     }
 
-    if (!this->root)
-        assert(false); // not found root
+    if (!this->root) {
+        assert(false); // Root not found.
+    }
 }
 
 template <typename T>
@@ -685,11 +716,13 @@ T RingModN<T>::get_order(T x)
     return order;
 }
 
-/*
- * Check whether a number is a primitive root
+/** Check whether a number is a primitive root.
+ *
+ * @param nb the number to check
+ * @return true if `nb` is a primitive root, false otherwise.
  */
 template <typename T>
-bool RingModN<T>::check_prime_root(T nb)
+bool RingModN<T>::check_primitive_root(T nb)
 {
     T h = this->card_minus_one();
     return (get_order(nb) == h);
@@ -728,22 +761,23 @@ T RingModN<T>::get_nth_root(T n)
 {
     T q_minus_one = this->card_minus_one();
     T d = arith::gcd<T>(n, q_minus_one);
-    if (!this->root)
-        this->find_prime_root();
+    if (!this->root) {
+        this->find_primitive_root();
+    }
     T nth_root = this->exp(this->root, q_minus_one / d);
     return nth_root;
 }
 
-/**
- * return prime root
-
- * @return root
+/** Return primitive root.
+ *
+ * @return the primitive root.
  */
 template <typename T>
-T RingModN<T>::get_prime_root()
+T RingModN<T>::get_primitive_root()
 {
-    if (!this->root)
-        this->find_prime_root();
+    if (!this->root) {
+        this->find_primitive_root();
+    }
     return this->root;
 }
 

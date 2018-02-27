@@ -112,7 +112,7 @@ Additive<T>::Additive(gf::Field<T>* gf, T m, vec::Vector<T>* betas)
 
         create_betas = true;
         betas = new vec::Vector<T>(gf, m);
-        T beta = this->gf->get_prime_root();
+        T beta = this->gf->get_primitive_root();
         betas->set(0, beta);
         for (T i = 1; i < m - 1; i++) {
             betas->set(i, this->gf->exp(beta, i + 1));

@@ -198,11 +198,11 @@ class GFUtest {
         }
     }
 
-    void test_find_prime_root(nttec::gf::Field<T>* gf)
+    void test_find_primitive_root(nttec::gf::Field<T>* gf)
     {
-        gf->find_prime_root();
+        gf->find_primitive_root();
         // std::cout << "root " << gf->root << std::endl;
-        assert(gf->check_prime_root(gf->get_root()));
+        assert(gf->check_primitive_root(gf->get_root()));
     }
 
     void test_get_order(nttec::gf::Field<T>* gf)
@@ -265,7 +265,7 @@ class GFUtest {
         std::cout << "test_prime_root_gf5\n";
 
         nttec::gf::Prime<T> gf5(5);
-        test_find_prime_root(&gf5);
+        test_find_primitive_root(&gf5);
         test_get_order(&gf5);
         test_get_nth_root(&gf5);
     }
@@ -299,7 +299,7 @@ class GFUtest {
         std::cout << "test_prime_root_gf9\n";
 
         nttec::gf::Extension<T> gf9(3, 2);
-        test_find_prime_root(&gf9);
+        test_find_primitive_root(&gf9);
         test_get_order(&gf9);
         test_get_nth_root(&gf9);
     }
@@ -333,7 +333,7 @@ class GFUtest {
         std::cout << "test_prime_root_gf256\n";
 
         nttec::gf::BinExtension<T> gf256(8);
-        test_find_prime_root(&gf256);
+        test_find_primitive_root(&gf256);
         test_get_order(&gf256);
         test_get_nth_root(&gf256);
     }
@@ -367,7 +367,7 @@ class GFUtest {
         std::cout << "test_prime_root_gf(2^" << n << ")\n";
 
         nttec::gf::BinExtension<T> gf2n(n);
-        test_find_prime_root(&gf2n);
+        test_find_primitive_root(&gf2n);
         test_get_order(&gf2n);
         test_get_nth_root(&gf2n);
     }
