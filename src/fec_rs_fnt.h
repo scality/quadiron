@@ -45,7 +45,7 @@ class RsFnt : public FecCode<T> {
         this->gf = new gf::Prime<T>(gf_p);
 
         assert(
-            arith::jacobi<T>(this->gf->get_prime_root(), this->gf->card())
+            arith::jacobi<T>(this->gf->get_primitive_root(), this->gf->card())
             == -1);
 
         // with this encoder we cannot exactly satisfy users request, we need to
