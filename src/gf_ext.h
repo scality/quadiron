@@ -62,7 +62,7 @@ class Extension : public gf::Field<T> {
   private:
     gf::Field<T>* sub_field;
     int max_deg;
-    Polynomial<T>* prim_poly;
+    Polynomial<T>* primitive_poly;
 };
 
 template <typename T>
@@ -75,28 +75,28 @@ Extension<T>::Extension(T p, int n) : gf::Field<T>(p, n)
     // XXX temp
     if (p == 2) {
         if (n == 8) {
-            prim_poly = new Polynomial<T>(sub_field);
-            prim_poly->set(8, 1);
-            prim_poly->set(4, 1);
-            prim_poly->set(3, 1);
-            prim_poly->set(1, 1);
-            prim_poly->set(0, 1);
+            primitive_poly = new Polynomial<T>(sub_field);
+            primitive_poly->set(8, 1);
+            primitive_poly->set(4, 1);
+            primitive_poly->set(3, 1);
+            primitive_poly->set(1, 1);
+            primitive_poly->set(0, 1);
         }
     } else if (p == 3) {
         if (n == 2) {
             // take irreducible polynomial from GF(3) of degree 2 P(X)=X^2+1
-            prim_poly = new Polynomial<T>(sub_field);
-            prim_poly->set(2, 1);
-            prim_poly->set(0, 1);
+            primitive_poly = new Polynomial<T>(sub_field);
+            primitive_poly->set(2, 1);
+            primitive_poly->set(0, 1);
         } else if (n == 3) {
             // take irreducible polynomial from GF(3) of degree 3
             // P(X)=X^3+2X^2+1  another irreducible polynomial from GF(3) of
             // degree 3 is P(X)=X^3+2X+1
-            prim_poly = new Polynomial<T>(sub_field);
-            prim_poly->set(3, 1);
-            prim_poly->set(2, 2);
-            // prim_poly->set(1, 2);
-            prim_poly->set(0, 1);
+            primitive_poly = new Polynomial<T>(sub_field);
+            primitive_poly->set(3, 1);
+            primitive_poly->set(2, 2);
+            // primitive_poly->set(1, 2);
+            primitive_poly->set(0, 1);
         }
     } else {
         // XXX generate irreducible polynomials
@@ -107,7 +107,7 @@ Extension<T>::Extension(T p, int n) : gf::Field<T>(p, n)
 template <typename T>
 Extension<T>::~Extension()
 {
-    delete prim_poly;
+    delete primitive_poly;
     delete sub_field;
 }
 
@@ -175,7 +175,7 @@ T Extension<T>::mul(T a, T b)
     _b.from_num(b, max_deg);
 
     _a.mul(&_b);
-    _a.mod(prim_poly);
+    _a.mod(primitive_poly);
 
     return _a.to_num();
 }
@@ -192,7 +192,7 @@ T Extension<T>::div(T a, T b)
     _b.from_num(b, max_deg);
 
     _a.div(&_b);
-    _a.mod(prim_poly);
+    _a.mod(primitive_poly);
 
     return _a.to_num();
 }
@@ -203,7 +203,7 @@ T Extension<T>::inv(T a)
     assert(this->check(a));
 
     Polynomial<T> _u(sub_field);
-    _u.copy(prim_poly);
+    _u.copy(primitive_poly);
     Polynomial<T> _v(sub_field);
     _v.from_num(a, max_deg);
 
@@ -219,7 +219,7 @@ T Extension<T>::inv(T a)
     assert(_gcd.degree() == 0);
     _gcd.set(0, sub_field->inv(_gcd.get(0)));
 
-    _b2.mod(prim_poly);
+    _b2.mod(primitive_poly);
     _b2.mul(&_gcd);
 
     return _b2.to_num();
