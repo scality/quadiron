@@ -61,7 +61,7 @@ class BinExtension : public gf::Field<T> {
     T n;
     T my_card;
     T sgroup_nb;
-    T prim_poly;
+    T primitive_poly;
     T first_bit;
     T tab_nb;
     T* gflog = nullptr;
@@ -98,30 +98,30 @@ BinExtension<T>::BinExtension(T n) : gf::Field<T>(2, n)
         assert(false);
     }
     if (n == 1)
-        this->prim_poly = 0x1;
+        this->primitive_poly = 0x1;
     else if (n == 2)
-        this->prim_poly = 0x7;
+        this->primitive_poly = 0x7;
     else if (n == 3)
-        this->prim_poly = 0xb;
+        this->primitive_poly = 0xb;
     else if (n == 4)
-        this->prim_poly = 0x13;
+        this->primitive_poly = 0x13;
     else if (n == 8)
         // alternative 0x11b, original one: 0x11d
-        this->prim_poly = 0x11d;
+        this->primitive_poly = 0x11d;
     else if (n == 16)
         // an alternative: 0x1002b
-        this->prim_poly = 0x1100b;
+        this->primitive_poly = 0x1100b;
     // Following irreducible polynomials are from Gadiel Seroussi's paper:
     //  "Table of Low-Weight Binary Irreducible Polynomials"
     else if (n == 32)
         // pentanomial x^32 + x^7 + x^3 + x^2 + 1
-        this->prim_poly = 0x8d;
+        this->primitive_poly = 0x8d;
     else if (n == 64)
         // pentanomial x^64 + x^4 + x^3 + x + 1
-        this->prim_poly = 0x1b;
+        this->primitive_poly = 0x1b;
     else if (n == 128)
         // pentanomial x^128 + x^7 + x^2 + x + 1
-        this->prim_poly = 0x87;
+        this->primitive_poly = 0x87;
     else
         assert(false); // not supported
 
@@ -205,7 +205,7 @@ void BinExtension<T>::setup_tables(void)
         gfilog[log] = b;
         b = b << 1;
         if (b & my_card)
-            b = b ^ prim_poly;
+            b = b ^ primitive_poly;
     }
 }
 
@@ -213,7 +213,7 @@ template <typename T>
 inline T BinExtension<T>::_mul_by_two(T x)
 {
     if ((x & first_bit) > 0) {
-        return ((x ^ first_bit) * 2) ^ prim_poly;
+        return ((x ^ first_bit) * 2) ^ primitive_poly;
     }
     return x * 2;
 }
