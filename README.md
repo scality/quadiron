@@ -2,7 +2,20 @@
 
 [![CircleCI][badgepub]](https://circleci.com/gh/vrancurel/nttec)
 
-stuff
+The NTTEC library is a C++ library, written in C++11, that offers a
+streaming API to use the different flavors of NTT-based erasure codes.
+
+The library focuses primarily on high fragmentation i.e. n >> k.
+
+It includes general modular arithmetic routines, algorithms for
+manipulating rings of integers modulo n, finite fields (including
+binary, prime and (non binary) extension fields), polynomial
+operations, implementations of different flavors of discrete Fourier
+transforms and forward error correction (FEC) codes algorithms.
+
+The library also includes an abstraction for writing systematic and
+non-systematic codes, although for applications requiring high
+fragmentation systematic codes are not necessarily useful.
 
 # Build from source
 
