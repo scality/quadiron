@@ -616,14 +616,14 @@ void xusage()
     std::cerr << "Usage: benchmark [options]\n"
               << "Options:\n"
               << "\t-e \tType of Reed-Solomon codes, either\n"
-              << "\t\t\tgf2nrsv: " << ec_desc[EC_TYPE_RS_GF2N_V] << '\n'
-              << "\t\t\tgf2nrsc: " << ec_desc[EC_TYPE_RS_GF2N_C] << '\n'
-              << "\t\t\tgf2nfftrs: " << ec_desc[EC_TYPE_RS_GF2N_FFT] << '\n'
-              << "\t\t\tgf2nfftaddrs: " << ec_desc[EC_TYPE_RS_GF2N_FFT_ADD]
+              << "\t\t\trs-gf2n-v: " << ec_desc[EC_TYPE_RS_GF2N_V] << '\n'
+              << "\t\t\trs-gf2n-c: " << ec_desc[EC_TYPE_RS_GF2N_C] << '\n'
+              << "\t\t\trs-gf2n-fft: " << ec_desc[EC_TYPE_RS_GF2N_FFT] << '\n'
+              << "\t\t\trs-gf2n-fft-add: " << ec_desc[EC_TYPE_RS_GF2N_FFT_ADD]
               << '\n'
-              << "\t\t\tgfpfftrs: " << ec_desc[EC_TYPE_RS_GFP_FFT] << '\n'
-              << "\t\t\tfntrs: " << ec_desc[EC_TYPE_RS_FNT] << '\n'
-              << "\t\t\tngff4rs: " << ec_desc[EC_TYPE_RS_NF4] << '\n'
+              << "\t\t\trs-gfp-fft: " << ec_desc[EC_TYPE_RS_GFP_FFT] << '\n'
+              << "\t\t\trs-fnt: " << ec_desc[EC_TYPE_RS_FNT] << '\n'
+              << "\t\t\trs-nf4: " << ec_desc[EC_TYPE_RS_NF4] << '\n'
               << "\t\t\tall: All available Reed-solomon codes\n"
               << "\t-s \tScenario for benchmark, either\n"
               << "\t\t\tenc_only: Only encodings\n"
