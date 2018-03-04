@@ -73,7 +73,8 @@ class RsNf4 : public FecCode<T> {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        this->fft = new fft::Radix2<T>(ngff4, n);
+        int m = arith::get_smallest_power_of_2<int>(n_data);
+        this->fft = new fft::Radix2<T>(ngff4, n, m);
     }
 
     ~RsNf4()
