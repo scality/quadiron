@@ -73,6 +73,8 @@ class NF4 : public gf::Field<T> {
     T get_nth_root(T n);
     void compute_omegas(vec::Vector<T>* W, int n, T w);
     gf::Field<uint32_t>* get_sub_field();
+    void hadamard_mul(int n, T* x, T* y);
+    void add(int n, T* x, T* y);
 
   private:
     T unit;
@@ -120,8 +122,11 @@ bool NF4<T>::check_n(unsigned n)
     return (n <= sizeof(T) / 4);
 }
 
+template <>
+__uint128_t NF4<__uint128_t>::expand16(uint16_t* arr);
+
 template <typename T>
-inline T NF4<T>::expand16(uint16_t* arr)
+T NF4<T>::expand16(uint16_t* arr)
 {
     T c = arr[this->n - 1];
     for (int i = this->n - 2; i >= 0; i--) {
@@ -130,8 +135,11 @@ inline T NF4<T>::expand16(uint16_t* arr)
     return c;
 }
 
+template <>
+__uint128_t NF4<__uint128_t>::expand32(uint32_t* arr);
+
 template <typename T>
-inline T NF4<T>::expand32(uint32_t* arr)
+T NF4<T>::expand32(uint32_t* arr)
 {
     T c = arr[this->n - 1];
     for (int i = this->n - 2; i >= 0; i--) {
@@ -192,6 +200,9 @@ T NF4<T>::neg(T a)
     return sub(0, a);
 }
 
+template <>
+__uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b);
+
 template <typename T>
 T NF4<T>::add(T a, T b)
 {
@@ -208,6 +219,9 @@ T NF4<T>::add(T a, T b)
 
     return c;
 }
+
+template <>
+__uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b);
 
 template <typename T>
 T NF4<T>::sub(T a, T b)
@@ -236,6 +250,9 @@ T NF4<T>::sub(T a, T b)
 
     return c;
 }
+
+template <>
+__uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b);
 
 template <typename T>
 T NF4<T>::mul(T a, T b)
@@ -345,6 +362,9 @@ T NF4<T>::weak_rand(void)
     return unpack(c).values;
 }
 
+template <>
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a);
+
 /**
  * Pack of n numbers each of 16 bits into n numbers each of 32 bits
  */
@@ -361,6 +381,9 @@ T NF4<T>::pack(T a)
     T c = expand32(arr);
     return c;
 }
+
+template <>
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag);
 
 /**
  * Pack of n numbers each of 16 bits into n numbers each of 32 bits
@@ -386,6 +409,9 @@ T NF4<T>::pack(T a, uint32_t flag)
     T c = expand32(arr);
     return c;
 }
+
+template <>
+GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a);
 
 /**
  * Unpack of n numbers each of 32 bits into n numbers each of 16 bits
@@ -455,6 +481,24 @@ template <typename T>
 gf::Field<uint32_t>* NF4<T>::get_sub_field()
 {
     return sub_field;
+}
+
+template <>
+void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y);
+
+template <typename T>
+void NF4<T>::hadamard_mul(int n, T* x, T* y)
+{
+    return;
+}
+
+template <>
+void NF4<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y);
+
+template <typename T>
+void NF4<T>::add(int n, T* x, T* y)
+{
+    return;
 }
 
 } // namespace gf

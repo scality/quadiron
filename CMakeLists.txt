@@ -142,7 +142,12 @@ foreach(flag ${DEBUG_CXX_FLAGS})
 endforeach(flag)
 
 # Release flags
-foreach(flag -O3 -flto -DNDEBUG)
+# Debug flags
+set(RELEASE_CXX_FLAGS
+  -O3 -DNDEBUG
+  -msse4.1
+)
+foreach(flag ${RELEASE_CXX_FLAGS})
   check_cxx_compiler_flag(${flag} has_flag_${flag})
   if(has_flag_${flag})
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${flag}")
