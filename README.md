@@ -25,8 +25,12 @@ fragmentation systematic codes are not necessarily useful.
 mkdir build
 cd build
 cmake -G 'Unix Makefiles' ..
+# CXX=clang++ cmake -G 'Unix Makefiles' ..
 make
 ```
+
+**WARNING**: If you are compiling the code from an Apple system, you must use
+Clang (the GCC provided by Apple has buggy code generation for SIMD).
 
 ### Targets
 
