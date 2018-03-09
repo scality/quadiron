@@ -144,7 +144,7 @@ endforeach(flag)
 # Release flags
 # Debug flags
 set(RELEASE_CXX_FLAGS
-  -O3 -flto -DNDEBUG
+  -O3 -DNDEBUG
   -msse4.1
 )
 foreach(flag ${RELEASE_CXX_FLAGS})
