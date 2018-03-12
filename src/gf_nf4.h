@@ -507,7 +507,18 @@ void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y);
 template <typename T>
 void NF4<T>::hadamard_mul(int n, T* x, T* y)
 {
-    return;
+    const int half = n / 2;
+    T* x_next = x + half;
+
+    // multiply y to the first half of `x`
+    for (int i = 0; i < half; i++) {
+        x[i] = mul(x[i], y[i]);
+    }
+
+    // multiply y to the second half of `x`
+    for (int i = 0; i < half; i++) {
+        x_next[i] = mul(x_next[i], y[i]);
+    }
 }
 
 #ifdef NTTEC_USE_SIMD
@@ -518,7 +529,18 @@ void NF4<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y);
 template <typename T>
 void NF4<T>::add(int n, T* x, T* y)
 {
-    return;
+    const int half = n / 2;
+    T* x_next = x + half;
+
+    // add y to the first half of `x`
+    for (int i = 0; i < half; i++) {
+        x[i] = add(x[i], y[i]);
+    }
+
+    // add y to the second half of `x`
+    for (int i = 0; i < half; i++) {
+        x_next[i] = add(x_next[i], y[i]);
+    }
 }
 
 } // namespace gf
