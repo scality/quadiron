@@ -34,6 +34,8 @@
 namespace nttec {
 namespace gf {
 
+#ifdef NTTEC_USE_SIMD
+
 template <>
 void RingModN<uint32_t>::mul_coef_to_buf(
     uint32_t a,
@@ -59,6 +61,8 @@ void RingModN<uint32_t>::sub_two_bufs(
 {
     simd::sub_two_bufs(bufa, bufb, res, len, this->_card);
 }
+
+#endif // #ifdef NTTEC_USE_SIMD
 
 } // namespace gf
 } // namespace nttec
