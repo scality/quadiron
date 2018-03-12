@@ -400,6 +400,13 @@ void RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest)
     }
 }
 
+template <>
+void RingModN<uint32_t>::sub_two_bufs(
+    uint32_t* bufa,
+    uint32_t* bufb,
+    uint32_t* res,
+    size_t len);
+
 template <typename T>
 void RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len)
 {

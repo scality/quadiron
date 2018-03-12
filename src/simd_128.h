@@ -252,6 +252,35 @@ add_two_bufs(uint32_t* src, uint32_t* dest, size_t len, uint32_t card = F4)
     }
 }
 
+inline void sub_two_bufs(
+    uint32_t* bufa,
+    uint32_t* bufb,
+    uint32_t* res,
+    size_t len,
+    uint32_t card = F4)
+{
+    __uint128_t* _bufa = static_cast<__uint128_t*>(static_cast<void*>(bufa));
+    __uint128_t* _bufb = static_cast<__uint128_t*>(static_cast<void*>(bufb));
+    __uint128_t* _res = static_cast<__uint128_t*>(static_cast<void*>(res));
+    size_t _len = len / 4;
+    size_t _last_len = len - _len * 4;
+
+    size_t i;
+    for (i = 0; i < _len; i++) {
+        // perform subtraction
+        _res[i] = sub(_bufa[i], _bufb[i], card);
+    }
+    if (_last_len > 0) {
+        for (i = _len * 4; i < len; i++) {
+            // perform subtraction
+            if (bufa[i] >= bufb[i])
+                res[i] = bufa[i] - bufb[i];
+            else
+                res[i] = card - (bufb[i] - bufa[i]);
+        }
+    }
+}
+
 /* ==================== Operations for NF4 =================== */
 
 inline __uint128_t expand16(uint16_t* arr, int n)
