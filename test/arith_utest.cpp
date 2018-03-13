@@ -496,19 +496,6 @@ class ArithUtest {
         test_get_coprime_factors();
         test_get_prime_factors();
     }
-
-    void arith_utest_mpz()
-    {
-        std::cout << "arith_utest_mpz\n";
-
-        srand(time(0));
-
-        test_basic_ops();
-        test_chinese_remainder();
-        test_mul_bignum();
-        test_jacobi();
-        test_ext_gcd();
-    }
 };
 
 void arith_utest()
@@ -519,6 +506,4 @@ void arith_utest()
     ArithUtest_uint64.arith_utest();
     ArithUtest<__uint128_t> ArithUtest_uint128;
     ArithUtest_uint128.arith_utest_no256();
-    ArithUtest<mpz_class> ArithUtest_mpz;
-    ArithUtest_mpz.arith_utest_mpz();
 }
