@@ -65,3 +65,23 @@ add_test(
   NAME unit_test
   COMMAND ${UNIT_TESTS}
 )
+
+######################
+# Erasure Coding Tests
+######################
+
+add_executable(${EC_DRIVER}
+  ${CMAKE_CURRENT_SOURCE_DIR}/ec_driver.cpp
+)
+add_coverage(${EC_DRIVER})
+
+# Link librairies.
+target_link_libraries(${EC_DRIVER}
+  ${STATIC_LIB}
+)
+
+# Tests
+add_test(
+  NAME ec_test
+  COMMAND ${SCRIPT_DIR}/test_ec.sh "$<TARGET_FILE:${EC_DRIVER}>"
+)
