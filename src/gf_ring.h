@@ -350,15 +350,6 @@ void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len)
     }
 }
 
-#ifdef NTTEC_USE_SIMD
-template <>
-void RingModN<uint32_t>::mul_coef_to_buf(
-    uint32_t a,
-    uint32_t* src,
-    uint32_t* dest,
-    size_t len);
-#endif
-
 template <typename T>
 void RingModN<T>::mul_vec_to_vecp(
     vec::Vector<T>* u,
@@ -384,14 +375,6 @@ void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len)
     }
 }
 
-#ifdef NTTEC_USE_SIMD
-template <>
-void RingModN<uint32_t>::add_two_bufs(
-    uint32_t* src,
-    uint32_t* dest,
-    size_t len);
-#endif
-
 template <typename T>
 void RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest)
 {
@@ -404,15 +387,6 @@ void RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest)
         this->add_two_bufs(src->get(i), dest->get(i), len);
     }
 }
-
-#ifdef NTTEC_USE_SIMD
-template <>
-void RingModN<uint32_t>::sub_two_bufs(
-    uint32_t* bufa,
-    uint32_t* bufb,
-    uint32_t* res,
-    size_t len);
-#endif
 
 template <typename T>
 void RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len)
@@ -850,6 +824,31 @@ T RingModN<T>::get_code_len_high_compo(T n)
     }
     return arith::get_code_len_high_compo<T>(this->all_primes_factors, n);
 }
+
+#ifdef NTTEC_USE_SIMD
+/* Operations are vectorized by SIMD */
+
+template <>
+void RingModN<uint32_t>::mul_coef_to_buf(
+    uint32_t a,
+    uint32_t* src,
+    uint32_t* dest,
+    size_t len);
+
+template <>
+void RingModN<uint32_t>::add_two_bufs(
+    uint32_t* src,
+    uint32_t* dest,
+    size_t len);
+
+template <>
+void RingModN<uint32_t>::sub_two_bufs(
+    uint32_t* bufa,
+    uint32_t* bufb,
+    uint32_t* res,
+    size_t len);
+
+#endif // #ifdef NTTEC_USE_SIMD
 
 } // namespace gf
 } // namespace nttec
