@@ -103,130 +103,6 @@ class FFTUtest {
         return vec;
     }
 
-    /**
-     * Schönhage-Strassen algorithm
-     * Example taken from Pierre Meunier's book
-     *
-     * @param gf
-     */
-    void test_mul_bignum()
-    {
-        if (sizeof(T) < 8)
-            return;
-        std::cout << "test_mul_bignum\n";
-
-        int b = 10; // base
-        int p = 14; // we could multiply integers of 2^p digits
-        // int max_digits = nttec::arith::exp<T>(2, p);
-        // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
-
-        uint64_t l = p + 1;
-        // std::cerr << "l=" << l << "\n";
-
-        // choose 2 prime numbers of the form p=a.2^n+1
-        // because if x is not a quadratic residue then w=x^a is
-        // a 2^n-th principal root of unity in GF_p
-        uint64_t a1 = 2;
-        uint64_t a2 = 5;
-        uint64_t p1 = a1 * nttec::arith::exp<T>(2, 15) + 1;
-        uint64_t p2 = a2 * nttec::arith::exp<T>(2, 15) + 1;
-        // std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
-        assert(nttec::arith::is_prime<T>(p1));
-        assert(nttec::arith::is_prime<T>(p2));
-
-        // ensure their product is bounded (b-1)^2*2^(n-1) < m
-        uint64_t m = p1 * p2;
-        // check overflow
-        assert(m / p1 == p2);
-        // std::cerr << " m=" << m << "\n";
-        assert(
-            nttec::arith::exp<T>((b - 1), 2) * nttec::arith::exp<T>(p, 2) < m);
-
-        // find x so it is not a quadratic residue in GF_p1 and GF_p2
-        assert(
-            nttec::arith::jacobi<T>(3, p1) == nttec::arith::jacobi<T>(p1, 3));
-        assert(nttec::arith::jacobi<T>(p1, 3) == nttec::arith::jacobi<T>(2, 3));
-        assert(
-            nttec::arith::jacobi<T>(3, p2) == nttec::arith::jacobi<T>(p2, 3));
-        assert(nttec::arith::jacobi<T>(p2, 3) == nttec::arith::jacobi<T>(2, 3));
-        assert(nttec::arith::jacobi<T>(2, 3) == -1);
-        // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
-
-        // therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
-        uint64_t w1 = nttec::arith::exp<T>(3, a1);
-        uint64_t w2 = nttec::arith::exp<T>(3, a2);
-        // std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
-        assert(w1 == 9);
-        assert(w2 == 243);
-
-        // find root of unity in GF_p1p2
-        uint64_t _a[2];
-        uint64_t _n[2];
-        _a[0] = w1;
-        _n[0] = p1;
-        _a[1] = w2;
-        _n[1] = p2;
-        uint64_t w = nttec::arith::chinese_remainder<uint64_t>(2, _a, _n);
-        // std::cerr << " w=" << w << "\n";
-        assert(w == 25559439);
-
-        nttec::gf::Prime<T> gf_m(m);
-        nttec::fft::Large<T> fft(&gf_m, l, 25559439);
-
-        // parse the big numbers
-        char X[] = "1236548787985654354598651354984132468";
-        char Y[] = "745211515185321545554545854598651354984132468";
-
-        nttec::vec::Vector<T>* _X = _convert_string2vec(&gf_m, fft.get_n(), X);
-        // _X->dump();
-        nttec::vec::Vector<T>* _Y = _convert_string2vec(&gf_m, fft.get_n(), Y);
-        // _Y->dump();
-
-        nttec::vec::Vector<T>* sfX =
-            new nttec::vec::Vector<T>(&gf_m, fft.get_n());
-        nttec::vec::Vector<T>* sfY =
-            new nttec::vec::Vector<T>(&gf_m, fft.get_n());
-        nttec::vec::Vector<T>* _XY =
-            new nttec::vec::Vector<T>(&gf_m, fft.get_n());
-        nttec::vec::Vector<T>* sfXY =
-            new nttec::vec::Vector<T>(&gf_m, fft.get_n());
-
-        fft.fft(sfX, _X);
-        fft.fft(sfY, _Y);
-
-        for (int i = 0; i <= fft.get_n() - 1; i++) {
-            nttec::DoubleSizeVal<T> val =
-                nttec::DoubleSizeVal<T>(sfX->get(i)) * sfY->get(i);
-            _XY->set(i, val % m);
-        }
-
-        fft.ifft(sfXY, _XY);
-
-        // carry propagation
-        mpz_class z = 0;
-        mpz_class u;
-        for (int i = 0; i <= fft.get_n() - 1; i++) {
-            mpz_class t, b;
-            b = 10;
-            mpz_pow_ui(t.get_mpz_t(), b.get_mpz_t(), i);
-            u = mpz_class(std::to_string(sfXY->get(i)));
-            z += u * t;
-        }
-
-        // std::cout << z << "\n";
-        assert(
-            z.get_str()
-            == std::string("921490395895362412399910100421159322")
-                   + "712298564831565484737491129935640058571771024");
-
-        delete sfXY;
-        delete _XY;
-        delete sfX;
-        delete sfY;
-        delete _X;
-        delete _Y;
-    }
-
     void test_fft_naive()
     {
         unsigned n;
@@ -737,7 +613,6 @@ class FFTUtest {
         test_fft_2_gfp();
         test_fft_single_gfp();
         test_fft_gf2n();
-        test_mul_bignum();
     }
 };
 
@@ -747,6 +622,4 @@ void fft_utest()
     fftutest_uint32.fft_utest();
     FFTUtest<uint64_t> fftutest_uint64;
     fftutest_uint64.fft_utest();
-    FFTUtest<mpz_class> fftutest_mpz;
-    fftutest_mpz.fft_utest_no_mul_bignum(); // too slow
 }

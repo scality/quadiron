@@ -76,7 +76,7 @@ set(OBJECT_LIB  object)
 set(SHARED_LIB  shared)
 set(STATIC_LIB  static)
 set(UNIT_TESTS  unit_tests)
-set(NTTEC_TOOLS tools)
+set(EC_DRIVER   ec_driver)
 
 file(MAKE_DIRECTORY ${GENERATE_DIR})
 
@@ -164,8 +164,6 @@ find_package(codecov)
 add_subdirectory(src)
 # Documentation
 add_subdirectory(documentation)
-# Tools
-add_subdirectory(tools)
 # Tests
 add_subdirectory(test)
 # Benchmark
@@ -177,7 +175,7 @@ coverage_evaluate()
 add_custom_target(check
   COMMAND ${CMAKE_CTEST_COMMAND}
   DEPENDS ${UNIT_TESTS}
-  DEPENDS ${NTTEC_TOOLS}
+  DEPENDS ${EC_DRIVER}
 )
 
 #####################
@@ -195,7 +193,6 @@ set(ALL_SRCS
   ${BENCH_SRC}
   ${LIB_SRC}
   ${TEST_SRC}
-  ${TOOLS_SRC}
   ${ALL_HEADERS}
 )
 

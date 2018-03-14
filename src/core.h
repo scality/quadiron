@@ -32,8 +32,6 @@
 
 #include <cstdint>
 
-#include <gmpxx.h>
-
 #include "big_int.h"
 
 namespace nttec {
@@ -53,10 +51,6 @@ template <>
 struct DoubleSize<__uint128_t> {
     typedef UInt256 T;
 };
-template <>
-struct DoubleSize<mpz_class> {
-    typedef mpz_class T;
-};
 
 template <typename Type>
 struct SignedDoubleSize {
@@ -72,10 +66,6 @@ struct SignedDoubleSize<uint64_t> {
 template <>
 struct SignedDoubleSize<__uint128_t> {
     typedef Int256 T;
-};
-template <>
-struct SignedDoubleSize<mpz_class> {
-    typedef mpz_class T;
 };
 
 /** A group of values stored as one.

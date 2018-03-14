@@ -49,15 +49,11 @@ configure_file(${SOURCE_DIR}/build_info.in ${GENERATE_DIR}/build_info.h @ONLY)
 # Libraries
 ###########
 
-# Dependencies.
-find_package(GMPXX REQUIRED)
-
 set(INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
 
 set(OBJECT_SYS_INCLUDES
   $<BUILD_INTERFACE:${GENERATE_DIR}>
   $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>
-  ${GMPXX_INCLUDE_DIRS}
 )
 
 set(OBJECT_INCLUDES
@@ -83,10 +79,6 @@ foreach(lib ${SHARED_LIB} ${STATIC_LIB})
   set_target_properties(${lib} PROPERTIES OUTPUT_NAME ${CMAKE_PROJECT_NAME})
   target_include_directories(${lib}        PUBLIC ${OBJECT_INCLUDES})
   target_include_directories(${lib} SYSTEM PUBLIC ${OBJECT_SYS_INCLUDES})
-
-  target_link_libraries(${lib}
-    ${GMPXX_LIBRARIES}
-  )
 endforeach()
 
 ##############
