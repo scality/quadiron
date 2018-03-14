@@ -1,6 +1,6 @@
 # NTTEC
 
-[![CircleCI][badgepub]](https://circleci.com/gh/vrancurel/nttec)
+[![CircleCI][badgepub]](https://circleci.com/gh/scality/nttec)
 
 The NTTEC library is a C++ library, written in C++11, that offers a
 streaming API to use the different flavors of NTT-based erasure codes.
