@@ -57,7 +57,7 @@ const am128i F3minus1_m128i = _mm_set1_epi32(256);
 static inline aint128 m128i_to_uint128(am128i v)
 {
     aint128 i;
-    _mm_storeu_si128((am128i*)&i, v);
+    _mm_store_si128((am128i*)&i, v);
 
     return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
 }
@@ -364,7 +364,7 @@ inline GroupedValues<aint128> unpack(aint128 a, int n)
     }
     am128i val = _mm_set_epi64(
         _mm_setzero_si64(), _mm_set_pi16(bi[3], bi[2], bi[1], bi[0]));
-    _mm_storeu_si128((am128i*)&values, val);
+    _mm_store_si128((am128i*)&values, val);
 
     GroupedValues<aint128> b = {values, flag};
 
