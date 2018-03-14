@@ -29,12 +29,13 @@
  */
 
 #include "gf_nf4.h"
+
+#ifdef NTTEC_USE_SIMD
+
 #include "simd.h"
 
 namespace nttec {
 namespace gf {
-
-#ifdef NTTEC_USE_SIMD
 
 template <>
 __uint128_t NF4<__uint128_t>::expand16(uint16_t* arr)
@@ -96,7 +97,7 @@ __uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag)
     return simd::pack(a, flag);
 }
 
-#endif // #ifdef NTTEC_USE_SIMD
-
 } // namespace gf
 } // namespace nttec
+
+#endif // #ifdef NTTEC_USE_SIMD

@@ -29,12 +29,12 @@
  */
 
 #include "gf_ring.h"
+
+#ifdef NTTEC_USE_SIMD
 #include "simd.h"
 
 namespace nttec {
 namespace gf {
-
-#ifdef NTTEC_USE_SIMD
 
 template <>
 void RingModN<uint32_t>::mul_coef_to_buf(
@@ -62,7 +62,7 @@ void RingModN<uint32_t>::sub_two_bufs(
     simd::sub_two_bufs(bufa, bufb, res, len, this->_card);
 }
 
-#endif // #ifdef NTTEC_USE_SIMD
-
 } // namespace gf
 } // namespace nttec
+
+#endif // #ifdef NTTEC_USE_SIMD
