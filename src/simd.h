@@ -31,7 +31,18 @@
 #ifndef __NTTEC_SIMD_H__
 #define __NTTEC_SIMD_H__
 
+#ifdef NTTEC_USE_SIMD
+
+#define ALIGN_SIZE 16
+typedef uint8_t aint8 __attribute__((aligned(ALIGN_SIZE)));
+typedef uint16_t aint16 __attribute__((aligned(ALIGN_SIZE)));
+typedef uint32_t aint32 __attribute__((aligned(ALIGN_SIZE)));
+typedef uint64_t aint64 __attribute__((aligned(ALIGN_SIZE)));
+typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
+
 // FIXME: detect SIMD flags since it requires SSE4.1 instructions
 #include "simd_128.h"
+
+#endif // #ifdef NTTEC_USE_SIMD
 
 #endif

@@ -29,6 +29,9 @@
  */
 
 #include "gf_nf4.h"
+
+#ifdef NTTEC_USE_SIMD
+
 #include "simd.h"
 
 namespace nttec {
@@ -96,3 +99,5 @@ __uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag)
 
 } // namespace gf
 } // namespace nttec
+
+#endif // #ifdef NTTEC_USE_SIMD

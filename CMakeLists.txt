@@ -60,6 +60,12 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}${VERSION_REV})
 set(PACKAGE ${CMAKE_PROJECT_NAME})
 string(TOUPPER "${CMAKE_PROJECT_NAME}" UPCASE_PROJECT_NAME)
 
+# Top level cmake file, set options
+option(NTTEC_USE_SIMD
+  "Build with SIMD vectorizations"
+  OFF
+)
+
 ################
 # Useful defines
 ################
@@ -117,6 +123,12 @@ set(COMMON_CXX_FLAGS
   -Wall
 )
 
+# Option for enabling/disabling SIMD flags is for both of debug and release
+if (NTTEC_USE_SIMD)
+  SET(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -msse4.1")
+  add_definitions(-DNTTEC_USE_SIMD)
+endif()
+
 # Manually add -Werror, for some reasons I can't make it works in the foreach…
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
   add_compile_options(-Werror)
@@ -142,10 +154,8 @@ foreach(flag ${DEBUG_CXX_FLAGS})
 endforeach(flag)
 
 # Release flags
-# Debug flags
 set(RELEASE_CXX_FLAGS
   -O3 -DNDEBUG
-  -msse4.1
 )
 foreach(flag ${RELEASE_CXX_FLAGS})
   check_cxx_compiler_flag(${flag} has_flag_${flag})

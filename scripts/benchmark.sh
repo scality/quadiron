@@ -42,23 +42,38 @@ then
     exit 1;
 fi
 
-for ec_type in rs-gf2n-v rs-gf2n-c rs-gf2n-fft rs-gf2n-fft-add rs-gfp-fft rs-fnt rs-nf4; do
-  for k in 5; do
-    for m in 2; do
-      for word_size in 1 2 4 8; do
-        ${bin} -e ${ec_type} -w ${word_size} -k ${k} -m ${m} -c ${chunk_size} -s ${sce_type} -g ${threads_nb} -f ${show_type}
-        show_type=0
-      done
+chunk_size=51200
+sce_type=enc_only
+# for rs-nf4
+ec_type=rs-nf4
+word_size=8
+for k in 16; do
+  for n in 256 1024; do
+    m=$((n-k))
+    ${bin} -e ${ec_type} -w ${word_size} -k ${k} -m ${m} -c ${chunk_size} -s ${sce_type} -g ${threads_nb} -f ${show_type}
+    show_type=0
+  done
+done
+
+# for rs-fnt with different packet sizes
+ec_type=rs-fnt
+word_size=2
+for k in 16; do
+  for n in 256 1024; do
+    m=$((n-k))
+    for pkt_size in 0 256 512; do
+      ${bin} -e ${ec_type} -w ${word_size} -k ${k} -m ${m} -c ${chunk_size} -s ${sce_type} -g ${threads_nb} -f ${show_type} -p ${pkt_size}
     done
   done
 done
 
-chunk_size=51200
-sce_type=enc_only
-for word_size in 2 8; do
-  for ec_type in rs-nf4 rs-fnt rs-gfp-fft; do
-    for k in 16; do
-      for m in 64; do
+# for all cases
+sce_type=enc_dec
+chunk_size=512
+for ec_type in rs-gf2n-v rs-gf2n-c rs-gf2n-fft rs-gf2n-fft-add rs-gfp-fft rs-fnt rs-nf4; do
+  for k in 5; do
+    for m in 2; do
+      for word_size in 1 2 4 8; do
         ${bin} -e ${ec_type} -w ${word_size} -k ${k} -m ${m} -c ${chunk_size} -s ${sce_type} -g ${threads_nb} -f ${show_type}
       done
     done

@@ -14,7 +14,7 @@ machine:
 
 compile:
   override:
-    - mkdir build && cd build && cmake -G 'Unix Makefiles' .. -DCMAKE_BUILD_TYPE=Release 'Unix Makefiles' .. && make
+    - mkdir build && cd build && cmake -G 'Unix Makefiles' .. -DCMAKE_BUILD_TYPE=Release  -DNTTEC_USE_SIMD=ON 'Unix Makefiles' .. && make
 
 test:
   override:
@@ -22,4 +22,7 @@ test:
     - cd build && make check-format
     - cd build && make check-lint
     - cd build && make check
-    - cd build && make benchmark
+    # w/o SIMD
+    - cd build && cmake .. -DNTTEC_USE_SIMD=OFF && make benchmark
+    # w/ SIMD
+    - cd build && cmake .. -DNTTEC_USE_SIMD=ON && make benchmark

@@ -122,9 +122,6 @@ bool NF4<T>::check_n(unsigned n)
     return (n <= sizeof(T) / 4);
 }
 
-template <>
-__uint128_t NF4<__uint128_t>::expand16(uint16_t* arr);
-
 template <typename T>
 T NF4<T>::expand16(uint16_t* arr)
 {
@@ -134,9 +131,6 @@ T NF4<T>::expand16(uint16_t* arr)
     }
     return c;
 }
-
-template <>
-__uint128_t NF4<__uint128_t>::expand32(uint32_t* arr);
 
 template <typename T>
 T NF4<T>::expand32(uint32_t* arr)
@@ -200,9 +194,6 @@ T NF4<T>::neg(T a)
     return sub(0, a);
 }
 
-template <>
-__uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b);
-
 template <typename T>
 T NF4<T>::add(T a, T b)
 {
@@ -219,9 +210,6 @@ T NF4<T>::add(T a, T b)
 
     return c;
 }
-
-template <>
-__uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b);
 
 template <typename T>
 T NF4<T>::sub(T a, T b)
@@ -250,9 +238,6 @@ T NF4<T>::sub(T a, T b)
 
     return c;
 }
-
-template <>
-__uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b);
 
 template <typename T>
 T NF4<T>::mul(T a, T b)
@@ -362,9 +347,6 @@ T NF4<T>::weak_rand(void)
     return unpack(c).values;
 }
 
-template <>
-__uint128_t NF4<__uint128_t>::pack(__uint128_t a);
-
 /**
  * Pack of n numbers each of 16 bits into n numbers each of 32 bits
  */
@@ -381,9 +363,6 @@ T NF4<T>::pack(T a)
     T c = expand32(arr);
     return c;
 }
-
-template <>
-__uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag);
 
 /**
  * Pack of n numbers each of 16 bits into n numbers each of 32 bits
@@ -409,9 +388,6 @@ T NF4<T>::pack(T a, uint32_t flag)
     T c = expand32(arr);
     return c;
 }
-
-template <>
-GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a);
 
 /**
  * Unpack of n numbers each of 32 bits into n numbers each of 16 bits
@@ -483,23 +459,74 @@ gf::Field<uint32_t>* NF4<T>::get_sub_field()
     return sub_field;
 }
 
-template <>
-void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y);
-
 template <typename T>
 void NF4<T>::hadamard_mul(int n, T* x, T* y)
 {
-    return;
-}
+    const int half = n / 2;
+    T* x_next = x + half;
 
-template <>
-void NF4<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y);
+    // multiply y to the first half of `x`
+    for (int i = 0; i < half; i++) {
+        x[i] = mul(x[i], y[i]);
+    }
+
+    // multiply y to the second half of `x`
+    for (int i = 0; i < half; i++) {
+        x_next[i] = mul(x_next[i], y[i]);
+    }
+}
 
 template <typename T>
 void NF4<T>::add(int n, T* x, T* y)
 {
-    return;
+    const int half = n / 2;
+    T* x_next = x + half;
+
+    // add y to the first half of `x`
+    for (int i = 0; i < half; i++) {
+        x[i] = add(x[i], y[i]);
+    }
+
+    // add y to the second half of `x`
+    for (int i = 0; i < half; i++) {
+        x_next[i] = add(x_next[i], y[i]);
+    }
 }
+
+#ifdef NTTEC_USE_SIMD
+/* Operations are vectorized by SIMD */
+
+template <>
+__uint128_t NF4<__uint128_t>::expand16(uint16_t* arr);
+
+template <>
+__uint128_t NF4<__uint128_t>::expand32(uint32_t* arr);
+
+template <>
+__uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b);
+
+template <>
+__uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b);
+
+template <>
+__uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b);
+
+template <>
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a);
+
+template <>
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag);
+
+template <>
+GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a);
+
+template <>
+void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y);
+
+template <>
+void NF4<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y);
+
+#endif // #ifdef NTTEC_USE_SIMD
 
 } // namespace gf
 } // namespace nttec
