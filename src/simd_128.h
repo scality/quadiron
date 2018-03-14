@@ -235,8 +235,8 @@ inline void mul_coef_to_buf(
 inline void
 add_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 {
-    aint128* _src = static_cast<aint128*>(static_cast<void*>(src));
-    aint128* _dest = static_cast<aint128*>(static_cast<void*>(dest));
+    aint128* _src = reinterpret_cast<aint128*>(src);
+    aint128* _dest = reinterpret_cast<aint128*>(dest);
     size_t _len = len / 4;
     size_t _last_len = len - _len * 4;
 
