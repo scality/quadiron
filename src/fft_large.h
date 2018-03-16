@@ -40,7 +40,10 @@
 namespace nttec {
 namespace fft {
 
-/** FFT implementation specialized for large FFT size. */
+/** FFT implementation specialized for large FFT size.
+ *
+ * The implementation comes from @cite meunier.
+ */
 template <typename T>
 class Large : public FourierTransform<T> {
   public:
