@@ -97,6 +97,7 @@ class Polynomial {
     gf::Field<T>* field;
     T field_characteristic;
     Term terms;
+    int degree_cache;
 };
 
 template <typename T>
@@ -104,12 +105,14 @@ Polynomial<T>::Polynomial(gf::Field<T>* field)
 {
     this->field = field;
     this->field_characteristic = field->get_p();
+    this->degree_cache = 0;
 }
 
 template <typename T>
 void Polynomial<T>::clear()
 {
     terms.clear();
+    degree_cache = 0;
 }
 
 template <typename T>
@@ -133,7 +136,7 @@ void Polynomial<T>::copy(Polynomial<T>* src, T offset)
 template <typename T>
 int Polynomial<T>::degree()
 {
-    return (terms.rbegin() == terms.rend()) ? 0 : terms.rbegin()->first;
+    return degree_cache;
 }
 
 template <typename T>
@@ -172,10 +175,16 @@ void Polynomial<T>::set(int exponent, T coef)
     } else {
         if (coef == 0) {
             terms.erase(it);
+            if (exponent == degree_cache) {
+                auto rit = terms.rbegin();
+                degree_cache = (rit == terms.rend()) ? 0 : rit->first;
+            }
             return;
         }
     }
     terms[exponent] = coef;
+    if (exponent > degree_cache)
+        degree_cache = exponent;
 }
 
 template <typename T>
