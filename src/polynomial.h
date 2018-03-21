@@ -85,6 +85,8 @@ class Polynomial {
     void add(Polynomial<T>* b);
     void sub(Polynomial<T>* b);
     void mul(Polynomial<T>* b);
+    void mul(Polynomial<T>* b, int deg_out);
+    void mul_to_x_plus_coef(T coef);
     void div(Polynomial<T>* d);
     void mod(Polynomial<T>* d);
     void derivative();
@@ -427,6 +429,59 @@ void Polynomial<T>::mul(Polynomial<T>* b)
     Polynomial<T> a(field);
     a.copy(this);
     _mul(this, &a, b);
+}
+
+/** Multiply to a polynomial \f$b\f$ with a limited degree of result
+ *
+ * Degree of result polynomial is limited by a given value, i.e. elements of
+ * degree greater than this value are ignored. It reduces operations in cases
+ * the degree limit is smaller than degree of input polynomials
+ *
+ * @param b - polynomial to multiply
+ * @param deg_out - degree of result
+ */
+template <typename T>
+void Polynomial<T>::mul(Polynomial<T>* b, int deg_out)
+{
+    for (int deg = deg_out; deg >= 0; deg--) {
+        T val = 0;
+        for (int deg_a = 0; deg_a <= deg; deg_a++) {
+            const T val_a = get(deg_a);
+            if (val_a > 0) {
+                const int deg_b = deg - deg_a;
+                const T val_b = b->get(deg_b);
+                if (val_b > 0)
+                    val = field->add(val, field->mul(val_a, val_b));
+            }
+        }
+        set(deg, val);
+    }
+    degree_cache = deg_out;
+}
+
+/** Multiply to polynomial (X + coef)
+ *
+ * \f{eqnarray*}{
+ * P(X) = &a_0 + a_1 X + ... + a_n X^n \\
+ * Q(X) = &coef + X \\
+ * R(X) = &P(X) \times Q(X) \\
+ *      = &a_0 * coef + a_1 * coef X + ... + a_n X^n + \\
+ *        &a_0 X + a_1 X^2 + ... + a_{n-1} X^n + a_n X^{n+1} \\
+ *      = &a_0 * coef + sum_{i=1}^{n}(a_{i-1} + a_i * coef) X^i + a_n X^{n+1}
+ * \f}
+ *
+ * @param coef - coef of the multiplied polynomial (X + coef)
+ */
+template <typename T>
+void Polynomial<T>::mul_to_x_plus_coef(T coef)
+{
+    const int deg_n = degree_cache;
+    const T val = get(deg_n);
+    for (int deg = degree_cache; deg > 0; deg--) {
+        set(deg, field->add(get(deg - 1), field->mul(get(deg), coef)));
+    }
+    set(0, field->mul(get(0), coef));
+    set(deg_n + 1, val);
 }
 
 template <typename T>
