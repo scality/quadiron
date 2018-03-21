@@ -95,7 +95,7 @@ class Polynomial {
     struct Term : std::map<int, T> {
     };
     gf::Field<T>* field;
-    gf::Field<T>* sub_field;
+    T field_characteristic;
     Term terms;
 };
 
@@ -103,7 +103,7 @@ template <typename T>
 Polynomial<T>::Polynomial(gf::Field<T>* field)
 {
     this->field = field;
-    this->sub_field = field->get_sub_field();
+    this->field_characteristic = field->get_p();
 }
 
 template <typename T>
@@ -279,7 +279,7 @@ void Polynomial<T>::_div(
 template <typename T>
 void Polynomial<T>::_gcd(Polynomial<T>* u, Polynomial<T>* v, Polynomial<T>* gcd)
 {
-    Polynomial<T> r(sub_field);
+    Polynomial<T> r(field);
 
     if (v->degree() == 0) {
         gcd->copy(u);
@@ -318,19 +318,19 @@ void Polynomial<T>::_extended_gcd(
     Polynomial<T>* quotient_gcd[2],
     Polynomial<T>* gcd)
 {
-    Polynomial<T> s(sub_field);
-    Polynomial<T> old_s(sub_field);
+    Polynomial<T> s(field);
+    Polynomial<T> old_s(field);
     old_s.set(0, 1);
-    Polynomial<T> t(sub_field);
+    Polynomial<T> t(field);
     t.set(0, 1);
-    Polynomial<T> old_t(sub_field);
-    Polynomial<T> r(sub_field);
+    Polynomial<T> old_t(field);
+    Polynomial<T> r(field);
     r.copy(b);
-    Polynomial<T> old_r(sub_field);
+    Polynomial<T> old_r(field);
     old_r.copy(a);
-    Polynomial<T> quotient(sub_field);
-    Polynomial<T> tmp(sub_field);
-    Polynomial<T> tmp2(sub_field);
+    Polynomial<T> quotient(field);
+    Polynomial<T> tmp(field);
+    Polynomial<T> tmp2(field);
 
     while (!r.is_zero()) {
         _div(&quotient, nullptr, &old_r, &r);
@@ -378,20 +378,23 @@ void Polynomial<T>::_extended_gcd(
     }
 }
 
+/** Derivative of a polynomial
+ * Note, derivate of \f$X^n\f$ is defined as sum of \f$n\f$ polynomials
+ * \f$X^{n-1}\f$, not a multiplication of \f$n\f$ and \f$X^{n-1}\f$. It can be
+ * expressed as below:
+ * \f[
+ *  derivative(X^n) = (1 + 1 + ... + 1) X^{n-1}
+ *                  = (n % p) * X^{n-1}
+ * \f]
+ * where \f$p\f$ is the characteristic of the field.
+ */
 template <typename T>
 void Polynomial<T>::_derivative(Polynomial<T>* result, Polynomial<T>* a)
 {
-    T _card;
-
-    if (sub_field)
-        _card = sub_field->card();
-    else
-        _card = field->card();
-
     result->clear();
 
     for (int i = a->degree(); i > 0; i--)
-        result->set(i - 1, field->mul(a->get(i), i % _card));
+        result->set(i - 1, field->mul(a->get(i), i % field_characteristic));
 }
 
 template <typename T>
