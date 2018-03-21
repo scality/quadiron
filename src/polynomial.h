@@ -176,23 +176,19 @@ void Polynomial<T>::set(int exponent, T coef)
     assert(exponent >= 0);
     assert(field->check(coef));
 
-    typename Term<T>::const_iterator it = terms.find(exponent);
-
+    auto it = terms.find(exponent);
     if (it == terms.end()) {
         if (coef == 0)
             return;
     } else {
-        if (coef == 0) {
+        if (coef == 0 && exponent == degree_cache) {
             terms.erase(it);
-            if (exponent == degree_cache) {
-                auto rit = terms.rbegin();
-                degree_cache = (rit == terms.rend()) ? 0 : rit->first;
-            }
+            degree_cache--;
             return;
         }
     }
     terms[exponent] = coef;
-    if (exponent > degree_cache)
+    if (exponent > degree_cache && coef > 0)
         degree_cache = exponent;
 }
 
