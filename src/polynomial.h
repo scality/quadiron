@@ -402,9 +402,8 @@ void Polynomial<T>::_derivative(Polynomial<T>* result, Polynomial<T>* a)
 template <typename T>
 void Polynomial<T>::neg()
 {
-    Polynomial<T> a(field), b(field);
-    b.copy(this);
-    _sub(this, &a, &b);
+    for (auto& term : terms)
+        terms[term.first] = field->neg(term.second);
 }
 
 template <typename T>
