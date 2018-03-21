@@ -48,6 +48,10 @@ class Vector;
 } // namespace vec
 
 template <typename T>
+struct Term : std::map<int, T> {
+};
+
+template <typename T>
 class Polynomial {
   public:
     explicit Polynomial(gf::Field<T>* field);
@@ -55,6 +59,7 @@ class Polynomial {
     void copy(Polynomial<T>* src);
     void copy(Polynomial<T>* src, T offset);
     int degree();
+    const Term<T>& get_terms();
     T lead();
     bool is_zero();
     T get(int exponent);
@@ -92,11 +97,9 @@ class Polynomial {
     void dump();
 
   private:
-    struct Term : std::map<int, T> {
-    };
     gf::Field<T>* field;
     T field_characteristic;
-    Term terms;
+    Term<T> terms;
     int degree_cache;
 };
 
@@ -119,9 +122,9 @@ template <typename T>
 void Polynomial<T>::copy(Polynomial<T>* src)
 {
     clear();
-
-    for (int i = src->degree(); i >= 0; i--)
-        set(i, src->get(i));
+    const Term<T> terms_src = src->get_terms();
+    terms.insert(terms_src.begin(), terms_src.end());
+    this->degree_cache = src->degree();
 }
 
 template <typename T>
@@ -137,6 +140,12 @@ template <typename T>
 int Polynomial<T>::degree()
 {
     return degree_cache;
+}
+
+template <typename T>
+const Term<T>& Polynomial<T>::get_terms()
+{
+    return terms;
 }
 
 template <typename T>
@@ -156,7 +165,7 @@ T Polynomial<T>::get(int exponent)
 {
     assert(exponent >= 0);
 
-    typename Term::const_iterator it = terms.find(exponent);
+    typename Term<T>::const_iterator it = terms.find(exponent);
 
     return (it == terms.end()) ? 0 : it->second;
 }
@@ -167,7 +176,7 @@ void Polynomial<T>::set(int exponent, T coef)
     assert(exponent >= 0);
     assert(field->check(coef));
 
-    typename Term::const_iterator it = terms.find(exponent);
+    typename Term<T>::const_iterator it = terms.find(exponent);
 
     if (it == terms.end()) {
         if (coef == 0)
@@ -417,9 +426,9 @@ void Polynomial<T>::neg()
 template <typename T>
 void Polynomial<T>::add(Polynomial<T>* b)
 {
-    Polynomial<T> a(field);
-    a.copy(this);
-    _add(this, &a, b);
+    for (auto& it : b->get_terms()) {
+        set(it.first, field->add(get(it.first), it.second));
+    }
 }
 
 template <typename T>
@@ -541,7 +550,7 @@ void Polynomial<T>::from_num(T x, int max_deg)
 template <typename T>
 void Polynomial<T>::dump(std::ostream& dest)
 {
-    typename Term::const_reverse_iterator it = terms.rbegin();
+    typename Term<T>::const_reverse_iterator it = terms.rbegin();
 
     if (it == terms.rend()) {
         dest << "0";
