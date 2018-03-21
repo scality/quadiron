@@ -202,20 +202,6 @@ void Polynomial<T>::_neg(Polynomial<T>* result, Polynomial<T>* a)
 }
 
 template <typename T>
-void Polynomial<T>::_add(
-    Polynomial<T>* result,
-    Polynomial<T>* a,
-    Polynomial<T>* b)
-{
-    result->clear();
-
-    int max = std::max(a->degree(), b->degree());
-
-    for (int i = max; i >= 0; i--)
-        result->set(i, field->add(a->get(i), b->get(i)));
-}
-
-template <typename T>
 void Polynomial<T>::_sub(
     Polynomial<T>* result,
     Polynomial<T>* a,
