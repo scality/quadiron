@@ -380,25 +380,6 @@ void Polynomial<T>::_extended_gcd(
     }
 }
 
-/** Derivative of a polynomial
- * Note, derivate of \f$X^n\f$ is defined as sum of \f$n\f$ polynomials
- * \f$X^{n-1}\f$, not a multiplication of \f$n\f$ and \f$X^{n-1}\f$. It can be
- * expressed as below:
- * \f[
- *  derivative(X^n) = (1 + 1 + ... + 1) X^{n-1}
- *                  = (n % p) * X^{n-1}
- * \f]
- * where \f$p\f$ is the characteristic of the field.
- */
-template <typename T>
-void Polynomial<T>::_derivative(Polynomial<T>* result, Polynomial<T>* a)
-{
-    result->clear();
-
-    for (int i = a->degree(); i > 0; i--)
-        result->set(i - 1, field->mul(a->get(i), i % field_characteristic));
-}
-
 template <typename T>
 void Polynomial<T>::neg()
 {
@@ -499,12 +480,31 @@ void Polynomial<T>::mod(Polynomial<T>* b)
     _div(nullptr, this, &a, b);
 }
 
+/** Compute the derivative of a polynomial
+ *
+ * \f{eqnarray*}{
+ * P(X) &= a_0 + a_1 X + a_2 X^2 + ... + a_n X^n \\
+ * P'(X)&=       a_1   + a_2 X   + ... + a_n X^{n-1}
+ * \f}
+ *
+ * Note, derivate of \f$X^n\f$ is defined as sum of \f$n\f$ polynomials
+ * \f$X^{n-1}\f$, not a multiplication of \f$n\f$ and \f$X^{n-1}\f$. It can be
+ * expressed as below:
+ * \f{eqnarray*}{
+ *  derivative(X^n) &= (1 + 1 + ... + 1) X^{n-1}
+ *                  &= (n % p) * X^{n-1}
+ * \f{eqnarray*}{
+ * where \f$p\f$ is the characteristic of the field.
+ *
+ * @return
+ */
 template <typename T>
 void Polynomial<T>::derivative()
 {
-    Polynomial<T> a(field);
-    a.copy(this);
-    _derivative(this, &a);
+    for (int deg = 1; deg <= degree_cache; ++deg) {
+        set(deg - 1, field->mul(deg % field_characteristic, get(deg)));
+    }
+    set(degree_cache, 0);
 }
 
 template <typename T>
