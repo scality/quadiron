@@ -141,35 +141,30 @@ class RsNf4 : public FecCode<T> {
         // nothing to do
     }
 
-    /**
-     * Perform a Lagrange interpolation to find the coefficients of the
-     * polynomial
-     *
-     * @note If all fragments are available ifft(words) is enough
-     *
-     * @param output must be exactly n_data
-     * @param props special values dictionary must be exactly n_data
-     * @param offset used to locate special values
-     * @param fragments_ids unused
-     * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
-     */
-    void decode(
-        vec::Vector<T>* output,
+  private:
+    fft::Radix2<T>* fft = nullptr;
+    gf::Field<uint32_t>* sub_field;
+    gf::NF4<T>* ngff4;
+    int gf_n;
+
+  protected:
+    void decode_prepare(
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int* vx_zero)
     {
         int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        vec::Vector<T> vx(ngff4, k);
         for (int i = 0; i < k; i++) {
-            vx.set(
+            vx->set(
                 i,
                 ngff4->replicate(
                     this->sub_field->exp(r, fragments_ids->get(i))));
         }
-        // std::cout << "vx"; vx.dump();
+        // std::cout << "vx"; vx->dump();
 
         T true_val;
         for (int i = 0; i < k; i++) {
@@ -188,19 +183,25 @@ class RsNf4 : public FecCode<T> {
             words->set(i, true_val);
         }
         // std::cout << "words packed"; words->dump();
+    }
 
-        // Lagrange interpolation
+    void decode_Lagrange(
+        vec::Vector<T>* output,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* fragments_ids,
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int vx_zero)
+    {
+        int k = this->n_data; // number of fragments received
         Polynomial<T> A(ngff4), _A(ngff4);
 
         // compute A(x) = prod_j(x-x_j)
         T one = ngff4->get_unit();
         A.set(0, one);
         for (int i = 0; i < k; i++) {
-            Polynomial<T> _t(ngff4);
-            _t.set(1, one);
-            _t.set(0, ngff4->sub(0, vx.get(i)));
-            // _t.dump();
-            A.mul(&_t);
+            A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
         }
         // std::cout << "A(x)="; A.dump();
 
@@ -214,7 +215,7 @@ class RsNf4 : public FecCode<T> {
         // evaluate n_i=v_i/A'_i(x_i)
         vec::Vector<T> _n(ngff4, k);
         for (int i = 0; i < k; i++) {
-            _n.set(i, ngff4->div(words->get(i), _A.eval(vx.get(i))));
+            _n.set(i, ngff4->div(words->get(i), _A.eval(vx->get(i))));
         }
         // std::cout << "_n="; _n.dump();
 
@@ -230,13 +231,13 @@ class RsNf4 : public FecCode<T> {
         // using Taylor series we rewrite the expression into
         // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
         Polynomial<T> S(ngff4);
-        for (T i = 0; i <= n - 1; i++) {
+        for (T i = 0; i <= k - 1; i++) {
             T val = ngff4->replicate(sub_field->inv(sub_field->exp(r, i + 1)));
             S.set(i, N_p.eval(val));
         }
         // std::cout << "S="; S.dump();
         S.neg();
-        S.mul(&A);
+        S.mul(&A, k - 1);
         // std::cout << "S="; S.dump();
         // No need to mod x^n since only last n_data coefs are obtained
         // output is n_data length
@@ -244,12 +245,6 @@ class RsNf4 : public FecCode<T> {
             output->set(i, ngff4->unpack(S.get(i)).values);
         // std::cout << "decoded"; output->dump();
     }
-
-  private:
-    fft::Radix2<T>* fft = nullptr;
-    gf::Field<uint32_t>* sub_field;
-    gf::NF4<T>* ngff4;
-    int gf_n;
 };
 
 } // namespace fec
