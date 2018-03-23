@@ -46,7 +46,6 @@ template <typename T>
 class RsGf2nFft : public FecCode<T> {
   public:
     T n;
-    T r;
 
     // NOTE: only NON_SYSTEMATIC is supported now
     RsGf2nFft(unsigned word_size, unsigned n_data, unsigned n_parities)
@@ -71,11 +70,18 @@ class RsGf2nFft : public FecCode<T> {
         // std::cerr << "r=" << r << "\n";
 
         this->fft = new fft::CooleyTukey<T>(this->gf, n);
+
+        // vector stores r^{-i} for i = 0, ... , k
+        T inv_r = this->gf->inv(this->r);
+        this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
+            new vec::Vector<T>(this->gf, this->n_data + 1));
+        for (int i = 0; i <= this->n_data; i++)
+            this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
     }
 
     ~RsGf2nFft()
     {
-        delete fft;
+        delete this->fft;
         delete this->gf;
     }
 
@@ -99,7 +105,7 @@ class RsGf2nFft : public FecCode<T> {
         vec::Vector<T>* words)
     {
         vec::ZeroExtended<T> vwords(words, n);
-        fft->fft(output, &vwords);
+        this->fft->fft(output, &vwords);
     }
 
     void decode_add_data(int fragment_index, int row)
@@ -117,83 +123,6 @@ class RsGf2nFft : public FecCode<T> {
     {
         // nothing to do
     }
-
-    /**
-     * Perform a Lagrange interpolation to find the coefficients of the
-     * polynomial
-     *
-     * @note If all fragments are available ifft(words) is enough
-     *
-     * @param output must be exactly n_data
-     * @param props special values dictionary must be exactly n_data
-     * @param offset used to locate special values
-     * @param fragments_ids unused
-     * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
-     */
-    void decode(
-        vec::Vector<T>* output,
-        const std::vector<Properties>& props,
-        off_t offset,
-        vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words)
-    {
-        int k = this->n_data; // number of fragments received
-        // vector x=(x_0, x_1, ..., x_k-1)
-        vec::Vector<T> vx(this->gf, k);
-        for (int i = 0; i < k; i++) {
-            vx.set(i, this->gf->exp(r, fragments_ids->get(i)));
-        }
-
-        // Lagrange interpolation
-        Polynomial<T> A(this->gf), _A(this->gf);
-
-        // compute A(x) = prod_j(x-x_j)
-        A.set(0, 1);
-        for (int i = 0; i < k; i++) {
-            Polynomial<T> _t(this->gf);
-            _t.set(1, 1);
-            _t.set(0, vx.get(i));
-            // _t.dump();
-            A.mul(&_t);
-        }
-        // std::cout << "A(x)="; A.dump();
-
-        // compute A'(x) since A_i(x_i) = A'_i(x_i)
-        _A.copy(&A);
-        _A.derivative();
-        // std::cout << "A'(x)="; _A.dump();
-
-        // evaluate n_i=v_i/A'_i(x_i)
-        vec::Vector<T> _n(this->gf, k);
-        for (int i = 0; i < k; i++) {
-            _n.set(i, this->gf->div(words->get(i), _A.eval(vx.get(i))));
-        }
-
-        // compute N'(x) = sum_i{n_i * x^z_i}
-        Polynomial<T> N_p(this->gf);
-        for (int i = 0; i <= k - 1; i++) {
-            N_p.set(fragments_ids->get(i), _n.get(i));
-        }
-
-        // We have to find the numerator of the following expression:
-        // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
-        // using Taylor series we rewrite the expression into
-        // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
-
-        Polynomial<T> S(this->gf);
-        for (T i = 0; i <= n - 1; i++) {
-            T val = this->gf->inv(this->gf->exp(r, i + 1));
-            S.set(i, N_p.eval(val));
-        }
-        S.mul(&A);
-
-        // output is n_data length
-        for (unsigned i = 0; i < this->n_data; i++)
-            output->set(i, S.get(i));
-    }
-
-  private:
-    fft::CooleyTukey<T>* fft = nullptr;
 };
 
 } // namespace fec
