@@ -34,10 +34,11 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <memory>
 #include <vector>
-
 #include <sys/time.h>
 
+#include "fft_base.h"
 #include "gf_base.h"
 #include "misc.h"
 #include "property.h"
@@ -163,7 +164,7 @@ class FecCode {
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words) = 0;
+        vec::Vector<T>* words);
 
     bool readw(T* ptr, std::istream* stream);
     bool writew(T val, std::ostream* stream);
@@ -207,7 +208,29 @@ class FecCode {
     }
 
   protected:
+    // primitive nth root of unity
+    T r;
     gf::Field<T>* gf;
+    fft::FourierTransform<T>* fft = nullptr;
+    // This vector MUST be initialized by derived Class using multiplicative FFT
+    std::unique_ptr<vec::Vector<T>> inv_r_powers = nullptr;
+
+    virtual void decode_prepare(
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* fragments_ids,
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int* vx_zero = 0);
+
+    virtual void decode_Lagrange(
+        vec::Vector<T>* output,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* fragments_ids,
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int vx_zero = 0);
 };
 
 /**
@@ -601,6 +624,135 @@ bool FecCode<T>::decode_bufs(
     }
 
     return true;
+}
+
+/**
+ * Perform a Lagrange interpolation to find the coefficients of the
+ * polynomial
+ *
+ * @note If all fragments are available ifft(words) is enough
+ *
+ * @param output must be exactly n_data
+ * @param props special values dictionary must be exactly n_data
+ * @param offset used to locate special values
+ * @param fragments_ids unused
+ * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
+ */
+template <typename T>
+void FecCode<T>::decode(
+    vec::Vector<T>* output,
+    const std::vector<Properties>& props,
+    off_t offset,
+    vec::Vector<T>* fragments_ids,
+    vec::Vector<T>* words)
+{
+    int vx_zero;
+    // vector x=(x_0, x_1, ..., x_k-1)
+    vec::Vector<T> vx(this->gf, this->n_data);
+
+    // prepare for decoding
+    decode_prepare(props, offset, fragments_ids, words, &vx, &vx_zero);
+
+    // Lagrange interpolation
+    decode_Lagrange(output, props, offset, fragments_ids, words, &vx, vx_zero);
+}
+
+/* Prepare for decoding
+ * It supports for FEC using multiplicative FFT over FNT
+ */
+template <typename T>
+void FecCode<T>::decode_prepare(
+    const std::vector<Properties>& props,
+    off_t offset,
+    vec::Vector<T>* fragments_ids,
+    vec::Vector<T>* words,
+    vec::Vector<T>* vx,
+    int* vx_zero)
+{
+    int k = this->n_data; // number of fragments received
+    // vector x=(x_0, x_1, ..., x_k-1)
+    for (int i = 0; i < k; i++) {
+        vx->set(i, this->gf->exp(r, fragments_ids->get(i)));
+    }
+
+    for (int i = 0; i < k; i++) {
+        const int j = fragments_ids->get(i);
+        auto data = props[j].get(ValueLocation(offset, j));
+
+        // Check if the symbol is a special case whick is marked by "@".
+        // Note: this check is necessary when word_size is not large enough to
+        // cover all symbols of the field.
+        // Following check is used for FFT over FNT where the single special
+        // case symbol equals card - 1
+        if (data && *data == "@") {
+            words->set(i, fft->get_gf()->card() - 1);
+        }
+    }
+}
+
+/* Lagrange interpolation
+ * It supports for FEC using multiplicative FFT over GF differing NF4
+ */
+template <typename T>
+void FecCode<T>::decode_Lagrange(
+    vec::Vector<T>* output,
+    const std::vector<Properties>& props,
+    off_t offset,
+    vec::Vector<T>* fragments_ids,
+    vec::Vector<T>* words,
+    vec::Vector<T>* vx,
+    int vx_zero)
+{
+    if (inv_r_powers == nullptr) {
+        throw LogicError("The pointer 'inv_r_powers' must be initialized");
+    }
+
+    Polynomial<T> A(this->gf);
+    Polynomial<T> _A(this->gf);
+    Polynomial<T> N_p(this->gf);
+    Polynomial<T> S(this->gf);
+
+    int k = this->n_data; // number of fragments received
+
+    // compute A(x) = prod_j(x-x_j)
+    A.set(0, 1);
+    for (int i = 0; i < k; i++) {
+        A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
+    }
+    // std::cout << "A(x)="; A.dump();
+
+    // compute A'(x) since A_i(x_i) = A'_i(x_i)
+    _A.copy(&A);
+    _A.derivative();
+    // std::cout << "A'(x)="; _A.dump();
+
+    // evaluate n_i=v_i/A'_i(x_i)
+    vec::Vector<T> _n(this->gf, k);
+    for (int i = 0; i < k; i++) {
+        _n.set(i, this->gf->div(words->get(i), _A.eval(vx->get(i))));
+    }
+    // std::cout << "_n="; _n.dump();
+
+    // compute N'(x) = sum_i{n_i * x^z_i}
+    for (int i = 0; i <= k - 1; i++) {
+        N_p.set(fragments_ids->get(i), _n.get(i));
+    }
+
+    // We have to find the numerator of the following expression:
+    // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
+    // using Taylor series we rewrite the expression into
+    // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
+    for (T i = 0; i <= k - 1; i++) {
+        S.set(i, N_p.eval(inv_r_powers->get(i + 1)));
+    }
+    S.neg();
+    // std::cout << "S:"; S.dump();
+    S.mul(&A, k - 1);
+    // std::cout << "S x A:"; S.dump();
+    // No need to mod x^n since only last n_data coefs are obtained
+    // output is n_data length
+    for (unsigned i = 0; i < this->n_data; i++)
+        output->set(i, S.get(i));
 }
 
 } // namespace fec
