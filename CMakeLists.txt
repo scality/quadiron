@@ -183,7 +183,7 @@ coverage_evaluate()
 
 # Be sure to recompile the test driver if needed before running the test suite.
 add_custom_target(check
-  COMMAND ${CMAKE_CTEST_COMMAND}
+  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
   DEPENDS ${UNIT_TESTS}
   DEPENDS ${EC_DRIVER}
 )
