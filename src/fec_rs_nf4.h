@@ -49,7 +49,6 @@ template <typename T>
 class RsNf4 : public FecCode<T> {
   public:
     T n;
-    T r;
     RsNf4(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {
@@ -67,19 +66,26 @@ class RsNf4 : public FecCode<T> {
         // n_data)
         n = sub_field->get_code_len_high_compo(n_parities + n_data);
 
-        // compute root of order n-1 such as r^(n-1) mod q == 1
-        r = sub_field->get_nth_root(n);
+        // compute root of order n-1 such as r^(n-1) mod q == (1, ..,1)
+        this->r = ngff4->get_nth_root(this->n);
 
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
         int m = arith::get_smallest_power_of_2<int>(n_data);
-        this->fft = new fft::Radix2<T>(ngff4, n, m);
+        this->fft = new fft::Radix2<T>(ngff4, this->n, m);
+
+        // vector stores r^{-i} for i = 0, ... , k
+        T inv_r = ngff4->inv(this->r);
+        this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
+            new vec::Vector<T>(ngff4, this->n_data + 1));
+        for (int i = 0; i <= this->n_data; i++)
+            this->inv_r_powers->set(i, ngff4->exp(inv_r, i));
     }
 
     ~RsNf4()
     {
-        delete fft;
+        delete this->fft;
         delete ngff4;
     }
 
@@ -107,8 +113,8 @@ class RsNf4 : public FecCode<T> {
             words->set(i, ngff4->pack(words->get(i)));
         }
         // std::cout << "pack words:"; words->dump();
-        vec::ZeroExtended<T> vwords(words, n);
-        fft->fft(output, &vwords);
+        vec::ZeroExtended<T> vwords(words, this->n);
+        this->fft->fft(output, &vwords);
         // std::cout << "encoded:"; output->dump();
         for (unsigned i = 0; i < this->code_len; i++) {
             T val = output->get(i);
@@ -142,7 +148,6 @@ class RsNf4 : public FecCode<T> {
     }
 
   private:
-    fft::Radix2<T>* fft = nullptr;
     gf::Field<uint32_t>* sub_field;
     gf::NF4<T>* ngff4;
     int gf_n;
@@ -161,8 +166,8 @@ class RsNf4 : public FecCode<T> {
         for (int i = 0; i < k; i++) {
             vx->set(
                 i,
-                ngff4->replicate(
-                    this->sub_field->exp(r, fragments_ids->get(i))));
+                this->gf->exp(
+                    this->r, ngff4->replicate(fragments_ids->get(i))));
         }
         // std::cout << "vx"; vx->dump();
 
@@ -232,8 +237,7 @@ class RsNf4 : public FecCode<T> {
         // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
         Polynomial<T> S(ngff4);
         for (T i = 0; i <= k - 1; i++) {
-            T val = ngff4->replicate(sub_field->inv(sub_field->exp(r, i + 1)));
-            S.set(i, N_p.eval(val));
+            S.set(i, N_p.eval(this->inv_r_powers->get(i + 1)));
         }
         // std::cout << "S="; S.dump();
         S.neg();
