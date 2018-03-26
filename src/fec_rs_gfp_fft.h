@@ -74,8 +74,6 @@ namespace fec {
 template <typename T>
 class RsGfpFft : public FecCode<T> {
   public:
-    T n;
-
     RsGfpFft(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {
@@ -104,20 +102,20 @@ class RsGfpFft : public FecCode<T> {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
         // n_data)
-        n = this->gf->get_code_len_high_compo(n_parities + n_data);
+        this->n = this->gf->get_code_len_high_compo(n_parities + n_data);
 
         // compute root of order n-1 such as r^(n-1) mod q == 1
-        this->r = this->gf->get_nth_root(n);
+        this->r = this->gf->get_nth_root(this->n);
 
         // std::cerr << "limit_value=" << limit_value << "\n";
         // std::cerr << "gf_p=" << gf_p << "\n";
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        if (arith::is_power_of_2<T>(n)) {
-            this->fft = new fft::Radix2<T>(this->gf, n);
+        if (arith::is_power_of_2<T>(this->n)) {
+            this->fft = new fft::Radix2<T>(this->gf, this->n);
         } else {
-            this->fft = new fft::CooleyTukey<T>(this->gf, n);
+            this->fft = new fft::CooleyTukey<T>(this->gf, this->n);
         }
 
         // vector stores r^{-i} for i = 0, ... , k
@@ -153,7 +151,7 @@ class RsGfpFft : public FecCode<T> {
         off_t offset,
         vec::Vector<T>* words)
     {
-        vec::ZeroExtended<T> vwords(words, n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {

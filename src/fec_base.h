@@ -43,6 +43,7 @@
 #include "misc.h"
 #include "property.h"
 #include "vec_buffers.h"
+#include "vec_poly.h"
 #include "vec_vector.h"
 
 namespace nttec {
@@ -110,6 +111,10 @@ class FecCode {
     unsigned n_outputs;
     size_t pkt_size; // packet size, i.e. number of words per packet
     size_t buf_size; // packet size in bytes
+
+    // Length of operating codeword. It's calculated by derived Class
+    // FIXME: move n to protected
+    T n;
 
     uint64_t total_encode_cycles = 0;
     uint64_t n_encode_ops = 0;
@@ -224,6 +229,15 @@ class FecCode {
         int* vx_zero = 0);
 
     virtual void decode_lagrange(
+        vec::Vector<T>* output,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* fragments_ids,
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int vx_zero = 0);
+
+    virtual void decode_vec_lagrange(
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,
@@ -743,6 +757,75 @@ void FecCode<T>::decode_lagrange(
     // using Taylor series we rewrite the expression into
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
     for (T i = 0; i <= k - 1; i++) {
+        S.set(i, N_p.eval(inv_r_powers->get(i + 1)));
+    }
+    S.neg();
+    // std::cout << "S:"; S.dump();
+    S.mul(&A, k - 1);
+    // std::cout << "S x A:"; S.dump();
+    // No need to mod x^n since only last n_data coefs are obtained
+    // output is n_data length
+    for (unsigned i = 0; i < this->n_data; i++)
+        output->set(i, S.get(i));
+}
+
+template <typename T>
+void FecCode<T>::decode_vec_lagrange(
+    vec::Vector<T>* output,
+    const std::vector<Properties>& props,
+    off_t offset,
+    vec::Vector<T>* fragments_ids,
+    vec::Vector<T>* words,
+    vec::Vector<T>* vx,
+    int vx_zero)
+{
+    if (this->fft == nullptr) {
+        throw LogicError("FEC base: FFT must be initialized");
+    }
+    // std::cout << "WORDS:"; words->dump();
+    int k = this->n_data; // number of fragments received
+
+    vec::Poly<T> A(this->gf, n);
+    vec::Poly<T> _A_fft(this->gf, n);
+    vec::Poly<T> N_p(this->gf, n);
+    vec::Poly<T> N_p_ifft(this->gf, n);
+    vec::Poly<T> S(this->gf, k);
+
+    // compute A(x) = prod_j(x-x_j)
+    A.zero();
+    A.set(0, 1);
+    for (int i = 0; i < k; i++) {
+        A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
+    }
+    // std::cout << "A(x)="; A.dump();
+
+    // compute A'(x) since A_i(x_i) = A'_i(x_i)
+    vec::Poly<T> _A(&A);
+    _A.derivative();
+    this->fft->fft(&_A_fft, &_A);
+    // std::cout << "A'(x)="; _A.dump();
+
+    // evaluate n_i=v_i/A'_i(x_i)
+    vec::Vector<T> _n(this->gf, k);
+    for (int i = 0; i < k; i++) {
+        _n.set(
+            i, this->gf->div(words->get(i), _A_fft.get(fragments_ids->get(i))));
+    }
+    // std::cout << "_n="; _n.dump();
+
+    // compute N'(x) = sum_i{n_i * x^z_i}
+    N_p.zero();
+    for (int i = 0; i <= k - 1; i++) {
+        N_p.set(fragments_ids->get(i), _n.get(i));
+    }
+    // std::cout << "N_p(x)="; N_p.dump();
+    this->fft->ifft(&N_p_ifft, &N_p);
+
+    // We have to find the numerator of the following expression:
+    // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
+    // using Taylor series we rewrite the expression into
+    // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
+    for (int i = 0; i <= k - 1; i++) {
         S.set(i, N_p.eval(inv_r_powers->get(i + 1)));
     }
     S.neg();

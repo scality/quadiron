@@ -54,7 +54,6 @@ namespace fec {
 template <typename T>
 class RsFnt : public FecCode<T> {
   public:
-    T n;
     RsFnt(
         unsigned word_size,
         unsigned n_data,
@@ -79,16 +78,16 @@ class RsFnt : public FecCode<T> {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
         // n_data)
-        n = this->gf->get_code_len_high_compo(n_parities + n_data);
+        this->n = this->gf->get_code_len_high_compo(n_parities + n_data);
 
         // compute root of order n-1 such as r^(n-1) mod q == 1
-        this->r = this->gf->get_nth_root(n);
+        this->r = this->gf->get_nth_root(this->n);
 
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
         int m = arith::get_smallest_power_of_2<int>(n_data);
-        this->fft = new fft::Radix2<T>(this->gf, n, m, pkt_size);
+        this->fft = new fft::Radix2<T>(this->gf, this->n, m, pkt_size);
 
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
@@ -123,7 +122,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Vector<T>* words)
     {
-        vec::ZeroExtended<T> vwords(words, n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         // max_value = 2^x
         T thres = this->fft->get_gf()->card() - 1;
@@ -142,7 +141,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>* words)
     {
-        vec::BuffersZeroExtended<T> vwords(words, n);
+        vec::BuffersZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         // check for out of range value in output
         int size = output->get_size();

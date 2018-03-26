@@ -48,7 +48,6 @@ namespace fec {
 template <typename T>
 class RsNf4 : public FecCode<T> {
   public:
-    T n;
     RsNf4(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {
@@ -64,7 +63,7 @@ class RsNf4 : public FecCode<T> {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
         // n_data)
-        n = sub_field->get_code_len_high_compo(n_parities + n_data);
+        this->n = sub_field->get_code_len_high_compo(n_parities + n_data);
 
         // compute root of order n-1 such as r^(n-1) mod q == (1, ..,1)
         this->r = ngff4->get_nth_root(this->n);

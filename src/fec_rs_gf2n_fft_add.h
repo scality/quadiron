@@ -46,7 +46,6 @@ namespace fec {
 template <typename T>
 class RsGf2nFftAdd : public FecCode<T> {
   public:
-    T n;
     T m;
 
     // NOTE: only NON_SYSTEMATIC is supported now
@@ -60,8 +59,8 @@ class RsGf2nFftAdd : public FecCode<T> {
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = smallest power of 2 and at least (n_parities + n_data)
-        n = arith::get_smallest_power_of_2<T>(n_data + n_parities);
-        m = arith::log2<T>(n);
+        this->n = arith::get_smallest_power_of_2<T>(n_data + n_parities);
+        m = arith::log2<T>(this->n);
 
         // std::cerr << "n_parities=" << n_parities << "\n";
         // std::cerr << "n_data=" << n_data << "\n";
@@ -71,7 +70,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         this->fft = new fft::Additive<T>(this->gf, m);
 
         // subspace spanned by <beta_i>
-        this->betas = new vec::Vector<T>(this->gf, n);
+        this->betas = new vec::Vector<T>(this->gf, this->n);
         this->fft->compute_B(this->betas);
     }
 
@@ -102,7 +101,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         off_t offset,
         vec::Vector<T>* words)
     {
-        vec::ZeroExtended<T> vwords(words, n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
     }
 

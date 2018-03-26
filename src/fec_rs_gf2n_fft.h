@@ -45,8 +45,6 @@ namespace fec {
 template <typename T>
 class RsGf2nFft : public FecCode<T> {
   public:
-    T n;
-
     // NOTE: only NON_SYSTEMATIC is supported now
     RsGf2nFft(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
@@ -59,17 +57,17 @@ class RsGf2nFft : public FecCode<T> {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
         // n_data)
-        n = this->gf->get_code_len_high_compo(n_parities + n_data);
+        this->n = this->gf->get_code_len_high_compo(n_parities + n_data);
 
         // compute root of order n such as r^n == 1
-        this->r = this->gf->get_nth_root(n);
+        this->r = this->gf->get_nth_root(this->n);
 
         // std::cerr << "n_parities=" << n_parities << "\n";
         // std::cerr << "n_data=" << n_data << "\n";
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        this->fft = new fft::CooleyTukey<T>(this->gf, n);
+        this->fft = new fft::CooleyTukey<T>(this->gf, this->n);
 
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
@@ -104,7 +102,7 @@ class RsGf2nFft : public FecCode<T> {
         off_t offset,
         vec::Vector<T>* words)
     {
-        vec::ZeroExtended<T> vwords(words, n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
     }
 
