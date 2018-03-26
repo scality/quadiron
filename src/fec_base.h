@@ -669,7 +669,8 @@ void FecCode<T>::decode(
     decode_prepare(props, offset, fragments_ids, words, &vx, &vx_zero);
 
     // Lagrange interpolation
-    decode_lagrange(output, props, offset, fragments_ids, words, &vx, vx_zero);
+    decode_vec_lagrange(
+        output, props, offset, fragments_ids, words, &vx, vx_zero);
 }
 
 /* Prepare for decoding
