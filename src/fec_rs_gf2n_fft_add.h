@@ -215,6 +215,85 @@ class RsGf2nFftAdd : public FecCode<T> {
             output->set(i, S.get(i));
     }
 
+    // Lagrange interpolation w/ vector
+    void decode_vec_lagrange(
+        vec::Vector<T>* output,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* fragments_ids,
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int vx_zero)
+    {
+        // std::cout << "WORDS:"; words->dump();
+        int k = this->n_data; // number of fragments received
+
+        vec::Poly<T> A(this->gf, this->n);
+        vec::Poly<T> _A_fft(this->gf, this->n);
+        vec::Poly<T> S(this->gf, k);
+
+        // compute A(x) = prod_j(x-x_j)
+        A.zero();
+        A.set(0, 1);
+        for (int i = 0; i < k; i++) {
+            A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
+        }
+        // std::cout << "A(x)="; A.dump();
+
+        // compute A'(x) since A_i(x_i) = A'_i(x_i)
+        vec::Poly<T> _A(&A);
+        _A.derivative();
+        this->fft->fft(&_A_fft, &_A);
+        // std::cout << "A'(x)="; _A.dump();
+
+        // evaluate n_i=v_i/A'_i(x_i)
+        vec::Vector<T> _n(this->gf, k);
+        for (int i = 0; i < k; i++) {
+            _n.set(
+                i,
+                this->gf->div(
+                    words->get(i), _A_fft.get(fragments_ids->get(i))));
+        }
+
+        // We have to find the numerator of the following expression:
+        // P(x)/A(x) = S(x) + R(x)
+        //  where S(x) = sum_{0 <= i <= k-1, i != vx_zero}(n_i/(x-x_i)) mod x^n
+        //        R(x) = _n[vx_zero] / x
+        // using Taylor series we rewrite the expression into
+        // S(x) = sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
+        for (int j = 0; j <= k - 1; j++) {
+            T val = 0;
+            for (int i = 0; i <= k - 1; i++) {
+                if (i == vx_zero)
+                    continue;
+                // perform Taylor series at 0
+                T xi_j_1 = this->gf->inv(this->gf->exp(vx->get(i), j + 1));
+                val = this->gf->add(val, this->gf->mul(_n.get(i), xi_j_1));
+            }
+            S.set(j, val);
+        }
+        // std::cout << "S:"; S.dump();
+        S.mul(&A, k - 1);
+        // std::cout << "S x A:"; S.dump();
+        if (vx_zero > -1) {
+            assert(A.get(0) == 0);
+            // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x
+            //  as S(x) does not include the term of vx_zero
+            // Note: A(0) = 0 since vx_zero exists
+            int deg = A.get_deg();
+            T val = _n.get(vx_zero);
+            for (int i = 1; i <= deg; i++)
+                S.set(
+                    i - 1,
+                    this->gf->add(S.get(i - 1), this->gf->mul(val, A.get(i))));
+            // std::cout << "S x A + vx_zero:"; S.dump();
+        }
+
+        // output is n_data length
+        for (unsigned i = 0; i < this->n_data; i++)
+            output->set(i, S.get(i));
+    }
+
   private:
     // this overwrite multiplicative FFT
     fft::Additive<T>* fft = nullptr;
