@@ -74,6 +74,9 @@ class RsNf4 : public FecCode<T> {
         int m = arith::get_smallest_power_of_2<int>(n_data);
         this->fft = new fft::Radix2<T>(ngff4, this->n, m);
 
+        this->fft_full =
+            std::unique_ptr<fft::Radix2<T>>(new fft::Radix2<T>(ngff4, this->n));
+
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = ngff4->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
@@ -299,7 +302,7 @@ class RsNf4 : public FecCode<T> {
             N_p.set(fragments_ids->get(i), _n.get(i));
         }
         // std::cout << "N_p="; N_p.dump();
-        this->fft->fft_inv(&N_p_ifft, &N_p);
+        this->fft_full->fft_inv(&N_p_ifft, &N_p);
 
         // We have to find the numerator of the following expression:
         // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n

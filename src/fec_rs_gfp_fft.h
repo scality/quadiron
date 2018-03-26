@@ -114,8 +114,12 @@ class RsGfpFft : public FecCode<T> {
 
         if (arith::is_power_of_2<T>(this->n)) {
             this->fft = new fft::Radix2<T>(this->gf, this->n);
+            this->fft_full = std::unique_ptr<fft::Radix2<T>>(
+                new fft::Radix2<T>(this->gf, this->n));
         } else {
             this->fft = new fft::CooleyTukey<T>(this->gf, this->n);
+            this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
+                new fft::CooleyTukey<T>(this->gf, this->n));
         }
 
         // vector stores r^{-i} for i = 0, ... , k

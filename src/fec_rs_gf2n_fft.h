@@ -69,6 +69,9 @@ class RsGf2nFft : public FecCode<T> {
 
         this->fft = new fft::CooleyTukey<T>(this->gf, this->n);
 
+        this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
+            new fft::CooleyTukey<T>(this->gf, this->n));
+
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(

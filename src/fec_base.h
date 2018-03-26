@@ -217,6 +217,7 @@ class FecCode {
     T r;
     gf::Field<T>* gf;
     fft::FourierTransform<T>* fft = nullptr;
+    std::unique_ptr<fft::FourierTransform<T>> fft_full = nullptr;
     // This vector MUST be initialized by derived Class using multiplicative FFT
     std::unique_ptr<vec::Vector<T>> inv_r_powers = nullptr;
 
@@ -782,6 +783,9 @@ void FecCode<T>::decode_vec_lagrange(
     if (this->fft == nullptr) {
         throw LogicError("FEC base: FFT must be initialized");
     }
+    if (this->fft_full == nullptr) {
+        throw LogicError("FEC base: FFT must be initialized");
+    }
     // std::cout << "WORDS:"; words->dump();
     int k = this->n_data; // number of fragments received
 
@@ -819,14 +823,14 @@ void FecCode<T>::decode_vec_lagrange(
         N_p.set(fragments_ids->get(i), _n.get(i));
     }
     // std::cout << "N_p(x)="; N_p.dump();
-    this->fft->ifft(&N_p_ifft, &N_p);
+    this->fft_full->fft_inv(&N_p_ifft, &N_p);
 
     // We have to find the numerator of the following expression:
     // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
     // using Taylor series we rewrite the expression into
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
     for (int i = 0; i <= k - 1; i++) {
-        S.set(i, N_p.eval(inv_r_powers->get(i + 1)));
+        S.set(i, N_p_ifft.get(i + 1));
     }
     S.neg();
     // std::cout << "S:"; S.dump();
