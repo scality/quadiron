@@ -248,6 +248,76 @@ class RsNf4 : public FecCode<T> {
             output->set(i, ngff4->unpack(S.get(i)).values);
         // std::cout << "decoded"; output->dump();
     }
+
+    void decode_vec_lagrange(
+        vec::Vector<T>* output,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* fragments_ids,
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int vx_zero)
+    {
+        int k = this->n_data; // number of fragments received
+        vec::Poly<T> A(this->gf, k + 1);
+        vec::Poly<T> _A(this->gf, this->n);
+        vec::Poly<T> _A_fft(this->gf, this->n);
+        vec::Poly<T> N_p(this->gf, this->n);
+        vec::Poly<T> N_p_ifft(this->gf, this->n);
+        vec::Poly<T> S(this->gf, k);
+
+        // compute A(x) = prod_j(x-x_j)
+        T one = ngff4->get_unit();
+        A.set(0, one);
+        for (int i = 0; i < k; i++) {
+            A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
+        }
+        // std::cout << "A(x)="; A.dump();
+
+        // compute A'(x) since A_i(x_i) = A'_i(x_i)
+        // _A.derivative();
+        _A.zero();
+        for (int i = 1; i <= A.get_deg(); i++)
+            _A.set(i - 1, ngff4->mul(A.get(i), ngff4->replicate(i)));
+
+        this->fft->fft(&_A_fft, &_A);
+        // std::cout << "A'(x)="; _A.dump();
+
+        // evaluate n_i=v_i/A'_i(x_i)
+        vec::Vector<T> _n(ngff4, k);
+        for (int i = 0; i < k; i++) {
+            // _n.set(i, ngff4->div(words->get(i), _A.eval(vx->get(i))));
+            _n.set(
+                i,
+                ngff4->div(words->get(i), _A_fft.get(fragments_ids->get(i))));
+        }
+        // std::cout << "_n="; _n.dump();
+
+        // compute N'(x) = sum_i{n_i * x^z_i}
+        N_p.zero();
+        for (int i = 0; i <= k - 1; i++) {
+            N_p.set(fragments_ids->get(i), _n.get(i));
+        }
+        // std::cout << "N_p="; N_p.dump();
+        this->fft->fft_inv(&N_p_ifft, &N_p);
+
+        // We have to find the numerator of the following expression:
+        // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
+        // using Taylor series we rewrite the expression into
+        // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
+        for (int i = 0; i <= k - 1; i++) {
+            S.set(i, N_p_ifft.get(i + 1));
+        }
+        // std::cout << "S="; S.dump();
+        S.neg();
+        S.mul(&A, k - 1);
+        // std::cout << "S="; S.dump();
+        // No need to mod x^n since only last n_data coefs are obtained
+        // output is n_data length
+        for (unsigned i = 0; i < this->n_data; i++)
+            output->set(i, ngff4->unpack(S.get(i)).values);
+        // std::cout << "decoded"; output->dump();
+    }
 };
 
 } // namespace fec
