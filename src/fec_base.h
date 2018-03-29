@@ -223,7 +223,7 @@ class FecCode {
         vec::Vector<T>* vx,
         int* vx_zero = 0);
 
-    virtual void decode_Lagrange(
+    virtual void decode_lagrange(
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,
@@ -654,7 +654,7 @@ void FecCode<T>::decode(
     decode_prepare(props, offset, fragments_ids, words, &vx, &vx_zero);
 
     // Lagrange interpolation
-    decode_Lagrange(output, props, offset, fragments_ids, words, &vx, vx_zero);
+    decode_lagrange(output, props, offset, fragments_ids, words, &vx, vx_zero);
 }
 
 /* Prepare for decoding
@@ -694,7 +694,7 @@ void FecCode<T>::decode_prepare(
  * It supports for FEC using multiplicative FFT over GF differing NF4
  */
 template <typename T>
-void FecCode<T>::decode_Lagrange(
+void FecCode<T>::decode_lagrange(
     vec::Vector<T>* output,
     const std::vector<Properties>& props,
     off_t offset,

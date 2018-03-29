@@ -146,7 +146,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     }
 
     // Lagrange interpolation
-    void decode_Lagrange(
+    void decode_lagrange(
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,

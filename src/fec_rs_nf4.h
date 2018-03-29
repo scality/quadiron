@@ -185,7 +185,7 @@ class RsNf4 : public FecCode<T> {
         // std::cout << "words packed"; words->dump();
     }
 
-    void decode_Lagrange(
+    void decode_lagrange(
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,
