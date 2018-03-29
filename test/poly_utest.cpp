@@ -55,7 +55,8 @@ void poly_utest2()
     p2.set(3, 4);
     // p2.dump();
     nttec::Polynomial<uint32_t> p3(&gfp);
-    p1._add(&p3, &p1, &p2);
+    p3.copy(&p2);
+    p3.add(&p1);
     // p3.dump();
     assert(p3.degree() == 6);
     assert(p3.get(6) == 6);
@@ -151,7 +152,8 @@ void poly_utest6()
     p1.set(1, 1);
     p1.set(0, 8);
     nttec::Polynomial<uint32_t> p2(&gfp);
-    p1._derivative(&p2, &p1);
+    p2.copy(&p1);
+    p2.derivative();
     assert(p2.degree() == 3);
     assert(p2.get(3) == 5);
     assert(p2.get(0) == 1);

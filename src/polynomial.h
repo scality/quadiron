@@ -48,6 +48,10 @@ class Vector;
 } // namespace vec
 
 template <typename T>
+struct Term : std::map<int, T> {
+};
+
+template <typename T>
 class Polynomial {
   public:
     explicit Polynomial(gf::Field<T>* field);
@@ -55,6 +59,7 @@ class Polynomial {
     void copy(Polynomial<T>* src);
     void copy(Polynomial<T>* src, T offset);
     int degree();
+    const Term<T>& get_terms();
     T lead();
     bool is_zero();
     T get(int exponent);
@@ -80,6 +85,8 @@ class Polynomial {
     void add(Polynomial<T>* b);
     void sub(Polynomial<T>* b);
     void mul(Polynomial<T>* b);
+    void mul(Polynomial<T>* b, int deg_out);
+    void mul_to_x_plus_coef(T coef);
     void div(Polynomial<T>* d);
     void mod(Polynomial<T>* d);
     void derivative();
@@ -92,33 +99,34 @@ class Polynomial {
     void dump();
 
   private:
-    struct Term : std::map<int, T> {
-    };
     gf::Field<T>* field;
-    gf::Field<T>* sub_field;
-    Term terms;
+    T field_characteristic;
+    Term<T> terms;
+    int degree_cache;
 };
 
 template <typename T>
 Polynomial<T>::Polynomial(gf::Field<T>* field)
 {
     this->field = field;
-    this->sub_field = field->get_sub_field();
+    this->field_characteristic = field->get_p();
+    this->degree_cache = 0;
 }
 
 template <typename T>
 void Polynomial<T>::clear()
 {
     terms.clear();
+    degree_cache = 0;
 }
 
 template <typename T>
 void Polynomial<T>::copy(Polynomial<T>* src)
 {
     clear();
-
-    for (int i = src->degree(); i >= 0; i--)
-        set(i, src->get(i));
+    const Term<T> terms_src = src->get_terms();
+    terms.insert(terms_src.begin(), terms_src.end());
+    this->degree_cache = src->degree();
 }
 
 template <typename T>
@@ -133,7 +141,13 @@ void Polynomial<T>::copy(Polynomial<T>* src, T offset)
 template <typename T>
 int Polynomial<T>::degree()
 {
-    return (terms.rbegin() == terms.rend()) ? 0 : terms.rbegin()->first;
+    return degree_cache;
+}
+
+template <typename T>
+const Term<T>& Polynomial<T>::get_terms()
+{
+    return terms;
 }
 
 template <typename T>
@@ -153,7 +167,7 @@ T Polynomial<T>::get(int exponent)
 {
     assert(exponent >= 0);
 
-    typename Term::const_iterator it = terms.find(exponent);
+    typename Term<T>::const_iterator it = terms.find(exponent);
 
     return (it == terms.end()) ? 0 : it->second;
 }
@@ -164,18 +178,20 @@ void Polynomial<T>::set(int exponent, T coef)
     assert(exponent >= 0);
     assert(field->check(coef));
 
-    typename Term::const_iterator it = terms.find(exponent);
-
+    auto it = terms.find(exponent);
     if (it == terms.end()) {
         if (coef == 0)
             return;
     } else {
-        if (coef == 0) {
+        if (coef == 0 && exponent == degree_cache) {
             terms.erase(it);
+            degree_cache--;
             return;
         }
     }
     terms[exponent] = coef;
+    if (exponent > degree_cache && coef > 0)
+        degree_cache = exponent;
 }
 
 template <typename T>
@@ -185,20 +201,6 @@ void Polynomial<T>::_neg(Polynomial<T>* result, Polynomial<T>* a)
 
     Polynomial<T> b(field);
     sub(result, &b, a);
-}
-
-template <typename T>
-void Polynomial<T>::_add(
-    Polynomial<T>* result,
-    Polynomial<T>* a,
-    Polynomial<T>* b)
-{
-    result->clear();
-
-    int max = std::max(a->degree(), b->degree());
-
-    for (int i = max; i >= 0; i--)
-        result->set(i, field->add(a->get(i), b->get(i)));
 }
 
 template <typename T>
@@ -279,7 +281,7 @@ void Polynomial<T>::_div(
 template <typename T>
 void Polynomial<T>::_gcd(Polynomial<T>* u, Polynomial<T>* v, Polynomial<T>* gcd)
 {
-    Polynomial<T> r(sub_field);
+    Polynomial<T> r(field);
 
     if (v->degree() == 0) {
         gcd->copy(u);
@@ -318,19 +320,19 @@ void Polynomial<T>::_extended_gcd(
     Polynomial<T>* quotient_gcd[2],
     Polynomial<T>* gcd)
 {
-    Polynomial<T> s(sub_field);
-    Polynomial<T> old_s(sub_field);
+    Polynomial<T> s(field);
+    Polynomial<T> old_s(field);
     old_s.set(0, 1);
-    Polynomial<T> t(sub_field);
+    Polynomial<T> t(field);
     t.set(0, 1);
-    Polynomial<T> old_t(sub_field);
-    Polynomial<T> r(sub_field);
+    Polynomial<T> old_t(field);
+    Polynomial<T> r(field);
     r.copy(b);
-    Polynomial<T> old_r(sub_field);
+    Polynomial<T> old_r(field);
     old_r.copy(a);
-    Polynomial<T> quotient(sub_field);
-    Polynomial<T> tmp(sub_field);
-    Polynomial<T> tmp2(sub_field);
+    Polynomial<T> quotient(field);
+    Polynomial<T> tmp(field);
+    Polynomial<T> tmp2(field);
 
     while (!r.is_zero()) {
         _div(&quotient, nullptr, &old_r, &r);
@@ -379,35 +381,18 @@ void Polynomial<T>::_extended_gcd(
 }
 
 template <typename T>
-void Polynomial<T>::_derivative(Polynomial<T>* result, Polynomial<T>* a)
-{
-    T _card;
-
-    if (sub_field)
-        _card = sub_field->card();
-    else
-        _card = field->card();
-
-    result->clear();
-
-    for (int i = a->degree(); i > 0; i--)
-        result->set(i - 1, field->mul(a->get(i), i % _card));
-}
-
-template <typename T>
 void Polynomial<T>::neg()
 {
-    Polynomial<T> a(field), b(field);
-    b.copy(this);
-    _sub(this, &a, &b);
+    for (auto& term : terms)
+        terms[term.first] = field->neg(term.second);
 }
 
 template <typename T>
 void Polynomial<T>::add(Polynomial<T>* b)
 {
-    Polynomial<T> a(field);
-    a.copy(this);
-    _add(this, &a, b);
+    for (auto& it : b->get_terms()) {
+        set(it.first, field->add(get(it.first), it.second));
+    }
 }
 
 template <typename T>
@@ -426,6 +411,59 @@ void Polynomial<T>::mul(Polynomial<T>* b)
     _mul(this, &a, b);
 }
 
+/** Multiply to a polynomial \f$b\f$ with a limited degree of result
+ *
+ * Degree of result polynomial is limited by a given value, i.e. elements of
+ * degree greater than this value are ignored. It reduces operations in cases
+ * the degree limit is smaller than degree of input polynomials
+ *
+ * @param b - polynomial to multiply
+ * @param deg_out - degree of result
+ */
+template <typename T>
+void Polynomial<T>::mul(Polynomial<T>* b, int deg_out)
+{
+    for (int deg = deg_out; deg >= 0; deg--) {
+        T val = 0;
+        for (int deg_a = 0; deg_a <= deg; deg_a++) {
+            const T val_a = get(deg_a);
+            if (val_a > 0) {
+                const int deg_b = deg - deg_a;
+                const T val_b = b->get(deg_b);
+                if (val_b > 0)
+                    val = field->add(val, field->mul(val_a, val_b));
+            }
+        }
+        set(deg, val);
+    }
+    degree_cache = deg_out;
+}
+
+/** Multiply to polynomial (X + coef)
+ *
+ * \f{eqnarray*}{
+ * P(X) = &a_0 + a_1 X + ... + a_n X^n \\
+ * Q(X) = &coef + X \\
+ * R(X) = &P(X) \times Q(X) \\
+ *      = &a_0 * coef + a_1 * coef X + ... + a_n X^n + \\
+ *        &a_0 X + a_1 X^2 + ... + a_{n-1} X^n + a_n X^{n+1} \\
+ *      = &a_0 * coef + sum_{i=1}^{n}(a_{i-1} + a_i * coef) X^i + a_n X^{n+1}
+ * \f}
+ *
+ * @param coef - coef of the multiplied polynomial (X + coef)
+ */
+template <typename T>
+void Polynomial<T>::mul_to_x_plus_coef(T coef)
+{
+    const int deg_n = degree_cache;
+    const T val = get(deg_n);
+    for (int deg = degree_cache; deg > 0; deg--) {
+        set(deg, field->add(get(deg - 1), field->mul(get(deg), coef)));
+    }
+    set(0, field->mul(get(0), coef));
+    set(deg_n + 1, val);
+}
+
 template <typename T>
 void Polynomial<T>::div(Polynomial<T>* b)
 {
@@ -442,12 +480,31 @@ void Polynomial<T>::mod(Polynomial<T>* b)
     _div(nullptr, this, &a, b);
 }
 
+/** Compute the derivative of a polynomial
+ *
+ * \f{eqnarray*}{
+ * P(X) &= a_0 + a_1 X + a_2 X^2 + ... + a_n X^n \\
+ * P'(X)&=       a_1   + a_2 X   + ... + a_n X^{n-1}
+ * \f}
+ *
+ * Note, derivate of \f$X^n\f$ is defined as sum of \f$n\f$ polynomials
+ * \f$X^{n-1}\f$, not a multiplication of \f$n\f$ and \f$X^{n-1}\f$. It can be
+ * expressed as below:
+ * \f{eqnarray*}{
+ *  derivative(X^n) &= (1 + 1 + ... + 1) X^{n-1}
+ *                  &= (n % p) * X^{n-1}
+ * \f{eqnarray*}{
+ * where \f$p\f$ is the characteristic of the field.
+ *
+ * @return
+ */
 template <typename T>
 void Polynomial<T>::derivative()
 {
-    Polynomial<T> a(field);
-    a.copy(this);
-    _derivative(this, &a);
+    for (int deg = 1; deg <= degree_cache; ++deg) {
+        set(deg - 1, field->mul(deg % field_characteristic, get(deg)));
+    }
+    set(degree_cache, 0);
 }
 
 template <typename T>
@@ -529,7 +586,7 @@ void Polynomial<T>::from_num(T x, int max_deg)
 template <typename T>
 void Polynomial<T>::dump(std::ostream& dest)
 {
-    typename Term::const_reverse_iterator it = terms.rbegin();
+    typename Term<T>::const_reverse_iterator it = terms.rbegin();
 
     if (it == terms.rend()) {
         dest << "0";

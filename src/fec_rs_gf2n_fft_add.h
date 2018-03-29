@@ -77,7 +77,7 @@ class RsGf2nFftAdd : public FecCode<T> {
 
     ~RsGf2nFftAdd()
     {
-        delete fft;
+        delete this->fft;
         delete this->gf;
         if (betas)
             delete betas;
@@ -103,7 +103,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         vec::Vector<T>* words)
     {
         vec::ZeroExtended<T> vwords(words, n);
-        fft->fft(output, &vwords);
+        this->fft->fft(output, &vwords);
     }
 
     void decode_add_data(int fragment_index, int row)
@@ -122,51 +122,46 @@ class RsGf2nFftAdd : public FecCode<T> {
         // nothing to do
     }
 
-    /**
-     * Perform a Lagrange interpolation to find the coefficients of the
-     * polynomial
-     *
-     * @note If all fragments are available ifft(words) is enough
-     *
-     * @note FFT(f, m, B) = ( f(B[0]), f(B[1]), .., f(B[n-1]) )
-     *  where n=2^m, and B is a subspace spanned by m linearly independent
-     *    beta_1, .., beta_m over GF(2).
-     *
-     * @param output must be exactly n_data
-     * @param props special values dictionary must be exactly n_data
-     * @param offset used to locate special values
-     * @param fragments_ids unused
-     * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
-     */
-    void decode(
+  private:
+    vec::Vector<T>* betas = nullptr;
+
+  protected:
+    void decode_prepare(
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* fragments_ids,
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int* vx_zero)
+    {
+        int _vx_zero = -1;
+        // vector x=(x_0, x_1, ..., x_k-1)
+        for (int i = 0; i < this->n_data; i++) {
+            int _vx = this->betas->get(fragments_ids->get(i));
+            vx->set(i, _vx);
+            if (_vx == 0)
+                _vx_zero = i;
+        }
+        *vx_zero = _vx_zero;
+    }
+
+    // Lagrange interpolation
+    void decode_Lagrange(
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int vx_zero)
     {
-        int vx_zero = -1;
         int k = this->n_data; // number of fragments received
-        // vector x=(x_0, x_1, ..., x_k-1)
-        vec::Vector<T> vx(this->gf, k);
-        for (int i = 0; i < k; i++) {
-            int _vx = this->betas->get(fragments_ids->get(i));
-            vx.set(i, _vx);
-            if (_vx == 0)
-                vx_zero = i;
-        }
-
-        // Lagrange interpolation
         Polynomial<T> A(this->gf), _A(this->gf);
 
         // compute A(x) = prod_j(x-x_j)
         A.set(0, 1);
         for (int i = 0; i < k; i++) {
-            Polynomial<T> _t(this->gf);
-            _t.set(1, 1);
-            _t.set(0, vx.get(i));
-            // _t.dump();
-            A.mul(&_t);
+            A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
         }
         // std::cout << "A(x)="; A.dump();
 
@@ -178,40 +173,43 @@ class RsGf2nFftAdd : public FecCode<T> {
         // evaluate n_i=v_i/A'_i(x_i)
         vec::Vector<T> _n(this->gf, k);
         for (int i = 0; i < k; i++) {
-            _n.set(i, this->gf->div(words->get(i), _A.eval(vx.get(i))));
+            _n.set(i, this->gf->div(words->get(i), _A.eval(vx->get(i))));
         }
 
         // We have to find the numerator of the following expression:
-        // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
+        // P(x)/A(x) = S(x) + R(x)
+        //  where S(x) = sum_{0 <= i <= k-1, i != vx_zero}(n_i/(x-x_i)) mod x^n
+        //        R(x) = _n[vx_zero] / x
         // using Taylor series we rewrite the expression into
-        // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
+        // S(x) = sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
         Polynomial<T> S(this->gf);
-        for (T j = 0; j <= n - 1; j++) {
+        for (int j = 0; j <= k - 1; j++) {
             T val = 0;
             for (int i = 0; i <= k - 1; i++) {
                 if (i == vx_zero)
                     continue;
                 // perform Taylor series at 0
-                T xi_j_1 = this->gf->inv(this->gf->exp(vx.get(i), j + 1));
+                T xi_j_1 = this->gf->inv(this->gf->exp(vx->get(i), j + 1));
                 val = this->gf->add(val, this->gf->mul(_n.get(i), xi_j_1));
             }
             S.set(j, val);
         }
-        // S.dump();
-        S.mul(&A);
+        // std::cout << "S:"; S.dump();
+        S.mul(&A, k - 1);
+        // std::cout << "S x A:"; S.dump();
         if (vx_zero > -1) {
             assert(A.get(0) == 0);
             // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x
             //  as S(x) does not include the term of vx_zero
+            // Note: A(0) = 0 since vx_zero exists
             int deg = A.degree();
+            T val = _n.get(vx_zero);
             for (int i = 1; i <= deg; i++)
                 S.set(
                     i - 1,
-                    this->gf->add(
-                        S.get(i - 1),
-                        this->gf->mul(_n.get(vx_zero), A.get(i))));
+                    this->gf->add(S.get(i - 1), this->gf->mul(val, A.get(i))));
+            // std::cout << "S x A + vx_zero:"; S.dump();
         }
-        // S.dump();
 
         // output is n_data length
         for (unsigned i = 0; i < this->n_data; i++)
@@ -219,8 +217,8 @@ class RsGf2nFftAdd : public FecCode<T> {
     }
 
   private:
+    // this overwrite multiplicative FFT
     fft::Additive<T>* fft = nullptr;
-    vec::Vector<T>* betas = nullptr;
 };
 
 } // namespace fec
