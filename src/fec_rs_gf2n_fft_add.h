@@ -46,40 +46,51 @@ namespace fec {
 template <typename T>
 class RsGf2nFftAdd : public FecCode<T> {
   public:
-    T m;
-
     // NOTE: only NON_SYSTEMATIC is supported now
     RsGf2nFftAdd(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {
-        if (word_size > 16)
-            assert(false); // not support yet
-        unsigned gf_n = 8 * word_size;
-        this->gf = new gf::BinExtension<T>(gf_n);
-
-        // with this encoder we cannot exactly satisfy users request, we need to
-        // pad n = smallest power of 2 and at least (n_parities + n_data)
-        this->n = arith::get_smallest_power_of_2<T>(n_data + n_parities);
-        m = arith::log2<T>(this->n);
-
-        // std::cerr << "n_parities=" << n_parities << "\n";
-        // std::cerr << "n_data=" << n_data << "\n";
-        // std::cerr << "n=" << n << "\n";
-        // std::cerr << "m=" << m << "\n";
-
-        this->fft = new fft::Additive<T>(this->gf, m);
-
-        // subspace spanned by <beta_i>
-        this->betas = new vec::Vector<T>(this->gf, this->n);
-        this->fft->compute_B(this->betas);
+        this->fec_init();
     }
 
     ~RsGf2nFftAdd()
     {
-        delete this->fft;
-        delete this->gf;
+        if (this->gf)
+            delete this->gf;
         if (betas)
             delete betas;
+    }
+
+    inline void check_params()
+    {
+        if (this->word_size > 16)
+            assert(false); // not support yet
+    }
+
+    inline void init_gf()
+    {
+        unsigned gf_n = 8 * this->word_size;
+        this->gf = new gf::BinExtension<T>(gf_n);
+    }
+
+    inline void init_fft()
+    {
+        // with this encoder we cannot exactly satisfy users request, we need to
+        // pad n = smallest power of 2 and at least (n_parities + n_data)
+        this->n =
+            arith::get_smallest_power_of_2<T>(this->n_data + this->n_parities);
+
+        T m = arith::log2<T>(this->n);
+
+        this->fft = std::unique_ptr<fft::Additive<T>>(
+            new fft::Additive<T>(this->gf, m));
+    }
+
+    inline void init_others()
+    {
+        // subspace spanned by <beta_i>
+        this->betas = new vec::Vector<T>(this->gf, this->n);
+        this->fft->compute_B(this->betas);
     }
 
     int get_n_outputs()
@@ -241,7 +252,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         // std::cout << "A(x)="; A.dump();
 
         // compute A'(x) since A_i(x_i) = A'_i(x_i)
-        vec::Poly<T> _A(&A);
+        vec::Poly<T> _A(A);
         _A.derivative();
         this->fft->fft(&_A_fft, &_A);
         // std::cout << "A'(x)="; _A.dump();
@@ -296,7 +307,7 @@ class RsGf2nFftAdd : public FecCode<T> {
 
   private:
     // this overwrite multiplicative FFT
-    fft::Additive<T>* fft = nullptr;
+    std::unique_ptr<fft::Additive<T>> fft = nullptr;
 };
 
 } // namespace fec

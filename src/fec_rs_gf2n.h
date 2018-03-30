@@ -56,15 +56,36 @@ class RsGf2n : public FecCode<T> {
         RsMatrixType type)
         : FecCode<T>(FecType::SYSTEMATIC, word_size, n_data, n_parities)
     {
+        this->fec_init();
+    }
+
+    ~RsGf2n()
+    {
+        if (this->gf)
+            delete this->gf;
+    }
+
+    inline void check_params()
+    {
         assert(
             type == RsMatrixType::VANDERMONDE || type == RsMatrixType::CAUCHY);
 
-        if (word_size > 16)
+        if (this->word_size > 16)
             assert(false); // not support yet
-        unsigned gf_n = 8 * word_size;
-        this->gf = new gf::BinExtension<T>(gf_n);
+    }
 
-        this->mat = new vec::Matrix<T>(this->gf, n_parities, n_data);
+    inline void init_gf()
+    {
+        unsigned gf_n = 8 * this->word_size;
+        this->gf = new gf::BinExtension<T>(gf_n);
+    }
+
+    inline void init_fft() {}
+
+    inline void init_others()
+    {
+        this->mat = std::unique_ptr<vec::Matrix<T>>(
+            new vec::Matrix<T>(this->gf, this->n_parities, this->n_data));
         if (type == RsMatrixType::CAUCHY) {
             mat->cauchy();
         } else if (type == RsMatrixType::VANDERMONDE) {
@@ -72,15 +93,8 @@ class RsGf2n : public FecCode<T> {
         }
 
         // has to be a n_data*n_data invertible square matrix
-        decode_mat =
-            new vec::Matrix<T>(this->gf, mat->get_n_cols(), mat->get_n_cols());
-    }
-
-    ~RsGf2n()
-    {
-        delete mat;
-        delete decode_mat;
-        delete this->gf;
+        decode_mat = std::unique_ptr<vec::Matrix<T>>(
+            new vec::Matrix<T>(this->gf, mat->get_n_cols(), mat->get_n_cols()));
     }
 
     int get_n_outputs()
@@ -132,8 +146,8 @@ class RsGf2n : public FecCode<T> {
     }
 
   private:
-    vec::Matrix<T>* mat = nullptr;
-    vec::Matrix<T>* decode_mat = nullptr;
+    std::unique_ptr<vec::Matrix<T>> mat = nullptr;
+    std::unique_ptr<vec::Matrix<T>> decode_mat = nullptr;
 };
 
 } // namespace fec

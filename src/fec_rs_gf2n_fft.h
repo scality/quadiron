@@ -49,41 +49,52 @@ class RsGf2nFft : public FecCode<T> {
     RsGf2nFft(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {
-        if (word_size > 16)
-            assert(false); // not support yet
-        unsigned gf_n = 8 * word_size;
-        this->gf = new gf::BinExtension<T>(gf_n);
+        this->fec_init();
+    }
 
+    ~RsGf2nFft()
+    {
+        if (this->gf)
+            delete this->gf;
+    }
+
+    inline void check_params()
+    {
+        if (this->word_size > 16)
+            assert(false); // not support yet
+    }
+
+    inline void init_gf()
+    {
+        unsigned gf_n = 8 * this->word_size;
+        this->gf = new gf::BinExtension<T>(gf_n);
+    }
+
+    inline void init_fft()
+    {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
         // n_data)
-        this->n = this->gf->get_code_len_high_compo(n_parities + n_data);
-
+        this->n =
+            this->gf->get_code_len_high_compo(this->n_parities + this->n_data);
         // compute root of order n such as r^n == 1
         this->r = this->gf->get_nth_root(this->n);
 
-        // std::cerr << "n_parities=" << n_parities << "\n";
-        // std::cerr << "n_data=" << n_data << "\n";
-        // std::cerr << "n=" << n << "\n";
-        // std::cerr << "r=" << r << "\n";
-
-        this->fft = new fft::CooleyTukey<T>(this->gf, this->n);
+        this->fft = std::unique_ptr<fft::CooleyTukey<T>>(
+            new fft::CooleyTukey<T>(this->gf, this->n));
 
         this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
             new fft::CooleyTukey<T>(this->gf, this->n));
+    }
 
+    inline void init_others()
+    {
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(this->gf, this->n_data + 1));
         for (int i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
-    }
-
-    ~RsGf2nFft()
-    {
-        delete this->fft;
-        delete this->gf;
     }
 
     int get_n_outputs()

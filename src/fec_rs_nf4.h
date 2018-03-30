@@ -51,44 +51,58 @@ class RsNf4 : public FecCode<T> {
     RsNf4(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {
-        assert(word_size >= 2);
-        assert(word_size <= 8);
-        gf_n = word_size / 2;
+        this->fec_init();
+    }
+
+    ~RsNf4()
+    {
+        if (ngff4)
+            delete ngff4;
+    }
+
+    inline void check_params()
+    {
+        assert(this->word_size >= 2);
+        assert(this->word_size <= 8);
+    }
+
+    inline void init_gf()
+    {
+        gf_n = this->word_size / 2;
 
         ngff4 = new gf::NF4<T>(gf_n);
         this->gf = ngff4;
 
         sub_field = ngff4->get_sub_field();
+    }
 
+    inline void init_fft()
+    {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
         // n_data)
-        this->n = sub_field->get_code_len_high_compo(n_parities + n_data);
+        this->n =
+            sub_field->get_code_len_high_compo(this->n_parities + this->n_data);
 
         // compute root of order n-1 such as r^(n-1) mod q == (1, ..,1)
         this->r = ngff4->get_nth_root(this->n);
 
-        // std::cerr << "n=" << n << "\n";
-        // std::cerr << "r=" << r << "\n";
-
-        int m = arith::get_smallest_power_of_2<int>(n_data);
-        this->fft = new fft::Radix2<T>(ngff4, this->n, m);
+        int m = arith::get_smallest_power_of_2<int>(this->n_data);
+        this->fft = std::unique_ptr<fft::Radix2<T>>(
+            new fft::Radix2<T>(ngff4, this->n, m));
 
         this->fft_full =
             std::unique_ptr<fft::Radix2<T>>(new fft::Radix2<T>(ngff4, this->n));
+    }
 
+    inline void init_others()
+    {
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = ngff4->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(ngff4, this->n_data + 1));
         for (int i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, ngff4->exp(inv_r, i));
-    }
-
-    ~RsNf4()
-    {
-        delete this->fft;
-        delete ngff4;
     }
 
     int get_n_outputs()
