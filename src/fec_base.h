@@ -215,11 +215,30 @@ class FecCode {
   protected:
     // primitive nth root of unity
     T r;
-    gf::Field<T>* gf;
-    fft::FourierTransform<T>* fft = nullptr;
+    gf::Field<T>* gf = nullptr;
+    std::unique_ptr<fft::FourierTransform<T>> fft = nullptr;
     std::unique_ptr<fft::FourierTransform<T>> fft_full = nullptr;
     // This vector MUST be initialized by derived Class using multiplicative FFT
     std::unique_ptr<vec::Vector<T>> inv_r_powers = nullptr;
+
+    // pure abstract methods that will be defined in derived class
+    virtual void check_params() = 0;
+    virtual void init_gf() = 0;
+    virtual void init_fft() = 0;
+    virtual void init_others() = 0;
+
+    // This function will called in constructor of every derived class
+    void fec_init()
+    {
+        // check compatible parameters
+        check_params();
+        // create the field
+        init_gf();
+        // create FFT
+        init_fft();
+        // init other parameters dedicated for derived class
+        init_others();
+    }
 
     virtual void decode_prepare(
         const std::vector<Properties>& props,
@@ -701,7 +720,7 @@ void FecCode<T>::decode_prepare(
         // Following check is used for FFT over FNT where the single special
         // case symbol equals card - 1
         if (data && *data == "@") {
-            words->set(i, fft->get_gf()->card() - 1);
+            words->set(i, this->gf->card() - 1);
         }
     }
 }
@@ -805,7 +824,7 @@ void FecCode<T>::decode_vec_lagrange(
     // std::cout << "A(x)="; A.dump();
 
     // compute A'(x) since A_i(x_i) = A'_i(x_i)
-    vec::Poly<T> _A(&A);
+    vec::Poly<T> _A(A);
     _A.derivative();
     this->fft->fft(&_A_fft, &_A);
     // std::cout << "A'(x)="; _A.dump();
