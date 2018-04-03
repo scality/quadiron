@@ -747,11 +747,11 @@ void FecCode<T>::decode_lagrange(
     Polynomial<T> N_p(this->gf);
     Polynomial<T> S(this->gf);
 
-    int k = this->n_data; // number of fragments received
+    unsigned k = this->n_data; // number of fragments received
 
     // compute A(x) = prod_j(x-x_j)
     A.set(0, 1);
-    for (int i = 0; i < k; i++) {
+    for (unsigned i = 0; i < k; i++) {
         A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
     }
 
@@ -761,12 +761,12 @@ void FecCode<T>::decode_lagrange(
 
     // evaluate n_i=v_i/A'_i(x_i)
     vec::Vector<T> _n(this->gf, k);
-    for (int i = 0; i < k; i++) {
+    for (unsigned i = 0; i < k; i++) {
         _n.set(i, this->gf->div(words->get(i), _A.eval(vx->get(i))));
     }
 
     // compute N'(x) = sum_i{n_i * x^z_i}
-    for (int i = 0; i <= k - 1; i++) {
+    for (unsigned i = 0; i < k; i++) {
         N_p.set(fragments_ids->get(i), _n.get(i));
     }
 
@@ -774,7 +774,7 @@ void FecCode<T>::decode_lagrange(
     // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
     // using Taylor series we rewrite the expression into
     // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
-    for (T i = 0; i <= k - 1; i++) {
+    for (T i = 0; i < k; i++) {
         S.set(i, N_p.eval(inv_r_powers->get(i + 1)));
     }
     S.neg();

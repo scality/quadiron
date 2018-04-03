@@ -146,7 +146,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     {
         int _vx_zero = -1;
         // vector x=(x_0, x_1, ..., x_k-1)
-        for (int i = 0; i < this->n_data; i++) {
+        for (unsigned i = 0; i < this->n_data; i++) {
             int _vx = this->betas->get(fragments_ids->get(i));
             vx->set(i, _vx);
             if (_vx == 0)

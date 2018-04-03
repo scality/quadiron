@@ -101,8 +101,9 @@ class RsNf4 : public FecCode<T> {
         const T inv_r = ngff4->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(ngff4, this->n_data + 1));
-        for (int i = 0; i <= this->n_data; i++)
+        for (unsigned i = 0; i <= this->n_data; i++) {
             this->inv_r_powers->set(i, ngff4->exp(inv_r, i));
+        }
     }
 
     int get_n_outputs()
@@ -210,13 +211,13 @@ class RsNf4 : public FecCode<T> {
         vec::Vector<T>* vx,
         int vx_zero)
     {
-        int k = this->n_data; // number of fragments received
+        unsigned k = this->n_data; // number of fragments received
         Polynomial<T> A(ngff4), _A(ngff4);
 
         // compute A(x) = prod_j(x-x_j)
         T one = ngff4->get_unit();
         A.set(0, one);
-        for (int i = 0; i < k; i++) {
+        for (unsigned i = 0; i < k; i++) {
             A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
         }
 
@@ -226,13 +227,13 @@ class RsNf4 : public FecCode<T> {
 
         // evaluate n_i=v_i/A'_i(x_i)
         vec::Vector<T> _n(ngff4, k);
-        for (int i = 0; i < k; i++) {
+        for (unsigned i = 0; i < k; i++) {
             _n.set(i, ngff4->div(words->get(i), _A.eval(vx->get(i))));
         }
 
         // compute N'(x) = sum_i{n_i * x^z_i}
         Polynomial<T> N_p(ngff4);
-        for (int i = 0; i <= k - 1; i++) {
+        for (unsigned i = 0; i < k; i++) {
             N_p.set(fragments_ids->get(i), _n.get(i));
         }
 

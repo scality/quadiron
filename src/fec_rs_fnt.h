@@ -116,7 +116,7 @@ class RsFnt : public FecCode<T> {
         T inv_r = this->gf->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(this->gf, this->n_data + 1));
-        for (int i = 0; i <= this->n_data; i++)
+        for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
     }
 
