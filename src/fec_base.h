@@ -680,7 +680,7 @@ void FecCode<T>::decode(
     vec::Vector<T>* fragments_ids,
     vec::Vector<T>* words)
 {
-    int vx_zero;
+    int vx_zero = 0;
     // vector x=(x_0, x_1, ..., x_k-1)
     vec::Vector<T> vx(this->gf, this->n_data);
 
