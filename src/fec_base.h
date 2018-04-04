@@ -754,19 +754,16 @@ void FecCode<T>::decode_lagrange(
     for (int i = 0; i < k; i++) {
         A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
     }
-    // std::cout << "A(x)="; A.dump();
 
     // compute A'(x) since A_i(x_i) = A'_i(x_i)
     _A.copy(&A);
     _A.derivative();
-    // std::cout << "A'(x)="; _A.dump();
 
     // evaluate n_i=v_i/A'_i(x_i)
     vec::Vector<T> _n(this->gf, k);
     for (int i = 0; i < k; i++) {
         _n.set(i, this->gf->div(words->get(i), _A.eval(vx->get(i))));
     }
-    // std::cout << "_n="; _n.dump();
 
     // compute N'(x) = sum_i{n_i * x^z_i}
     for (int i = 0; i <= k - 1; i++) {
@@ -781,9 +778,7 @@ void FecCode<T>::decode_lagrange(
         S.set(i, N_p.eval(inv_r_powers->get(i + 1)));
     }
     S.neg();
-    // std::cout << "S:"; S.dump();
     S.mul(&A, k - 1);
-    // std::cout << "S x A:"; S.dump();
     // No need to mod x^n since only last n_data coefs are obtained
     // output is n_data length
     for (unsigned i = 0; i < this->n_data; i++)
@@ -806,7 +801,6 @@ void FecCode<T>::decode_vec_lagrange(
     if (this->fft_full == nullptr) {
         throw LogicError("FEC base: FFT must be initialized");
     }
-    // std::cout << "WORDS:"; words->dump();
     int k = this->n_data; // number of fragments received
 
     vec::Poly<T> A(this->gf, n);
@@ -821,13 +815,11 @@ void FecCode<T>::decode_vec_lagrange(
     for (int i = 0; i < k; i++) {
         A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
     }
-    // std::cout << "A(x)="; A.dump();
 
     // compute A'(x) since A_i(x_i) = A'_i(x_i)
     vec::Poly<T> _A(A);
     _A.derivative();
     this->fft->fft(&_A_fft, &_A);
-    // std::cout << "A'(x)="; _A.dump();
 
     // evaluate n_i=v_i/A'_i(x_i)
     vec::Vector<T> _n(this->gf, k);
@@ -835,14 +827,12 @@ void FecCode<T>::decode_vec_lagrange(
         _n.set(
             i, this->gf->div(words->get(i), _A_fft.get(fragments_ids->get(i))));
     }
-    // std::cout << "_n="; _n.dump();
 
     // compute N'(x) = sum_i{n_i * x^z_i}
     N_p.zero();
     for (int i = 0; i <= k - 1; i++) {
         N_p.set(fragments_ids->get(i), _n.get(i));
     }
-    // std::cout << "N_p(x)="; N_p.dump();
     this->fft_full->fft_inv(&N_p_ifft, &N_p);
 
     // We have to find the numerator of the following expression:
@@ -853,9 +843,7 @@ void FecCode<T>::decode_vec_lagrange(
         S.set(i, N_p_ifft.get(i + 1));
     }
     S.neg();
-    // std::cout << "S:"; S.dump();
     S.mul(&A, k - 1);
-    // std::cout << "S x A:"; S.dump();
     // No need to mod x^n since only last n_data coefs are obtained
     // output is n_data length
     for (unsigned i = 0; i < this->n_data; i++)

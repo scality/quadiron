@@ -173,12 +173,10 @@ class RsGf2nFftAdd : public FecCode<T> {
         for (int i = 0; i < k; i++) {
             A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
         }
-        // std::cout << "A(x)="; A.dump();
 
         // compute A'(x) since A_i(x_i) = A'_i(x_i)
         _A.copy(&A);
         _A.derivative();
-        // std::cout << "A'(x)="; _A.dump();
 
         // evaluate n_i=v_i/A'_i(x_i)
         vec::Vector<T> _n(this->gf, k);
@@ -204,9 +202,7 @@ class RsGf2nFftAdd : public FecCode<T> {
             }
             S.set(j, val);
         }
-        // std::cout << "S:"; S.dump();
         S.mul(&A, k - 1);
-        // std::cout << "S x A:"; S.dump();
         if (vx_zero > -1) {
             assert(A.get(0) == 0);
             // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x
@@ -218,7 +214,6 @@ class RsGf2nFftAdd : public FecCode<T> {
                 S.set(
                     i - 1,
                     this->gf->add(S.get(i - 1), this->gf->mul(val, A.get(i))));
-            // std::cout << "S x A + vx_zero:"; S.dump();
         }
 
         // output is n_data length
@@ -236,7 +231,6 @@ class RsGf2nFftAdd : public FecCode<T> {
         vec::Vector<T>* vx,
         int vx_zero)
     {
-        // std::cout << "WORDS:"; words->dump();
         int k = this->n_data; // number of fragments received
 
         vec::Poly<T> A(this->gf, this->n);
@@ -249,13 +243,11 @@ class RsGf2nFftAdd : public FecCode<T> {
         for (int i = 0; i < k; i++) {
             A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
         }
-        // std::cout << "A(x)="; A.dump();
 
         // compute A'(x) since A_i(x_i) = A'_i(x_i)
         vec::Poly<T> _A(A);
         _A.derivative();
         this->fft->fft(&_A_fft, &_A);
-        // std::cout << "A'(x)="; _A.dump();
 
         // evaluate n_i=v_i/A'_i(x_i)
         vec::Vector<T> _n(this->gf, k);
@@ -283,9 +275,7 @@ class RsGf2nFftAdd : public FecCode<T> {
             }
             S.set(j, val);
         }
-        // std::cout << "S:"; S.dump();
         S.mul(&A, k - 1);
-        // std::cout << "S x A:"; S.dump();
         if (vx_zero > -1) {
             assert(A.get(0) == 0);
             // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x
@@ -297,7 +287,6 @@ class RsGf2nFftAdd : public FecCode<T> {
                 S.set(
                     i - 1,
                     this->gf->add(S.get(i - 1), this->gf->mul(val, A.get(i))));
-            // std::cout << "S x A + vx_zero:"; S.dump();
         }
 
         // output is n_data length
