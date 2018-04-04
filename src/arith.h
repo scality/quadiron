@@ -81,10 +81,6 @@ bool solovay_strassen(T n);
 template <class T>
 bool is_prime(T n);
 template <class T>
-T weak_rand(T max);
-template <class T>
-T weak_rand0(T max);
-template <class T>
 T gcd(T u, T v);
 template <class T>
 void factor_distinct_prime(T n, std::vector<T>* output);
@@ -461,8 +457,9 @@ bool solovay_strassen1(T a, T n)
 template <class T>
 bool solovay_strassen(T n)
 {
+    std::uniform_int_distribution<uint32_t> dis(1, n - 1);
     for (int i = 0; i < 100; i++) {
-        T a = weak_rand<T>(n);
+        T a = dis(prng());
         if (!solovay_strassen1(a, n))
             return false;
     }
@@ -488,39 +485,6 @@ bool is_prime(T n)
             return false;
     }
     return true;
-}
-
-/**
- * Returns a number n such as 0 < n < max
- *
- * @param max
- *
- * @return
- */
-template <class T>
-T weak_rand(T max)
-{
-    T r;
-retry:
-    r = rand() % max;
-    if (0 == r)
-        goto retry;
-    return r;
-}
-
-/**
- * Returns a number n such as 0 <= n < max
- *
- * @param max
- *
- * @return
- */
-template <class T>
-T weak_rand0(T max)
-{
-    T r;
-    r = rand() % max;
-    return r;
 }
 
 /*

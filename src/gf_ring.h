@@ -518,7 +518,8 @@ void RingModN<T>::compute_omegas_cached(vec::Vector<T>* W, int n, T w)
 template <typename T>
 T RingModN<T>::weak_rand(void)
 {
-    return arith::weak_rand<T>(this->card());
+    std::uniform_int_distribution<uint32_t> dis(1, this->card() - 1);
+    return dis(prng());
 }
 
 /** Check if a number is primitive root or not.

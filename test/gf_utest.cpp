@@ -109,16 +109,12 @@ class GFUtest {
         for (i = 0; i < 100; i++) {
             T x, y;
 
-            // std::cout << "i=" << i << "\n";
-
             x = gf->weak_rand();
-            // std::cout << "x=" << x << "\n";
             try {
                 y = gf->inv(x);
-            } catch (nttec::Exception e) {
+            } catch (const nttec::Exception& e) {
                 continue;
             }
-            // std::cout << "inv(x)=" << y << "\n";
             assert(gf->mul(x, y) == 1);
             n_found++;
         }
@@ -133,16 +129,12 @@ class GFUtest {
         for (i = 0; i < 100; i++) {
             T x, y;
 
-            // std::cout << "i=" << i << "\n";
-
             x = gf->weak_rand_tuple();
-            // std::cout << "x=" << x << "\n";
             try {
                 y = gf->inv(x);
-            } catch (nttec::Exception e) {
+            } catch (const nttec::Exception& e) {
                 continue;
             }
-            // std::cout << "inv(x)=" << y << "\n";
             assert(gf->mul(x, y) == gf->get_unit());
             n_found++;
         }
@@ -376,7 +368,7 @@ class GFUtest {
     {
         std::cout << "gf_utest_gf_nf4_with_n=" << n << "\n";
 
-        srand(time(0));
+        nttec::prng().seed(time(0));
 
         nttec::gf::NF4<T> gf(n);
 
@@ -399,7 +391,7 @@ class GFUtest {
     {
         std::cout << "gf_utest\n";
 
-        srand(time(0));
+        nttec::prng().seed(time(0));
 
         simple_tests();
         test_negation_gf5();
@@ -422,7 +414,7 @@ class GFUtest {
     {
         std::cout << "gf_utest 2^" << n << "\n";
 
-        srand(time(0));
+        nttec::prng().seed(time(0));
 
         test_negation_gf2_bign(n);
         test_reciprocal_gf2_bign(n);
@@ -435,7 +427,7 @@ class GFUtest {
     {
         std::cout << "gf_utest_nogf2n\n";
 
-        srand(time(0));
+        nttec::prng().seed(time(0));
 
         test_negation_gf5();
         test_reciprocal_gf5();

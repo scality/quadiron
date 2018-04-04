@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 {
     struct test* p;
 
-    srand(0);
+    nttec::prng().seed(0);
 
     if (2 == argc) {
         std::stringstream ss(argv[1]);

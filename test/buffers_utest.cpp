@@ -27,11 +27,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <random>
+
 #include "nttec.h"
 
 template <typename T>
 class BuffersUtest {
   private:
+    std::mt19937 prng;
     nttec::gf::Prime<T>* gfp;
     T max_val;
 
@@ -48,12 +51,14 @@ class BuffersUtest {
 
     nttec::vec::Buffers<T>* gen_buffers_rand_data(int n, int size, int _max = 0)
     {
-        int max = (_max == 0) ? max_val : _max;
+        const int max = (_max == 0) ? max_val : _max;
+        std::uniform_int_distribution<uint32_t> dis(0, max - 1);
         nttec::vec::Buffers<T>* vec = new nttec::vec::Buffers<T>(n, size);
+
         for (int i = 0; i < n; i++) {
             T* buf = new T[size];
             for (int j = 0; j < size; j++) {
-                buf[j] = rand() % max;
+                buf[j] = dis(prng);
             }
             vec->set(i, buf);
         }
