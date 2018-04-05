@@ -48,10 +48,13 @@ typedef __m128i am128i __attribute__((aligned(ALIGN_SIZE)));
 
 const aint32 F4 = 65537;
 const aint32 F3 = 257;
-const am128i F4_m128i = _mm_set1_epi32(65537);
-const am128i F4minus1_m128i = _mm_set1_epi32(65536);
-const am128i F3_m128i = _mm_set1_epi32(257);
-const am128i F3minus1_m128i = _mm_set1_epi32(256);
+
+// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
+// (probably a false positive present in Clang 5 and fixed in Clang 6).
+const am128i F4_m128i = _mm_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
+const am128i F4minus1_m128i = _mm_set1_epi32(65536); // NOLINT(cert-err58-cpp)
+const am128i F3_m128i = _mm_set1_epi32(257);         // NOLINT(cert-err58-cpp)
+const am128i F3minus1_m128i = _mm_set1_epi32(256);   // NOLINT(cert-err58-cpp)
 
 /** Return aint128 integer from a _m128i register */
 static inline aint128 m128i_to_uint128(am128i v)

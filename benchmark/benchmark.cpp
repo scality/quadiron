@@ -53,11 +53,13 @@ Benchmark<T>::Benchmark(Params_t* params)
     int error;
     if ((error = this->check_params()) < 0) {
         std::cerr << errors_desc.at(error) << std::endl;
+        // NOLINTNEXTLINE(cert-err60-cpp)
         throw std::invalid_argument(errors_desc.at(error));
     }
 
     if ((error = this->init()) < 0) {
         std::cerr << errors_desc.at(error) << std::endl;
+        // NOLINTNEXTLINE(cert-err60-cpp)
         throw std::invalid_argument(errors_desc.at(error));
     }
 }
@@ -316,6 +318,7 @@ void Benchmark<T>::gen_data()
     }
     if (!check(d_chunks)) {
         std::cerr << errors_desc.at(ERR_FAILED_CHUNK) << std::endl;
+        // NOLINTNEXTLINE(cert-err60-cpp)
         throw std::runtime_error(errors_desc.at(ERR_FAILED_CHUNK));
     }
 }
