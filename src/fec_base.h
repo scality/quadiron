@@ -799,7 +799,7 @@ void FecCode<T>::decode_vec_lagrange(
         throw LogicError("FEC base: FFT must be initialized");
     }
     if (this->fft_full == nullptr) {
-        throw LogicError("FEC base: FFT must be initialized");
+        throw LogicError("FEC base: FFT full must be initialized");
     }
     int k = this->n_data; // number of fragments received
 
