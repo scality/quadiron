@@ -98,7 +98,7 @@ class RsNf4 : public FecCode<T> {
     inline void init_others()
     {
         // vector stores r^{-i} for i = 0, ... , k
-        T inv_r = ngff4->inv(this->r);
+        const T inv_r = ngff4->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(ngff4, this->n_data + 1));
         for (int i = 0; i <= this->n_data; i++)
