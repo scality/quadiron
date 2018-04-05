@@ -246,7 +246,7 @@ class FecCode {
         vec::Vector<T>* fragments_ids,
         vec::Vector<T>* words,
         vec::Vector<T>* vx,
-        int* vx_zero = 0);
+        int* vx_zero);
 
     virtual void decode_lagrange(
         vec::Vector<T>* output,
@@ -255,7 +255,7 @@ class FecCode {
         vec::Vector<T>* fragments_ids,
         vec::Vector<T>* words,
         vec::Vector<T>* vx,
-        int vx_zero = 0);
+        int vx_zero);
 
     virtual void decode_vec_lagrange(
         vec::Vector<T>* output,
@@ -264,7 +264,7 @@ class FecCode {
         vec::Vector<T>* fragments_ids,
         vec::Vector<T>* words,
         vec::Vector<T>* vx,
-        int vx_zero = 0);
+        int vx_zero);
 };
 
 /**
