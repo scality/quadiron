@@ -97,7 +97,7 @@ NF4<T>::NF4(unsigned n) : gf::Field<T>(65537, n)
 
     if (!check_n(n)) {
         // not supported yet
-        assert("Input n is not supported for NF4");
+        assert(false && "Input n is not supported for NF4");
     }
 
     unit = 0;

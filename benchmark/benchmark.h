@@ -54,7 +54,8 @@ enum ec_type {
     EC_TYPE_END,
 };
 
-std::map<ec_type, std::string> ec_desc = {
+// NOLINTNEXTLINE(cert-err58-cpp)
+const std::map<ec_type, std::string> ec_desc = {
     {EC_TYPE_ALL, "All available Reed-solomon codes"},
     {EC_TYPE_RS_GF2N_V,
      "Classical Vandermonde Reed-solomon codes over GF(2^n)"},
@@ -68,7 +69,8 @@ std::map<ec_type, std::string> ec_desc = {
      "Reed-solomon codes over GF(65537) using FFT on pack of codewords"},
 };
 
-std::map<ec_type, std::string> ec_desc_short = {
+// NOLINTNEXTLINE(cert-err58-cpp)
+const std::map<ec_type, std::string> ec_desc_short = {
     {EC_TYPE_ALL, "all"},
     {EC_TYPE_RS_GF2N_V, "rs-gf2n-v"},
     {EC_TYPE_RS_GF2N_C, "rs-gf2n-c"},
@@ -95,7 +97,8 @@ enum errors {
     ERR_T_NOT_SUPPORTED,
 };
 
-std::map<int, std::string> errors_desc = {
+// NOLINTNEXTLINE(cert-err58-cpp)
+const std::map<int, std::string> errors_desc = {
     {ERR_COMPT_WORD_SIZE_T, "Word size and type T is not compatible"},
     {ERR_WORD_SIZE, "Word size is incorrect"},
     {ERR_COMPT_CODE_LEN_T, "Code length is too long vs. type T"},
@@ -106,7 +109,8 @@ std::map<int, std::string> errors_desc = {
     {ERR_T_NOT_SUPPORTED, "Type T is not supported"},
 };
 
-std::map<std::string, ec_type> fec_type_map = {
+// NOLINTNEXTLINE(cert-err58-cpp)
+const std::map<std::string, ec_type> fec_type_map = {
     {"all", EC_TYPE_ALL},
     {"rs-gf2n-v", EC_TYPE_RS_GF2N_V},
     {"rs-gf2n-c", EC_TYPE_RS_GF2N_C},
@@ -123,19 +127,22 @@ enum scenario_type {
     ENC_DEC,
 };
 
-std::map<std::string, scenario_type> sce_type_map = {
+// NOLINTNEXTLINE(cert-err58-cpp)
+const std::map<std::string, scenario_type> sce_type_map = {
     {"enc_only", ENC_ONLY},
     {"dec_only", DEC_ONLY},
     {"enc_dec", ENC_DEC},
 };
 
-std::map<int, std::string> sce_desc = {
+// NOLINTNEXTLINE(cert-err58-cpp)
+const std::map<int, std::string> sce_desc = {
     {ENC_ONLY, "Only encodings"},
     {DEC_ONLY, "Encode once and many decodings"},
     {ENC_DEC, "Encodings and decodings"},
 };
 
-std::map<int, std::string> sce_desc_short = {
+// NOLINTNEXTLINE(cert-err58-cpp)
+const std::map<int, std::string> sce_desc_short = {
     {ENC_ONLY, "enc"},
     {DEC_ONLY, "dec"},
     {ENC_DEC, "enc & dec"},
@@ -163,8 +170,9 @@ struct Params_t {
     void print()
     {
         std::cout << "\n--------------- Parameters ----------------\n";
-        std::cout << "FEC type:             " << ec_desc[fec_type] << std::endl;
-        std::cout << "Scenario benchmark:   " << sce_desc[sce_type]
+        std::cout << "FEC type:             " << ec_desc.at(fec_type)
+                  << std::endl;
+        std::cout << "Scenario benchmark:   " << sce_desc.at(sce_type)
                   << std::endl;
         std::cout << "Word size:            " << word_size << std::endl;
         std::cout << "Number of data:       " << k << std::endl;
@@ -184,7 +192,7 @@ struct Params_t {
 
     void show_ec_desc()
     {
-        std::cout << "\nBenchmarking for " << ec_desc[fec_type] << std::endl;
+        std::cout << "\nBenchmarking for " << ec_desc.at(fec_type) << std::endl;
     }
 
     std::string* get_header()
@@ -218,8 +226,8 @@ struct Params_t {
 
     void show_params()
     {
-        std::cout << "  " << std::setw(15) << ec_desc_short[fec_type];
-        std::cout << "  " << std::setw(10) << sce_desc_short[sce_type];
+        std::cout << "  " << std::setw(15) << ec_desc_short.at(fec_type);
+        std::cout << "  " << std::setw(10) << sce_desc_short.at(sce_type);
         std::cout << "  " << std::setw(7) << k;
         std::cout << "  " << std::setw(7) << m;
         std::cout << "  " << std::setw(7) << word_size;

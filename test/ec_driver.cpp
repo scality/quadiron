@@ -27,7 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <string.h>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -433,7 +433,7 @@ int main(int argc, char** argv)
             }
             break;
         case 'w':
-            word_size = atoi(optarg);
+            word_size = std::stoi(optarg);
             break;
         case 'v':
             vflag = 1;
@@ -448,10 +448,10 @@ int main(int argc, char** argv)
             rflag = 1;
             break;
         case 'n':
-            n_data = atoi(optarg);
+            n_data = std::stoi(optarg);
             break;
         case 'm':
-            n_parities = atoi(optarg);
+            n_parities = std::stoi(optarg);
             break;
         case 'p':
             prefix = xstrdup(optarg);

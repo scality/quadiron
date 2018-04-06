@@ -27,12 +27,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <random>
+
 #include "nttec.h"
 
 template <typename T>
 class ArithUtest {
   public:
     T max;
+    std::uniform_int_distribution<uint32_t> uniform_dist_max;
 
     ArithUtest()
     {
@@ -43,6 +46,8 @@ class ArithUtest {
             for (size_t i = 0; i < sizeof(T) * 8; i++)
                 max += (T)1 << i;
         }
+        uniform_dist_max = std::uniform_int_distribution<uint32_t>(
+            1, static_cast<uint32_t>(max - 1));
     }
 
     ~ArithUtest() {}
@@ -61,14 +66,15 @@ class ArithUtest {
     void test_reciprocal()
     {
         std::cout << "test_reciprocal\n";
+
         int i;
         T sub_max = nttec::arith::sqrt<T>(max);
+        std::uniform_int_distribution<uint32_t> dis(1, sub_max - 1);
+
         for (i = 0; i < 1000; i++) {
             T x, y, z;
 
-            // std::cout << "i=" << i << "\n";
-
-            x = nttec::arith::weak_rand<T>(sub_max);
+            x = dis(nttec::prng());
             // std::cout << "x=" << x << "\n";
             y = nttec::arith::exp<T>(x, 2);
             // std::cout << "exp(x)=" << y << "\n";
@@ -245,12 +251,11 @@ class ArithUtest {
         std::cout << "test_factor_distinct_prime\n";
 
         int i;
+
         for (i = 0; i < 1000; i++) {
-            T x;
+            const T x = uniform_dist_max(nttec::prng());
             std::vector<T> primes;
-            // std::cout << "i=" << i << "\n";
-            x = nttec::arith::weak_rand<T>(max);
-            // std::cout << "x=" << x << "\n";
+
             nttec::arith::factor_distinct_prime<T>(x, &primes);
             check_all_primes(&primes, true);
         }
@@ -263,11 +268,10 @@ class ArithUtest {
         int i;
         std::vector<T> primes;
         std::vector<int> exponent;
+
         for (i = 0; i < 1000; i++) {
-            T x;
-            // std::cout << "i=" << i << "\n";
-            x = nttec::arith::weak_rand<T>(max);
-            // std::cout << "x=" << x << "\n";
+            const T x = uniform_dist_max(nttec::prng());
+
             nttec::arith::factor_prime<T>(x, &primes, &exponent);
             check_all_primes(&primes, true);
             check_primes_exponent(x, &primes, &exponent);
@@ -299,10 +303,8 @@ class ArithUtest {
         int i;
         std::vector<T> divisors;
         for (i = 0; i < 1000; i++) {
-            T x;
-            // std::cout << "i=" << i << "\n";
-            x = nttec::arith::weak_rand<T>(max);
-            // std::cout << "x=" << x << "\n";
+            const T x = uniform_dist_max(nttec::prng());
+
             nttec::arith::get_proper_divisors<T>(x, &divisors);
             check_divisors(x, &divisors, true);
             divisors.clear();
@@ -316,12 +318,10 @@ class ArithUtest {
         int i;
         std::vector<T> divisors;
         for (i = 0; i < 1000; i++) {
-            T x;
-            // std::cout << "i=" << i << "\n";
-            x = nttec::arith::weak_rand<T>(max);
+            const T x = uniform_dist_max(nttec::prng());
+
             std::vector<T> factors;
             nttec::arith::factor_distinct_prime<T>(x, &factors);
-            // std::cout << "x=" << x << "\n";
             nttec::arith::get_proper_divisors<T>(x, &factors, &divisors);
             check_divisors(x, &divisors, true);
             divisors.clear();
@@ -335,10 +335,8 @@ class ArithUtest {
         int i;
         std::vector<T> divisors;
         for (i = 0; i < 1000; i++) {
-            T x;
-            // std::cout << "i=" << i << "\n";
-            x = nttec::arith::weak_rand<T>(max);
-            // std::cout << "x=" << x << "\n";
+            const T x = uniform_dist_max(nttec::prng());
+
             nttec::arith::get_all_divisors<T>(x, &divisors);
             check_divisors(x, &divisors, false);
             divisors.clear();
@@ -351,14 +349,11 @@ class ArithUtest {
 
         int i;
         for (i = 0; i < 1000; i++) {
-            T order, n;
-            // std::cout << "i=" << i << "\n";
-            order = nttec::arith::weak_rand<T>(max);
-            // std::cout << "order=" << order << "\n";
-            n = nttec::arith::weak_rand<T>(order);
-            // std::cout << "n=" << n << "\n";
-            T len = nttec::arith::get_code_len<T>(order, n);
-            // std::cout << "len=" << len << "\n";
+            const T order = uniform_dist_max(nttec::prng());
+            std::uniform_int_distribution<uint32_t> dis(1, order - 1);
+            const T n = dis(nttec::prng());
+            const T len = nttec::arith::get_code_len<T>(order, n);
+
             assert(order % len == 0);
             assert(len >= n);
         }
@@ -370,14 +365,11 @@ class ArithUtest {
 
         int i;
         for (i = 0; i < 1000; i++) {
-            T order, n;
-            // std::cout << "i=" << i << "\n";
-            order = nttec::arith::weak_rand<T>(max);
-            // std::cout << "order=" << order << "\n";
-            n = nttec::arith::weak_rand<T>(order);
-            // std::cout << "n=" << n << "\n";
-            T len = nttec::arith::get_code_len_high_compo<T>(order, n);
-            // std::cout << "len=" << len << "\n";
+            const T order = uniform_dist_max(nttec::prng());
+            std::uniform_int_distribution<uint32_t> dis(1, order - 1);
+            const T n = dis(nttec::prng());
+            const T len = nttec::arith::get_code_len_high_compo<T>(order, n);
+
             assert(order % len == 0);
             assert(len >= n);
         }
@@ -389,15 +381,13 @@ class ArithUtest {
 
         int i;
         for (i = 0; i < 1000; i++) {
-            T order, n;
-            // std::cout << "i=" << i << "\n";
-            order = nttec::arith::weak_rand<T>(max);
-            // std::cout << "order=" << order << "\n";
-            n = nttec::arith::weak_rand<T>(order);
-            // std::cout << "n=" << n << "\n";
+            const T order = uniform_dist_max(nttec::prng());
+            std::uniform_int_distribution<uint32_t> dis(1, order - 1);
+            const T n = dis(nttec::prng());
+
             std::vector<T> factors;
             nttec::arith::get_prime_factors<T>(order, &factors);
-            T len = nttec::arith::get_code_len_high_compo<T>(&factors, n);
+            const T len = nttec::arith::get_code_len_high_compo<T>(&factors, n);
             // std::cout << "len=" << len << "\n";
             assert(order % len == 0);
             assert(len >= n);
@@ -429,10 +419,8 @@ class ArithUtest {
         std::vector<T> divisors;
         int i;
         for (i = 0; i < 1000; i++) {
-            T n;
-            // std::cout << "i=" << i << "\n";
-            n = nttec::arith::weak_rand<T>(max);
-            // std::cout << "n=" << n << "\n";
+            const T n = uniform_dist_max(nttec::prng());
+
             nttec::arith::get_coprime_factors<T>(n, &divisors);
             check_prime_divisors(n, &divisors, true);
             divisors.clear();
@@ -446,10 +434,8 @@ class ArithUtest {
         std::vector<T> divisors;
         int i;
         for (i = 0; i < 1000; i++) {
-            T n;
-            // std::cout << "i=" << i << "\n";
-            n = nttec::arith::weak_rand<T>(max);
-            // std::cout << "n=" << n << "\n";
+            const T n = uniform_dist_max(nttec::prng());
+
             nttec::arith::get_prime_factors<T>(n, &divisors);
             check_prime_divisors(n, &divisors, false);
             divisors.clear();
@@ -460,7 +446,7 @@ class ArithUtest {
     {
         std::cout << "arith_utest with sizeof(T)=" << sizeof(T) << "\n";
 
-        srand(time(0));
+        nttec::prng().seed(time(0));
 
         test_basic_ops();
         test_reciprocal();
@@ -482,7 +468,7 @@ class ArithUtest {
     {
         std::cout << "arith_utest_no256\n";
 
-        srand(time(0));
+        nttec::prng().seed(time(0));
 
         test_basic_ops();
         test_reciprocal();

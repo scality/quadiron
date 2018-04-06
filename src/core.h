@@ -31,6 +31,7 @@
 #define __NTTEC_CORE_H__
 
 #include <cstdint>
+#include <random>
 
 #include "big_int.h"
 
@@ -95,6 +96,14 @@ struct GroupedValues {
  * @return the version string.
  */
 const char* get_version();
+
+/** Return a reference to the global PRNG. */
+static inline std::mt19937& prng()
+{
+    static std::mt19937 PRNG;
+
+    return PRNG;
+}
 
 } // namespace nttec
 

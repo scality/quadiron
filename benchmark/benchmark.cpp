@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <string>
+
 #include "benchmark.h"
 
 template <typename T>
@@ -50,13 +52,15 @@ Benchmark<T>::Benchmark(Params_t* params)
 
     int error;
     if ((error = this->check_params()) < 0) {
-        std::cerr << errors_desc[error] << std::endl;
-        throw std::invalid_argument(errors_desc[error]);
+        std::cerr << errors_desc.at(error) << std::endl;
+        // NOLINTNEXTLINE(cert-err60-cpp)
+        throw std::invalid_argument(errors_desc.at(error));
     }
 
     if ((error = this->init()) < 0) {
-        std::cerr << errors_desc[error] << std::endl;
-        throw std::invalid_argument(errors_desc[error]);
+        std::cerr << errors_desc.at(error) << std::endl;
+        // NOLINTNEXTLINE(cert-err60-cpp)
+        throw std::invalid_argument(errors_desc.at(error));
     }
 }
 
@@ -313,8 +317,9 @@ void Benchmark<T>::gen_data()
         prng->gen_chunk(d_chunks->at(i), chunk_size);
     }
     if (!check(d_chunks)) {
-        std::cerr << errors_desc[ERR_FAILED_CHUNK] << std::endl;
-        throw errors_desc[ERR_FAILED_CHUNK];
+        std::cerr << errors_desc.at(ERR_FAILED_CHUNK) << std::endl;
+        // NOLINTNEXTLINE(cert-err60-cpp)
+        throw std::runtime_error(errors_desc.at(ERR_FAILED_CHUNK));
     }
 }
 
@@ -499,14 +504,14 @@ bool Benchmark<T>::decode()
         return false;
 
     if (!compare(d_chunks, r_chunks)) {
-        std::cerr << errors_desc[ERR_FAILED_REPAIR_CHUNK] << std::endl;
+        std::cerr << errors_desc.at(ERR_FAILED_REPAIR_CHUNK) << std::endl;
         return false;
     }
 
     // dump("r_chunks", r_chunks);
 
     if (!check(r_chunks)) {
-        std::cerr << errors_desc[ERR_FAILED_CHUNK] << std::endl;
+        std::cerr << errors_desc.at(ERR_FAILED_CHUNK) << std::endl;
         return false;
     }
 
@@ -616,14 +621,15 @@ void xusage()
     std::cerr << "Usage: benchmark [options]\n"
               << "Options:\n"
               << "\t-e \tType of Reed-Solomon codes, either\n"
-              << "\t\t\trs-gf2n-v: " << ec_desc[EC_TYPE_RS_GF2N_V] << '\n'
-              << "\t\t\trs-gf2n-c: " << ec_desc[EC_TYPE_RS_GF2N_C] << '\n'
-              << "\t\t\trs-gf2n-fft: " << ec_desc[EC_TYPE_RS_GF2N_FFT] << '\n'
-              << "\t\t\trs-gf2n-fft-add: " << ec_desc[EC_TYPE_RS_GF2N_FFT_ADD]
+              << "\t\t\trs-gf2n-v: " << ec_desc.at(EC_TYPE_RS_GF2N_V) << '\n'
+              << "\t\t\trs-gf2n-c: " << ec_desc.at(EC_TYPE_RS_GF2N_C) << '\n'
+              << "\t\t\trs-gf2n-fft: " << ec_desc.at(EC_TYPE_RS_GF2N_FFT)
               << '\n'
-              << "\t\t\trs-gfp-fft: " << ec_desc[EC_TYPE_RS_GFP_FFT] << '\n'
-              << "\t\t\trs-fnt: " << ec_desc[EC_TYPE_RS_FNT] << '\n'
-              << "\t\t\trs-nf4: " << ec_desc[EC_TYPE_RS_NF4] << '\n'
+              << "\t\t\trs-gf2n-fft-add: "
+              << ec_desc.at(EC_TYPE_RS_GF2N_FFT_ADD) << '\n'
+              << "\t\t\trs-gfp-fft: " << ec_desc.at(EC_TYPE_RS_GFP_FFT) << '\n'
+              << "\t\t\trs-fnt: " << ec_desc.at(EC_TYPE_RS_FNT) << '\n'
+              << "\t\t\trs-nf4: " << ec_desc.at(EC_TYPE_RS_NF4) << '\n'
               << "\t\t\tall: All available Reed-solomon codes\n"
               << "\t-s \tScenario for benchmark, either\n"
               << "\t\t\tenc_only: Only encodings\n"
@@ -691,7 +697,7 @@ void run_scenario(Params_t* params)
         break;
     }
     default:
-        std::cerr << errors_desc[ERR_T_NOT_SUPPORTED]
+        std::cerr << errors_desc.at(ERR_T_NOT_SUPPORTED)
                   << " T: " << params->sizeof_T << std::endl;
         exit(0);
     }
@@ -724,50 +730,50 @@ int main(int argc, char** argv)
     while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:g:p:f:")) != -1) {
         switch (opt) {
         case 't':
-            params->sizeof_T = atoi(optarg);
+            params->sizeof_T = std::stoi(optarg);
             break;
         case 'e':
             if (fec_type_map.find(optarg) == fec_type_map.end()) {
-                std::cerr << errors_desc[ERR_FEC_TYPE_NOT_SUPPORTED]
+                std::cerr << errors_desc.at(ERR_FEC_TYPE_NOT_SUPPORTED)
                           << std::endl;
                 xusage();
             }
-            params->fec_type = fec_type_map[optarg];
+            params->fec_type = fec_type_map.at(optarg);
             break;
         case 's':
             if (sce_type_map.find(optarg) == sce_type_map.end()) {
-                std::cerr << errors_desc[ERR_SCENARIO_TYPE_NOT_SUPPORTED]
+                std::cerr << errors_desc.at(ERR_SCENARIO_TYPE_NOT_SUPPORTED)
                           << std::endl;
                 xusage();
             }
-            params->sce_type = sce_type_map[optarg];
+            params->sce_type = sce_type_map.at(optarg);
             break;
         case 'w':
-            params->word_size = atoi(optarg);
+            params->word_size = std::stoi(optarg);
             break;
         case 'k':
-            params->k = atoi(optarg);
+            params->k = std::stoi(optarg);
             break;
         case 'm':
-            params->m = atoi(optarg);
+            params->m = std::stoi(optarg);
             break;
         case 'c':
-            params->chunk_size = atoi(optarg);
+            params->chunk_size = std::stoi(optarg);
             break;
         case 'p':
-            params->pkt_size = atoi(optarg);
+            params->pkt_size = std::stoi(optarg);
             break;
         case 'n':
-            params->samples_nb = atoi(optarg);
+            params->samples_nb = std::stoi(optarg);
             break;
         case 'x':
-            params->extra_param = atoi(optarg);
+            params->extra_param = std::stoi(optarg);
             break;
         case 'g':
-            params->threads_nb = atoi(optarg);
+            params->threads_nb = std::stoi(optarg);
             break;
         case 'f':
-            params->compact_print = atoi(optarg);
+            params->compact_print = std::stoi(optarg);
             break;
         default:
             xusage();

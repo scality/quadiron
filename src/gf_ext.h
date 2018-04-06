@@ -245,12 +245,13 @@ T Extension<T>::log(T a, T b)
 template <typename T>
 T Extension<T>::weak_rand(void)
 {
+    std::uniform_int_distribution<uint32_t> dis(0, this->p - 1);
     Polynomial<T> _a(sub_field);
     T num;
 
 retry:
     for (int i = 0; i < this->n; i++)
-        _a.set(i, arith::weak_rand0<T>(this->p));
+        _a.set(i, dis(prng()));
 
     num = _a.to_num();
     if (0 == num)

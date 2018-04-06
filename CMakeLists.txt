@@ -215,6 +215,9 @@ add_dependencies(format ${OBJECT_LIB})
 set(CLANG_LINTS_LIST
   android-*
   boost-*
+  bugprone-*
+  cert-*
+  -cert-dcl58-cpp
   clang-analyzer-*
   mpi-*
 )

@@ -59,9 +59,9 @@ class PRNG {
     {
         state = 0U;
         inc = (initseq << 1u) | 1u;
-        rand();
+        _rand();
         state += initstate;
-        rand();
+        _rand();
     }
 
     uint32_t _rand()
