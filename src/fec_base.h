@@ -43,6 +43,7 @@
 #include "misc.h"
 #include "property.h"
 #include "vec_buffers.h"
+#include "vec_poly.h"
 #include "vec_vector.h"
 
 namespace nttec {
@@ -110,6 +111,10 @@ class FecCode {
     unsigned n_outputs;
     size_t pkt_size; // packet size, i.e. number of words per packet
     size_t buf_size; // packet size in bytes
+
+    // Length of operating codeword. It's calculated by derived Class
+    // FIXME: move n to protected
+    T n;
 
     uint64_t total_encode_cycles = 0;
     uint64_t n_encode_ops = 0;
@@ -210,10 +215,30 @@ class FecCode {
   protected:
     // primitive nth root of unity
     T r;
-    gf::Field<T>* gf;
-    fft::FourierTransform<T>* fft = nullptr;
+    gf::Field<T>* gf = nullptr;
+    std::unique_ptr<fft::FourierTransform<T>> fft = nullptr;
+    std::unique_ptr<fft::FourierTransform<T>> fft_full = nullptr;
     // This vector MUST be initialized by derived Class using multiplicative FFT
     std::unique_ptr<vec::Vector<T>> inv_r_powers = nullptr;
+
+    // pure abstract methods that will be defined in derived class
+    virtual void check_params() = 0;
+    virtual void init_gf() = 0;
+    virtual void init_fft() = 0;
+    virtual void init_others() = 0;
+
+    // This function will called in constructor of every derived class
+    void fec_init()
+    {
+        // check compatible parameters
+        check_params();
+        // create the field
+        init_gf();
+        // create FFT
+        init_fft();
+        // init other parameters dedicated for derived class
+        init_others();
+    }
 
     virtual void decode_prepare(
         const std::vector<Properties>& props,
@@ -221,16 +246,25 @@ class FecCode {
         vec::Vector<T>* fragments_ids,
         vec::Vector<T>* words,
         vec::Vector<T>* vx,
-        int* vx_zero = 0);
+        int* vx_zero);
 
-    virtual void decode_Lagrange(
+    virtual void decode_lagrange(
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>* fragments_ids,
         vec::Vector<T>* words,
         vec::Vector<T>* vx,
-        int vx_zero = 0);
+        int vx_zero);
+
+    virtual void decode_vec_lagrange(
+        vec::Vector<T>* output,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* fragments_ids,
+        vec::Vector<T>* words,
+        vec::Vector<T>* vx,
+        int vx_zero);
 };
 
 /**
@@ -654,7 +688,8 @@ void FecCode<T>::decode(
     decode_prepare(props, offset, fragments_ids, words, &vx, &vx_zero);
 
     // Lagrange interpolation
-    decode_Lagrange(output, props, offset, fragments_ids, words, &vx, vx_zero);
+    decode_vec_lagrange(
+        output, props, offset, fragments_ids, words, &vx, vx_zero);
 }
 
 /* Prepare for decoding
@@ -685,7 +720,7 @@ void FecCode<T>::decode_prepare(
         // Following check is used for FFT over FNT where the single special
         // case symbol equals card - 1
         if (data && *data == "@") {
-            words->set(i, fft->get_gf()->card() - 1);
+            words->set(i, this->gf->card() - 1);
         }
     }
 }
@@ -694,7 +729,7 @@ void FecCode<T>::decode_prepare(
  * It supports for FEC using multiplicative FFT over GF differing NF4
  */
 template <typename T>
-void FecCode<T>::decode_Lagrange(
+void FecCode<T>::decode_lagrange(
     vec::Vector<T>* output,
     const std::vector<Properties>& props,
     off_t offset,
@@ -719,19 +754,16 @@ void FecCode<T>::decode_Lagrange(
     for (int i = 0; i < k; i++) {
         A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
     }
-    // std::cout << "A(x)="; A.dump();
 
     // compute A'(x) since A_i(x_i) = A'_i(x_i)
     _A.copy(&A);
     _A.derivative();
-    // std::cout << "A'(x)="; _A.dump();
 
     // evaluate n_i=v_i/A'_i(x_i)
     vec::Vector<T> _n(this->gf, k);
     for (int i = 0; i < k; i++) {
         _n.set(i, this->gf->div(words->get(i), _A.eval(vx->get(i))));
     }
-    // std::cout << "_n="; _n.dump();
 
     // compute N'(x) = sum_i{n_i * x^z_i}
     for (int i = 0; i <= k - 1; i++) {
@@ -746,9 +778,72 @@ void FecCode<T>::decode_Lagrange(
         S.set(i, N_p.eval(inv_r_powers->get(i + 1)));
     }
     S.neg();
-    // std::cout << "S:"; S.dump();
     S.mul(&A, k - 1);
-    // std::cout << "S x A:"; S.dump();
+    // No need to mod x^n since only last n_data coefs are obtained
+    // output is n_data length
+    for (unsigned i = 0; i < this->n_data; i++)
+        output->set(i, S.get(i));
+}
+
+template <typename T>
+void FecCode<T>::decode_vec_lagrange(
+    vec::Vector<T>* output,
+    const std::vector<Properties>& props,
+    off_t offset,
+    vec::Vector<T>* fragments_ids,
+    vec::Vector<T>* words,
+    vec::Vector<T>* vx,
+    int vx_zero)
+{
+    if (this->fft == nullptr) {
+        throw LogicError("FEC base: FFT must be initialized");
+    }
+    if (this->fft_full == nullptr) {
+        throw LogicError("FEC base: FFT full must be initialized");
+    }
+    int k = this->n_data; // number of fragments received
+
+    vec::Poly<T> A(this->gf, n);
+    vec::Poly<T> _A_fft(this->gf, n);
+    vec::Poly<T> N_p(this->gf, n);
+    vec::Poly<T> N_p_ifft(this->gf, n);
+    vec::Poly<T> S(this->gf, k);
+
+    // compute A(x) = prod_j(x-x_j)
+    A.zero();
+    A.set(0, 1);
+    for (int i = 0; i < k; i++) {
+        A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
+    }
+
+    // compute A'(x) since A_i(x_i) = A'_i(x_i)
+    vec::Poly<T> _A(A);
+    _A.derivative();
+    this->fft->fft(&_A_fft, &_A);
+
+    // evaluate n_i=v_i/A'_i(x_i)
+    vec::Vector<T> _n(this->gf, k);
+    for (int i = 0; i < k; i++) {
+        _n.set(
+            i, this->gf->div(words->get(i), _A_fft.get(fragments_ids->get(i))));
+    }
+
+    // compute N'(x) = sum_i{n_i * x^z_i}
+    N_p.zero();
+    for (int i = 0; i <= k - 1; i++) {
+        N_p.set(fragments_ids->get(i), _n.get(i));
+    }
+    this->fft_full->fft_inv(&N_p_ifft, &N_p);
+
+    // We have to find the numerator of the following expression:
+    // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
+    // using Taylor series we rewrite the expression into
+    // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
+    for (int i = 0; i <= k - 1; i++) {
+        S.set(i, N_p_ifft.get(i + 1));
+    }
+    S.neg();
+    S.mul(&A, k - 1);
     // No need to mod x^n since only last n_data coefs are obtained
     // output is n_data length
     for (unsigned i = 0; i < this->n_data; i++)

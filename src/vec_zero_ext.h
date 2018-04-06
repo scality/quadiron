@@ -54,7 +54,7 @@ template <typename T>
 class ZeroExtended : public Vector<T> {
   public:
     ZeroExtended(Vector<T>* vec, int n);
-    int get_n(void);
+    const int get_n(void) const;
     T get(int i);
 
   private:
@@ -71,7 +71,7 @@ ZeroExtended<T>::ZeroExtended(Vector<T>* vec, int n)
 }
 
 template <typename T>
-int ZeroExtended<T>::get_n(void)
+const int ZeroExtended<T>::get_n(void) const
 {
     return n;
 }

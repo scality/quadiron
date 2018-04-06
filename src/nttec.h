@@ -68,6 +68,7 @@
 #include "vec_buffers.h"
 #include "vec_doubled.h"
 #include "vec_matrix.h"
+#include "vec_poly.h"
 #include "vec_slice.h"
 #include "vec_vector.h"
 #include "vec_view.h"

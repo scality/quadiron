@@ -74,17 +74,28 @@ namespace fec {
 template <typename T>
 class RsGfpFft : public FecCode<T> {
   public:
-    T n;
-
     RsGfpFft(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {
+        this->fec_init();
+    }
+
+    ~RsGfpFft()
+    {
+        if (this->gf)
+            delete this->gf;
+    }
+
+    inline void check_params() {}
+
+    inline void init_gf()
+    {
         // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
         T gf_p = 0;
-        if (word_size < 4) {
-            gf_p = (1ULL << (8 * word_size)) + 1;
-            this->limit_value = (1ULL << (8 * word_size));
-        } else if (word_size == 4) {
+        if (this->word_size < 4) {
+            gf_p = (1ULL << (8 * this->word_size)) + 1;
+            this->limit_value = (1ULL << (8 * this->word_size));
+        } else if (this->word_size == 4) {
             gf_p = (T)4294991873ULL;              // p-1=2^13 29^1 101^1 179^1
             this->limit_value = (T)4294967296ULL; // 2^32
         } else {
@@ -100,38 +111,40 @@ class RsGfpFft : public FecCode<T> {
         assert(
             arith::jacobi<T>(this->gf->get_primitive_root(), this->gf->card())
             == -1);
+    }
 
+    inline void init_fft()
+    {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
         // n_data)
-        n = this->gf->get_code_len_high_compo(n_parities + n_data);
+        this->n =
+            this->gf->get_code_len_high_compo(this->n_parities + this->n_data);
 
         // compute root of order n-1 such as r^(n-1) mod q == 1
-        this->r = this->gf->get_nth_root(n);
+        this->r = this->gf->get_nth_root(this->n);
 
-        // std::cerr << "limit_value=" << limit_value << "\n";
-        // std::cerr << "gf_p=" << gf_p << "\n";
-        // std::cerr << "n=" << n << "\n";
-        // std::cerr << "r=" << r << "\n";
-
-        if (arith::is_power_of_2<T>(n)) {
-            this->fft = new fft::Radix2<T>(this->gf, n);
+        if (arith::is_power_of_2<T>(this->n)) {
+            this->fft = std::unique_ptr<fft::Radix2<T>>(
+                new fft::Radix2<T>(this->gf, this->n));
+            this->fft_full = std::unique_ptr<fft::Radix2<T>>(
+                new fft::Radix2<T>(this->gf, this->n));
         } else {
-            this->fft = new fft::CooleyTukey<T>(this->gf, n);
+            this->fft = std::unique_ptr<fft::CooleyTukey<T>>(
+                new fft::CooleyTukey<T>(this->gf, this->n));
+            this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
+                new fft::CooleyTukey<T>(this->gf, this->n));
         }
+    }
 
+    inline void init_others()
+    {
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(this->gf, this->n_data + 1));
         for (int i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
-    }
-
-    ~RsGfpFft()
-    {
-        delete this->fft;
-        delete this->gf;
     }
 
     int get_n_outputs()
@@ -153,7 +166,7 @@ class RsGfpFft : public FecCode<T> {
         off_t offset,
         vec::Vector<T>* words)
     {
-        vec::ZeroExtended<T> vwords(words, n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {

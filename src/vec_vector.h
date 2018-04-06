@@ -164,13 +164,13 @@ class Vector {
     gf::RingModN<T>* rn;
     Vector(gf::RingModN<T>* rn, int n, T* mem = nullptr, int mem_len = 0);
     virtual ~Vector();
-    virtual int get_n(void);
-    int get_mem_len(void);
+    virtual const int get_n(void) const;
+    const int get_mem_len(void) const;
     void zero_fill(void);
     void fill(T val);
     virtual void set(int i, T val);
     virtual T get(int i);
-    T* get_mem();
+    T* get_mem() const;
     void set_mem(T* mem, int mem_len);
     void mul_scalar(T scalar);
     void mul_beta(T beta);
@@ -223,13 +223,13 @@ Vector<T>::~Vector()
 }
 
 template <typename T>
-inline int Vector<T>::get_n(void)
+inline const int Vector<T>::get_n(void) const
 {
     return this->n;
 }
 
 template <typename T>
-inline int Vector<T>::get_mem_len(void)
+inline const int Vector<T>::get_mem_len(void) const
 {
     return this->mem_len;
 }
@@ -268,7 +268,7 @@ inline T Vector<T>::get(int i)
 }
 
 template <typename T>
-inline T* Vector<T>::get_mem()
+inline T* Vector<T>::get_mem() const
 {
     return mem;
 }

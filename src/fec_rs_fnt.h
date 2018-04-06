@@ -54,7 +54,6 @@ namespace fec {
 template <typename T>
 class RsFnt : public FecCode<T> {
   public:
-    T n;
     RsFnt(
         unsigned word_size,
         unsigned n_data,
@@ -67,41 +66,58 @@ class RsFnt : public FecCode<T> {
               n_parities,
               pkt_size)
     {
-        assert(word_size < 4);
+        this->fec_init();
+    }
+
+    ~RsFnt()
+    {
+        if (this->gf)
+            delete this->gf;
+    }
+
+    inline void check_params()
+    {
+        assert(this->word_size < 4);
+    }
+
+    inline void init_gf()
+    {
         // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
-        T gf_p = (1ULL << (8 * word_size)) + 1;
+        T gf_p = (1ULL << (8 * this->word_size)) + 1;
         this->gf = new gf::Prime<T>(gf_p);
 
         assert(
             arith::jacobi<T>(this->gf->get_primitive_root(), this->gf->card())
             == -1);
+    }
 
+    inline void init_fft()
+    {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
         // n_data)
-        n = this->gf->get_code_len_high_compo(n_parities + n_data);
+        this->n =
+            this->gf->get_code_len_high_compo(this->n_parities + this->n_data);
 
         // compute root of order n-1 such as r^(n-1) mod q == 1
-        this->r = this->gf->get_nth_root(n);
+        this->r = this->gf->get_nth_root(this->n);
 
-        // std::cerr << "n=" << n << "\n";
-        // std::cerr << "r=" << r << "\n";
+        int m = arith::get_smallest_power_of_2<int>(this->n_data);
+        this->fft = std::unique_ptr<fft::Radix2<T>>(
+            new fft::Radix2<T>(this->gf, this->n, m, this->pkt_size));
 
-        int m = arith::get_smallest_power_of_2<int>(n_data);
-        this->fft = new fft::Radix2<T>(this->gf, n, m, pkt_size);
+        this->fft_full = std::unique_ptr<fft::Radix2<T>>(
+            new fft::Radix2<T>(this->gf, this->n, this->n, this->pkt_size));
+    }
 
+    inline void init_others()
+    {
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(this->gf, this->n_data + 1));
         for (int i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
-    }
-
-    ~RsFnt()
-    {
-        delete this->fft;
-        delete this->gf;
     }
 
     int get_n_outputs()
@@ -123,7 +139,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Vector<T>* words)
     {
-        vec::ZeroExtended<T> vwords(words, n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         // max_value = 2^x
         T thres = this->fft->get_gf()->card() - 1;
@@ -142,7 +158,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>* words)
     {
-        vec::BuffersZeroExtended<T> vwords(words, n);
+        vec::BuffersZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         // check for out of range value in output
         int size = output->get_size();

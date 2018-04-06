@@ -113,7 +113,9 @@ class Radix2 : public FourierTransform<T> {
  * n-th root will be constructed with primitive root
  *
  * @param gf
- * @param n for now must be a power of 2
+ * @param n FFT length, for now must be a power of 2
+ * @param m length of input vector without zero padding. It allows shorterning
+ *  operation cycles
  * @param pkt_size size of packet, i.e. number of symbols per chunk will be
  *  received and processed at a time
  * @param N original length
