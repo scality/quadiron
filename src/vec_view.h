@@ -57,7 +57,7 @@ class View : public Vector<T> {
   public:
     explicit View(Vector<T>* vec, int n = 0, int offset = 0, int step = 1);
     const int get_n(void) const;
-    T get(int i);
+    T get(int i) const;
     void set(int i, T val);
     void set_map(int offset, int step);
     void set_len(int n);
@@ -89,7 +89,7 @@ const int View<T>::get_n(void) const
 }
 
 template <typename T>
-T View<T>::get(int i)
+T View<T>::get(int i) const
 {
     assert(i >= 0 && i < this->n);
 

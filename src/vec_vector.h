@@ -170,7 +170,7 @@ class Vector {
     void zero_fill(void);
     void fill(T val);
     virtual void set(int i, T val);
-    virtual T get(int i);
+    virtual T get(int i) const;
     T* get_mem() const;
     void set_mem(T* mem, int mem_len);
     void mul_scalar(T scalar);
@@ -261,7 +261,7 @@ inline void Vector<T>::set(int i, T val)
 }
 
 template <typename T>
-inline T Vector<T>::get(int i)
+inline T Vector<T>::get(int i) const
 {
     assert(i >= 0 && i < n);
 

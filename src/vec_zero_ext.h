@@ -55,7 +55,7 @@ class ZeroExtended : public Vector<T> {
   public:
     ZeroExtended(Vector<T>* vec, int n);
     const int get_n(void) const;
-    T get(int i);
+    T get(int i) const;
 
   private:
     Vector<T>* vec;
@@ -77,7 +77,7 @@ const int ZeroExtended<T>::get_n(void) const
 }
 
 template <typename T>
-T ZeroExtended<T>::get(int i)
+T ZeroExtended<T>::get(int i) const
 {
     assert(i >= 0 && i < n);
 

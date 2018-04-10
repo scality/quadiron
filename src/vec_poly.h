@@ -49,7 +49,7 @@ class Poly : public Vector<T> {
     Poly(gf::Field<T>* field, int n);
     Poly(const Poly<T>& a);
     const int get_deg() const;
-    T get(int exponent);
+    T get(int exponent) const;
     void set(int exponent, T coef);
     void derivative();
     T eval(T x);
@@ -93,7 +93,7 @@ const int Poly<T>::get_deg() const
 }
 
 template <typename T>
-T Poly<T>::get(int exponent)
+T Poly<T>::get(int exponent) const
 {
     assert(exponent >= 0 && exponent < this->n);
 
