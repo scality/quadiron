@@ -108,6 +108,10 @@ class RsFnt : public FecCode<T> {
 
         this->fft_full = std::unique_ptr<fft::Radix2<T>>(
             new fft::Radix2<T>(this->gf, this->n, this->n, this->pkt_size));
+
+        unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
+        this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
+            new fft::Radix2<T>(this->gf, len_2k, len_2k, this->pkt_size));
     }
 
     inline void init_others()
@@ -118,6 +122,12 @@ class RsFnt : public FecCode<T> {
             new vec::Vector<T>(this->gf, this->n_data + 1));
         for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
+
+        // vector stores r^{i} for i = 0, ... , n-1
+        this->r_powers = std::unique_ptr<vec::Vector<T>>(
+            new vec::Vector<T>(this->gf, this->n));
+        for (int i = 0; i < this->n; i++)
+            this->r_powers->set(i, this->gf->exp(this->r, i));
     }
 
     int get_n_outputs()
