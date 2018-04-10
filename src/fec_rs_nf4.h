@@ -93,6 +93,10 @@ class RsNf4 : public FecCode<T> {
 
         this->fft_full =
             std::unique_ptr<fft::Radix2<T>>(new fft::Radix2<T>(ngff4, this->n));
+
+        unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
+        this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
+            new fft::Radix2<T>(this->gf, len_2k, len_2k));
     }
 
     inline void init_others()
@@ -101,9 +105,14 @@ class RsNf4 : public FecCode<T> {
         const T inv_r = ngff4->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(ngff4, this->n_data + 1));
-        for (unsigned i = 0; i <= this->n_data; i++) {
+        for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, ngff4->exp(inv_r, i));
-        }
+
+        // vector stores r^{i} for i = 0, ... , k
+        this->r_powers =
+            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(ngff4, this->n));
+        for (int i = 0; i < this->n; i++)
+            this->r_powers->set(i, ngff4->exp(this->r, i));
     }
 
     int get_n_outputs()
@@ -170,25 +179,78 @@ class RsNf4 : public FecCode<T> {
     int gf_n;
 
   protected:
-    void decode_prepare(
-        const std::vector<Properties>& props,
-        off_t offset,
-        vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words,
-        vec::Vector<T>* vx,
-        int* vx_zero)
+    void decode_init(DecodeContext<T>* context, vec::Vector<T>* fragments_ids)
     {
+        if (this->inv_r_powers == nullptr) {
+            throw LogicError("FEC base: vector (inv_r)^i must be initialized");
+        }
+        if (this->r_powers == nullptr) {
+            throw LogicError("FEC base: vector r^i must be initialized");
+        }
+        if (this->fft == nullptr) {
+            throw LogicError("FEC base: FFT must be initialized");
+        }
+        if (this->fft_full == nullptr) {
+            throw LogicError("FEC base: FFT full must be initialized");
+        }
+
         int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        for (int i = 0; i < k; i++) {
-            vx->set(
+        vec::Vector<T> vx(this->gf, k);
+        for (int i = 0; i < k; ++i) {
+            vx.set(
                 i,
                 this->gf->exp(
                     this->r, ngff4->replicate(fragments_ids->get(i))));
         }
 
+        // initialize context
+        context->set_frag_ids(fragments_ids);
+
+        vec::Poly<T>* A = context->get_A();
+        vec::Poly<T>* inv_A_i = context->get_inv_A_i();
+
+        // compute A(x) = prod_j(x-x_j)
+        A->set(0, ngff4->get_unit());
+        for (int i = 0; i < k; ++i) {
+            A->mul_to_x_plus_coef(this->gf->sub(0, vx.get(i)));
+        }
+
+        // compute A'(x) since A_i(x_i) = A'_i(x_i)
+        vec::Poly<T> _A(this->gf, this->n);
+        _A.zero();
+        for (int i = 1; i <= A->get_deg(); ++i)
+            _A.set(i - 1, ngff4->mul(A->get(i), ngff4->replicate(i)));
+
+        // compute A_i(x_i)
+        this->fft->fft(inv_A_i, &_A);
+
+        // compute 1/(x_i * A_i(x_i))
+        // we care only about elements corresponding to fragments_ids
+        for (unsigned i = 0; i < k; ++i) {
+            unsigned j = fragments_ids->get(i);
+            inv_A_i->set(
+                j, this->gf->inv(this->gf->mul(inv_A_i->get(j), vx.get(i))));
+        }
+
+        // compute FFT(A) of length 2k
+        unsigned len_2k = context->get_len_2k();
+        vec::ZeroExtended<T> A_2k(A, len_2k);
+        vec::Poly<T>* A_fft_2k = context->get_A_fft_2k();
+        this->fft_2k->fft(A_fft_2k, &A_2k);
+    }
+
+    void decode_prepare(
+        DecodeContext<T>* context,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* words)
+    {
         T true_val;
-        for (int i = 0; i < k; i++) {
+        vec::Vector<T>* fragments_ids = context->get_frag_ids();
+        // std::cout << "fragments_ids:"; fragments_ids->dump();
+        int k = this->n_data; // number of fragments received
+        for (int i = 0; i < k; ++i) {
             const int j = fragments_ids->get(i);
             auto data = props[j].get(ValueLocation(offset, j));
 
@@ -202,117 +264,17 @@ class RsNf4 : public FecCode<T> {
         }
     }
 
-    void decode_lagrange(
+    void decode_apply(
+        DecodeContext<T>* context,
         vec::Vector<T>* output,
-        const std::vector<Properties>& props,
-        off_t offset,
-        vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words,
-        vec::Vector<T>* vx,
-        int vx_zero)
+        vec::Vector<T>* words)
     {
-        unsigned k = this->n_data; // number of fragments received
-        Polynomial<T> A(ngff4), _A(ngff4);
-
-        // compute A(x) = prod_j(x-x_j)
-        T one = ngff4->get_unit();
-        A.set(0, one);
-        for (unsigned i = 0; i < k; i++) {
-            A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
+        // decode_apply: do the same thing as in fec_base
+        FecCode<T>::decode_apply(context, output, words);
+        // unpack decoded symbols
+        for (unsigned i = 0; i < this->n_data; ++i) {
+            output->set(i, ngff4->unpack(output->get(i)).values);
         }
-
-        // compute A'(x) since A_i(x_i) = A'_i(x_i)
-        for (int i = 1; i <= A.degree(); i++)
-            _A.set(i - 1, ngff4->mul(A.get(i), ngff4->replicate(i)));
-
-        // evaluate n_i=v_i/A'_i(x_i)
-        vec::Vector<T> _n(ngff4, k);
-        for (unsigned i = 0; i < k; i++) {
-            _n.set(i, ngff4->div(words->get(i), _A.eval(vx->get(i))));
-        }
-
-        // compute N'(x) = sum_i{n_i * x^z_i}
-        Polynomial<T> N_p(ngff4);
-        for (unsigned i = 0; i < k; i++) {
-            N_p.set(fragments_ids->get(i), _n.get(i));
-        }
-
-        // //std::cout << "N_p="; N_p.dump();
-        // We have to find the numerator of the following expression:
-        // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
-        // using Taylor series we rewrite the expression into
-        // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
-        Polynomial<T> S(ngff4);
-        for (T i = 0; i <= k - 1; i++) {
-            S.set(i, N_p.eval(this->inv_r_powers->get(i + 1)));
-        }
-        S.neg();
-        S.mul(&A, k - 1);
-        // No need to mod x^n since only last n_data coefs are obtained
-        // output is n_data length
-        for (unsigned i = 0; i < this->n_data; i++)
-            output->set(i, ngff4->unpack(S.get(i)).values);
-    }
-
-    void decode_vec_lagrange(
-        vec::Vector<T>* output,
-        const std::vector<Properties>& props,
-        off_t offset,
-        vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words,
-        vec::Vector<T>* vx,
-        int vx_zero)
-    {
-        int k = this->n_data; // number of fragments received
-        vec::Poly<T> A(this->gf, k + 1);
-        vec::Poly<T> _A(this->gf, this->n);
-        vec::Poly<T> _A_fft(this->gf, this->n);
-        vec::Poly<T> N_p(this->gf, this->n);
-        vec::Poly<T> N_p_ifft(this->gf, this->n);
-        vec::Poly<T> S(this->gf, k);
-
-        // compute A(x) = prod_j(x-x_j)
-        T one = ngff4->get_unit();
-        A.set(0, one);
-        for (int i = 0; i < k; i++) {
-            A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
-        }
-
-        // compute A'(x) since A_i(x_i) = A'_i(x_i)
-        _A.zero();
-        for (int i = 1; i <= A.get_deg(); i++)
-            _A.set(i - 1, ngff4->mul(A.get(i), ngff4->replicate(i)));
-
-        this->fft->fft(&_A_fft, &_A);
-
-        // evaluate n_i=v_i/A'_i(x_i)
-        vec::Vector<T> _n(ngff4, k);
-        for (int i = 0; i < k; i++) {
-            _n.set(
-                i,
-                ngff4->div(words->get(i), _A_fft.get(fragments_ids->get(i))));
-        }
-
-        // compute N'(x) = sum_i{n_i * x^z_i}
-        N_p.zero();
-        for (int i = 0; i <= k - 1; i++) {
-            N_p.set(fragments_ids->get(i), _n.get(i));
-        }
-        this->fft_full->fft_inv(&N_p_ifft, &N_p);
-
-        // We have to find the numerator of the following expression:
-        // P(x)/A(x) = sum_i=0_k-1(n_i/(x-x_i)) mod x^n
-        // using Taylor series we rewrite the expression into
-        // P(x)/A(x) = -sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
-        for (int i = 0; i <= k - 1; i++) {
-            S.set(i, N_p_ifft.get(i + 1));
-        }
-        S.neg();
-        S.mul(&A, k - 1);
-        // No need to mod x^n since only last n_data coefs are obtained
-        // output is n_data length
-        for (unsigned i = 0; i < this->n_data; i++)
-            output->set(i, ngff4->unpack(S.get(i)).values);
     }
 };
 
