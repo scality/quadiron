@@ -136,126 +136,79 @@ class RsGf2nFftAdd : public FecCode<T> {
     vec::Vector<T>* betas = nullptr;
 
   protected:
-    void decode_prepare(
-        const std::vector<Properties>& props,
-        off_t offset,
-        vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words,
-        vec::Vector<T>* vx,
-        int* vx_zero)
+    DecodeContext<T>* init_context_dec(vec::Vector<T>* fragments_ids)
     {
-        int _vx_zero = -1;
+        DecodeContext<T>* context = new DecodeContext<T>(
+            this->gf, *fft, *(this->fft_2k), this->n_data, this->n);
+        decode_init(context, fragments_ids);
+
+        return context;
+    }
+
+    void decode_init(DecodeContext<T>* context, vec::Vector<T>* fragments_ids)
+    {
+        if (this->betas == nullptr) {
+            throw LogicError("FEC FFT ADD: vector 'betas' must be initialized");
+        }
+        if (this->fft == nullptr) {
+            throw LogicError("FEC FFT ADD: FFT must be initialized");
+        }
+
+        int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        for (unsigned i = 0; i < this->n_data; i++) {
-            int _vx = this->betas->get(fragments_ids->get(i));
-            vx->set(i, _vx);
-            if (_vx == 0)
-                _vx_zero = i;
-        }
-        *vx_zero = _vx_zero;
-    }
+        vec::Vector<T> vx(this->gf, k);
 
-    // Lagrange interpolation
-    void decode_lagrange(
-        vec::Vector<T>* output,
-        const std::vector<Properties>& props,
-        off_t offset,
-        vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words,
-        vec::Vector<T>* vx,
-        int vx_zero)
-    {
-        int k = this->n_data; // number of fragments received
-        Polynomial<T> A(this->gf), _A(this->gf);
-
-        // compute A(x) = prod_j(x-x_j)
-        A.set(0, 1);
-        for (int i = 0; i < k; i++) {
-            A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
-        }
-
-        // compute A'(x) since A_i(x_i) = A'_i(x_i)
-        _A.copy(&A);
-        _A.derivative();
-
-        // evaluate n_i=v_i/A'_i(x_i)
-        vec::Vector<T> _n(this->gf, k);
-        for (int i = 0; i < k; i++) {
-            _n.set(i, this->gf->div(words->get(i), _A.eval(vx->get(i))));
-        }
-
-        // We have to find the numerator of the following expression:
-        // P(x)/A(x) = S(x) + R(x)
-        //  where S(x) = sum_{0 <= i <= k-1, i != vx_zero}(n_i/(x-x_i)) mod x^n
-        //        R(x) = _n[vx_zero] / x
-        // using Taylor series we rewrite the expression into
-        // S(x) = sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
-        Polynomial<T> S(this->gf);
-        for (int j = 0; j <= k - 1; j++) {
-            T val = 0;
-            for (int i = 0; i <= k - 1; i++) {
-                if (i == vx_zero)
-                    continue;
-                // perform Taylor series at 0
-                T xi_j_1 = this->gf->inv(this->gf->exp(vx->get(i), j + 1));
-                val = this->gf->add(val, this->gf->mul(_n.get(i), xi_j_1));
+        int vx_zero = -1;
+        for (int i = 0; i < this->n_data; ++i) {
+            T val = betas->get(fragments_ids->get(i));
+            vx.set(i, val);
+            if (val == 0) {
+                vx_zero = i;
             }
-            S.set(j, val);
         }
-        S.mul(&A, k - 1);
-        if (vx_zero > -1) {
-            assert(A.get(0) == 0);
-            // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x
-            //  as S(x) does not include the term of vx_zero
-            // Note: A(0) = 0 since vx_zero exists
-            int deg = A.degree();
-            T val = _n.get(vx_zero);
-            for (int i = 1; i <= deg; i++)
-                S.set(
-                    i - 1,
-                    this->gf->add(S.get(i - 1), this->gf->mul(val, A.get(i))));
-        }
+        context->set_vx_zero(vx_zero);
 
-        // output is n_data length
-        for (unsigned i = 0; i < this->n_data; i++)
-            output->set(i, S.get(i));
+        // initialize context
+        context->init(fragments_ids, vx);
     }
 
-    // Lagrange interpolation w/ vector
-    void decode_vec_lagrange(
-        vec::Vector<T>* output,
+    void decode_prepare(
+        DecodeContext<T>* context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words,
-        vec::Vector<T>* vx,
-        int vx_zero)
+        vec::Vector<T>* words)
     {
+        // nothing to do
+    }
+
+    void decode_apply(
+        DecodeContext<T>* context,
+        vec::Vector<T>* output,
+        vec::Vector<T>* words)
+    {
+        vec::Vector<T>* fragments_ids = context->get_frag_ids();
+        vec::Poly<T>* A = context->get_A();
+        vec::Poly<T>* inv_A_i = context->get_inv_A_i();
+        vec::Poly<T>* poly1_n = context->get_poly1_n();
+        vec::Poly<T>* S = context->get_S();
+
         int k = this->n_data; // number of fragments received
+        int vx_zero = context->get_vx_zero();
 
-        vec::Poly<T> A(this->gf, this->n);
-        vec::Poly<T> _A_fft(this->gf, this->n);
-        vec::Poly<T> S(this->gf, k);
-
-        // compute A(x) = prod_j(x-x_j)
-        A.zero();
-        A.set(0, 1);
-        for (int i = 0; i < k; i++) {
-            A.mul_to_x_plus_coef(this->gf->sub(0, vx->get(i)));
+        // FIXME: split this step in decode_init as multiplicative FFT
+        vec::Vector<T> vx(this->gf, k);
+        for (int i = 0; i < this->n_data; ++i) {
+            vx.set(i, this->betas->get(fragments_ids->get(i)));
         }
 
-        // compute A'(x) since A_i(x_i) = A'_i(x_i)
-        vec::Poly<T> _A(A);
-        _A.derivative();
-        this->fft->fft(&_A_fft, &_A);
-
-        // evaluate n_i=v_i/A'_i(x_i)
-        vec::Vector<T> _n(this->gf, k);
-        for (int i = 0; i < k; i++) {
-            _n.set(
+        // compute N'(x) = sum_i{n_i * x^z_i}
+        // where n_i=v_i/A'_i(x_i)
+        poly1_n->zero();
+        for (int i = 0; i <= k - 1; ++i) {
+            poly1_n->set(
                 i,
-                this->gf->div(
-                    words->get(i), _A_fft.get(fragments_ids->get(i))));
+                this->gf->mul(
+                    words->get(i), inv_A_i->get(fragments_ids->get(i))));
         }
 
         // We have to find the numerator of the following expression:
@@ -266,32 +219,35 @@ class RsGf2nFftAdd : public FecCode<T> {
         // S(x) = sum_i=0_k-1(sum_j=0_n-1(n_i*x_i^(-j-1)*x^j))
         for (int j = 0; j <= k - 1; j++) {
             T val = 0;
-            for (int i = 0; i <= k - 1; i++) {
+            for (int i = 0; i <= k - 1; ++i) {
                 if (i == vx_zero)
                     continue;
                 // perform Taylor series at 0
-                T xi_j_1 = this->gf->inv(this->gf->exp(vx->get(i), j + 1));
-                val = this->gf->add(val, this->gf->mul(_n.get(i), xi_j_1));
+                T xi_j_1 = this->gf->inv(this->gf->exp(vx.get(i), j));
+                val =
+                    this->gf->add(val, this->gf->mul(poly1_n->get(i), xi_j_1));
             }
-            S.set(j, val);
+            S->set(j, val);
         }
-        S.mul(&A, k - 1);
+        S->mul(A, k - 1);
         if (vx_zero > -1) {
-            assert(A.get(0) == 0);
+            assert(A->get(0) == 0);
             // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x
             //  as S(x) does not include the term of vx_zero
             // Note: A(0) = 0 since vx_zero exists
-            int deg = A.get_deg();
-            T val = _n.get(vx_zero);
-            for (int i = 1; i <= deg; i++)
-                S.set(
+            int deg = A->get_deg();
+            T val = poly1_n->get(vx_zero);
+            for (int i = 1; i <= deg; ++i)
+                S->set(
                     i - 1,
-                    this->gf->add(S.get(i - 1), this->gf->mul(val, A.get(i))));
+                    this->gf->add(
+                        S->get(i - 1), this->gf->mul(val, A->get(i))));
         }
 
+        // No need to mod x^n since only last n_data coefs are obtained
         // output is n_data length
-        for (unsigned i = 0; i < this->n_data; i++)
-            output->set(i, S.get(i));
+        for (unsigned i = 0; i < this->n_data; ++i)
+            output->set(i, S->get(i));
     }
 
   private:
