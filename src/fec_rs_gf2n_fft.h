@@ -85,6 +85,10 @@ class RsGf2nFft : public FecCode<T> {
 
         this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
             new fft::CooleyTukey<T>(this->gf, this->n));
+
+        unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
+        this->fft_2k = std::unique_ptr<fft::CooleyTukey<T>>(
+            new fft::CooleyTukey<T>(this->gf, len_2k));
     }
 
     inline void init_others()
@@ -95,6 +99,12 @@ class RsGf2nFft : public FecCode<T> {
             new vec::Vector<T>(this->gf, this->n_data + 1));
         for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
+
+        // vector stores r^{i} for i = 0, ... , k
+        this->r_powers = std::unique_ptr<vec::Vector<T>>(
+            new vec::Vector<T>(this->gf, this->n));
+        for (int i = 0; i < this->n; i++)
+            this->r_powers->set(i, this->gf->exp(this->r, i));
     }
 
     int get_n_outputs()
@@ -132,6 +142,15 @@ class RsGf2nFft : public FecCode<T> {
     }
 
     void decode_build()
+    {
+        // nothing to do
+    }
+
+    void decode_prepare(
+        DecodeContext<T>* context,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* words)
     {
         // nothing to do
     }
