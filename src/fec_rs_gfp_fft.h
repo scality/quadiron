@@ -135,6 +135,15 @@ class RsGfpFft : public FecCode<T> {
             this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
                 new fft::CooleyTukey<T>(this->gf, this->n));
         }
+
+        unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
+        if (arith::is_power_of_2<T>(len_2k)) {
+            this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
+                new fft::Radix2<T>(this->gf, len_2k, len_2k));
+        } else {
+            this->fft_2k = std::unique_ptr<fft::CooleyTukey<T>>(
+                new fft::CooleyTukey<T>(this->gf, len_2k, len_2k));
+        }
     }
 
     inline void init_others()
@@ -145,6 +154,12 @@ class RsGfpFft : public FecCode<T> {
             new vec::Vector<T>(this->gf, this->n_data + 1));
         for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
+
+        // vector stores r^{i} for i = 0, ... , k
+        this->r_powers = std::unique_ptr<vec::Vector<T>>(
+            new vec::Vector<T>(this->gf, this->n));
+        for (int i = 0; i < this->n; i++)
+            this->r_powers->set(i, this->gf->exp(this->r, i));
     }
 
     int get_n_outputs()
@@ -198,21 +213,18 @@ class RsGfpFft : public FecCode<T> {
     T limit_value;
 
   protected:
+    /* Prepare for decoding
+     * It supports for FEC using multiplicative FFT over FNT
+     */
     void decode_prepare(
+        DecodeContext<T>* context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* fragments_ids,
-        vec::Vector<T>* words,
-        vec::Vector<T>* vx,
-        int* vx_zero)
+        vec::Vector<T>* words)
     {
+        vec::Vector<T>* fragments_ids = context->get_frag_ids();
         int k = this->n_data; // number of fragments received
-        // vector x=(x_0, x_1, ..., x_k-1)
-        for (int i = 0; i < k; i++) {
-            vx->set(i, this->gf->exp(this->r, fragments_ids->get(i)));
-        }
-
-        for (int i = 0; i < k; i++) {
+        for (int i = 0; i < k; ++i) {
             const int j = fragments_ids->get(i);
             auto data = props[j].get(ValueLocation(offset, j));
 
