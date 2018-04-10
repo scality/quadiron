@@ -38,6 +38,7 @@
 #include <vector>
 #include <sys/time.h>
 
+#include "fec_context.h"
 #include "fft_base.h"
 #include "gf_base.h"
 #include "misc.h"
