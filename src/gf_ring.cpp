@@ -43,13 +43,13 @@ void RingModN<uint32_t>::mul_coef_to_buf(
     uint32_t* dest,
     size_t len)
 {
-    simd::mul_coef_to_buf(a, src, dest, len, this->_card);
+    simd::u32::mul_coef_to_buf(a, src, dest, len, this->_card);
 }
 
 template <>
 void RingModN<uint32_t>::add_two_bufs(uint32_t* src, uint32_t* dest, size_t len)
 {
-    simd::add_two_bufs(src, dest, len, this->_card);
+    simd::u32::add_two_bufs(src, dest, len, this->_card);
 }
 
 template <>
@@ -59,7 +59,7 @@ void RingModN<uint32_t>::sub_two_bufs(
     uint32_t* res,
     size_t len)
 {
-    simd::sub_two_bufs(bufa, bufb, res, len, this->_card);
+    simd::u32::sub_two_bufs(bufa, bufb, res, len, this->_card);
 }
 
 } // namespace gf
