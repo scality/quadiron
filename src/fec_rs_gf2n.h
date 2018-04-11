@@ -47,7 +47,7 @@ enum class RsMatrixType { VANDERMONDE, CAUCHY };
 template <typename T>
 class RsGf2n : public FecCode<T> {
   public:
-    RsMatrixType type;
+    RsMatrixType mat_type;
 
     RsGf2n(
         unsigned word_size,
@@ -56,6 +56,7 @@ class RsGf2n : public FecCode<T> {
         RsMatrixType type)
         : FecCode<T>(FecType::SYSTEMATIC, word_size, n_data, n_parities)
     {
+        mat_type = type;
         this->fec_init();
     }
 
@@ -68,7 +69,8 @@ class RsGf2n : public FecCode<T> {
     inline void check_params()
     {
         assert(
-            type == RsMatrixType::VANDERMONDE || type == RsMatrixType::CAUCHY);
+            mat_type == RsMatrixType::VANDERMONDE
+            || mat_type == RsMatrixType::CAUCHY);
 
         if (this->word_size > 16)
             assert(false); // not support yet
@@ -86,9 +88,9 @@ class RsGf2n : public FecCode<T> {
     {
         this->mat = std::unique_ptr<vec::Matrix<T>>(
             new vec::Matrix<T>(this->gf, this->n_parities, this->n_data));
-        if (type == RsMatrixType::CAUCHY) {
+        if (mat_type == RsMatrixType::CAUCHY) {
             mat->cauchy();
-        } else if (type == RsMatrixType::VANDERMONDE) {
+        } else if (mat_type == RsMatrixType::VANDERMONDE) {
             mat->vandermonde_suitable_for_ec();
         }
 
