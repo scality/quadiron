@@ -641,7 +641,7 @@ void xusage()
               << "\t-c \tChunk size (bytes)\n"
               << "\t-n \tNumber of samples per operation\n"
               << "\t-t \tSize of used integer type, either "
-              << "4, 8, 16 for uint32_t, uint64_t, __uint128_t\n"
+              << "2, 4, 8, 16 for uint16_t, uint32_t, uint64_t, __uint128_t\n"
               << "\t-g \tNumber of threads\n"
               << "\t-x \tExtra parameter\n\n";
     exit(1);
@@ -669,6 +669,15 @@ void run_scenario(Params_t* params)
     params->get_sizeof_T();
 
     switch (params->sizeof_T) {
+    case 2: {
+        try {
+            Benchmark<uint16_t> bench(params);
+            run<uint16_t>(&bench, params);
+        } catch (const std::exception& e) {
+            return;
+        }
+        break;
+    }
     case 4: {
         try {
             Benchmark<uint32_t> bench(params);

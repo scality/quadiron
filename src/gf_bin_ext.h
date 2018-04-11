@@ -110,7 +110,7 @@ BinExtension<T>::BinExtension(T n) : gf::Field<T>(2, n)
         this->primitive_poly = 0x11d;
     else if (n == 16)
         // an alternative: 0x1002b
-        this->primitive_poly = 0x1100b;
+        this->primitive_poly = T(0x1100b);
     // Following irreducible polynomials are from Gadiel Seroussi's paper:
     //  "Table of Low-Weight Binary Irreducible Polynomials"
     else if (n == 32)
