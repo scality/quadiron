@@ -80,6 +80,15 @@ void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y)
 }
 
 template <>
+void NF4<__uint128_t>::hadamard_mul_doubled(
+    int n,
+    __uint128_t* x,
+    __uint128_t* y)
+{
+    simd::hadamard_mul_doubled(n, x, y);
+}
+
+template <>
 GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a)
 {
     return simd::unpack(a, this->n);

@@ -84,6 +84,9 @@ class BinExtension : public gf::Field<T> {
     void init_mask(void);
     void setup_tables(void);
     void setup_split_tables(void);
+    void hadamard_mul(int n, T* x, T* y);
+    void hadamard_mul_doubled(int n, T* x, T* y);
+    void add(int n, T* x, T* y);
 };
 
 enum MulType { MUL_LOG_TAB, SPLIT_8_8 };
@@ -532,6 +535,48 @@ T BinExtension<T>::_inv_ext_gcd(T x)
     return g[a];
 }
 
+template <typename T>
+void BinExtension<T>::hadamard_mul(int n, T* x, T* y)
+{
+    // this->hadamard_mul(n, x, y);
+    for (int i = 0; i < n; i++) {
+        x[i] = mul(x[i], y[i]);
+    }
+}
+
+template <typename T>
+void BinExtension<T>::hadamard_mul_doubled(int n, T* x, T* y)
+{
+    const int half = n / 2;
+    T* x_next = x + half;
+
+    // multiply y to the first half of `x`
+    for (int i = 0; i < half; i++) {
+        x[i] = mul(x[i], y[i]);
+    }
+
+    // multiply y to the second half of `x`
+    for (int i = 0; i < half; i++) {
+        x_next[i] = mul(x_next[i], y[i]);
+    }
+}
+
+template <typename T>
+void BinExtension<T>::add(int n, T* x, T* y)
+{
+    const int half = n / 2;
+    T* x_next = x + half;
+
+    // add y to the first half of `x`
+    for (int i = 0; i < half; i++) {
+        x[i] = add(x[i], y[i]);
+    }
+
+    // add y to the second half of `x`
+    for (int i = 0; i < half; i++) {
+        x_next[i] = add(x_next[i], y[i]);
+    }
+}
 } // namespace gf
 } // namespace nttec
 

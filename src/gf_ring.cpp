@@ -94,6 +94,21 @@ void RingModN<uint32_t>::add(int n, uint32_t* x_u32, uint32_t* y_u32)
 template <>
 void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x_u16, uint16_t* y_u16)
 {
+    simd::mul_two_bufs(y_u16, x_u16, n, this->_card);
+}
+
+template <>
+void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x_u32, uint32_t* y_u32)
+{
+    simd::mul_two_bufs(y_u32, x_u32, n, this->_card);
+}
+
+template <>
+void RingModN<uint16_t>::hadamard_mul_doubled(
+    int n,
+    uint16_t* x_u16,
+    uint16_t* y_u16)
+{
     const int half = n / 2;
     uint16_t* x_next = x_u16 + half;
     simd::mul_two_bufs(y_u16, x_u16, half, this->_card);
@@ -101,7 +116,10 @@ void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x_u16, uint16_t* y_u16)
 }
 
 template <>
-void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x_u32, uint32_t* y_u32)
+void RingModN<uint32_t>::hadamard_mul_doubled(
+    int n,
+    uint32_t* x_u32,
+    uint32_t* y_u32)
 {
     const int half = n / 2;
     uint32_t* x_next = x_u32 + half;
@@ -111,12 +129,12 @@ void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x_u32, uint32_t* y_u32)
 
 // TODO
 // template <>
-// void RingModN<uint64_t>::hadamard_mul(int n, uint64_t* x_u64, uint64_t*
-// y_u64)
+// void RingModN<uint64_t>::hadamard_mul_doubled(int n, uint64_t* x_u64,
+// uint64_t* y_u64)
 // {
 // }
 // template <>
-// void RingModN<__uint128_t>::hadamard_mul(int n, __uint128_t* x_u128,
+// void RingModN<__uint128_t>::hadamard_mul_doubled(int n, __uint128_t* x_u128,
 // __uint128_t* y_u128)
 // {
 // }

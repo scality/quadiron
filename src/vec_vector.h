@@ -320,9 +320,9 @@ template <typename T>
 void Vector<T>::hadamard_mul(Vector<T>* v)
 {
     assert(n == v->get_n());
+    T* dest = mem;
     T* src = v->get_mem();
-    for (int i = 0; i < n; i++)
-        mem[i] = rn->mul(mem[i], src[i]);
+    rn->hadamard_mul(n, dest, src);
 }
 
 /**
@@ -338,7 +338,7 @@ void Vector<T>::hadamard_mul(Doubled<T>* v)
     // typical butterfly operation
     T* dest = mem;
     T* src = v->get_mem();
-    rn->hadamard_mul(n, dest, src);
+    rn->hadamard_mul_doubled(n, dest, src);
 }
 
 template <typename T>

@@ -75,6 +75,7 @@ class NF4 : public gf::Field<T> {
     void compute_omegas(vec::Vector<T>* W, int n, T w);
     gf::Field<uint32_t>* get_sub_field();
     void hadamard_mul(int n, T* x, T* y);
+    void hadamard_mul_doubled(int n, T* x, T* y);
     void add(int n, T* x, T* y);
 
   private:
@@ -469,6 +470,14 @@ gf::Field<uint32_t>* NF4<T>::get_sub_field()
 template <typename T>
 void NF4<T>::hadamard_mul(int n, T* x, T* y)
 {
+    for (int i = 0; i < n; i++) {
+        x[i] = mul(x[i], y[i]);
+    }
+}
+
+template <typename T>
+void NF4<T>::hadamard_mul_doubled(int n, T* x, T* y)
+{
     const int half = n / 2;
     T* x_next = x + half;
 
@@ -529,6 +538,12 @@ GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a);
 
 template <>
 void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y);
+
+template <>
+void NF4<__uint128_t>::hadamard_mul_doubled(
+    int n,
+    __uint128_t* x,
+    __uint128_t* y);
 
 template <>
 void NF4<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y);
