@@ -190,8 +190,9 @@ inline void mul_coef_to_buf(
 
     m128i* _src = reinterpret_cast<m128i*>(src);
     m128i* _dest = reinterpret_cast<m128i*>(dest);
-    size_t _len = len / 4;
-    size_t _last_len = len - _len * 4;
+    unsigned ratio = sizeof(*_src) / sizeof(*src);
+    size_t _len = len / ratio;
+    size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {
@@ -200,7 +201,7 @@ inline void mul_coef_to_buf(
     }
     if (_last_len > 0) {
         uint64_t coef_64 = (uint64_t)a;
-        for (i = _len * 4; i < len; i++) {
+        for (i = _len * ratio; i < len; i++) {
             // perform multiplication
             dest[i] = (aint32)((coef_64 * src[i]) % card);
         }
@@ -212,8 +213,9 @@ add_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 {
     m128i* _src = reinterpret_cast<m128i*>(src);
     m128i* _dest = reinterpret_cast<m128i*>(dest);
-    size_t _len = len / 4;
-    size_t _last_len = len - _len * 4;
+    unsigned ratio = sizeof(*_src) / sizeof(*src);
+    size_t _len = len / ratio;
+    size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {
@@ -221,7 +223,7 @@ add_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
         _dest[i] = add(_src[i], _dest[i], card);
     }
     if (_last_len > 0) {
-        for (i = _len * 4; i < len; i++) {
+        for (i = _len * ratio; i < len; i++) {
             // perform addition
             aint32 tmp = src[i] + dest[i];
             dest[i] = (tmp >= card) ? (tmp - card) : tmp;
@@ -239,8 +241,9 @@ inline void sub_two_bufs(
     m128i* _bufa = reinterpret_cast<m128i*>(bufa);
     m128i* _bufb = reinterpret_cast<m128i*>(bufb);
     m128i* _res = reinterpret_cast<m128i*>(res);
-    size_t _len = len / 4;
-    size_t _last_len = len - _len * 4;
+    unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
+    size_t _len = len / ratio;
+    size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {
@@ -248,7 +251,7 @@ inline void sub_two_bufs(
         _res[i] = sub(_bufa[i], _bufb[i], card);
     }
     if (_last_len > 0) {
-        for (i = _len * 4; i < len; i++) {
+        for (i = _len * ratio; i < len; i++) {
             // perform subtraction
             if (bufa[i] >= bufb[i])
                 res[i] = bufa[i] - bufb[i];
@@ -263,8 +266,9 @@ mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 {
     m128i* _src = reinterpret_cast<m128i*>(src);
     m128i* _dest = reinterpret_cast<m128i*>(dest);
-    size_t _len = len / 4;
-    size_t _last_len = len - _len * 4;
+    unsigned ratio = sizeof(*_src) / sizeof(*src);
+    size_t _len = len / ratio;
+    size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {
@@ -272,7 +276,7 @@ mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
         _dest[i] = mul(_src[i], _dest[i], card);
     }
     if (_last_len > 0) {
-        for (i = _len * 4; i < len; i++) {
+        for (i = _len * ratio; i < len; i++) {
             // perform multiplicaton
             dest[i] = uint32_t((uint64_t(src[i]) * dest[i]) % card);
         }
