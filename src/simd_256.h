@@ -28,26 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_H__
-#define __NTTEC_SIMD_H__
+#ifndef __NTTEC_SIMD_256_H__
+#define __NTTEC_SIMD_256_H__
 
-#ifdef NTTEC_USE_SIMD
-
-const unsigned F4 = 65537;
-const unsigned F3 = 257;
-
-typedef uint8_t aint8 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint16_t aint16 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint32_t aint32 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint64_t aint64 __attribute__((aligned(ALIGN_SIZE)));
-typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
-
-#ifdef NTTEC_USE_SSE4
-#include "simd_128.h"
-#elif defined NTTEC_USE_AVX2
-#include "simd_256.h"
-#endif
-
-#endif // #ifdef NTTEC_USE_SIMD
+#include "simd_256_u16.h"
+#include "simd_256_u32.h"
 
 #endif
