@@ -43,7 +43,7 @@ namespace nttec {
 namespace simd {
 namespace u32 {
 
-typedef __m128i am128i __attribute__((aligned(ALIGN_SIZE)));
+typedef __m128i m128i;
 
 /* ==================== Essential Operations =================== */
 
@@ -52,39 +52,30 @@ const aint32 F3 = 257;
 
 // Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
 // (probably a false positive present in Clang 5 and fixed in Clang 6).
-const am128i F4_m128i = _mm_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
-const am128i F4minus1_m128i = _mm_set1_epi32(65536); // NOLINT(cert-err58-cpp)
-const am128i F3_m128i = _mm_set1_epi32(257);         // NOLINT(cert-err58-cpp)
-const am128i F3minus1_m128i = _mm_set1_epi32(256);   // NOLINT(cert-err58-cpp)
-
-/** Return aint128 integer from a _m128i register */
-static inline aint128 m128i_to_uint128(am128i v)
-{
-    aint128 i;
-    _mm_store_si128((am128i*)&i, v);
-
-    return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
-}
+const m128i F4_m128i = _mm_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
+const m128i F4minus1_m128i = _mm_set1_epi32(65536); // NOLINT(cert-err58-cpp)
+const m128i F3_m128i = _mm_set1_epi32(257);         // NOLINT(cert-err58-cpp)
+const m128i F3minus1_m128i = _mm_set1_epi32(256);   // NOLINT(cert-err58-cpp)
 
 /** Perform a%card where a is a addition of two numbers whose elements are
  *  symbols of GF(card) */
-inline aint128 mod_after_add(am128i a, aint32 card)
+inline m128i mod_after_add(m128i a, aint32 card)
 {
-    const am128i _card = _mm_set1_epi32(card);
-    const am128i _card_minus_1 = _mm_set1_epi32(card - 1);
+    const m128i _card = _mm_set1_epi32(card);
+    const m128i _card_minus_1 = _mm_set1_epi32(card - 1);
 
-    am128i cmp = _mm_cmpgt_epi32(a, _card_minus_1);
-    am128i b = _mm_sub_epi32(a, _mm_and_si128(_card, cmp));
+    m128i cmp = _mm_cmpgt_epi32(a, _card_minus_1);
+    m128i b = _mm_sub_epi32(a, _mm_and_si128(_card, cmp));
 
-    return m128i_to_uint128(b);
+    return b;
 }
 
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
-inline aint128 add(aint128 a, aint128 b, aint32 card = F4)
+inline m128i add(m128i a, m128i b, aint32 card = F4)
 {
-    am128i _a = _mm_load_si128((am128i*)&a);
-    am128i _b = _mm_load_si128((am128i*)&b);
-    am128i c = _mm_add_epi32(_a, _b);
+    m128i _a = _mm_loadu_si128(&a);
+    m128i _b = _mm_loadu_si128(&b);
+    m128i c = _mm_add_epi32(_a, _b);
 
     // Modulo
     return mod_after_add(c, card);
@@ -95,19 +86,17 @@ inline aint128 add(aint128 a, aint128 b, aint32 card = F4)
  * sub(a, b) = a - b if a >= b, or
  *             card + a - b, otherwise
  */
-inline aint128 sub(aint128 a, aint128 b, aint32 card = F4)
+inline m128i sub(m128i a, m128i b, aint32 card = F4)
 {
-    const am128i _card = _mm_set1_epi32(card);
+    const m128i _card = _mm_set1_epi32(card);
 
-    am128i _a = _mm_load_si128((am128i*)&a);
-    am128i _b = _mm_load_si128((am128i*)&b);
+    m128i _a = _mm_loadu_si128(&a);
+    m128i _b = _mm_loadu_si128(&b);
 
-    am128i cmp = _mm_cmpgt_epi32(_b, _a);
-    am128i _a1 = _mm_add_epi32(_a, _mm_and_si128(_card, cmp));
+    m128i cmp = _mm_cmpgt_epi32(_b, _a);
+    m128i _a1 = _mm_add_epi32(_a, _mm_and_si128(_card, cmp));
 
-    am128i c = _mm_sub_epi32(_a1, _b);
-
-    return m128i_to_uint128(c);
+    return _mm_sub_epi32(_a1, _b);
 }
 
 /** Perform a%card where a is a multiplication of two numbers whose elements are
@@ -121,68 +110,64 @@ inline aint128 sub(aint128 a, aint128 b, aint32 card = F4)
  *          or
  *          F4 + lo - hi, otherwise
  */
-inline aint128 mod_after_multiply_f4(am128i a)
+inline m128i mod_after_multiply_f4(m128i a)
 {
-    const am128i mask = _mm_set1_epi32(F4 - 2);
+    const m128i mask = _mm_set1_epi32(F4 - 2);
 
-    am128i lo = _mm_and_si128(a, mask);
+    m128i lo = _mm_and_si128(a, mask);
 
-    am128i a_shift = _mm_srli_si128(a, 2);
-    am128i hi = _mm_and_si128(a_shift, mask);
+    m128i a_shift = _mm_srli_si128(a, 2);
+    m128i hi = _mm_and_si128(a_shift, mask);
 
-    am128i cmp = _mm_cmpgt_epi32(hi, lo);
-    am128i _lo = _mm_add_epi32(lo, _mm_and_si128(F4_m128i, cmp));
+    m128i cmp = _mm_cmpgt_epi32(hi, lo);
+    m128i _lo = _mm_add_epi32(lo, _mm_and_si128(F4_m128i, cmp));
 
-    am128i b = _mm_sub_epi32(_lo, hi);
-
-    return m128i_to_uint128(b);
+    return _mm_sub_epi32(_lo, hi);
 }
 
-inline aint128 mod_after_multiply_f3(am128i a)
+inline m128i mod_after_multiply_f3(m128i a)
 {
-    const am128i mask = _mm_set1_epi32(F3 - 2);
+    const m128i mask = _mm_set1_epi32(F3 - 2);
 
-    am128i lo = _mm_and_si128(a, mask);
+    m128i lo = _mm_and_si128(a, mask);
 
-    am128i a_shift = _mm_srli_si128(a, 1);
-    am128i hi = _mm_and_si128(a_shift, mask);
+    m128i a_shift = _mm_srli_si128(a, 1);
+    m128i hi = _mm_and_si128(a_shift, mask);
 
-    am128i cmp = _mm_cmpgt_epi32(hi, lo);
-    am128i _lo = _mm_add_epi32(lo, _mm_and_si128(F3_m128i, cmp));
+    m128i cmp = _mm_cmpgt_epi32(hi, lo);
+    m128i _lo = _mm_add_epi32(lo, _mm_and_si128(F3_m128i, cmp));
 
-    am128i b = _mm_sub_epi32(_lo, hi);
-
-    return m128i_to_uint128(b);
+    return _mm_sub_epi32(_lo, hi);
 }
 
-inline aint128 mul_f4(aint128 a, aint128 b)
+inline m128i mul_f4(m128i a, m128i b)
 {
-    am128i _a = _mm_load_si128((am128i*)&a);
-    am128i _b = _mm_load_si128((am128i*)&b);
+    m128i _a = _mm_loadu_si128(&a);
+    m128i _b = _mm_loadu_si128(&b);
 
-    am128i c = _mm_mullo_epi32(_a, _b);
+    m128i c = _mm_mullo_epi32(_a, _b);
 
     // filter elements of both of a & b = card-1
-    am128i cmp = _mm_and_si128(
+    m128i cmp = _mm_and_si128(
         _mm_cmpeq_epi32(_a, F4minus1_m128i),
         _mm_cmpeq_epi32(_b, F4minus1_m128i));
 
-    const am128i one = _mm_set1_epi32(1);
+    const m128i one = _mm_set1_epi32(1);
     c = _mm_add_epi32(c, _mm_and_si128(one, cmp));
 
     // Modulo
     return mod_after_multiply_f4(c);
 }
 
-inline aint128 mul_f3(aint128 a, aint128 b)
+inline m128i mul_f3(m128i a, m128i b)
 {
-    am128i _a = _mm_load_si128((am128i*)&a);
-    am128i _b = _mm_load_si128((am128i*)&b);
+    m128i _a = _mm_loadu_si128(&a);
+    m128i _b = _mm_loadu_si128(&b);
 
-    am128i c = _mm_mullo_epi32(_a, _b);
+    m128i c = _mm_mullo_epi32(_a, _b);
 
     // filter elements of both of a & b = card-1
-    am128i cmp = _mm_and_si128(
+    m128i cmp = _mm_and_si128(
         _mm_cmpeq_epi32(_a, F3minus1_m128i),
         _mm_cmpeq_epi32(_b, F3minus1_m128i));
 
@@ -196,7 +181,7 @@ inline aint128 mul_f3(aint128 a, aint128 b)
  *  where `card` is a prime Fermat number, i.e. card = Fx with x < 5
  *  Currently, it supports only for F3 and F4
  */
-inline aint128 mul(aint128 a, aint128 b, aint32 card = F4)
+inline m128i mul(m128i a, m128i b, aint32 card = F4)
 {
     assert(card == F4 || card == F3);
     if (card == F4)
@@ -214,11 +199,10 @@ inline void mul_coef_to_buf(
     size_t len,
     aint32 card = F4)
 {
-    const am128i _coef = _mm_set1_epi32(a);
-    aint128 coef = m128i_to_uint128(_coef);
+    const m128i coef = _mm_set1_epi32(a);
 
-    aint128* _src = static_cast<aint128*>(static_cast<void*>(src));
-    aint128* _dest = static_cast<aint128*>(static_cast<void*>(dest));
+    m128i* _src = reinterpret_cast<m128i*>(src);
+    m128i* _dest = reinterpret_cast<m128i*>(dest);
     size_t _len = len / 4;
     size_t _last_len = len - _len * 4;
 
@@ -239,8 +223,8 @@ inline void mul_coef_to_buf(
 inline void
 add_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 {
-    aint128* _src = reinterpret_cast<aint128*>(src);
-    aint128* _dest = reinterpret_cast<aint128*>(dest);
+    m128i* _src = reinterpret_cast<m128i*>(src);
+    m128i* _dest = reinterpret_cast<m128i*>(dest);
     size_t _len = len / 4;
     size_t _last_len = len - _len * 4;
 
@@ -265,9 +249,9 @@ inline void sub_two_bufs(
     size_t len,
     aint32 card = F4)
 {
-    aint128* _bufa = static_cast<aint128*>(static_cast<void*>(bufa));
-    aint128* _bufb = static_cast<aint128*>(static_cast<void*>(bufb));
-    aint128* _res = static_cast<aint128*>(static_cast<void*>(res));
+    m128i* _bufa = reinterpret_cast<m128i*>(bufa);
+    m128i* _bufb = reinterpret_cast<m128i*>(bufb);
+    m128i* _res = reinterpret_cast<m128i*>(res);
     size_t _len = len / 4;
     size_t _last_len = len - _len * 4;
 
@@ -290,8 +274,8 @@ inline void sub_two_bufs(
 inline void
 mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 {
-    aint128* _src = reinterpret_cast<aint128*>(src);
-    aint128* _dest = reinterpret_cast<aint128*>(dest);
+    m128i* _src = reinterpret_cast<m128i*>(src);
+    m128i* _dest = reinterpret_cast<m128i*>(dest);
     size_t _len = len / 4;
     size_t _last_len = len - _len * 4;
 
@@ -310,12 +294,42 @@ mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 
 /* ==================== Operations for NF4 =================== */
 
+/** Return aint128 integer from a _m128i register */
+static inline aint128 m128i_to_uint128(m128i v)
+{
+    aint128 i;
+    _mm_store_si128((m128i*)&i, v);
+
+    return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
+}
+
+inline __uint128_t add(__uint128_t a, __uint128_t b)
+{
+    m128i res = add((m128i)a, (m128i)b, F4);
+    return m128i_to_uint128(res);
+}
+
+inline __uint128_t sub(__uint128_t a, __uint128_t b)
+{
+    m128i res = sub((m128i)a, (m128i)b, F4);
+    return m128i_to_uint128(res);
+}
+
+inline __uint128_t mul(__uint128_t a, __uint128_t b)
+{
+    m128i res = mul((m128i)a, (m128i)b, F4);
+    return m128i_to_uint128(res);
+}
+
 /** Add buffer `y` to two halves of `x`. `x` is of length `n` */
-inline void add_buf_to_two_bufs(int n, aint128* x, aint128* y, aint32 card = F4)
+inline void
+add_buf_to_two_bufs(int n, aint128* _x, aint128* _y, aint32 card = F4)
 {
     int i;
     const int half = n / 2;
-    aint128* x_next = x + half;
+    m128i* x = reinterpret_cast<m128i*>(_x);
+    m128i* y = reinterpret_cast<m128i*>(_y);
+    m128i* x_next = x + half;
 
     // add y to the first half of `x`
     for (i = 0; i < half; i++) {
@@ -328,11 +342,13 @@ inline void add_buf_to_two_bufs(int n, aint128* x, aint128* y, aint32 card = F4)
     }
 }
 
-inline void hadamard_mul(int n, aint128* x, aint128* y)
+inline void hadamard_mul(int n, aint128* _x, aint128* _y)
 {
     int i;
     const int half = n / 2;
-    aint128* x_next = x + half;
+    m128i* x = reinterpret_cast<m128i*>(_x);
+    m128i* y = reinterpret_cast<m128i*>(_y);
+    m128i* x_next = x + half;
 
     // multiply y to the first half of `x`
     for (i = 0; i < half; i++) {
@@ -351,7 +367,7 @@ inline aint128 expand16(aint16* arr, int n)
     uint16_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
     std::copy_n(arr, n, _arr);
 
-    am128i b = _mm_set_epi64(
+    m128i b = _mm_set_epi64(
         _mm_setzero_si64(), _mm_set_pi16(_arr[3], _arr[2], _arr[1], _arr[0]));
 
     return m128i_to_uint128(b);
@@ -363,7 +379,7 @@ inline aint128 expand32(aint32* arr, int n)
     uint32_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
     std::copy_n(arr, n, _arr);
 
-    am128i b = _mm_set_epi32(_arr[3], _arr[2], _arr[1], _arr[0]);
+    m128i b = _mm_set_epi32(_arr[3], _arr[2], _arr[1], _arr[0]);
 
     return m128i_to_uint128(b);
 }
@@ -376,7 +392,7 @@ inline GroupedValues<aint128> unpack(aint128 a, int n)
     aint128 values;
     int i;
 
-    am128i _a = _mm_load_si128((am128i*)&a);
+    m128i _a = _mm_loadu_si128((m128i*)&a);
     ai[0] = _mm_extract_epi32(_a, 0);
     ai[1] = _mm_extract_epi32(_a, 1);
     ai[2] = _mm_extract_epi32(_a, 2);
@@ -387,9 +403,9 @@ inline GroupedValues<aint128> unpack(aint128 a, int n)
         else
             bi[i] = (aint16)ai[i];
     }
-    am128i val = _mm_set_epi64(
+    m128i val = _mm_set_epi64(
         _mm_setzero_si64(), _mm_set_pi16(bi[3], bi[2], bi[1], bi[0]));
-    _mm_store_si128((am128i*)&values, val);
+    _mm_store_si128((m128i*)&values, val);
 
     GroupedValues<aint128> b = {values, flag};
 
@@ -398,8 +414,8 @@ inline GroupedValues<aint128> unpack(aint128 a, int n)
 
 inline aint128 pack(aint128 a)
 {
-    am128i _a = _mm_load_si128((am128i*)&a);
-    am128i b = _mm_set_epi32(
+    m128i _a = _mm_loadu_si128((m128i*)&a);
+    m128i b = _mm_set_epi32(
         _mm_extract_epi16(_a, 3),
         _mm_extract_epi16(_a, 2),
         _mm_extract_epi16(_a, 1),
@@ -411,7 +427,7 @@ inline aint128 pack(aint128 a)
 inline aint128 pack(aint128 a, aint32 flag)
 {
     aint32 b0, b1, b2, b3;
-    am128i _a = _mm_load_si128((am128i*)&a);
+    m128i _a = _mm_loadu_si128((m128i*)&a);
 
     if (flag & 1)
         b0 = 65536;
@@ -433,7 +449,7 @@ inline aint128 pack(aint128 a, aint32 flag)
     else
         b3 = _mm_extract_epi16(_a, 3);
 
-    am128i b = _mm_set_epi32(b3, b2, b1, b0);
+    m128i b = _mm_set_epi32(b3, b2, b1, b0);
 
     return m128i_to_uint128(b);
 }

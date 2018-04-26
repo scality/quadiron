@@ -43,7 +43,7 @@ namespace nttec {
 namespace simd {
 namespace u16 {
 
-typedef __m128i am128i __attribute__((aligned(ALIGN_SIZE)));
+typedef __m128i m128i;
 
 /* ==================== Essential Operations =================== */
 
@@ -51,37 +51,28 @@ const aint16 F3 = 257;
 
 // Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
 // (probably a false positive present in Clang 5 and fixed in Clang 6).
-const am128i F3_m128i = _mm_set1_epi16(257);       // NOLINT(cert-err58-cpp)
-const am128i F3minus1_m128i = _mm_set1_epi16(256); // NOLINT(cert-err58-cpp)
-
-/** Return aint128 integer from a _m128i register */
-static inline aint128 m128i_to_uint128(am128i v)
-{
-    aint128 i;
-    _mm_store_si128((am128i*)&i, v);
-
-    return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
-}
+const m128i F3_m128i = _mm_set1_epi16(257);       // NOLINT(cert-err58-cpp)
+const m128i F3minus1_m128i = _mm_set1_epi16(256); // NOLINT(cert-err58-cpp)
 
 /** Perform a%card where a is a addition of two numbers whose elements are
  *  symbols of GF(card) */
-inline aint128 mod_after_add(am128i a, aint16 card)
+inline m128i mod_after_add(m128i a, aint16 card)
 {
-    const am128i _card = _mm_set1_epi16(card);
-    const am128i _card_minus_1 = _mm_set1_epi16(card - 1);
+    const m128i _card = _mm_set1_epi16(card);
+    const m128i _card_minus_1 = _mm_set1_epi16(card - 1);
 
-    am128i cmp = _mm_cmpgt_epi16(a, _card_minus_1);
-    am128i b = _mm_sub_epi16(a, _mm_and_si128(_card, cmp));
+    m128i cmp = _mm_cmpgt_epi16(a, _card_minus_1);
+    m128i b = _mm_sub_epi16(a, _mm_and_si128(_card, cmp));
 
-    return m128i_to_uint128(b);
+    return b;
 }
 
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
-inline aint128 add(aint128 a, aint128 b, aint16 card = F3)
+inline m128i add(m128i a, m128i b, aint16 card = F3)
 {
-    am128i _a = _mm_load_si128((am128i*)&a);
-    am128i _b = _mm_load_si128((am128i*)&b);
-    am128i c = _mm_add_epi16(_a, _b);
+    m128i _a = _mm_loadu_si128(&a);
+    m128i _b = _mm_loadu_si128(&b);
+    m128i c = _mm_add_epi16(_a, _b);
 
     // Modulo
     return mod_after_add(c, card);
@@ -92,51 +83,47 @@ inline aint128 add(aint128 a, aint128 b, aint16 card = F3)
  * sub(a, b) = a - b if a >= b, or
  *             card + a - b, otherwise
  */
-inline aint128 sub(aint128 a, aint128 b, aint16 card = F3)
+inline m128i sub(m128i a, m128i b, aint16 card = F3)
 {
-    const am128i _card = _mm_set1_epi16(card);
+    const m128i _card = _mm_set1_epi16(card);
 
-    am128i _a = _mm_load_si128((am128i*)&a);
-    am128i _b = _mm_load_si128((am128i*)&b);
+    m128i _a = _mm_loadu_si128(&a);
+    m128i _b = _mm_loadu_si128(&b);
 
-    am128i cmp = _mm_cmpgt_epi16(_b, _a);
-    am128i _a1 = _mm_add_epi16(_a, _mm_and_si128(_card, cmp));
+    m128i cmp = _mm_cmpgt_epi16(_b, _a);
+    m128i _a1 = _mm_add_epi16(_a, _mm_and_si128(_card, cmp));
 
-    am128i c = _mm_sub_epi16(_a1, _b);
-
-    return m128i_to_uint128(c);
+    return _mm_sub_epi16(_a1, _b);
 }
 
-inline aint128 mod_after_multiply(am128i a)
+inline m128i mod_after_multiply(m128i a)
 {
-    const am128i mask = _mm_set1_epi16(F3 - 2);
+    const m128i mask = _mm_set1_epi16(F3 - 2);
 
-    am128i lo = _mm_and_si128(a, mask);
+    m128i lo = _mm_and_si128(a, mask);
 
-    am128i a_shift = _mm_srli_si128(a, 1);
-    am128i hi = _mm_and_si128(a_shift, mask);
+    m128i a_shift = _mm_srli_si128(a, 1);
+    m128i hi = _mm_and_si128(a_shift, mask);
 
-    am128i cmp = _mm_cmpgt_epi16(hi, lo);
-    am128i _lo = _mm_add_epi16(lo, _mm_and_si128(F3_m128i, cmp));
+    m128i cmp = _mm_cmpgt_epi16(hi, lo);
+    m128i _lo = _mm_add_epi16(lo, _mm_and_si128(F3_m128i, cmp));
 
-    am128i b = _mm_sub_epi16(_lo, hi);
-
-    return m128i_to_uint128(b);
+    return _mm_sub_epi16(_lo, hi);
 }
 
-inline aint128 mul(aint128 a, aint128 b)
+inline m128i mul(m128i a, m128i b)
 {
-    am128i _a = _mm_load_si128((am128i*)&a);
-    am128i _b = _mm_load_si128((am128i*)&b);
+    m128i _a = _mm_loadu_si128(&a);
+    m128i _b = _mm_loadu_si128(&b);
 
-    am128i c = _mm_mullo_epi16(_a, _b);
+    m128i c = _mm_mullo_epi16(_a, _b);
 
     // filter elements of both of a & b = card-1
-    am128i cmp = _mm_and_si128(
+    m128i cmp = _mm_and_si128(
         _mm_cmpeq_epi16(_a, F3minus1_m128i),
         _mm_cmpeq_epi16(_b, F3minus1_m128i));
 
-    const am128i one = _mm_set1_epi16(1);
+    const m128i one = _mm_set1_epi16(1);
     c = _mm_add_epi16(c, _mm_and_si128(one, cmp));
 
     // Modulo
@@ -147,7 +134,7 @@ inline aint128 mul(aint128 a, aint128 b)
  *  where `card` is a prime Fermat number, i.e. card = Fx with x < 5
  *  Currently, it supports only for F3
  */
-inline aint128 mul(aint128 a, aint128 b, aint16 card)
+inline m128i mul(m128i a, m128i b, aint16 card)
 {
     // FIXME: generalize card
     assert(card == F3);
@@ -164,11 +151,10 @@ inline void mul_coef_to_buf(
     size_t len,
     aint16 card = F3)
 {
-    const am128i _coef = _mm_set1_epi16(a);
-    aint128 coef = m128i_to_uint128(_coef);
+    const m128i coef = _mm_set1_epi16(a);
 
-    aint128* _src = reinterpret_cast<aint128*>(src);
-    aint128* _dest = reinterpret_cast<aint128*>(dest);
+    m128i* _src = reinterpret_cast<m128i*>(src);
+    m128i* _dest = reinterpret_cast<m128i*>(dest);
     unsigned ratio = sizeof(*_src) / sizeof(*src);
     size_t _len = len / ratio;
     size_t _last_len = len - _len * ratio;
@@ -190,8 +176,8 @@ inline void mul_coef_to_buf(
 inline void
 add_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 {
-    aint128* _src = reinterpret_cast<aint128*>(src);
-    aint128* _dest = reinterpret_cast<aint128*>(dest);
+    m128i* _src = reinterpret_cast<m128i*>(src);
+    m128i* _dest = reinterpret_cast<m128i*>(dest);
     unsigned ratio = sizeof(*_src) / sizeof(*src);
     size_t _len = len / ratio;
     size_t _last_len = len - _len * ratio;
@@ -217,9 +203,9 @@ inline void sub_two_bufs(
     size_t len,
     aint16 card = F3)
 {
-    aint128* _bufa = reinterpret_cast<aint128*>(bufa);
-    aint128* _bufb = reinterpret_cast<aint128*>(bufb);
-    aint128* _res = reinterpret_cast<aint128*>(res);
+    m128i* _bufa = reinterpret_cast<m128i*>(bufa);
+    m128i* _bufb = reinterpret_cast<m128i*>(bufb);
+    m128i* _res = reinterpret_cast<m128i*>(res);
     unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
     size_t _len = len / ratio;
     size_t _last_len = len - _len * ratio;
@@ -243,8 +229,8 @@ inline void sub_two_bufs(
 inline void
 mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 {
-    aint128* _src = reinterpret_cast<aint128*>(src);
-    aint128* _dest = reinterpret_cast<aint128*>(dest);
+    m128i* _src = reinterpret_cast<m128i*>(src);
+    m128i* _dest = reinterpret_cast<m128i*>(dest);
     unsigned ratio = sizeof(*_src) / sizeof(*src);
     size_t _len = len / ratio;
     size_t _last_len = len - _len * ratio;
