@@ -48,6 +48,8 @@ typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
 #include "simd_256.h"
 #endif
 
+#include "simd_nf4.h"
+
 #endif // #ifdef NTTEC_USE_SIMD
 
 #endif
