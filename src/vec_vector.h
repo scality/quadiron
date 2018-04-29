@@ -38,6 +38,7 @@
 #include <iostream>
 #include <vector>
 
+#include "core.h"
 #include "gf_ring.h"
 #include "vec_doubled.h"
 
@@ -205,7 +206,7 @@ Vector<T>::Vector(gf::RingModN<T>* rn, int n, T* mem, int mem_len)
     this->rn = rn;
     this->n = n;
     if (mem == nullptr) {
-        this->mem = new T[n];
+        this->mem = aligned_allocate<T>(n);
         this->mem_len = n;
         this->new_mem = true;
     } else {
@@ -219,7 +220,7 @@ template <typename T>
 Vector<T>::~Vector()
 {
     if (new_mem)
-        delete[] this->mem;
+        aligned_deallocate<T>(this->mem);
 }
 
 template <typename T>
@@ -277,7 +278,7 @@ template <typename T>
 inline void Vector<T>::set_mem(T* mem, int mem_len)
 {
     if (new_mem)
-        delete[] this->mem;
+        aligned_deallocate<T>(this->mem);
     new_mem = false;
     this->mem = mem;
     this->mem_len = mem_len;

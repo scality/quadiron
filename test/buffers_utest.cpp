@@ -56,7 +56,7 @@ class BuffersUtest {
         nttec::vec::Buffers<T>* vec = new nttec::vec::Buffers<T>(n, size);
 
         for (int i = 0; i < n; i++) {
-            T* buf = new T[size];
+            T* buf = nttec::aligned_allocate<T>(size);
             for (int j = 0; j < size; j++) {
                 buf[j] = dis(prng);
             }
