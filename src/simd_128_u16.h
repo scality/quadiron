@@ -60,8 +60,8 @@ inline m128i mod_after_add(m128i a, aint16 card)
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
 inline m128i add(m128i a, m128i b, aint16 card)
 {
-    m128i _a = _mm_loadu_si128(&a);
-    m128i _b = _mm_loadu_si128(&b);
+    m128i _a = _mm_load_si128(&a);
+    m128i _b = _mm_load_si128(&b);
     m128i c = _mm_add_epi16(_a, _b);
 
     // Modulo
@@ -77,8 +77,8 @@ inline m128i sub(m128i a, m128i b, aint16 card)
 {
     const m128i _card = _mm_set1_epi16(card);
 
-    m128i _a = _mm_loadu_si128(&a);
-    m128i _b = _mm_loadu_si128(&b);
+    m128i _a = _mm_load_si128(&a);
+    m128i _b = _mm_load_si128(&b);
 
     m128i cmp = _mm_cmpgt_epi16(_b, _a);
     m128i _a1 = _mm_add_epi16(_a, _mm_and_si128(_card, cmp));
@@ -103,8 +103,8 @@ inline m128i mod_after_multiply(m128i a)
 
 inline m128i mul(m128i a, m128i b)
 {
-    m128i _a = _mm_loadu_si128(&a);
-    m128i _b = _mm_loadu_si128(&b);
+    m128i _a = _mm_load_si128(&a);
+    m128i _b = _mm_load_si128(&b);
 
     m128i c = _mm_mullo_epi16(_a, _b);
 

@@ -68,8 +68,8 @@ inline m256i mod_after_add(m256i a, aint16 card)
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
 inline m256i add(m256i a, m256i b, aint16 card = F3)
 {
-    m256i _a = _mm256_loadu_si256(&a);
-    m256i _b = _mm256_loadu_si256(&b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
     m256i c = _mm256_add_epi16(_a, _b);
 
     // Modulo
@@ -85,8 +85,8 @@ inline m256i sub(m256i a, m256i b, aint16 card = F3)
 {
     const m256i _card = _mm256_set1_epi16(card);
 
-    m256i _a = _mm256_loadu_si256(&a);
-    m256i _b = _mm256_loadu_si256(&b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
 
     m256i cmp = _mm256_cmpgt_epi16(_b, _a);
     m256i _a1 = _mm256_add_epi16(_a, _mm256_and_si256(_card, cmp));
@@ -111,8 +111,8 @@ inline m256i mod_after_multiply(m256i a)
 
 inline m256i mul(m256i a, m256i b)
 {
-    m256i _a = _mm256_loadu_si256(&a);
-    m256i _b = _mm256_loadu_si256(&b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
 
     m256i c = _mm256_mullo_epi16(_a, _b);
 
