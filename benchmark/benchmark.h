@@ -44,6 +44,8 @@
 #include "prng.h"
 #include "stats.h"
 
+#include "libs/fec_rs_isal.h"
+
 enum ec_type {
     EC_TYPE_ALL = 0,
     EC_TYPE_RS_FNT,
@@ -54,6 +56,7 @@ enum ec_type {
     EC_TYPE_RS_GF2N_V,
     EC_TYPE_RS_GF2N_C,
     EC_TYPE_RS_GF2N_FFT,
+    EC_TYPE_RS_ISAL,
     EC_TYPE_END,
 };
 
@@ -73,6 +76,8 @@ const std::map<ec_type, std::string> ec_desc = {
      "Systematic Reed-solomon codes over GF(p = Fermat number) using FFT"},
     {EC_TYPE_RS_NF4,
      "Reed-solomon codes over GF(65537) using FFT on pack of codewords"},
+    {EC_TYPE_RS_ISAL,
+     "Reed-solomon codes over GF(256) using the ISA-L library"},
 };
 
 // NOLINTNEXTLINE(cert-err58-cpp)
@@ -86,6 +91,7 @@ const std::map<ec_type, std::string> ec_desc_short = {
     {EC_TYPE_RS_FNT, "rs-fnt"},
     {EC_TYPE_RS_FNT_SYS, "rs-fnt-sys"},
     {EC_TYPE_RS_NF4, "rs-nf4"},
+    {EC_TYPE_RS_ISAL, "rs-isal"},
 };
 
 enum gf2nrs_type {
@@ -127,6 +133,7 @@ const std::map<std::string, ec_type> fec_type_map = {
     {"rs-fnt", EC_TYPE_RS_FNT},
     {"rs-fnt-sys", EC_TYPE_RS_FNT_SYS},
     {"rs-nf4", EC_TYPE_RS_NF4},
+    {"rs-isal", EC_TYPE_RS_ISAL},
 };
 
 enum scenario_type {
