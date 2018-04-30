@@ -127,6 +127,8 @@ include(CheckCXXCompilerFlag)
 set(COMMON_CXX_FLAGS
   -pipe
   -Wall
+  -Wno-constant-conversion
+  -Wno-shift-count-overflow
 )
 
 # Option for enabling/disabling SIMD flags is for both of debug and release
