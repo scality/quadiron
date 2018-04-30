@@ -803,8 +803,14 @@ int main(int argc, char** argv)
     // Currently support operating on packet:RS_FNT
     if (params->fec_type != EC_TYPE_RS_FNT
         && params->fec_type != EC_TYPE_RS_FNT_SYS
+        && params->fec_type != EC_TYPE_RS_ISAL
         && params->fec_type != EC_TYPE_RS_NF4) {
         params->operation_on_packet = false;
+    }
+
+    if (params->fec_type == EC_TYPE_RS_ISAL) {
+        params->word_size = 1;
+        params->sizeof_T = 1;
     }
 
     if (params->pkt_size <= 0) {
