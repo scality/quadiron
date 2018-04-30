@@ -138,12 +138,12 @@ class RsIsal : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>* words)
     {
-        printf(
-            " encode (m,k,p)=(%d,%d,%d) len=%zu\n",
-            this->code_len,
-            this->n_data,
-            this->n_parities,
-            this->pkt_size);
+        // printf(
+        //     " encode (m,k,p)=(%d,%d,%d) len=%zu\n",
+        //     this->code_len,
+        //     this->n_data,
+        //     this->n_parities,
+        //     this->pkt_size);
 
         std::vector<T*>* vec_data = words->get_mem();
         std::vector<T*>* vec_coding = output->get_mem();
@@ -151,6 +151,24 @@ class RsIsal : public FecCode<T> {
         u8** data = reinterpret_cast<u8**>(vec_data->data());
         u8** coding = reinterpret_cast<u8**>(vec_coding->data());
         // Generate EC parity blocks from sources
+
+#if NTTEC_USE_SIMD == AVX2
+        ec_encode_data_avx2(
+            this->pkt_size,
+            this->n_data,
+            this->n_parities,
+            g_tbls,
+            data,
+            coding);
+#elif NTTEC_USE_SIMD == SSE4
+        ec_encode_data_sse(
+            this->pkt_size,
+            this->n_data,
+            this->n_parities,
+            g_tbls,
+            data,
+            coding);
+#else
         ec_encode_data(
             this->pkt_size,
             this->n_data,
@@ -158,6 +176,7 @@ class RsIsal : public FecCode<T> {
             g_tbls,
             data,
             coding);
+#endif
     }
 
     void decode_add_data(int fragment_index, int row)
