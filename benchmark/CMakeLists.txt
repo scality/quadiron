@@ -36,6 +36,15 @@ set(BENCH_SRC
   FORCE
 )
 
+############
+# ISA-L
+############
+include_directories(SYSTEM ./libs/usr/include)
+link_directories(./libs/usr/lib)
+
+link_libraries(isal)
+link_libraries(boost_program_options)
+
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
   message(WARNING "Benchmark results with an un-optimised build may be misleading")

@@ -182,7 +182,7 @@ int Benchmark<T>::init()
             quadiron::fec::FecType::SYSTEMATIC, word_size, k, m, pkt_size);
         break;
     case EC_TYPE_RS_ISAL:
-        fec = new nttec::fec::RsIsal<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        fec = new quadiron::fec::RsIsal<T>(word_size, k, m, quadiron::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
