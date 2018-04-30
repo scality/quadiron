@@ -41,6 +41,10 @@ template <typename Type>
 struct DoubleSize {
 };
 template <>
+struct DoubleSize<unsigned char> {
+    typedef uint16_t T;
+};
+template <>
 struct DoubleSize<uint16_t> {
     typedef uint32_t T;
 };
@@ -59,6 +63,10 @@ struct DoubleSize<__uint128_t> {
 
 template <typename Type>
 struct SignedDoubleSize {
+};
+template <>
+struct SignedDoubleSize<unsigned char> {
+    typedef int16_t T;
 };
 template <>
 struct SignedDoubleSize<uint16_t> {
