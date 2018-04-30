@@ -176,6 +176,9 @@ int Benchmark<T>::init()
     case EC_TYPE_RS_FNT:
         fec = new nttec::fec::RsFnt<T>(word_size, k, m, pkt_size);
         break;
+    case EC_TYPE_RS_ISAL:
+        fec = new nttec::fec::RsIsal<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
@@ -640,6 +643,7 @@ void xusage()
               << "\t\t\trs-gfp-fft: " << ec_desc.at(EC_TYPE_RS_GFP_FFT) << '\n'
               << "\t\t\trs-fnt: " << ec_desc.at(EC_TYPE_RS_FNT) << '\n'
               << "\t\t\trs-nf4: " << ec_desc.at(EC_TYPE_RS_NF4) << '\n'
+              << "\t\t\trs-isal: " << ec_desc.at(EC_TYPE_RS_ISAL) << '\n'
               << "\t\t\tall: All available Reed-solomon codes\n"
               << "\t-s \tScenario for benchmark, either\n"
               << "\t\t\tenc_only: Only encodings\n"
@@ -690,6 +694,9 @@ void run_scenario(Params_t* params)
     params->get_sizeof_T();
 
     switch (params->sizeof_T) {
+    case 1:
+        init_run_bench<unsigned char>(params);
+        break;
     case 2:
         init_run_bench<uint16_t>(params);
         break;
