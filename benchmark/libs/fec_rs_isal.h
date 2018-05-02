@@ -72,17 +72,9 @@ class RsIsal : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsIsal()
-    {
-        if (mat)
-            delete[] mat;
-        if (decode_mat)
-            delete[] decode_mat;
-        if (g_tbls)
-            delete[] g_tbls;
-    }
+    ~RsIsal() = default;
 
-    inline void check_params()
+    inline void check_params() override
     {
         assert(
             mat_type == RsMatrixType::VANDERMONDE
@@ -95,138 +87,138 @@ class RsIsal : public FecCode<T> {
         }
     }
 
-    inline void init_gf() {}
+    inline void init_gf() override {}
 
-    inline void init_fft() {}
+    inline void init_fft() override {}
 
-    inline void init_others()
+    inline void init_others() override
     {
-        mat = new u8[this->code_len * this->n_data];
-        decode_mat = new u8[this->n_data * this->n_data];
-        g_tbls = new u8[this->n_data * this->n_parities * 32];
+        encode_mat = std::unique_ptr<u8>(new u8[this->code_len * this->n_data]);
+        decode_mat_tmp =
+            std::unique_ptr<u8>(new u8[this->n_data * this->n_data]);
+        decode_mat = std::unique_ptr<u8>(new u8[this->n_data * this->n_data]);
+        enc_g_tbls =
+            std::unique_ptr<u8>(new u8[this->n_data * this->n_parities * 32]);
+        dec_g_tbls =
+            std::unique_ptr<u8>(new u8[this->n_data * this->n_data * 32]);
 
         // Pick an encode matrix.
         if (mat_type == RsMatrixType::CAUCHY) {
-            gf_gen_cauchy1_matrix(mat, this->code_len, this->n_data);
+            gf_gen_cauchy1_matrix(
+                encode_mat.get(), this->code_len, this->n_data);
         } else if (mat_type == RsMatrixType::VANDERMONDE) {
-            gf_gen_rs_matrix(mat, this->code_len, this->n_data);
+            gf_gen_rs_matrix(encode_mat.get(), this->code_len, this->n_data);
         }
-        // Initialize g_tbls from encode matrix
+        // Initialize enc_g_tbls from encode matrix
         ec_init_tables(
             this->n_data,
             this->n_parities,
-            &mat[this->n_data * this->n_data],
-            g_tbls);
+            encode_mat.get() + this->n_data * this->n_data,
+            enc_g_tbls.get());
     }
 
-    int get_n_outputs()
+    int get_n_outputs() override
     {
         return this->n_parities;
     }
 
     void encode(
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words)
+        vec::Vector<T>& words) override
     {
     }
 
-    void encode(
-        vec::Buffers<T>* output,
-        std::vector<Properties>& props,
-        off_t offset,
-        vec::Buffers<T>* words)
+    void do_multiply(vec::Buffers<T>& output, vec::Buffers<T>& words, u8* tbls)
     {
-        // printf(
-        //     " encode (m,k,p)=(%d,%d,%d) len=%zu\n",
-        //     this->code_len,
-        //     this->n_data,
-        //     this->n_parities,
-        //     this->pkt_size);
-
-        std::vector<T*>* vec_data = words->get_mem();
-        std::vector<T*>* vec_coding = output->get_mem();
+        const unsigned input_len = words.get_n();
+        const unsigned output_len = output.get_n();
+        std::vector<T*>* vec_data = words.get_mem();
+        std::vector<T*>* vec_coding = output.get_mem();
 
         u8** data = reinterpret_cast<u8**>(vec_data->data());
         u8** coding = reinterpret_cast<u8**>(vec_coding->data());
         // Generate EC parity blocks from sources
 
-#if NTTEC_USE_SIMD == AVX2
+#if NTTEC_USE_AVX2
         ec_encode_data_avx2(
-            this->pkt_size,
-            this->n_data,
-            this->n_parities,
-            g_tbls,
-            data,
-            coding);
-#elif NTTEC_USE_SIMD == SSE4
+            this->pkt_size, input_len, output_len, tbls, data, coding);
+#elif NTTEC_USE_SSE4
         ec_encode_data_sse(
-            this->pkt_size,
-            this->n_data,
-            this->n_parities,
-            g_tbls,
-            data,
-            coding);
+            this->pkt_size, input_len, output_len, tbls, data, coding);
 #else
         ec_encode_data(
-            this->pkt_size,
-            this->n_data,
-            this->n_parities,
-            g_tbls,
-            data,
-            coding);
+            this->pkt_size, input_len, output_len, tbls, data, coding);
 #endif
     }
 
-    void decode_add_data(int fragment_index, int row)
+    void encode(
+        vec::Buffers<T>& output,
+        std::vector<Properties>& props,
+        off_t offset,
+        vec::Buffers<T>& words) override
     {
-        // for each data available generate the corresponding identity
-        for (int j = 0; j < this->n_data; j++) {
-            if (row == j)
-                // decode_mat->set(fragment_index, j, 1);
-                decode_mat[fragment_index * this->code_len + j] = 1;
-            else
-                // decode_mat->set(fragment_index, j, 0);
-                decode_mat[fragment_index * this->code_len + j] = 0;
-        }
+        do_multiply(output, words, enc_g_tbls.get());
     }
 
-    void decode_add_parities(int fragment_index, int row)
+    void decode_add_data(int fragment_index, int row) override
     {
-        // copy corresponding row in vandermonde matrix
-        for (int j = 0; j < this->n_data; j++) {
-            // decode_mat->set(fragment_index, j, mat->get(row, j));
-            decode_mat[fragment_index * this->code_len + j] =
-                mat[row * this->code_len + j];
-        }
+        std::copy_n(
+            encode_mat.get() + row * this->n_data,
+            this->n_data,
+            decode_mat_tmp.get() + fragment_index * this->n_data);
     }
 
-    void decode_build()
+    void decode_add_parities(int fragment_index, int row) override
     {
-        gf_invert_matrix(decode_mat, decode_mat, this->n_data);
-        // ec_init_tables(, nerrs, decode_mat, g_tbls);
+        int _row = row + this->n_data;
+        std::copy_n(
+            encode_mat.get() + _row * this->n_data,
+            this->n_data,
+            decode_mat_tmp.get() + fragment_index * this->n_data);
+    }
+
+    void decode_build() override
+    {
+        gf_invert_matrix(decode_mat_tmp.get(), decode_mat.get(), this->n_data);
+        // Initialize dec_g_tbls from decode matrix
+        ec_init_tables(
+            this->n_data, this->n_data, decode_mat.get(), dec_g_tbls.get());
+    }
+
+    std::unique_ptr<DecodeContext<T>>
+    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
+    {
+        std::unique_ptr<DecodeContext<T>> context;
+        return context;
     }
 
     void decode(
-        ContextDec<T>* context,
-        vec::Vector<T>* output,
+        const DecodeContext<T>& context,
+        vec::Vector<T>& output,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words)
+        vec::Vector<T>& words) override
     {
-        // decode_mat->mul(output, words);
     }
 
-    ContextDec<T>* init_context_dec(vec::Vector<T>* fragments_ids)
+    void decode(
+        const DecodeContext<T>& context,
+        vec::Buffers<T>& output,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Buffers<T>& words) override
     {
-        return nullptr;
+        do_multiply(output, words, dec_g_tbls.get());
     }
 
   private:
-    u8* mat = nullptr;
-    u8* decode_mat = nullptr;
-    u8* g_tbls = nullptr;
+    std::unique_ptr<u8> encode_mat = nullptr;
+    std::unique_ptr<u8> decode_mat = nullptr;
+    std::unique_ptr<u8> decode_mat_tmp = nullptr;
+    std::unique_ptr<u8> enc_g_tbls = nullptr;
+    std::unique_ptr<u8> dec_g_tbls = nullptr;
 };
 
 } // namespace fec
