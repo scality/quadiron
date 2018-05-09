@@ -115,6 +115,8 @@ class RingModN {
     virtual void hadamard_mul(int n, T* x, T* y) const;
     virtual void hadamard_mul_doubled(int n, T* x, T* y) const;
     virtual void add_doubled(int n, T* x, T* y) const;
+    virtual void neg(size_t n, T* x) const;
+    virtual void neg(vec::Buffers<T>* buf) const;
 
   protected:
     T _card;
@@ -879,6 +881,24 @@ void RingModN<T>::add_doubled(int n, T* x, T* y) const
     // add y to the second half of `x`
     for (int i = 0; i < half; i++) {
         x_next[i] = add(x_next[i], y[i]);
+    }
+}
+
+template <typename T>
+void RingModN<T>::neg(size_t n, T* x) const
+{
+    // add y to the first half of `x`
+    for (int i = 0; i < n; i++) {
+        x[i] = sub(0, x[i]);
+    }
+}
+
+template <typename T>
+void RingModN<T>::neg(vec::Buffers<T>* buf) const
+{
+    size_t size = buf->get_size();
+    for (int i = 0; i < buf->get_n(); i++) {
+        neg(size, buf->get(i));
     }
 }
 
