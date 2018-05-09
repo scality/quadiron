@@ -71,6 +71,11 @@ struct ValueLocation {
         str += std::to_string(fragment_id);
         return str;
     }
+
+    inline off_t get_offset() const
+    {
+        return offset;
+    }
 };
 
 } // namespace quad
@@ -111,6 +116,11 @@ class Properties {
     inline void clear()
     {
         props.clear();
+    }
+
+    std::unordered_map<ValueLocation, std::string> const get_map() const
+    {
+        return props;
     }
 
   private:
