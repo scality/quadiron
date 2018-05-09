@@ -80,6 +80,21 @@ inline m256i sub(m256i a, m256i b, aint32 card)
     return _mm256_sub_epi32(_a1, _b);
 }
 
+/** Perform negatize of a
+ * neg(a) = 0 if a = 0
+ *          card - a otherwise
+ */
+inline m256i neg(m256i a, aint32 card = F4)
+{
+    const m256i _card = _mm256_set1_epi32(card);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_setzero_si256();
+
+    m256i cmp = _mm256_cmpgt_epi32(_a, _b);
+
+    return _mm256_sub_epi32(_mm256_and_si256(cmp, _card), _a);
+}
+
 /** Perform a%card where a is a multiplication of two numbers whose elements are
  *  symbols of GF(F4)
  *
@@ -168,6 +183,29 @@ inline m256i mul(m256i a, m256i b, aint32 card)
     if (card == F4)
         return mul_f4(a, b);
     return mul_f3(a, b);
+}
+
+/** Negatize elements of buffers
+ */
+inline void neg(size_t len, aint32* buf, aint32 card = F4)
+{
+    m256i* _buf = reinterpret_cast<m256i*>(buf);
+    unsigned ratio = sizeof(*_buf) / sizeof(*buf);
+    size_t _len = len / ratio;
+    size_t _last_len = len - _len * ratio;
+
+    size_t i;
+    for (i = 0; i < _len; i++) {
+        // perform negatization
+        _buf[i] = neg(_buf[i], card);
+    }
+    if (_last_len > 0) {
+        for (i = _len * ratio; i < len; i++) {
+            // perform negatization
+            if (buf[i])
+                buf[i] = card - buf[i];
+        }
+    }
 }
 
 /** Perform a multiplication of a coefficient `a` to each element of `src` and
