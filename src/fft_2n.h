@@ -135,6 +135,10 @@ Radix2<T>::Radix2(gf::Field<T>* gf, int n, int m, size_t pkt_size, int N)
     }
     this->m = m > 0 ? m : n;
 
+    // Note: we need k to calculate ifft where k is checked == N/2
+    // It's necessary for FFT of length N = 2.
+    k = n / 2;
+
     if (this->m == 1) {
         bypass = true;
         this->fft_trivial = new fft::Single<T>(gf, this->n);
@@ -143,7 +147,6 @@ Radix2<T>::Radix2(gf::Field<T>* gf, int n, int m, size_t pkt_size, int N)
         this->fft_trivial = new fft::Size2<T>(gf);
     } else { // (this->m > 1 && this->n > 2)
         bypass = false;
-        k = n / 2;
 
         W = new vec::Vector<T>(gf, n);
         inv_W = new vec::Vector<T>(gf, n);
