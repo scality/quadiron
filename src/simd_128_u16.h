@@ -80,6 +80,21 @@ inline m128i sub(m128i a, m128i b, aint16 card)
     return _mm_sub_epi16(_a1, _b);
 }
 
+/** Perform negatize of a
+ * neg(a) = 0 if a = 0
+ *          card - a otherwise
+ */
+inline m128i neg(m128i a, aint16 card = F3)
+{
+    const m128i _card = _mm_set1_epi16(card);
+    m128i _a = _mm_load_si128(&a);
+    m128i _b = _mm_setzero_si128();
+
+    m128i cmp = _mm_cmpgt_epi16(_a, _b);
+
+    return _mm_sub_epi16(_mm_and_si128(cmp, _card), _a);
+}
+
 inline m128i mod_after_multiply(m128i a)
 {
     const m128i mask = _mm_set1_epi16(F3 - 2);
@@ -123,6 +138,29 @@ inline m128i mul(m128i a, m128i b, aint16 card)
     // FIXME: generalize card
     assert(card == F3);
     return mul(a, b);
+}
+
+/** Negatize elements of buffers
+ */
+inline void neg(size_t len, aint16* buf, aint16 card = F3)
+{
+    m128i* _buf = reinterpret_cast<m128i*>(buf);
+    unsigned ratio = sizeof(*_buf) / sizeof(*buf);
+    size_t _len = len / ratio;
+    size_t _last_len = len - _len * ratio;
+
+    size_t i;
+    for (i = 0; i < _len; i++) {
+        // perform negatization
+        _buf[i] = neg(_buf[i], card);
+    }
+    if (_last_len > 0) {
+        for (i = _len * ratio; i < len; i++) {
+            // perform negatization
+            if (buf[i])
+                buf[i] = card - buf[i];
+        }
+    }
 }
 
 /** Perform a multiplication of a coefficient `a` to each element of `src` and
