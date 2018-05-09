@@ -93,13 +93,14 @@ class Buffers {
     Buffers(Buffers<T>* vec, int begin, int end);
     Buffers(Buffers<T>* vec1, Buffers<T>* vec2);
     virtual ~Buffers();
-    virtual int get_n(void);
-    virtual size_t get_size(void);
+    virtual int get_n(void) const;
+    virtual size_t get_size(void) const;
     int get_mem_len(void);
     void zero_fill(void);
+    void fill(int i, T value);
     virtual void set(int i, T* buf);
     virtual T* get(int i);
-    std::vector<T*>* get_mem();
+    std::vector<T*>* get_mem() const;
     void set_mem(std::vector<T*>* mem);
     void copy(Buffers<T>* v);
     void copy(int i, T* buf);
@@ -257,13 +258,13 @@ Buffers<T>::~Buffers()
 }
 
 template <typename T>
-inline int Buffers<T>::get_n(void)
+inline int Buffers<T>::get_n(void) const
 {
     return n;
 }
 
 template <typename T>
-inline size_t Buffers<T>::get_size(void)
+inline size_t Buffers<T>::get_size(void) const
 {
     return size;
 }
@@ -279,6 +280,12 @@ void Buffers<T>::zero_fill(void)
 {
     for (int i = 0; i < n; i++)
         std::memset(mem->at(i), 0, size * sizeof(T));
+}
+
+template <typename T>
+void Buffers<T>::fill(int i, T value)
+{
+    std::memset(mem->at(i), value, size * sizeof(T));
 }
 
 template <typename T>
@@ -300,7 +307,7 @@ inline T* Buffers<T>::get(int i)
 }
 
 template <typename T>
-inline std::vector<T*>* Buffers<T>::get_mem()
+inline std::vector<T*>* Buffers<T>::get_mem() const
 {
     return mem;
 }
