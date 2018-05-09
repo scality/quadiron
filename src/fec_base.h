@@ -43,6 +43,7 @@
 #include "misc.h"
 #include "property.h"
 #include "vec_buffers.h"
+#include "vec_cast.h"
 #include "vec_poly.h"
 #include "vec_vector.h"
 
@@ -63,26 +64,6 @@ static inline uint64_t hrtime_usec(timeval begin)
     struct timeval tv;
     gettimeofday(&tv, nullptr);
     return 1000000 * (tv.tv_sec - begin.tv_sec) + tv.tv_usec - begin.tv_usec;
-}
-
-/*
- * Get and cast mem of Buffers<Ts> to a vector of Td*
- */
-template <typename Ts, typename Td>
-std::vector<Td*>* cast_mem_of_vecp(vec::Buffers<Ts>* s)
-{
-    int i;
-    int n = s->get_n();
-
-    // std::cout << "\ninput: "; s->dump();
-
-    std::vector<Ts*>* mem_s = s->get_mem();
-    std::vector<Td*>* mem_d = new std::vector<Td*>(n, nullptr);
-    for (i = 0; i < n; i++) {
-        mem_d->at(i) = static_cast<Td*>(static_cast<void*>(mem_s->at(i)));
-    }
-
-    return mem_d;
 }
 
 enum class FecType {
