@@ -41,18 +41,8 @@ namespace nttec {
  *  It supports operations on 32-bit numbers
  */
 namespace simd {
-namespace u32 {
-
-typedef __m256i m256i;
 
 /* ==================== Essential Operations =================== */
-
-// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
-// (probably a false positive present in Clang 5 and fixed in Clang 6).
-const m256i F4_m256i = _mm256_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
-const m256i F4minus1_m256i = _mm256_set1_epi32(65536); // NOLINT(cert-err58-cpp)
-const m256i F3_m256i = _mm256_set1_epi32(257);         // NOLINT(cert-err58-cpp)
-const m256i F3minus1_m256i = _mm256_set1_epi32(256);   // NOLINT(cert-err58-cpp)
 
 /** Perform a%card where a is a addition of two numbers whose elements are
  *  symbols of GF(card) */
@@ -68,7 +58,7 @@ inline m256i mod_after_add(m256i a, aint32 card)
 }
 
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
-inline m256i add(m256i a, m256i b, aint32 card = F4)
+inline m256i add(m256i a, m256i b, aint32 card)
 {
     m256i _a = _mm256_load_si256(&a);
     m256i _b = _mm256_load_si256(&b);
@@ -83,7 +73,7 @@ inline m256i add(m256i a, m256i b, aint32 card = F4)
  * sub(a, b) = a - b if a >= b, or
  *             card + a - b, otherwise
  */
-inline m256i sub(m256i a, m256i b, aint32 card = F4)
+inline m256i sub(m256i a, m256i b, aint32 card)
 {
     const m256i _card = _mm256_set1_epi32(card);
 
@@ -178,7 +168,7 @@ inline m256i mul_f3(m256i a, m256i b)
  *  where `card` is a prime Fermat number, i.e. card = Fx with x < 5
  *  Currently, it supports only for F3 and F4
  */
-inline m256i mul(m256i a, m256i b, aint32 card = F4)
+inline m256i mul(m256i a, m256i b, aint32 card)
 {
     assert(card == F4 || card == F3);
     if (card == F4)
@@ -383,12 +373,12 @@ inline void hadamard_mul(int n, aint128* _x, aint128* _y)
 
     // multiply y to the first half of `x`
     for (i = 0; i < len_y_256; i++) {
-        x[i] = mul(x[i], y[i]);
+        x[i] = mul(x[i], y[i], F4);
     }
 
     // multiply y to the second half of `x`
     for (i = 0; i < len_y_256; i++) {
-        x_next[i] = mul(x_next[i], y[i]);
+        x_next[i] = mul(x_next[i], y[i], F4);
     }
 
     if (last_len_y > 0) {
@@ -398,13 +388,12 @@ inline void hadamard_mul(int n, aint128* _x, aint128* _y)
             m256i _x_next_p = _mm256_castsi128_si256((m128i)x_half[i]);
             m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
 
-            _x_p = mul(_x_p, _y_p);
-            _x_next_p = mul(_x_next_p, _y_p);
+            _x_p = mul(_x_p, _y_p, F4);
+            _x_next_p = mul(_x_next_p, _y_p, F4);
         }
     }
 }
 
-} // namespace u32
 } // namespace simd
 } // namespace nttec
 

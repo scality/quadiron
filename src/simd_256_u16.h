@@ -41,16 +41,6 @@ namespace nttec {
  *  It supports operations on 16-bit numbers
  */
 namespace simd {
-namespace u16 {
-
-typedef __m256i m256i;
-
-/* ==================== Essential Operations =================== */
-
-// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
-// (probably a false positive present in Clang 5 and fixed in Clang 6).
-const m256i F3_m256i = _mm256_set1_epi16(257);       // NOLINT(cert-err58-cpp)
-const m256i F3minus1_m256i = _mm256_set1_epi16(256); // NOLINT(cert-err58-cpp)
 
 /** Perform a%card where a is a addition of two numbers whose elements are
  *  symbols of GF(card) */
@@ -81,7 +71,7 @@ inline m256i add(m256i a, m256i b, aint16 card = F3)
  * sub(a, b) = a - b if a >= b, or
  *             card + a - b, otherwise
  */
-inline m256i sub(m256i a, m256i b, aint16 card = F3)
+inline m256i sub(m256i a, m256i b, aint16 card)
 {
     const m256i _card = _mm256_set1_epi16(card);
 
@@ -246,7 +236,6 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
     }
 }
 
-} // namespace u16
 } // namespace simd
 } // namespace nttec
 

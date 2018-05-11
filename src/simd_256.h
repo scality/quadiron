@@ -31,6 +31,17 @@
 #ifndef __NTTEC_SIMD_256_H__
 #define __NTTEC_SIMD_256_H__
 
+#include <x86intrin.h>
+
+typedef __m256i m256i;
+
+// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
+// (probably a false positive present in Clang 5 and fixed in Clang 6).
+const m256i F4_m256i = _mm256_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
+const m256i F4minus1_m256i = _mm256_set1_epi32(65536); // NOLINT(cert-err58-cpp)
+const m256i F3_m256i = _mm256_set1_epi32(257);         // NOLINT(cert-err58-cpp)
+const m256i F3minus1_m256i = _mm256_set1_epi32(256);   // NOLINT(cert-err58-cpp)
+
 #include "simd_256_u16.h"
 #include "simd_256_u32.h"
 
