@@ -41,21 +41,8 @@ namespace nttec {
  *  It supports operations on 32-bit numbers
  */
 namespace simd {
-namespace u32 {
-
-typedef __m128i m128i;
 
 /* ==================== Essential Operations =================== */
-
-const aint32 F4 = 65537;
-const aint32 F3 = 257;
-
-// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
-// (probably a false positive present in Clang 5 and fixed in Clang 6).
-const m128i F4_m128i = _mm_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
-const m128i F4minus1_m128i = _mm_set1_epi32(65536); // NOLINT(cert-err58-cpp)
-const m128i F3_m128i = _mm_set1_epi32(257);         // NOLINT(cert-err58-cpp)
-const m128i F3minus1_m128i = _mm_set1_epi32(256);   // NOLINT(cert-err58-cpp)
 
 /** Perform a%card where a is a addition of two numbers whose elements are
  *  symbols of GF(card) */
@@ -71,7 +58,7 @@ inline m128i mod_after_add(m128i a, aint32 card)
 }
 
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
-inline m128i add(m128i a, m128i b, aint32 card = F4)
+inline m128i add(m128i a, m128i b, aint32 card)
 {
     m128i _a = _mm_loadu_si128(&a);
     m128i _b = _mm_loadu_si128(&b);
@@ -86,7 +73,7 @@ inline m128i add(m128i a, m128i b, aint32 card = F4)
  * sub(a, b) = a - b if a >= b, or
  *             card + a - b, otherwise
  */
-inline m128i sub(m128i a, m128i b, aint32 card = F4)
+inline m128i sub(m128i a, m128i b, aint32 card)
 {
     const m128i _card = _mm_set1_epi32(card);
 
@@ -181,7 +168,7 @@ inline m128i mul_f3(m128i a, m128i b)
  *  where `card` is a prime Fermat number, i.e. card = Fx with x < 5
  *  Currently, it supports only for F3 and F4
  */
-inline m128i mul(m128i a, m128i b, aint32 card = F4)
+inline m128i mul(m128i a, m128i b, aint32 card)
 {
     assert(card == F4 || card == F3);
     if (card == F4)
@@ -352,12 +339,12 @@ inline void hadamard_mul(int n, aint128* _x, aint128* _y)
 
     // multiply y to the first half of `x`
     for (i = 0; i < half; i++) {
-        x[i] = mul(x[i], y[i]);
+        x[i] = mul(x[i], y[i], F4);
     }
 
     // multiply y to the second half of `x`
     for (i = 0; i < half; i++) {
-        x_next[i] = mul(x_next[i], y[i]);
+        x_next[i] = mul(x_next[i], y[i], F4);
     }
 }
 
@@ -454,7 +441,6 @@ inline aint128 pack(aint128 a, aint32 flag)
     return m128i_to_uint128(b);
 }
 
-} // namespace u32
 } // namespace simd
 } // namespace nttec
 

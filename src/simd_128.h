@@ -33,6 +33,15 @@
 
 #include <x86intrin.h>
 
+typedef __m128i m128i;
+
+// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
+// (probably a false positive present in Clang 5 and fixed in Clang 6).
+const m128i F4_m128i = _mm_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
+const m128i F4minus1_m128i = _mm_set1_epi32(65536); // NOLINT(cert-err58-cpp)
+const m128i F3_m128i = _mm_set1_epi32(257);         // NOLINT(cert-err58-cpp)
+const m128i F3minus1_m128i = _mm_set1_epi32(256);   // NOLINT(cert-err58-cpp)
+
 #include "simd_128_u16.h"
 #include "simd_128_u32.h"
 

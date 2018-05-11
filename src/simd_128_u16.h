@@ -41,18 +41,8 @@ namespace nttec {
  *  It supports operations on 16-bit numbers
  */
 namespace simd {
-namespace u16 {
-
-typedef __m128i m128i;
 
 /* ==================== Essential Operations =================== */
-
-const aint16 F3 = 257;
-
-// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
-// (probably a false positive present in Clang 5 and fixed in Clang 6).
-const m128i F3_m128i = _mm_set1_epi16(257);       // NOLINT(cert-err58-cpp)
-const m128i F3minus1_m128i = _mm_set1_epi16(256); // NOLINT(cert-err58-cpp)
 
 /** Perform a%card where a is a addition of two numbers whose elements are
  *  symbols of GF(card) */
@@ -68,7 +58,7 @@ inline m128i mod_after_add(m128i a, aint16 card)
 }
 
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
-inline m128i add(m128i a, m128i b, aint16 card = F3)
+inline m128i add(m128i a, m128i b, aint16 card)
 {
     m128i _a = _mm_loadu_si128(&a);
     m128i _b = _mm_loadu_si128(&b);
@@ -83,7 +73,7 @@ inline m128i add(m128i a, m128i b, aint16 card = F3)
  * sub(a, b) = a - b if a >= b, or
  *             card + a - b, otherwise
  */
-inline m128i sub(m128i a, m128i b, aint16 card = F3)
+inline m128i sub(m128i a, m128i b, aint16 card)
 {
     const m128i _card = _mm_set1_epi16(card);
 
@@ -248,7 +238,6 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
     }
 }
 
-} // namespace u16
 } // namespace simd
 } // namespace nttec
 

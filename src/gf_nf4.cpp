@@ -40,61 +40,61 @@ namespace gf {
 template <>
 __uint128_t NF4<__uint128_t>::expand16(uint16_t* arr)
 {
-    return simd::u32::expand16(arr, this->n);
+    return simd::expand16(arr, this->n);
 }
 
 template <>
 __uint128_t NF4<__uint128_t>::expand32(uint32_t* arr)
 {
-    return simd::u32::expand32(arr, this->n);
+    return simd::expand32(arr, this->n);
 }
 
 template <>
 __uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b)
 {
-    return simd::u32::add(a, b);
+    return simd::add(a, b);
 }
 
 template <>
 __uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b)
 {
-    return simd::u32::sub(a, b);
+    return simd::sub(a, b);
 }
 
 template <>
 __uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b)
 {
-    return simd::u32::mul(a, b);
+    return simd::mul(a, b);
 }
 
 template <>
 void NF4<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y)
 {
-    simd::u32::add_buf_to_two_bufs(n, x, y);
+    simd::add_buf_to_two_bufs(n, x, y);
 }
 
 template <>
 void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y)
 {
-    simd::u32::hadamard_mul(n, x, y);
+    simd::hadamard_mul(n, x, y);
 }
 
 template <>
 GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a)
 {
-    return simd::u32::unpack(a, this->n);
+    return simd::unpack(a, this->n);
 }
 
 template <>
 __uint128_t NF4<__uint128_t>::pack(__uint128_t a)
 {
-    return simd::u32::pack(a);
+    return simd::pack(a);
 }
 
 template <>
 __uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag)
 {
-    return simd::u32::pack(a, flag);
+    return simd::pack(a, flag);
 }
 
 } // namespace gf
