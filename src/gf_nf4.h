@@ -91,9 +91,9 @@ class NF4 : public gf::Field<T> {
 };
 
 template <typename T>
-NF4<T>::NF4(unsigned n) : gf::Field<T>(65537, n)
+NF4<T>::NF4(unsigned n) : gf::Field<T>(T(65537), n)
 {
-    sub_field = new gf::Prime<uint32_t>(65537);
+    sub_field = new gf::Prime<uint32_t>(T(65537));
 
     if (!check_n(n)) {
         // not supported yet
@@ -166,8 +166,8 @@ template <typename T>
 void NF4<T>::init(void)
 {
     unit = replicate(1);
-    q = replicate(65537);
-    h = replicate(65536);
+    q = replicate(T(65537));
+    h = replicate(T(65536));
 }
 
 template <typename T>

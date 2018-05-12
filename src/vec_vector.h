@@ -333,19 +333,12 @@ template <typename T>
 void Vector<T>::hadamard_mul(Doubled<T>* v)
 {
     assert(n == v->get_n());
-    T* src = v->get_mem();
-    int i;
-    int j;
-    for (i = 0; i < n / 2; i++)
-        mem[i] = rn->mul(mem[i], src[i]);
-    for (j = 0; i < n; i++, j++)
-        mem[i] = rn->mul(mem[i], src[j]);
-}
 
-template <>
-void Vector<uint32_t>::hadamard_mul(Doubled<uint32_t>* v);
-template <>
-void Vector<uint64_t>::hadamard_mul(Doubled<uint64_t>* v);
+    // typical butterfly operation
+    T* dest = mem;
+    T* src = v->get_mem();
+    rn->hadamard_mul(n, dest, src);
+}
 
 template <typename T>
 void Vector<T>::add(Vector<T>* v)
@@ -361,13 +354,11 @@ template <typename T>
 void Vector<T>::add(Doubled<T>* v)
 {
     assert(n == v->get_n());
+
+    // typical butterfly operation
+    T* dest = mem;
     T* src = v->get_mem();
-    int i;
-    int j;
-    for (i = 0; i < n / 2; i++)
-        mem[i] = rn->add(mem[i], src[i]);
-    for (j = 0; i < n; i++, j++)
-        mem[i] = rn->add(mem[i], src[j]);
+    rn->add(n, dest, src);
 }
 
 template <typename T>
@@ -414,11 +405,6 @@ void Vector<T>::add_mutual(Vector<T>* v, int offset, int len)
     for (int i = 0; i < len; i++)
         dest[i] = rn->add(dest[i], src[i]);
 }
-
-template <>
-void Vector<uint32_t>::add(Doubled<uint32_t>* v);
-template <>
-void Vector<uint64_t>::add(Doubled<uint64_t>* v);
 
 template <typename T>
 void Vector<T>::copy(Vector<T>* v)
@@ -500,6 +486,20 @@ void Vector<T>::dump(void)
         std::cout << get(i) << " ";
     std::cout << ")\n";
 }
+
+#ifndef NTTEC_USE_SIMD
+// try to improve performance without parallization
+template <>
+void Vector<uint32_t>::add(Doubled<uint32_t>* v);
+template <>
+void Vector<uint64_t>::add(Doubled<uint64_t>* v);
+
+template <>
+void Vector<uint32_t>::hadamard_mul(Doubled<uint32_t>* v);
+template <>
+void Vector<uint64_t>::hadamard_mul(Doubled<uint64_t>* v);
+
+#endif
 
 } // namespace vec
 } // namespace nttec

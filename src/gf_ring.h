@@ -106,8 +106,8 @@ class RingModN {
     virtual T get_nth_root(T n);
     T get_code_len(T n);
     T get_code_len_high_compo(T n);
-    virtual void hadamard_mul(int n, T* x, T* y){};
-    virtual void add(int n, T* x, T* y){};
+    virtual void hadamard_mul(int n, T* x, T* y);
+    virtual void add(int n, T* x, T* y);
 
   private:
     T _card;
@@ -826,6 +826,40 @@ T RingModN<T>::get_code_len_high_compo(T n)
     return arith::get_code_len_high_compo<T>(this->all_primes_factors, n);
 }
 
+template <typename T>
+void RingModN<T>::hadamard_mul(int n, T* x, T* y)
+{
+    const int half = n / 2;
+    T* x_next = x + half;
+
+    // multiply y to the first half of `x`
+    for (int i = 0; i < half; i++) {
+        x[i] = mul(x[i], y[i]);
+    }
+
+    // multiply y to the second half of `x`
+    for (int i = 0; i < half; i++) {
+        x_next[i] = mul(x_next[i], y[i]);
+    }
+}
+
+template <typename T>
+void RingModN<T>::add(int n, T* x, T* y)
+{
+    const int half = n / 2;
+    T* x_next = x + half;
+
+    // add y to the first half of `x`
+    for (int i = 0; i < half; i++) {
+        x[i] = add(x[i], y[i]);
+    }
+
+    // add y to the second half of `x`
+    for (int i = 0; i < half; i++) {
+        x_next[i] = add(x_next[i], y[i]);
+    }
+}
+
 #ifdef NTTEC_USE_SIMD
 /* Operations are vectorized by SIMD */
 
@@ -848,6 +882,25 @@ void RingModN<uint32_t>::sub_two_bufs(
     uint32_t* bufb,
     uint32_t* res,
     size_t len);
+
+template <>
+void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x, uint16_t* y);
+template <>
+void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x, uint32_t* y);
+// template <>
+// void RingModN<uint64_t>::hadamard_mul(int n, uint64_t* x, uint64_t* y);
+// template <>
+// void RingModN<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t*
+// y);
+
+template <>
+void RingModN<uint16_t>::add(int n, uint16_t* x, uint16_t* y);
+template <>
+void RingModN<uint32_t>::add(int n, uint32_t* x, uint32_t* y);
+// template <>
+// void RingModN<uint64_t>::add(int n, uint64_t* x, uint64_t* y);
+// template <>
+// void RingModN<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y);
 
 #endif // #ifdef NTTEC_USE_SIMD
 

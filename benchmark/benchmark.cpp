@@ -641,7 +641,7 @@ void xusage()
               << "\t-c \tChunk size (bytes)\n"
               << "\t-n \tNumber of samples per operation\n"
               << "\t-t \tSize of used integer type, either "
-              << "4, 8, 16 for uint32_t, uint64_t, __uint128_t\n"
+              << "2, 4, 8, 16 for uint16_t, uint32_t, uint64_t, __uint128_t\n"
               << "\t-g \tNumber of threads\n"
               << "\t-x \tExtra parameter\n\n";
     exit(1);
@@ -663,39 +663,35 @@ void run(Benchmark<T>* bench, Params_t* params)
     }
 }
 
+template <typename T>
+void init_run_bench(Params_t* params)
+{
+    try {
+        Benchmark<T> bench(params);
+        run<T>(&bench, params);
+    } catch (const std::exception& e) {
+        return;
+    }
+}
+
 void run_scenario(Params_t* params)
 {
     // get sizeof_T if necessary
     params->get_sizeof_T();
 
     switch (params->sizeof_T) {
-    case 4: {
-        try {
-            Benchmark<uint32_t> bench(params);
-            run<uint32_t>(&bench, params);
-        } catch (const std::exception& e) {
-            return;
-        }
+    case 2:
+        init_run_bench<uint16_t>(params);
         break;
-    }
-    case 8: {
-        try {
-            Benchmark<uint64_t> bench(params);
-            run<uint64_t>(&bench, params);
-        } catch (const std::exception& e) {
-            return;
-        }
+    case 4:
+        init_run_bench<uint32_t>(params);
         break;
-    }
-    case 16: {
-        try {
-            Benchmark<__uint128_t> bench(params);
-            run<__uint128_t>(&bench, params);
-        } catch (const std::exception& e) {
-            return;
-        }
+    case 8:
+        init_run_bench<uint64_t>(params);
         break;
-    }
+    case 16:
+        init_run_bench<__uint128_t>(params);
+        break;
     default:
         std::cerr << errors_desc.at(ERR_T_NOT_SUPPORTED)
                   << " T: " << params->sizeof_T << std::endl;

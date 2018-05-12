@@ -240,27 +240,5 @@ void Vector<uint64_t>::add(Doubled<uint64_t>* v)
         mem[i] = rn->add(mem[i], src[j]);
 }
 
-template <>
-void Vector<__uint128_t>::hadamard_mul(Doubled<__uint128_t>* v)
-{
-    assert(n == v->get_n());
-
-    // typical butterfly operation
-    __uint128_t* a = get_mem();
-    __uint128_t* b = v->get_mem();
-    rn->hadamard_mul(n, a, b);
-}
-
-template <>
-void Vector<__uint128_t>::add(Doubled<__uint128_t>* v)
-{
-    assert(n == v->get_n());
-
-    // typical butterfly operation
-    __uint128_t* a = get_mem();
-    __uint128_t* b = v->get_mem();
-    rn->add(n, a, b);
-}
-
 } // namespace vec
 } // namespace nttec

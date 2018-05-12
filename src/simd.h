@@ -40,6 +40,9 @@ typedef uint32_t aint32 __attribute__((aligned(ALIGN_SIZE)));
 typedef uint64_t aint64 __attribute__((aligned(ALIGN_SIZE)));
 typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
 
+const aint32 F4 = 65537;
+const aint32 F3 = 257;
+
 // FIXME: detect SIMD flags since it requires SSE4.1 instructions
 #include "simd_128.h"
 
