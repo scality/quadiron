@@ -78,7 +78,7 @@ inline aint128 expand32(aint32* arr, int n)
     return m128i_to_uint128(b);
 }
 
-inline GroupedValues<aint128> unpack(aint128 a, int n)
+inline GroupedValues<__uint128_t> unpack(aint128 a, int n)
 {
     aint32 flag = 0;
     uint32_t ai[4] __attribute__((aligned(ALIGN_SIZE)));
@@ -101,7 +101,7 @@ inline GroupedValues<aint128> unpack(aint128 a, int n)
         _mm_setzero_si64(), _mm_set_pi16(bi[3], bi[2], bi[1], bi[0]));
     _mm_store_si128((m128i*)&values, val);
 
-    GroupedValues<aint128> b = {values, flag};
+    GroupedValues<__uint128_t> b = {values, flag};
 
     return b;
 }
