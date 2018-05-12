@@ -42,6 +42,17 @@ const m256i F4minus1_m256i = _mm256_set1_epi32(65536); // NOLINT(cert-err58-cpp)
 const m256i F3_m256i = _mm256_set1_epi32(257);         // NOLINT(cert-err58-cpp)
 const m256i F3minus1_m256i = _mm256_set1_epi32(256);   // NOLINT(cert-err58-cpp)
 
+/* GCC doesn't include the split store intrinsics so define them here. */
+#if defined(__GNUC__) && !defined(__clang__)
+
+static inline void __attribute__((__always_inline__))
+_mm256_storeu2_m128i(__m128i* const hi, __m128i* const lo, const __m256i a)
+{
+    _mm_storeu_si128(lo, _mm256_castsi256_si128(a));
+    _mm_storeu_si128(hi, _mm256_extracti128_si256(a, 1));
+}
+#endif /* defined(__GNUC__) */
+
 #include "simd_256_u16.h"
 #include "simd_256_u32.h"
 
