@@ -467,6 +467,7 @@ bool Benchmark<T>::encode()
 {
     // this operation is done per trail
     reset_d_streams();
+    reset_c_streams();
 
     if (operation_on_packet)
         fec->encode_packet(*d_streams, *c_streams, c_props);
