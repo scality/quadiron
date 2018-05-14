@@ -37,6 +37,18 @@ namespace nttec {
 namespace gf {
 
 template <>
+void RingModN<uint16_t>::neg(size_t n, uint16_t* x) const
+{
+    simd::neg(n, x, this->_card);
+}
+
+template <>
+void RingModN<uint32_t>::neg(size_t n, uint32_t* x) const
+{
+    simd::neg(n, x, this->_card);
+}
+
+template <>
 void RingModN<uint32_t>::mul_coef_to_buf(
     uint32_t a,
     uint32_t* src,
@@ -64,16 +76,6 @@ void RingModN<uint32_t>::sub_two_bufs(
 }
 
 template <>
-void RingModN<uint16_t>::add_doubled(int n, uint16_t* x_u16, uint16_t* y_u16)
-    const
-{
-    const int half = n / 2;
-    uint16_t* x_next = x_u16 + half;
-    simd::add_two_bufs(y_u16, x_u16, half, this->_card);
-    simd::add_two_bufs(y_u16, x_next, half, this->_card);
-}
-
-template <>
 void RingModN<uint32_t>::add_doubled(int n, uint32_t* x_u32, uint32_t* y_u32)
     const
 {
@@ -81,6 +83,43 @@ void RingModN<uint32_t>::add_doubled(int n, uint32_t* x_u32, uint32_t* y_u32)
     uint32_t* x_next = x_u32 + half;
     simd::add_two_bufs(y_u32, x_u32, half, this->_card);
     simd::add_two_bufs(y_u32, x_next, half, this->_card);
+}
+
+template <>
+void RingModN<uint16_t>::mul_coef_to_buf(
+    uint16_t a,
+    uint16_t* src,
+    uint16_t* dest,
+    size_t len) const
+{
+    simd::mul_coef_to_buf(a, src, dest, len, this->_card);
+}
+
+template <>
+void RingModN<uint16_t>::add_two_bufs(uint16_t* src, uint16_t* dest, size_t len)
+    const
+{
+    simd::add_two_bufs(src, dest, len, this->_card);
+}
+
+template <>
+void RingModN<uint16_t>::sub_two_bufs(
+    uint16_t* bufa,
+    uint16_t* bufb,
+    uint16_t* res,
+    size_t len) const
+{
+    simd::sub_two_bufs(bufa, bufb, res, len, this->_card);
+}
+
+template <>
+void RingModN<uint16_t>::add_doubled(int n, uint16_t* x_u16, uint16_t* y_u16)
+    const
+{
+    const int half = n / 2;
+    uint16_t* x_next = x_u16 + half;
+    simd::add_two_bufs(y_u16, x_u16, half, this->_card);
+    simd::add_two_bufs(y_u16, x_next, half, this->_card);
 }
 
 // TODO

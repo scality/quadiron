@@ -886,6 +886,19 @@ void RingModN<T>::add_doubled(int n, T* x, T* y) const
 /* Operations are vectorized by SIMD */
 
 template <>
+void RingModN<uint16_t>::neg(size_t n, uint16_t* x) const;
+
+template <>
+void RingModN<uint32_t>::neg(size_t n, uint32_t* x) const;
+
+template <>
+void RingModN<uint16_t>::mul_coef_to_buf(
+    uint16_t a,
+    uint16_t* src,
+    uint16_t* dest,
+    size_t len) const;
+
+template <>
 void RingModN<uint32_t>::mul_coef_to_buf(
     uint32_t a,
     uint32_t* src,
@@ -893,8 +906,19 @@ void RingModN<uint32_t>::mul_coef_to_buf(
     size_t len) const;
 
 template <>
+void RingModN<uint16_t>::add_two_bufs(uint16_t* src, uint16_t* dest, size_t len)
+    const;
+
+template <>
 void RingModN<uint32_t>::add_two_bufs(uint32_t* src, uint32_t* dest, size_t len)
     const;
+
+template <>
+void RingModN<uint16_t>::sub_two_bufs(
+    uint16_t* bufa,
+    uint16_t* bufb,
+    uint16_t* res,
+    size_t len) const;
 
 template <>
 void RingModN<uint32_t>::sub_two_bufs(
