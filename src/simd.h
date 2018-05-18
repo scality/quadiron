@@ -42,6 +42,19 @@ typedef uint32_t aint32 __attribute__((aligned(ALIGN_SIZE)));
 typedef uint64_t aint64 __attribute__((aligned(ALIGN_SIZE)));
 typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
 
+namespace nttec {
+/** The namespace simd contains functions for GF-NF4 that are accelerated by
+ *  using SIMD operations over 128bits
+ *
+ *  It supports operations on 32-bit numbers
+ */
+namespace simd {
+
+// Vectorized operations are implemented in appropriated headers simd*.h
+
+} // namespace simd
+} // namespace nttec
+
 #ifdef NTTEC_USE_SSE4
 #include "simd_128.h"
 #elif defined NTTEC_USE_AVX2

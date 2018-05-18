@@ -34,12 +34,6 @@
 #include <x86intrin.h>
 
 namespace nttec {
-
-/** The namespace simd contains functions that are accelerated by using SIMD
- *  operations over 256bits
- *
- *  It supports operations on 16-bit numbers
- */
 namespace simd {
 
 /** Perform a%card where a is a addition of two numbers whose elements are
@@ -143,9 +137,9 @@ inline void mul_coef_to_buf(
 
     m256i* _src = reinterpret_cast<m256i*>(src);
     m256i* _dest = reinterpret_cast<m256i*>(dest);
-    unsigned ratio = sizeof(*_src) / sizeof(*src);
-    size_t _len = len / ratio;
-    size_t _last_len = len - _len * ratio;
+    const unsigned ratio = sizeof(*_src) / sizeof(*src);
+    const size_t _len = len / ratio;
+    const size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {
@@ -166,9 +160,9 @@ add_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 {
     m256i* _src = reinterpret_cast<m256i*>(src);
     m256i* _dest = reinterpret_cast<m256i*>(dest);
-    unsigned ratio = sizeof(*_src) / sizeof(*src);
-    size_t _len = len / ratio;
-    size_t _last_len = len - _len * ratio;
+    const unsigned ratio = sizeof(*_src) / sizeof(*src);
+    const size_t _len = len / ratio;
+    const size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {
@@ -194,9 +188,9 @@ inline void sub_two_bufs(
     m256i* _bufa = reinterpret_cast<m256i*>(bufa);
     m256i* _bufb = reinterpret_cast<m256i*>(bufb);
     m256i* _res = reinterpret_cast<m256i*>(res);
-    unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
-    size_t _len = len / ratio;
-    size_t _last_len = len - _len * ratio;
+    const unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
+    const size_t _len = len / ratio;
+    const size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {
@@ -219,9 +213,9 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 {
     m256i* _src = reinterpret_cast<m256i*>(src);
     m256i* _dest = reinterpret_cast<m256i*>(dest);
-    unsigned ratio = sizeof(*_src) / sizeof(*src);
-    size_t _len = len / ratio;
-    size_t _last_len = len - _len * ratio;
+    const unsigned ratio = sizeof(*_src) / sizeof(*src);
+    const size_t _len = len / ratio;
+    const size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {

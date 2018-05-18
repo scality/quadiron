@@ -34,12 +34,6 @@
 #include <x86intrin.h>
 
 namespace nttec {
-
-/** The namespace simd contains functions for GF-NF4 that are accelerated by
- *  using SIMD operations over 128bits
- *
- *  It supports operations on 32-bit numbers
- */
 namespace simd {
 
 #ifdef NTTEC_USE_AVX2

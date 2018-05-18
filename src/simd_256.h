@@ -51,6 +51,7 @@ _mm256_storeu2_m128i(__m128i* const hi, __m128i* const lo, const __m256i a)
     _mm_storeu_si128(lo, _mm256_castsi256_si128(a));
     _mm_storeu_si128(hi, _mm256_extracti128_si256(a, 1));
 }
+
 #endif /* defined(__GNUC__) */
 
 #include "simd_256_u16.h"
