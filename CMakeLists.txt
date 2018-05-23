@@ -60,12 +60,6 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}${VERSION_REV})
 set(PACKAGE ${CMAKE_PROJECT_NAME})
 string(TOUPPER "${CMAKE_PROJECT_NAME}" UPCASE_PROJECT_NAME)
 
-# Top level cmake file, set options
-option(NTTEC_USE_SIMD
-  "Build with SIMD vectorizations"
-  OFF
-)
-
 ################
 # Useful defines
 ################
@@ -85,6 +79,18 @@ set(UNIT_TESTS  unit_tests)
 set(EC_DRIVER   ec_driver)
 
 file(MAKE_DIRECTORY ${GENERATE_DIR})
+
+########################
+# Setting for SIMD level
+########################
+include(FindSIMD)
+set(NTTEC_USE_SIMD "${NTTEC_USE_SIMD}"
+  CACHE
+  STRING
+  "Build with SIMD vectorizations."
+  FORCE
+)
+set_property(CACHE NTTEC_USE_SIMD PROPERTY STRINGS ${SIMD_LIST})
 
 ####################
 # Default build type
@@ -124,9 +130,12 @@ set(COMMON_CXX_FLAGS
 )
 
 # Option for enabling/disabling SIMD flags is for both of debug and release
-if (NTTEC_USE_SIMD)
+if (NTTEC_USE_SIMD STREQUAL "SSE4")
   SET(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -msse4.1")
-  add_definitions(-DNTTEC_USE_SIMD)
+  add_definitions(-DNTTEC_USE_SIMD=1)
+elseif (NTTEC_USE_SIMD STREQUAL "AVX2")
+  SET(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -mavx2")
+  add_definitions(-DNTTEC_USE_SIMD=2)
 endif()
 
 # Manually add -Werror, for some reasons I can't make it works in the foreach…
