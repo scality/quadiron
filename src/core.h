@@ -113,6 +113,53 @@ static inline std::mt19937& prng()
     return PRNG;
 }
 
+#ifdef NTTEC_USE_SSE4
+#define ALIGN_SIZE 16
+#endif
+
+#ifdef NTTEC_USE_AVX2
+#define ALIGN_SIZE 32
+#endif
+
+template <typename T>
+inline T* aligned_allocate(size_t size)
+{
+#ifdef NTTEC_USE_SIMD
+    size_t len = ALIGN_SIZE + size * sizeof(T);
+    uint8_t* ptr = new uint8_t[len];
+    if (!ptr)
+        return nullptr;
+    unsigned offset = (unsigned)((uintptr_t)ptr % ALIGN_SIZE);
+    ptr += ALIGN_SIZE - offset - 1;
+    // store offset
+    ptr[0] = (uint8_t)offset; // NOLINT
+    // increment ptr to the aligned location
+    ptr++;
+    T* data = reinterpret_cast<T*>(ptr);
+    return data;
+#else
+    T* data = new T[size];
+    if (!data)
+        return nullptr;
+    return data;
+#endif
+}
+
+template <typename T>
+inline void aligned_deallocate(T* data)
+{
+    if (!data)
+        return;
+#ifdef NTTEC_USE_SIMD
+    uint8_t* ptr = (uint8_t*)data;
+    unsigned offset = *(ptr - 1);
+    ptr -= ALIGN_SIZE - offset;
+    delete[] ptr;
+#else
+    delete[] data;
+#endif
+}
+
 } // namespace nttec
 
 #endif

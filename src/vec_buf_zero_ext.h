@@ -88,7 +88,7 @@ BuffersZeroExtended<T>::BuffersZeroExtended(Buffers<T>* vec, int n)
     this->mem =
         new std::vector<T*>(vec->get_mem()->begin(), vec->get_mem()->end());
     if (n > vec_n) {
-        zero_chunk = new T[this->size];
+        zero_chunk = aligned_allocate<T>(this->size);
         std::memset(zero_chunk, 0, this->size * sizeof(T));
         this->mem->resize(n, zero_chunk);
     }
@@ -98,7 +98,7 @@ template <typename T>
 BuffersZeroExtended<T>::~BuffersZeroExtended()
 {
     if (zero_chunk != nullptr) {
-        delete[] zero_chunk;
+        aligned_deallocate<T>(zero_chunk);
     }
     this->mem->shrink_to_fit();
     delete this->mem;

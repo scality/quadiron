@@ -37,6 +37,8 @@
 #include <iostream>
 #include <vector>
 
+#include "core.h"
+
 namespace nttec {
 namespace vec {
 
@@ -119,7 +121,7 @@ Buffers<T>::Buffers(int n, size_t size, std::vector<T*>* mem)
     if (mem == nullptr) {
         this->mem = new std::vector<T*>(n, nullptr);
         for (int i = 0; i < n; i++) {
-            this->mem->at(i) = new T[size];
+            this->mem->at(i) = aligned_allocate<T>(size);
         }
     } else {
         this->mem_alloc_case = 2;
@@ -146,7 +148,7 @@ Buffers<T>::Buffers(Buffers<T>* vec, int n)
     this->mem_len = n * size;
 
     for (i = 0; i < this->n; i++) {
-        this->mem->at(i) = new T[this->size];
+        this->mem->at(i) = aligned_allocate<T>(this->size);
     }
 
     int copy_len = (this->n <= vec_n) ? this->n : vec_n;
@@ -191,7 +193,7 @@ Buffers<T>::~Buffers()
     if (this->mem_alloc_case < 2 && this->mem != nullptr) {
         if (this->mem_alloc_case == 0) {
             for (int i = 0; i < n; i++) {
-                delete[] this->mem->at(i);
+                aligned_deallocate<T>(this->mem->at(i));
             }
         }
         this->mem->shrink_to_fit();
@@ -230,7 +232,7 @@ inline void Buffers<T>::set(int i, T* buf)
     assert(i >= 0 && i < n);
 
     if ((mem_alloc_case == 0) && (this->mem->at(i) != nullptr))
-        delete[] this->mem->at(i);
+        aligned_deallocate<T>(this->mem->at(i));
 
     this->mem->at(i) = buf;
 }

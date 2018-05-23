@@ -28,41 +28,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_H__
-#define __NTTEC_SIMD_H__
+#ifndef __NTTEC_SIMD_256_H__
+#define __NTTEC_SIMD_256_H__
 
-#ifdef NTTEC_USE_SIMD
+#include <x86intrin.h>
 
-const unsigned F4 = 65537;
-const unsigned F3 = 257;
+typedef __m256i m256i;
 
-typedef uint8_t aint8 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint16_t aint16 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint32_t aint32 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint64_t aint64 __attribute__((aligned(ALIGN_SIZE)));
-typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
+// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
+// (probably a false positive present in Clang 5 and fixed in Clang 6).
+const m256i F4_m256i = _mm256_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
+const m256i F4minus1_m256i = _mm256_set1_epi32(65536); // NOLINT(cert-err58-cpp)
+const m256i F3_m256i = _mm256_set1_epi32(257);         // NOLINT(cert-err58-cpp)
+const m256i F3minus1_m256i = _mm256_set1_epi32(256);   // NOLINT(cert-err58-cpp)
 
-namespace nttec {
-/** The namespace simd contains functions for GF-NF4 that are accelerated by
- *  using SIMD operations over 128bits
- *
- *  It supports operations on 32-bit numbers
- */
-namespace simd {
+/* GCC doesn't include the split store intrinsics so define them here. */
+#if defined(__GNUC__) && !defined(__clang__)
 
-// Vectorized operations are implemented in appropriated headers simd*.h
+static inline void __attribute__((__always_inline__))
+_mm256_storeu2_m128i(__m128i* const hi, __m128i* const lo, const __m256i a)
+{
+    _mm_storeu_si128(lo, _mm256_castsi256_si128(a));
+    _mm_storeu_si128(hi, _mm256_extracti128_si256(a, 1));
+}
 
-} // namespace simd
-} // namespace nttec
+#endif /* defined(__GNUC__) */
 
-#ifdef NTTEC_USE_SSE4
-#include "simd_128.h"
-#elif defined NTTEC_USE_AVX2
-#include "simd_256.h"
-#endif
-
-#include "simd_nf4.h"
-
-#endif // #ifdef NTTEC_USE_SIMD
+#include "simd_256_u16.h"
+#include "simd_256_u32.h"
 
 #endif

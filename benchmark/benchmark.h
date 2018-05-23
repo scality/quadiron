@@ -38,6 +38,7 @@
 
 #include "nttec.h"
 
+#include "core.h"
 #include "iostreambuf.h"
 #include "prng.h"
 #include "stats.h"

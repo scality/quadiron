@@ -126,19 +126,19 @@ Benchmark<T>::~Benchmark()
 
     if (d_chunks != nullptr) {
         for (int i = 0; i < k; i++) {
-            delete[] d_chunks->at(i);
+            nttec::aligned_deallocate<uint8_t>(d_chunks->at(i));
         }
         delete d_chunks;
     }
     if (c_chunks != nullptr) {
         for (int i = 0; i < n_c; i++) {
-            delete[] c_chunks->at(i);
+            nttec::aligned_deallocate<uint8_t>(c_chunks->at(i));
         }
         delete c_chunks;
     }
     if (r_chunks != nullptr) {
         for (int i = 0; i < k; i++) {
-            delete[] r_chunks->at(i);
+            nttec::aligned_deallocate<uint8_t>(r_chunks->at(i));
         }
         delete r_chunks;
     }
@@ -194,13 +194,13 @@ int Benchmark<T>::init()
     r_chunks = new std::vector<uint8_t*>(k);
 
     for (i = 0; i < k; i++) {
-        d_chunks->at(i) = new uint8_t[chunk_size];
+        d_chunks->at(i) = nttec::aligned_allocate<uint8_t>(chunk_size);
     }
     for (i = 0; i < n_c; i++) {
-        c_chunks->at(i) = new uint8_t[chunk_size];
+        c_chunks->at(i) = nttec::aligned_allocate<uint8_t>(chunk_size);
     }
     for (i = 0; i < k; i++) {
-        r_chunks->at(i) = new uint8_t[chunk_size];
+        r_chunks->at(i) = nttec::aligned_allocate<uint8_t>(chunk_size);
     }
 
     // Allocate memory for iostreambufs

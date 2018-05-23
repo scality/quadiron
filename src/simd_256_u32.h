@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_128_U32_H__
-#define __NTTEC_SIMD_128_U32_H__
+#ifndef __NTTEC_SIMD_256_U32_H__
+#define __NTTEC_SIMD_256_U32_H__
 
 #include <x86intrin.h>
 
@@ -40,23 +40,23 @@ namespace simd {
 
 /** Perform a%card where a is a addition of two numbers whose elements are
  *  symbols of GF(card) */
-inline m128i mod_after_add(m128i a, aint32 card)
+inline m256i mod_after_add(m256i a, aint32 card)
 {
-    const m128i _card = _mm_set1_epi32(card);
-    const m128i _card_minus_1 = _mm_set1_epi32(card - 1);
+    const m256i _card = _mm256_set1_epi32(card);
+    const m256i _card_minus_1 = _mm256_set1_epi32(card - 1);
 
-    m128i cmp = _mm_cmpgt_epi32(a, _card_minus_1);
-    m128i b = _mm_sub_epi32(a, _mm_and_si128(_card, cmp));
+    m256i cmp = _mm256_cmpgt_epi32(a, _card_minus_1);
+    m256i b = _mm256_sub_epi32(a, _mm256_and_si256(_card, cmp));
 
     return b;
 }
 
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
-inline m128i add(m128i a, m128i b, aint32 card)
+inline m256i add(m256i a, m256i b, aint32 card)
 {
-    m128i _a = _mm_load_si128(&a);
-    m128i _b = _mm_load_si128(&b);
-    m128i c = _mm_add_epi32(_a, _b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
+    m256i c = _mm256_add_epi32(_a, _b);
 
     // Modulo
     return mod_after_add(c, card);
@@ -67,17 +67,17 @@ inline m128i add(m128i a, m128i b, aint32 card)
  * sub(a, b) = a - b if a >= b, or
  *             card + a - b, otherwise
  */
-inline m128i sub(m128i a, m128i b, aint32 card)
+inline m256i sub(m256i a, m256i b, aint32 card)
 {
-    const m128i _card = _mm_set1_epi32(card);
+    const m256i _card = _mm256_set1_epi32(card);
 
-    m128i _a = _mm_load_si128(&a);
-    m128i _b = _mm_load_si128(&b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
 
-    m128i cmp = _mm_cmpgt_epi32(_b, _a);
-    m128i _a1 = _mm_add_epi32(_a, _mm_and_si128(_card, cmp));
+    m256i cmp = _mm256_cmpgt_epi32(_b, _a);
+    m256i _a1 = _mm256_add_epi32(_a, _mm256_and_si256(_card, cmp));
 
-    return _mm_sub_epi32(_a1, _b);
+    return _mm256_sub_epi32(_a1, _b);
 }
 
 /** Perform a%card where a is a multiplication of two numbers whose elements are
@@ -91,68 +91,68 @@ inline m128i sub(m128i a, m128i b, aint32 card)
  *          or
  *          F4 + lo - hi, otherwise
  */
-inline m128i mod_after_multiply_f4(m128i a)
+inline m256i mod_after_multiply_f4(m256i a)
 {
-    const m128i mask = _mm_set1_epi32(F4 - 2);
+    const m256i mask = _mm256_set1_epi32(F4 - 2);
 
-    m128i lo = _mm_and_si128(a, mask);
+    m256i lo = _mm256_and_si256(a, mask);
 
-    m128i a_shift = _mm_srli_si128(a, 2);
-    m128i hi = _mm_and_si128(a_shift, mask);
+    m256i a_shift = _mm256_srli_si256(a, 2);
+    m256i hi = _mm256_and_si256(a_shift, mask);
 
-    m128i cmp = _mm_cmpgt_epi32(hi, lo);
-    m128i _lo = _mm_add_epi32(lo, _mm_and_si128(F4_m128i, cmp));
+    m256i cmp = _mm256_cmpgt_epi32(hi, lo);
+    m256i _lo = _mm256_add_epi32(lo, _mm256_and_si256(F4_m256i, cmp));
 
-    return _mm_sub_epi32(_lo, hi);
+    return _mm256_sub_epi32(_lo, hi);
 }
 
-inline m128i mod_after_multiply_f3(m128i a)
+inline m256i mod_after_multiply_f3(m256i a)
 {
-    const m128i mask = _mm_set1_epi32(F3 - 2);
+    const m256i mask = _mm256_set1_epi32(F3 - 2);
 
-    m128i lo = _mm_and_si128(a, mask);
+    m256i lo = _mm256_and_si256(a, mask);
 
-    m128i a_shift = _mm_srli_si128(a, 1);
-    m128i hi = _mm_and_si128(a_shift, mask);
+    m256i a_shift = _mm256_srli_si256(a, 1);
+    m256i hi = _mm256_and_si256(a_shift, mask);
 
-    m128i cmp = _mm_cmpgt_epi32(hi, lo);
-    m128i _lo = _mm_add_epi32(lo, _mm_and_si128(F3_m128i, cmp));
+    m256i cmp = _mm256_cmpgt_epi32(hi, lo);
+    m256i _lo = _mm256_add_epi32(lo, _mm256_and_si256(F3_m256i, cmp));
 
-    return _mm_sub_epi32(_lo, hi);
+    return _mm256_sub_epi32(_lo, hi);
 }
 
-inline m128i mul_f4(m128i a, m128i b)
+inline m256i mul_f4(m256i a, m256i b)
 {
-    m128i _a = _mm_load_si128(&a);
-    m128i _b = _mm_load_si128(&b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
 
-    m128i c = _mm_mullo_epi32(_a, _b);
+    m256i c = _mm256_mullo_epi32(_a, _b);
 
     // filter elements of both of a & b = card-1
-    m128i cmp = _mm_and_si128(
-        _mm_cmpeq_epi32(_a, F4minus1_m128i),
-        _mm_cmpeq_epi32(_b, F4minus1_m128i));
+    m256i cmp = _mm256_and_si256(
+        _mm256_cmpeq_epi32(_a, F4minus1_m256i),
+        _mm256_cmpeq_epi32(_b, F4minus1_m256i));
 
-    const m128i one = _mm_set1_epi32(1);
-    c = _mm_add_epi32(c, _mm_and_si128(one, cmp));
+    const m256i one = _mm256_set1_epi32(1);
+    c = _mm256_add_epi32(c, _mm256_and_si256(one, cmp));
 
     // Modulo
     return mod_after_multiply_f4(c);
 }
 
-inline m128i mul_f3(m128i a, m128i b)
+inline m256i mul_f3(m256i a, m256i b)
 {
-    m128i _a = _mm_load_si128(&a);
-    m128i _b = _mm_load_si128(&b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
 
-    m128i c = _mm_mullo_epi32(_a, _b);
+    m256i c = _mm256_mullo_epi32(_a, _b);
 
     // filter elements of both of a & b = card-1
-    m128i cmp = _mm_and_si128(
-        _mm_cmpeq_epi32(_a, F3minus1_m128i),
-        _mm_cmpeq_epi32(_b, F3minus1_m128i));
+    m256i cmp = _mm256_and_si256(
+        _mm256_cmpeq_epi32(_a, F3minus1_m256i),
+        _mm256_cmpeq_epi32(_b, F3minus1_m256i));
 
-    c = _mm_xor_si128(c, _mm_and_si128(F4_m128i, cmp));
+    c = _mm256_xor_si256(c, _mm256_and_si256(F4_m256i, cmp));
 
     // Modulo
     return mod_after_multiply_f3(c);
@@ -162,7 +162,7 @@ inline m128i mul_f3(m128i a, m128i b)
  *  where `card` is a prime Fermat number, i.e. card = Fx with x < 5
  *  Currently, it supports only for F3 and F4
  */
-inline m128i mul(m128i a, m128i b, aint32 card)
+inline m256i mul(m256i a, m256i b, aint32 card)
 {
     assert(card == F4 || card == F3);
     if (card == F4)
@@ -180,10 +180,10 @@ inline void mul_coef_to_buf(
     size_t len,
     aint32 card = F4)
 {
-    const m128i coef = _mm_set1_epi32(a);
+    const m256i coef = _mm256_set1_epi32(a);
 
-    m128i* _src = reinterpret_cast<m128i*>(src);
-    m128i* _dest = reinterpret_cast<m128i*>(dest);
+    m256i* _src = reinterpret_cast<m256i*>(src);
+    m256i* _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -205,8 +205,8 @@ inline void mul_coef_to_buf(
 inline void
 add_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 {
-    m128i* _src = reinterpret_cast<m128i*>(src);
-    m128i* _dest = reinterpret_cast<m128i*>(dest);
+    m256i* _src = reinterpret_cast<m256i*>(src);
+    m256i* _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -232,9 +232,9 @@ inline void sub_two_bufs(
     size_t len,
     aint32 card = F4)
 {
-    m128i* _bufa = reinterpret_cast<m128i*>(bufa);
-    m128i* _bufb = reinterpret_cast<m128i*>(bufb);
-    m128i* _res = reinterpret_cast<m128i*>(res);
+    m256i* _bufa = reinterpret_cast<m256i*>(bufa);
+    m256i* _bufb = reinterpret_cast<m256i*>(bufb);
+    m256i* _res = reinterpret_cast<m256i*>(res);
     const unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -258,8 +258,8 @@ inline void sub_two_bufs(
 inline void
 mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 {
-    m128i* _src = reinterpret_cast<m128i*>(src);
-    m128i* _dest = reinterpret_cast<m128i*>(dest);
+    m256i* _src = reinterpret_cast<m256i*>(src);
+    m256i* _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -278,32 +278,38 @@ mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
 }
 
 /* ==================== Operations for NF4 =================== */
+typedef __m128i m128i;
 
 /** Return aint128 integer from a _m128i register */
-static inline aint128 m128i_to_uint128(m128i v)
+inline aint128 m256i_to_uint128(m256i v)
 {
-    aint128 i;
-    _mm_store_si128((m128i*)&i, v);
-
-    return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
+    aint128 hi, lo;
+    _mm256_storeu2_m128i((m128i*)&hi, (m128i*)&lo, v);
+    return lo;
 }
 
 inline __uint128_t add(__uint128_t a, __uint128_t b)
 {
-    m128i res = add((m128i)a, (m128i)b, F4);
-    return m128i_to_uint128(res);
+    m256i _a = _mm256_castsi128_si256((m128i)a);
+    m256i _b = _mm256_castsi128_si256((m128i)b);
+    m256i res = add(_a, _b, F4);
+    return m256i_to_uint128(res);
 }
 
 inline __uint128_t sub(__uint128_t a, __uint128_t b)
 {
-    m128i res = sub((m128i)a, (m128i)b, F4);
-    return m128i_to_uint128(res);
+    m256i _a = _mm256_castsi128_si256((m128i)a);
+    m256i _b = _mm256_castsi128_si256((m128i)b);
+    m256i res = sub(_a, _b, F4);
+    return m256i_to_uint128(res);
 }
 
 inline __uint128_t mul(__uint128_t a, __uint128_t b)
 {
-    m128i res = mul((m128i)a, (m128i)b, F4);
-    return m128i_to_uint128(res);
+    m256i _a = _mm256_castsi128_si256((m128i)a);
+    m256i _b = _mm256_castsi128_si256((m128i)b);
+    m256i res = mul(_a, _b, F4);
+    return m256i_to_uint128(res);
 }
 
 /** Add buffer `y` to two halves of `x`. `x` is of length `n` */
@@ -311,38 +317,74 @@ inline void
 add_buf_to_two_bufs(int n, aint128* _x, aint128* _y, aint32 card = F4)
 {
     int i;
-    const int half = n / 2;
-    m128i* x = reinterpret_cast<m128i*>(_x);
-    m128i* y = reinterpret_cast<m128i*>(_y);
-    m128i* x_next = x + half;
+    m256i* x = reinterpret_cast<m256i*>(_x);
+    m256i* y = reinterpret_cast<m256i*>(_y);
+
+    const unsigned ratio = sizeof(*x) / sizeof(*_x);
+    const int len_y = n / 2;
+    const int len_y_256 = len_y / ratio;
+    const int last_len_y = len_y - len_y_256 * ratio;
+
+    aint128* x_half = _x + len_y;
+    m256i* x_next = reinterpret_cast<m256i*>(x_half);
 
     // add y to the first half of `x`
-    for (i = 0; i < half; i++) {
+    for (i = 0; i < len_y_256; i++) {
         x[i] = add(x[i], y[i], card);
     }
 
     // add y to the second half of `x`
-    for (i = 0; i < half; i++) {
+    for (i = 0; i < len_y_256; i++) {
         x_next[i] = add(x_next[i], y[i], card);
+    }
+
+    if (last_len_y > 0) {
+        // add last _y[] to x and x_next
+        for (i = len_y_256 * ratio; i < len_y; i++) {
+            m256i _x_p = _mm256_castsi128_si256((m128i)_x[i]);
+            m256i _x_next_p = _mm256_castsi128_si256((m128i)x_half[i]);
+            m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
+
+            _x_p = add(_x_p, _y_p, card);
+            _x_next_p = add(_x_next_p, _y_p, card);
+        }
     }
 }
 
 inline void hadamard_mul(int n, aint128* _x, aint128* _y)
 {
     int i;
-    const int half = n / 2;
-    m128i* x = reinterpret_cast<m128i*>(_x);
-    m128i* y = reinterpret_cast<m128i*>(_y);
-    m128i* x_next = x + half;
+    m256i* x = reinterpret_cast<m256i*>(_x);
+    m256i* y = reinterpret_cast<m256i*>(_y);
+
+    const unsigned ratio = sizeof(*x) / sizeof(*_x);
+    const int len_y = n / 2;
+    const int len_y_256 = len_y / ratio;
+    const int last_len_y = len_y - len_y_256 * ratio;
+
+    aint128* x_half = _x + len_y;
+    m256i* x_next = reinterpret_cast<m256i*>(x_half);
 
     // multiply y to the first half of `x`
-    for (i = 0; i < half; i++) {
+    for (i = 0; i < len_y_256; i++) {
         x[i] = mul(x[i], y[i], F4);
     }
 
     // multiply y to the second half of `x`
-    for (i = 0; i < half; i++) {
+    for (i = 0; i < len_y_256; i++) {
         x_next[i] = mul(x_next[i], y[i], F4);
+    }
+
+    if (last_len_y > 0) {
+        // add last _y[] to x and x_next
+        for (i = len_y_256 * ratio; i < len_y; i++) {
+            m256i _x_p = _mm256_castsi128_si256((m128i)_x[i]);
+            m256i _x_next_p = _mm256_castsi128_si256((m128i)x_half[i]);
+            m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
+
+            _x_p = mul(_x_p, _y_p, F4);
+            _x_next_p = mul(_x_next_p, _y_p, F4);
+        }
     }
 }
 

@@ -28,35 +28,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_128_U16_H__
-#define __NTTEC_SIMD_128_U16_H__
+#ifndef __NTTEC_SIMD_256_U16_H__
+#define __NTTEC_SIMD_256_U16_H__
 
 #include <x86intrin.h>
 
 namespace nttec {
 namespace simd {
 
-/* ==================== Essential Operations =================== */
-
 /** Perform a%card where a is a addition of two numbers whose elements are
  *  symbols of GF(card) */
-inline m128i mod_after_add(m128i a, aint16 card)
+inline m256i mod_after_add(m256i a, aint16 card)
 {
-    const m128i _card = _mm_set1_epi16(card);
-    const m128i _card_minus_1 = _mm_set1_epi16(card - 1);
+    const m256i _card = _mm256_set1_epi16(card);
+    const m256i _card_minus_1 = _mm256_set1_epi16(card - 1);
 
-    m128i cmp = _mm_cmpgt_epi16(a, _card_minus_1);
-    m128i b = _mm_sub_epi16(a, _mm_and_si128(_card, cmp));
+    m256i cmp = _mm256_cmpgt_epi16(a, _card_minus_1);
+    m256i b = _mm256_sub_epi16(a, _mm256_and_si256(_card, cmp));
 
     return b;
 }
 
 /** Perform addition of two numbers a, b whose elements are of GF(card) */
-inline m128i add(m128i a, m128i b, aint16 card)
+inline m256i add(m256i a, m256i b, aint16 card = F3)
 {
-    m128i _a = _mm_load_si128(&a);
-    m128i _b = _mm_load_si128(&b);
-    m128i c = _mm_add_epi16(_a, _b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
+    m256i c = _mm256_add_epi16(_a, _b);
 
     // Modulo
     return mod_after_add(c, card);
@@ -67,48 +65,48 @@ inline m128i add(m128i a, m128i b, aint16 card)
  * sub(a, b) = a - b if a >= b, or
  *             card + a - b, otherwise
  */
-inline m128i sub(m128i a, m128i b, aint16 card)
+inline m256i sub(m256i a, m256i b, aint16 card)
 {
-    const m128i _card = _mm_set1_epi16(card);
+    const m256i _card = _mm256_set1_epi16(card);
 
-    m128i _a = _mm_load_si128(&a);
-    m128i _b = _mm_load_si128(&b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
 
-    m128i cmp = _mm_cmpgt_epi16(_b, _a);
-    m128i _a1 = _mm_add_epi16(_a, _mm_and_si128(_card, cmp));
+    m256i cmp = _mm256_cmpgt_epi16(_b, _a);
+    m256i _a1 = _mm256_add_epi16(_a, _mm256_and_si256(_card, cmp));
 
-    return _mm_sub_epi16(_a1, _b);
+    return _mm256_sub_epi16(_a1, _b);
 }
 
-inline m128i mod_after_multiply(m128i a)
+inline m256i mod_after_multiply(m256i a)
 {
-    const m128i mask = _mm_set1_epi16(F3 - 2);
+    const m256i mask = _mm256_set1_epi16(F3 - 2);
 
-    m128i lo = _mm_and_si128(a, mask);
+    m256i lo = _mm256_and_si256(a, mask);
 
-    m128i a_shift = _mm_srli_si128(a, 1);
-    m128i hi = _mm_and_si128(a_shift, mask);
+    m256i a_shift = _mm256_srli_si256(a, 1);
+    m256i hi = _mm256_and_si256(a_shift, mask);
 
-    m128i cmp = _mm_cmpgt_epi16(hi, lo);
-    m128i _lo = _mm_add_epi16(lo, _mm_and_si128(F3_m128i, cmp));
+    m256i cmp = _mm256_cmpgt_epi16(hi, lo);
+    m256i _lo = _mm256_add_epi16(lo, _mm256_and_si256(F3_m256i, cmp));
 
-    return _mm_sub_epi16(_lo, hi);
+    return _mm256_sub_epi16(_lo, hi);
 }
 
-inline m128i mul(m128i a, m128i b)
+inline m256i mul(m256i a, m256i b)
 {
-    m128i _a = _mm_load_si128(&a);
-    m128i _b = _mm_load_si128(&b);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
 
-    m128i c = _mm_mullo_epi16(_a, _b);
+    m256i c = _mm256_mullo_epi16(_a, _b);
 
     // filter elements of both of a & b = card-1
-    m128i cmp = _mm_and_si128(
-        _mm_cmpeq_epi16(_a, F3minus1_m128i),
-        _mm_cmpeq_epi16(_b, F3minus1_m128i));
+    m256i cmp = _mm256_and_si256(
+        _mm256_cmpeq_epi16(_a, F3minus1_m256i),
+        _mm256_cmpeq_epi16(_b, F3minus1_m256i));
 
-    const m128i one = _mm_set1_epi16(1);
-    c = _mm_add_epi16(c, _mm_and_si128(one, cmp));
+    const m256i one = _mm256_set1_epi16(1);
+    c = _mm256_add_epi16(c, _mm256_and_si256(one, cmp));
 
     // Modulo
     return mod_after_multiply(c);
@@ -118,7 +116,7 @@ inline m128i mul(m128i a, m128i b)
  *  where `card` is a prime Fermat number, i.e. card = Fx with x < 5
  *  Currently, it supports only for F3
  */
-inline m128i mul(m128i a, m128i b, aint16 card)
+inline m256i mul(m256i a, m256i b, aint16 card)
 {
     // FIXME: generalize card
     assert(card == F3);
@@ -135,10 +133,10 @@ inline void mul_coef_to_buf(
     size_t len,
     aint16 card = F3)
 {
-    const m128i coef = _mm_set1_epi16(a);
+    const m256i coef = _mm256_set1_epi16(a);
 
-    m128i* _src = reinterpret_cast<m128i*>(src);
-    m128i* _dest = reinterpret_cast<m128i*>(dest);
+    m256i* _src = reinterpret_cast<m256i*>(src);
+    m256i* _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -160,8 +158,8 @@ inline void mul_coef_to_buf(
 inline void
 add_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 {
-    m128i* _src = reinterpret_cast<m128i*>(src);
-    m128i* _dest = reinterpret_cast<m128i*>(dest);
+    m256i* _src = reinterpret_cast<m256i*>(src);
+    m256i* _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -187,9 +185,9 @@ inline void sub_two_bufs(
     size_t len,
     aint16 card = F3)
 {
-    m128i* _bufa = reinterpret_cast<m128i*>(bufa);
-    m128i* _bufb = reinterpret_cast<m128i*>(bufb);
-    m128i* _res = reinterpret_cast<m128i*>(res);
+    m256i* _bufa = reinterpret_cast<m256i*>(bufa);
+    m256i* _bufb = reinterpret_cast<m256i*>(bufb);
+    m256i* _res = reinterpret_cast<m256i*>(res);
     const unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -213,8 +211,8 @@ inline void sub_two_bufs(
 inline void
 mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 {
-    m128i* _src = reinterpret_cast<m128i*>(src);
-    m128i* _dest = reinterpret_cast<m128i*>(dest);
+    m256i* _src = reinterpret_cast<m256i*>(src);
+    m256i* _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
