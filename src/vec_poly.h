@@ -122,9 +122,9 @@ void Poly<T>::set(int exponent, T coef)
  * \f$X^{n-1}\f$, not a multiplication of \f$n\f$ and \f$X^{n-1}\f$. It can be
  * expressed as below:
  * \f{eqnarray*}{
- *  derivative(X^n) &= (1 + 1 + ... + 1) X^{n-1}
- *                  &= (n % p) * X^{n-1}
- * \f{eqnarray*}{
+ *  derivative(X^n) &= (1 + 1 + ... + 1) X^{n-1} \\
+ *                  &= (n \% p) * X^{n-1}
+ * \f}
  * where \f$p\f$ is the characteristic of the field.
  */
 template <typename T>
