@@ -43,7 +43,6 @@ then
 fi
 
 chunk_size=51200
-sce_type=enc_only
 # for rs-nf4
 ec_type=rs-nf4
 word_size=8
