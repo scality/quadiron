@@ -131,8 +131,8 @@ class BuffersUtest {
 
         nttec::vec::Buffers<T> _i_even(vec1, 0, half);
         nttec::vec::Buffers<T> _i_odd(vec1, half, n);
-        assert(i_even->eq(&_i_even));
-        assert(i_odd->eq(&_i_odd));
+        assert(i_even->eq(&_i_even)); // NOLINT
+        assert(i_odd->eq(&_i_odd));   // NOLINT
 
         // vec2.dump();
 
