@@ -156,6 +156,8 @@ class BuffersUtest {
         assert(ok);
 
         delete vec1;
+        delete i_even;
+        delete i_odd;
     }
 
     void buffers_utest3()
