@@ -74,7 +74,7 @@ FourierTransform<T>::FourierTransform(gf::Field<T>* gf, int n)
 {
     this->gf = gf;
     this->n = n;
-    this->inv_n_mod_p = gf->inv(n) % gf->get_sub_field()->card();
+    this->inv_n_mod_p = gf->get_inv_n_mod_p(n);
 
     this->vec_inv_n = new vec::Vector<T>(this->gf, n);
     for (int i = 0; i < n; i++) {

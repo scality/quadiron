@@ -52,6 +52,7 @@ class Field : public RingModN<T> {
     Field<T>* get_sub_field();
     T get_p();
     int get_n();
+    virtual T get_inv_n_mod_p(int n);
 
   protected:
     T p;
@@ -101,6 +102,12 @@ template <typename T>
 int Field<T>::get_n()
 {
     return n;
+}
+
+template <typename T>
+T Field<T>::get_inv_n_mod_p(int n)
+{
+    return this->inv(n) % p;
 }
 
 } // namespace gf

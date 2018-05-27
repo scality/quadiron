@@ -54,6 +54,7 @@ class NF4 : public gf::Field<T> {
     ~NF4();
     T card(void);
     T card_minus_one(void);
+    T get_inv_n_mod_p(int n);
     bool check(T a);
     T neg(T a);
     T add(T a, T b);
@@ -110,6 +111,12 @@ template <typename T>
 NF4<T>::~NF4()
 {
     delete sub_field;
+}
+
+template <typename T>
+T NF4<T>::get_inv_n_mod_p(int n)
+{
+    return replicate(gf::Field<T>::get_inv_n_mod_p(n));
 }
 
 /*
