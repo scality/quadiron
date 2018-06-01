@@ -108,7 +108,7 @@ class RingModN {
     T get_code_len_high_compo(T n);
     virtual void hadamard_mul(int n, T* x, T* y);
     virtual void hadamard_mul_doubled(int n, T* x, T* y);
-    virtual void add(int n, T* x, T* y);
+    virtual void add_doubled(int n, T* x, T* y);
 
   private:
     T _card;
@@ -853,7 +853,7 @@ void RingModN<T>::hadamard_mul_doubled(int n, T* x, T* y)
 }
 
 template <typename T>
-void RingModN<T>::add(int n, T* x, T* y)
+void RingModN<T>::add_doubled(int n, T* x, T* y)
 {
     const int half = n / 2;
     T* x_next = x + half;
@@ -913,13 +913,14 @@ void RingModN<uint32_t>::hadamard_mul_doubled(int n, uint32_t* x, uint32_t* y);
 // __uint128_t* x, __uint128_t* y);
 
 template <>
-void RingModN<uint16_t>::add(int n, uint16_t* x, uint16_t* y);
+void RingModN<uint16_t>::add_doubled(int n, uint16_t* x, uint16_t* y);
 template <>
-void RingModN<uint32_t>::add(int n, uint32_t* x, uint32_t* y);
+void RingModN<uint32_t>::add_doubled(int n, uint32_t* x, uint32_t* y);
 // template <>
-// void RingModN<uint64_t>::add(int n, uint64_t* x, uint64_t* y);
+// void RingModN<uint64_t>::add_doubled(int n, uint64_t* x, uint64_t* y);
 // template <>
-// void RingModN<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y);
+// void RingModN<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t*
+// y);
 
 #endif // #ifdef NTTEC_USE_SIMD
 

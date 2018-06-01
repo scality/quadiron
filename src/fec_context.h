@@ -45,7 +45,6 @@
 
 namespace nttec {
 
-/** Forward Error Correction code implementations. */
 namespace fec {
 
 /** A class for context of decoding

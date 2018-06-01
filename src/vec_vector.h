@@ -258,7 +258,7 @@ void Vector<T>::add(Doubled<T>* v)
     // typical butterfly operation
     T* dest = mem;
     T* src = v->get_mem();
-    rn->add(n, dest, src);
+    rn->add_doubled(n, dest, src);
 }
 
 template <typename T>

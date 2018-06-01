@@ -76,7 +76,7 @@ class NF4 : public gf::Field<T> {
     gf::Field<uint32_t>* get_sub_field();
     void hadamard_mul(int n, T* x, T* y);
     void hadamard_mul_doubled(int n, T* x, T* y);
-    void add(int n, T* x, T* y);
+    void add_doubled(int n, T* x, T* y);
 
   private:
     T unit;
@@ -493,7 +493,7 @@ void NF4<T>::hadamard_mul_doubled(int n, T* x, T* y)
 }
 
 template <typename T>
-void NF4<T>::add(int n, T* x, T* y)
+void NF4<T>::add_doubled(int n, T* x, T* y)
 {
     const int half = n / 2;
     T* x_next = x + half;
@@ -546,7 +546,7 @@ void NF4<__uint128_t>::hadamard_mul_doubled(
     __uint128_t* y);
 
 template <>
-void NF4<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y);
+void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y);
 
 #endif // #ifdef NTTEC_USE_SIMD
 

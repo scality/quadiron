@@ -86,7 +86,7 @@ class BinExtension : public gf::Field<T> {
     void setup_split_tables(void);
     void hadamard_mul(int n, T* x, T* y);
     void hadamard_mul_doubled(int n, T* x, T* y);
-    void add(int n, T* x, T* y);
+    void add_doubled(int n, T* x, T* y);
 };
 
 enum MulType { MUL_LOG_TAB, SPLIT_8_8 };
@@ -562,7 +562,7 @@ void BinExtension<T>::hadamard_mul_doubled(int n, T* x, T* y)
 }
 
 template <typename T>
-void BinExtension<T>::add(int n, T* x, T* y)
+void BinExtension<T>::add_doubled(int n, T* x, T* y)
 {
     const int half = n / 2;
     T* x_next = x + half;

@@ -42,7 +42,6 @@
 
 namespace nttec {
 
-/** Low-level wrappers/helpers around memory buffer. */
 namespace vec {
 
 template <typename Ts, typename Td, typename Tw>

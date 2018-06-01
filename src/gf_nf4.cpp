@@ -68,7 +68,7 @@ __uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b)
 }
 
 template <>
-void NF4<__uint128_t>::add(int n, __uint128_t* x, __uint128_t* y)
+void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y)
 {
     simd::add_buf_to_two_bufs(n, x, y);
 }

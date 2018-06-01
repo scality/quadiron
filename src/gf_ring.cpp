@@ -63,7 +63,7 @@ void RingModN<uint32_t>::sub_two_bufs(
 }
 
 template <>
-void RingModN<uint16_t>::add(int n, uint16_t* x_u16, uint16_t* y_u16)
+void RingModN<uint16_t>::add_doubled(int n, uint16_t* x_u16, uint16_t* y_u16)
 {
     const int half = n / 2;
     uint16_t* x_next = x_u16 + half;
@@ -72,7 +72,7 @@ void RingModN<uint16_t>::add(int n, uint16_t* x_u16, uint16_t* y_u16)
 }
 
 template <>
-void RingModN<uint32_t>::add(int n, uint32_t* x_u32, uint32_t* y_u32)
+void RingModN<uint32_t>::add_doubled(int n, uint32_t* x_u32, uint32_t* y_u32)
 {
     const int half = n / 2;
     uint32_t* x_next = x_u32 + half;
@@ -82,12 +82,12 @@ void RingModN<uint32_t>::add(int n, uint32_t* x_u32, uint32_t* y_u32)
 
 // TODO
 // template <>
-// void RingModN<uint64_t>::add(int n, uint64_t* x_u64, uint64_t* y_u64)
+// void RingModN<uint64_t>::add_doubled(int n, uint64_t* x_u64, uint64_t* y_u64)
 // {
 // }
 // template <>
-// void RingModN<__uint128_t>::add(int n, __uint128_t* x_u128, __uint128_t*
-// y_u128)
+// void RingModN<__uint128_t>::add_doubled(int n, __uint128_t* x_u128,
+// __uint128_t* y_u128)
 // {
 // }
 
