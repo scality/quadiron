@@ -167,7 +167,7 @@ class RsGf2nFftAdd : public FecCode<T> {
                 vx_zero = i;
             }
         }
-        context->set_vx_zero(vx_zero);
+        context->vx_zero = vx_zero;
 
         // initialize context
         context->init(fragments_ids, vx);
@@ -187,14 +187,14 @@ class RsGf2nFftAdd : public FecCode<T> {
         vec::Vector<T>* output,
         vec::Vector<T>* words) override
     {
-        vec::Vector<T>* fragments_ids = context->get_frag_ids();
-        vec::Poly<T>* A = context->get_A();
-        vec::Poly<T>* inv_A_i = context->get_inv_A_i();
-        vec::Poly<T>* poly1_n = context->get_poly1_n();
-        vec::Poly<T>* S = context->get_S();
+        vec::Vector<T>* fragments_ids = context->fragments_ids;
+        std::shared_ptr<vec::Poly<T>> A = context->A;
+        std::shared_ptr<vec::Poly<T>> inv_A_i = context->inv_A_i;
+        std::shared_ptr<vec::Poly<T>> poly1_n = context->poly1_n;
+        std::shared_ptr<vec::Poly<T>> S = context->S;
 
         int k = this->n_data; // number of fragments received
-        int vx_zero = context->get_vx_zero();
+        int vx_zero = context->vx_zero;
 
         // FIXME: split this step in decode_init as multiplicative FFT
         vec::Vector<T> vx(this->gf, k);
@@ -230,7 +230,7 @@ class RsGf2nFftAdd : public FecCode<T> {
             }
             S->set(j, val);
         }
-        S->mul(A, k - 1);
+        S->mul(A.get(), k - 1);
         if (vx_zero > -1) {
             assert(A->get(0) == 0);
             // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x

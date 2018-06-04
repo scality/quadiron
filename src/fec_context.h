@@ -40,12 +40,19 @@
 
 #include "fft_base.h"
 #include "gf_base.h"
+#include "gf_nf4.h"
 #include "vec_poly.h"
 #include "vec_zero_ext.h"
 
 namespace nttec {
 
 namespace fec {
+
+/* List of vectors handled by context */
+enum class CtxVec { A_FFT_2K = 0, INV_A_I, N1, N2, V2K1, V2K2 };
+
+/* List of polynomials handled by context */
+enum class CtxPoly { A = 0, S };
 
 /** A class for context of decoding
  */
@@ -56,8 +63,11 @@ class DecodeContext {
         gf::Field<T>* gf,
         fft::FourierTransform<T>& fft,
         fft::FourierTransform<T>& fft_2k,
+        const vec::Vector<T>& fragments_ids,
+        const vec::Vector<T>& vx,
         const int k,
         const int n,
+        int vx_zero = -1,
         const size_t size = 0)
     {
         this->k = k;
@@ -66,127 +76,124 @@ class DecodeContext {
         this->gf = gf;
         this->fft = &fft;
         this->fft_2k = &fft_2k;
-        this->vx_zero = -1;
+        this->vx_zero = vx_zero;
 
         this->len_2k = this->gf->get_code_len_high_compo(2 * this->k);
 
-        A = new vec::Poly<T>(this->gf, this->n);
-        A_fft_2k = new vec::Poly<T>(this->gf, this->len_2k);
-        inv_A_i = new vec::Poly<T>(this->gf, this->n);
-        S = new vec::Poly<T>(this->gf, k);
+        this->fragments_ids = &fragments_ids;
 
-        poly1_n = new vec::Poly<T>(this->gf, n);
-        poly2_n = new vec::Poly<T>(this->gf, n);
+        A = std::unique_ptr<vec::Poly<T>>(new vec::Poly<T>(gf, n));
+        A_fft_2k =
+            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
+        inv_A_i = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
+        S = std::unique_ptr<vec::Poly<T>>(new vec::Poly<T>(gf, k));
 
-        poly1_2k = new vec::Poly<T>(this->gf, len_2k);
-        poly2_2k = new vec::Poly<T>(this->gf, len_2k);
+        vec1_n = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
+        vec2_n = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
+
+        vec1_2k =
+            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
+        vec2_2k =
+            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
 
         // zero-out all polynomials as they are used in full-length for FFT
-        A->zero();
-        inv_A_i->zero();
-        S->zero();
+        A->zero_fill();
+        inv_A_i->zero_fill();
+        S->zero_fill();
 
-        poly1_n->zero();
-        poly2_n->zero();
+        vec1_n->zero_fill();
+        vec2_n->zero_fill();
+
+        init(vx);
     }
 
-    ~DecodeContext()
-    {
-        if (A)
-            delete A;
-        if (A_fft_2k)
-            delete A_fft_2k;
-        if (inv_A_i)
-            delete inv_A_i;
-        if (S)
-            delete S;
-        if (poly1_n)
-            delete poly1_n;
-        if (poly2_n)
-            delete poly2_n;
-    }
+    ~DecodeContext() {}
 
-    unsigned get_len_2k()
+    unsigned get_len_2k() const
     {
         return len_2k;
     }
 
-    vec::Poly<T>* get_A()
+    const vec::Vector<T>& get_fragments_id() const
     {
-        return A;
+        return *fragments_ids;
     }
 
-    vec::Poly<T>* get_A_fft_2k()
+    vec::Vector<T>& get_vector(CtxVec type) const
     {
-        return A_fft_2k;
+        switch (type) {
+        case CtxVec::A_FFT_2K:
+            return *A_fft_2k;
+        case CtxVec::INV_A_I:
+            return *inv_A_i;
+        case CtxVec::N1:
+            return *vec1_n;
+        case CtxVec::N2:
+            return *vec2_n;
+        case CtxVec::V2K1:
+            return *vec1_2k;
+        case CtxVec::V2K2:
+            return *vec2_2k;
+        }
     }
 
-    vec::Poly<T>* get_inv_A_i()
+    vec::Poly<T>& get_poly(CtxPoly type) const
     {
-        return inv_A_i;
+        switch (type) {
+        case CtxPoly::A:
+            return *A;
+        case CtxPoly::S:
+            return *S;
+        }
     }
 
-    vec::Poly<T>* get_poly1_n()
+    void find_vx_zero(vec::Vector<T>* betas)
     {
-        return poly1_n;
+        vx_zero = -1;
+        // vector x=(x_0, x_1, ..., x_k-1)
+        for (int i = 0; i < k; ++i) {
+            if (betas->get(fragments_ids->get(i)) == 0) {
+                vx_zero = i;
+                break;
+            }
+        }
     }
 
-    vec::Poly<T>* get_poly2_n()
+    void dump() const
     {
-        return poly2_n;
+        std::cout << "Dump context:\n";
+        std::cout << "A:";
+        A->dump();
+        std::cout << "inv_A_i init:";
+        inv_A_i->dump();
+        std::cout << "inv_A_i:";
+        inv_A_i->dump();
     }
 
-    vec::Poly<T>* get_poly1_2k()
+  private:
+    void init(const vec::Vector<T>& vx)
     {
-        return poly1_2k;
-    }
-
-    vec::Poly<T>* get_poly2_2k()
-    {
-        return poly2_2k;
-    }
-
-    vec::Poly<T>* get_S()
-    {
-        return S;
-    }
-
-    vec::Vector<T>* get_frag_ids()
-    {
-        return fragments_ids;
-    }
-
-    void set_frag_ids(vec::Vector<T>* fragments_ids)
-    {
-        this->fragments_ids = fragments_ids;
-    }
-
-    int get_vx_zero()
-    {
-        return vx_zero;
-    }
-
-    void set_vx_zero(int value)
-    {
-        this->vx_zero = value;
-    }
-
-    void init(vec::Vector<T>* fragments_ids, const vec::Vector<T>& vx)
-    {
-        this->fragments_ids = fragments_ids;
-
         // compute A(x) = prod_j(x-x_j)
-        A->set(0, 1);
+        if (gf->isNF4) {
+            A->set(0, this->gf->replicate(1));
+        } else {
+            A->set(0, 1);
+        }
+
         for (int i = 0; i < k; ++i) {
             A->mul_to_x_plus_coef(this->gf->sub(0, vx.get(i)));
         }
 
         // compute A'(x) since A_i(x_i) = A'_i(x_i)
         vec::Poly<T> _A(*A);
-        _A.derivative();
+        if (gf->isNF4) {
+            _A.derivative_nf4();
+        } else {
+            _A.derivative();
+        }
 
         // compute A_i(x_i)
-        this->fft->fft(inv_A_i, &_A);
+        this->fft->fft(inv_A_i.get(), &_A);
 
         // compute 1/(x_i * A_i(x_i))
         // we care only about elements corresponding to fragments_ids
@@ -203,56 +210,34 @@ class DecodeContext {
 
         // compute FFT(A) of length 2k
         if (this->fft_2k) {
-            vec::ZeroExtended<T> A_2k(A, len_2k);
-            this->fft_2k->fft(A_fft_2k, &A_2k);
+            vec::ZeroExtended<T> A_2k(A.get(), len_2k);
+            this->fft_2k->fft(A_fft_2k.get(), &A_2k);
         }
-    }
-
-    void find_vx_zero(vec::Vector<T>* betas)
-    {
-        vx_zero = -1;
-        // vector x=(x_0, x_1, ..., x_k-1)
-        for (int i = 0; i < k; ++i) {
-            if (betas->get(fragments_ids->get(i)) == 0) {
-                vx_zero = i;
-                break;
-            }
-        }
-    }
-
-    void dump()
-    {
-        std::cout << "Dump context:\n";
-        std::cout << "A:";
-        A->dump();
-        std::cout << "inv_A_i init:";
-        inv_A_i->dump();
-        std::cout << "inv_A_i:";
-        inv_A_i->dump();
     }
 
   public:
-    vec::Vector<T>* fragments_ids;
+    int vx_zero;
 
   private:
     unsigned k;
     unsigned n;
     unsigned len_2k;
     size_t size;
-    int vx_zero;
     gf::Field<T>* gf;
     fft::FourierTransform<T>* fft;
     fft::FourierTransform<T>* fft_2k;
 
-    vec::Poly<T>* A = nullptr;
-    vec::Poly<T>* A_fft_2k = nullptr;
-    vec::Poly<T>* inv_A_i = nullptr;
-    vec::Poly<T>* S = nullptr;
+    const vec::Vector<T>* fragments_ids;
 
-    vec::Poly<T>* poly1_n = nullptr;
-    vec::Poly<T>* poly2_n = nullptr;
-    vec::Poly<T>* poly1_2k = nullptr;
-    vec::Poly<T>* poly2_2k = nullptr;
+    std::unique_ptr<vec::Poly<T>> A = nullptr;
+    std::unique_ptr<vec::Vector<T>> A_fft_2k = nullptr;
+    std::unique_ptr<vec::Vector<T>> inv_A_i = nullptr;
+    std::unique_ptr<vec::Poly<T>> S = nullptr;
+
+    std::unique_ptr<vec::Vector<T>> vec1_n = nullptr;
+    std::unique_ptr<vec::Vector<T>> vec2_n = nullptr;
+    std::unique_ptr<vec::Vector<T>> vec1_2k = nullptr;
+    std::unique_ptr<vec::Vector<T>> vec2_2k = nullptr;
 };
 
 } // namespace fec

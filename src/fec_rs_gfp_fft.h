@@ -222,7 +222,7 @@ class RsGfpFft : public FecCode<T> {
         off_t offset,
         vec::Vector<T>* words) override
     {
-        vec::Vector<T>* fragments_ids = context->get_frag_ids();
+        vec::Vector<T>* fragments_ids = context->fragments_ids;
         int k = this->n_data; // number of fragments received
         for (int i = 0; i < k; ++i) {
             const int j = fragments_ids->get(i);

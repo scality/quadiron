@@ -762,7 +762,7 @@ void FecCode<T>::decode_prepare(
     off_t offset,
     vec::Vector<T>* words)
 {
-    vec::Vector<T>* fragments_ids = context->get_frag_ids();
+    vec::Vector<T>* fragments_ids = context->fragments_ids;
     for (int i = 0; i < this->n_data; ++i) {
         const int j = fragments_ids->get(i);
         auto data = props[j].get(ValueLocation(offset, j));
@@ -793,13 +793,13 @@ void FecCode<T>::decode_apply(
 {
     unsigned len_2k = context->get_len_2k();
 
-    vec::Vector<T>* fragments_ids = context->get_frag_ids();
-    vec::Poly<T>* inv_A_i = context->get_inv_A_i();
-    vec::Poly<T>* A_fft_2k = context->get_A_fft_2k();
-    vec::Poly<T>* poly1_n = context->get_poly1_n();
-    vec::Poly<T>* poly2_n = context->get_poly2_n();
-    vec::Poly<T>* poly1_2k = context->get_poly1_2k();
-    vec::Poly<T>* poly2_2k = context->get_poly2_2k();
+    vec::Vector<T>* fragments_ids = context->fragments_ids;
+    std::shared_ptr<vec::Poly<T>> inv_A_i = context->inv_A_i;
+    std::shared_ptr<vec::Poly<T>> A_fft_2k = context->A_fft_2k;
+    std::shared_ptr<vec::Poly<T>> poly1_n = context->poly1_n;
+    std::shared_ptr<vec::Poly<T>> poly2_n = context->poly2_n;
+    std::shared_ptr<vec::Poly<T>> poly1_2k = context->poly1_2k;
+    std::shared_ptr<vec::Poly<T>> poly2_2k = context->poly2_2k;
 
     unsigned k = this->n_data; // number of fragments received
 
@@ -812,21 +812,21 @@ void FecCode<T>::decode_apply(
     }
 
     // compute poly2_n = FFT(poly1_n)
-    this->fft_full->fft_inv(poly2_n, poly1_n);
+    this->fft_full->fft_inv(poly2_n.get(), poly1_n.get());
 
     // vec_tmp_2k: first k elements from poly2_n
     //             last (len_2k - k) elements are padded
-    vec::Slice<T> vec_tmp_k(poly2_n, k);
+    vec::Slice<T> vec_tmp_k(poly2_n.get(), k);
     vec::ZeroExtended<T> vec_tmp_2k(&vec_tmp_k, len_2k);
 
     // compute FFT_2k(Q(x))
-    this->fft_2k->fft(poly1_2k, &vec_tmp_2k);
+    this->fft_2k->fft(poly1_2k.get(), &vec_tmp_2k);
 
     // multiply FFT_2k(A(x)) to FFT_2k(Q(x)), results are stored in poly1_2k
-    poly1_2k->hadamard_mul(A_fft_2k);
+    poly1_2k->hadamard_mul(A_fft_2k.get());
 
     // compute iFFT_{2k}( FFT_{2k}(A(x)) \cdot FFT_{2k}(Q(x)) )
-    this->fft_2k->ifft(poly2_2k, poly1_2k);
+    this->fft_2k->ifft(poly2_2k.get(), poly1_2k.get());
 
     // perform negative
     poly2_2k->neg();

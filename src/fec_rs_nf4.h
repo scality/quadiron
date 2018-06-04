@@ -206,10 +206,10 @@ class RsNf4 : public FecCode<T> {
         }
 
         // initialize context
-        context->set_frag_ids(fragments_ids);
+        context->fragments_ids = fragments_ids;
 
-        vec::Poly<T>* A = context->get_A();
-        vec::Poly<T>* inv_A_i = context->get_inv_A_i();
+        std::shared_ptr<vec::Poly<T>> A = context->A;
+        std::shared_ptr<vec::Poly<T>> inv_A_i = context->inv_A_i;
 
         // compute A(x) = prod_j(x-x_j)
         A->set(0, ngff4->get_unit());
@@ -224,7 +224,7 @@ class RsNf4 : public FecCode<T> {
             _A.set(i - 1, ngff4->mul(A->get(i), ngff4->replicate(i)));
 
         // compute A_i(x_i)
-        this->fft->fft(inv_A_i, &_A);
+        this->fft->fft(inv_A_i.get(), &_A);
 
         // compute 1/(x_i * A_i(x_i))
         // we care only about elements corresponding to fragments_ids
@@ -236,9 +236,9 @@ class RsNf4 : public FecCode<T> {
 
         // compute FFT(A) of length 2k
         unsigned len_2k = context->get_len_2k();
-        vec::ZeroExtended<T> A_2k(A, len_2k);
-        vec::Poly<T>* A_fft_2k = context->get_A_fft_2k();
-        this->fft_2k->fft(A_fft_2k, &A_2k);
+        vec::ZeroExtended<T> A_2k(A.get(), len_2k);
+        std::shared_ptr<vec::Poly<T>> A_fft_2k = context->A_fft_2k;
+        this->fft_2k->fft(A_fft_2k.get(), &A_2k);
     }
 
     void decode_prepare(
@@ -248,7 +248,7 @@ class RsNf4 : public FecCode<T> {
         vec::Vector<T>* words) override
     {
         T true_val;
-        vec::Vector<T>* fragments_ids = context->get_frag_ids();
+        vec::Vector<T>* fragments_ids = context->fragments_ids;
         // std::cout << "fragments_ids:"; fragments_ids->dump();
         int k = this->n_data; // number of fragments received
         for (int i = 0; i < k; ++i) {
