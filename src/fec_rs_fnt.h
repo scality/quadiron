@@ -75,12 +75,12 @@ class RsFnt : public FecCode<T> {
             delete this->gf;
     }
 
-    inline void check_params()
+    inline void check_params() override
     {
         assert(this->word_size < 4);
     }
 
-    inline void init_gf()
+    inline void init_gf() override
     {
         // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
         T gf_p = (1ULL << (8 * this->word_size)) + 1;
@@ -91,7 +91,7 @@ class RsFnt : public FecCode<T> {
             == -1);
     }
 
-    inline void init_fft()
+    inline void init_fft() override
     {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -114,7 +114,7 @@ class RsFnt : public FecCode<T> {
             new fft::Radix2<T>(this->gf, len_2k, len_2k, this->pkt_size));
     }
 
-    inline void init_others()
+    inline void init_others() override
     {
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
@@ -130,7 +130,7 @@ class RsFnt : public FecCode<T> {
             this->r_powers->set(i, this->gf->exp(this->r, i));
     }
 
-    int get_n_outputs()
+    int get_n_outputs() override
     {
         return this->n;
     }
@@ -147,7 +147,7 @@ class RsFnt : public FecCode<T> {
         vec::Vector<T>* output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
@@ -166,7 +166,7 @@ class RsFnt : public FecCode<T> {
         vec::Buffers<T>* output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Buffers<T>* words)
+        vec::Buffers<T>* words) override
     {
         vec::BuffersZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
@@ -186,18 +186,18 @@ class RsFnt : public FecCode<T> {
         }
     }
 
-    void decode_add_data(int fragment_index, int row)
+    void decode_add_data(int fragment_index, int row) override
     {
         // not applicable
         assert(false);
     }
 
-    void decode_add_parities(int fragment_index, int row)
+    void decode_add_parities(int fragment_index, int row) override
     {
         // we can't anticipate here
     }
 
-    void decode_build()
+    void decode_build() override
     {
         // nothing to do
     }

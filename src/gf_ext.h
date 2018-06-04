@@ -47,17 +47,17 @@ class Extension : public gf::Field<T> {
   public:
     explicit Extension(T p, int n);
     ~Extension();
-    T card(void);
-    T card_minus_one(void);
-    T neg(T a);
-    T add(T a, T b);
-    T sub(T a, T b);
-    T mul(T a, T b);
-    T div(T a, T b);
-    T inv(T a);
-    T exp(T a, T b);
-    T log(T a, T b);
-    T weak_rand(void);
+    T card(void) override;
+    T card_minus_one(void) override;
+    T neg(T a) override;
+    T add(T a, T b) override;
+    T sub(T a, T b) override;
+    T mul(T a, T b) override;
+    T div(T a, T b) override;
+    T inv(T a) override;
+    T exp(T a, T b) override;
+    T log(T a, T b) override;
+    T weak_rand(void) override;
 
   private:
     gf::Field<T>* sub_field;

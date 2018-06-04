@@ -56,9 +56,9 @@ class Additive : public FourierTransform<T> {
     void compute_G();
     void compute_B(vec::Vector<T>* B);
     void compute_subspace(vec::Vector<T>* basis, vec::Vector<T>* subspace);
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input);
+    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
     void taylor_expand_t2(vec::Vector<T>* input, int n, bool do_copy = false);
     void
     taylor_expand(vec::Vector<T>* output, vec::Vector<T>* input, int n, int t);

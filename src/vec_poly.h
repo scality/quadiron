@@ -50,15 +50,15 @@ class Poly : public Vector<T> {
     Poly(const Poly<T>& a);
     const int get_deg() const;
     void set_deg(int exponent);
-    T get(int exponent) const;
-    void set(int exponent, T coef);
+    T get(int exponent) const override;
+    void set(int exponent, T coef) override;
     void derivative();
     T eval(T x);
     void mul(Poly<T>* b, int deg_out);
     void mul_to_x_plus_coef(T coef);
     void neg();
     void zero();
-    void dump();
+    void dump() override;
 
   private:
     gf::Field<T>* field;

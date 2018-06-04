@@ -54,8 +54,8 @@ template <typename T>
 class ZeroExtended : public Vector<T> {
   public:
     ZeroExtended(Vector<T>* vec, int n);
-    const int get_n(void) const;
-    T get(int i) const;
+    const int get_n(void) const override;
+    T get(int i) const override;
 
   private:
     Vector<T>* vec;

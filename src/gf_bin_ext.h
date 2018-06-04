@@ -45,17 +45,20 @@ class BinExtension : public gf::Field<T> {
   public:
     explicit BinExtension(T n);
     ~BinExtension();
-    T card(void);
-    T card_minus_one(void);
-    bool check(T a);
-    T neg(T a);
-    T add(T a, T b);
-    T sub(T a, T b);
-    T mul(T a, T b);
-    T div(T a, T b);
-    T inv(T a);
-    T exp(T a, T b);
-    T log(T a, T b);
+    T card(void) override;
+    T card_minus_one(void) override;
+    bool check(T a) override;
+    T neg(T a) override;
+    T add(T a, T b) override;
+    T sub(T a, T b) override;
+    T mul(T a, T b) override;
+    T div(T a, T b) override;
+    T inv(T a) override;
+    T exp(T a, T b) override;
+    T log(T a, T b) override;
+    void hadamard_mul(int n, T* x, T* y) override;
+    void hadamard_mul_doubled(int n, T* x, T* y) override;
+    void add_doubled(int n, T* x, T* y) override;
 
   private:
     T n;
@@ -84,9 +87,6 @@ class BinExtension : public gf::Field<T> {
     void init_mask(void);
     void setup_tables(void);
     void setup_split_tables(void);
-    void hadamard_mul(int n, T* x, T* y);
-    void hadamard_mul_doubled(int n, T* x, T* y);
-    void add_doubled(int n, T* x, T* y);
 };
 
 enum MulType { MUL_LOG_TAB, SPLIT_8_8 };

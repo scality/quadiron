@@ -50,9 +50,9 @@ class Naive : public FourierTransform<T> {
   public:
     Naive(gf::Field<T>* gf, int n, T w);
     ~Naive();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input);
+    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
 
   private:
     T w;

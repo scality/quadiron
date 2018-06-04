@@ -49,9 +49,9 @@ class Large : public FourierTransform<T> {
   public:
     Large(gf::Field<T>* gf, int l, T w);
     ~Large();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input);
+    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
 
   private:
     void

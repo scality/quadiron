@@ -56,8 +56,8 @@ template <typename T>
 class Slice : public Vector<T> {
   public:
     explicit Slice(Vector<T>* vec, int n = 0, int offset = 0);
-    T get(int i) const;
-    void set(int i, T val);
+    T get(int i) const override;
+    void set(int i, T val) override;
     void set_map(int offset);
     int get_offset(void);
 

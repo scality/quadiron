@@ -56,9 +56,9 @@ template <typename T>
 class View : public Vector<T> {
   public:
     explicit View(Vector<T>* vec, int n = 0, int offset = 0, int step = 1);
-    const int get_n(void) const;
-    T get(int i) const;
-    void set(int i, T val);
+    const int get_n(void) const override;
+    T get(int i) const override;
+    void set(int i, T val) override;
     void set_map(int offset, int step);
     void set_len(int n);
     void set_vec(Vector<T>* vec);

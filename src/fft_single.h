@@ -48,12 +48,12 @@ class Single : public FourierTransform<T> {
   public:
     explicit Single(gf::Field<T>* gf, int n);
     ~Single();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft(vec::Buffers<T>* output, vec::Buffers<T>* input);
-    void ifft(vec::Buffers<T>* output, vec::Buffers<T>* input);
-    void fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input);
+    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
+    void ifft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
+    void fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
 };
 
 template <typename T>

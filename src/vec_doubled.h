@@ -56,8 +56,8 @@ template <typename T>
 class Doubled : public Vector<T> {
   public:
     explicit Doubled(Vector<T>* vec);
-    const int get_n(void) const;
-    T get(int i) const;
+    const int get_n(void) const override;
+    T get(int i) const override;
 
   private:
     Vector<T>* vec;

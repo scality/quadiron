@@ -92,9 +92,9 @@ class CooleyTukey : public FourierTransform<T> {
         std::vector<T>* factors = nullptr,
         T _w = 0);
     ~CooleyTukey();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input);
+    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
 
   private:
     void _fft(vec::Vector<T>* output, vec::Vector<T>* input, bool inv);

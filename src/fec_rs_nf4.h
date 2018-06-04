@@ -60,13 +60,13 @@ class RsNf4 : public FecCode<T> {
             delete ngff4;
     }
 
-    inline void check_params()
+    inline void check_params() override
     {
         assert(this->word_size >= 2);
         assert(this->word_size <= 8);
     }
 
-    inline void init_gf()
+    inline void init_gf() override
     {
         gf_n = this->word_size / 2;
 
@@ -76,7 +76,7 @@ class RsNf4 : public FecCode<T> {
         sub_field = ngff4->get_sub_field();
     }
 
-    inline void init_fft()
+    inline void init_fft() override
     {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -99,7 +99,7 @@ class RsNf4 : public FecCode<T> {
             new fft::Radix2<T>(this->gf, len_2k, len_2k));
     }
 
-    inline void init_others()
+    inline void init_others() override
     {
         // vector stores r^{-i} for i = 0, ... , k
         const T inv_r = ngff4->inv(this->r);
@@ -115,7 +115,7 @@ class RsNf4 : public FecCode<T> {
             this->r_powers->set(i, ngff4->exp(this->r, i));
     }
 
-    int get_n_outputs()
+    int get_n_outputs() override
     {
         return this->n;
     }
@@ -132,7 +132,7 @@ class RsNf4 : public FecCode<T> {
         vec::Vector<T>* output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words) override
     {
         // std::cout << "words:"; words->dump();
         for (unsigned i = 0; i < this->n_data; i++) {
@@ -157,18 +157,18 @@ class RsNf4 : public FecCode<T> {
         // std::cout << "unpacked:"; output->dump();
     }
 
-    void decode_add_data(int fragment_index, int row)
+    void decode_add_data(int fragment_index, int row) override
     {
         // not applicable
         assert(false);
     }
 
-    void decode_add_parities(int fragment_index, int row)
+    void decode_add_parities(int fragment_index, int row) override
     {
         // we can't anticipate here
     }
 
-    void decode_build()
+    void decode_build() override
     {
         // nothing to do
     }
@@ -180,6 +180,7 @@ class RsNf4 : public FecCode<T> {
 
   protected:
     void decode_init(DecodeContext<T>* context, vec::Vector<T>* fragments_ids)
+        override
     {
         if (this->inv_r_powers == nullptr) {
             throw LogicError("FEC base: vector (inv_r)^i must be initialized");
@@ -244,7 +245,7 @@ class RsNf4 : public FecCode<T> {
         DecodeContext<T>* context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words) override
     {
         T true_val;
         vec::Vector<T>* fragments_ids = context->get_frag_ids();
@@ -267,7 +268,7 @@ class RsNf4 : public FecCode<T> {
     void decode_apply(
         DecodeContext<T>* context,
         vec::Vector<T>* output,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words) override
     {
         // decode_apply: do the same thing as in fec_base
         FecCode<T>::decode_apply(context, output, words);

@@ -67,7 +67,7 @@ template <typename T>
 class BuffersDoubled : public Buffers<T> {
   public:
     explicit BuffersDoubled(Buffers<T>* vec);
-    T* get(int i);
+    T* get(int i) override;
 
   private:
     Buffers<T>* vec;

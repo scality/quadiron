@@ -73,12 +73,12 @@ class Radix2 : public FourierTransform<T> {
   public:
     Radix2(gf::Field<T>* gf, int n, int m = 0, size_t pkt_size = 0, int N = 0);
     ~Radix2();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft(vec::Buffers<T>* output, vec::Buffers<T>* input);
-    void ifft(vec::Buffers<T>* output, vec::Buffers<T>* input);
-    void fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input);
+    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
+    void ifft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
+    void fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
 
   private:
     void _fftp(vec::Buffers<T>* output, vec::Buffers<T>* input, bool inv);

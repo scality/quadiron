@@ -66,7 +66,7 @@ class RsGf2n : public FecCode<T> {
             delete this->gf;
     }
 
-    inline void check_params()
+    inline void check_params() override
     {
         assert(
             mat_type == RsMatrixType::VANDERMONDE
@@ -76,15 +76,15 @@ class RsGf2n : public FecCode<T> {
             assert(false); // not support yet
     }
 
-    inline void init_gf()
+    inline void init_gf() override
     {
         unsigned gf_n = 8 * this->word_size;
         this->gf = new gf::BinExtension<T>(gf_n);
     }
 
-    inline void init_fft() {}
+    inline void init_fft() override {}
 
-    inline void init_others()
+    inline void init_others() override
     {
         this->mat = std::unique_ptr<vec::Matrix<T>>(
             new vec::Matrix<T>(this->gf, this->n_parities, this->n_data));
@@ -99,7 +99,7 @@ class RsGf2n : public FecCode<T> {
             new vec::Matrix<T>(this->gf, mat->get_n_cols(), mat->get_n_cols()));
     }
 
-    int get_n_outputs()
+    int get_n_outputs() override
     {
         return this->n_parities;
     }
@@ -108,12 +108,12 @@ class RsGf2n : public FecCode<T> {
         vec::Vector<T>* output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words) override
     {
         mat->mul(output, words);
     }
 
-    void decode_add_data(int fragment_index, int row)
+    void decode_add_data(int fragment_index, int row) override
     {
         // for each data available generate the corresponding identity
         for (int j = 0; j < mat->get_n_cols(); j++) {
@@ -124,7 +124,7 @@ class RsGf2n : public FecCode<T> {
         }
     }
 
-    void decode_add_parities(int fragment_index, int row)
+    void decode_add_parities(int fragment_index, int row) override
     {
         // copy corresponding row in vandermonde matrix
         for (int j = 0; j < mat->get_n_cols(); j++) {
@@ -132,7 +132,7 @@ class RsGf2n : public FecCode<T> {
         }
     }
 
-    void decode_build()
+    void decode_build() override
     {
         decode_mat->inv();
     }
@@ -142,12 +142,12 @@ class RsGf2n : public FecCode<T> {
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words) override
     {
         decode_mat->mul(output, words);
     }
 
-    DecodeContext<T>* init_context_dec(vec::Vector<T>* fragments_ids)
+    DecodeContext<T>* init_context_dec(vec::Vector<T>* fragments_ids) override
     {
         return nullptr;
     }
