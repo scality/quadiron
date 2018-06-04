@@ -149,11 +149,11 @@ class FECUtest {
                 f.set(i, ids.at(i));
                 _v2.set(i, _v.get(ids.at(i)));
             }
-            nttec::fec::DecodeContext<T>* context = fec->init_context_dec(&f);
-            fec->decode(context, &v2, props, 0, &_v2);
+            std::unique_ptr<nttec::fec::DecodeContext<T>> context =
+                fec->init_context_dec(f);
+            fec->decode(*context, &v2, props, 0, &_v2);
             // std::cout << "v2:"; v2.dump();
             assert(v_p.eq(&v2));
-            delete context;
         }
     }
 

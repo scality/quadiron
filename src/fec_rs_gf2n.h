@@ -138,7 +138,7 @@ class RsGf2n : public FecCode<T> {
     }
 
     void decode(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,
@@ -147,9 +147,11 @@ class RsGf2n : public FecCode<T> {
         decode_mat->mul(output, words);
     }
 
-    DecodeContext<T>* init_context_dec(vec::Vector<T>* fragments_ids) override
+    std::unique_ptr<DecodeContext<T>>
+    init_context_dec(vec::Vector<T>& fragments_ids) override
     {
-        return nullptr;
+        std::unique_ptr<DecodeContext<T>> context;
+        return context;
     }
 
   private:

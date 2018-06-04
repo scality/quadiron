@@ -217,15 +217,15 @@ class RsGfpFft : public FecCode<T> {
      * It supports for FEC using multiplicative FFT over FNT
      */
     void decode_prepare(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>* words) override
     {
-        vec::Vector<T>* fragments_ids = context->fragments_ids;
+        const vec::Vector<T>& fragments_ids = context.get_fragments_id();
         int k = this->n_data; // number of fragments received
         for (int i = 0; i < k; ++i) {
-            const int j = fragments_ids->get(i);
+            const int j = fragments_ids.get(i);
             auto data = props[j].get(ValueLocation(offset, j));
 
             // Check if the symbol is a special case whick is marked by "@".

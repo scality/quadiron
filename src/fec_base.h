@@ -148,7 +148,7 @@ class FecCode {
      *  if NON_SYSTEMATIC get_n_outputs()
      */
     virtual void decode(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         vec::Vector<T>* output,
         const std::vector<Properties>& props,
         off_t offset,
@@ -176,7 +176,8 @@ class FecCode {
         const std::vector<Properties>& input_parities_props,
         std::vector<std::ostream*> output_data_bufs);
 
-    virtual DecodeContext<T>* init_context_dec(vec::Vector<T>* fragments_ids);
+    virtual std::unique_ptr<DecodeContext<T>>
+    init_context_dec(vec::Vector<T>& fragments_ids);
 
     gf::Field<T>* get_gf()
     {
@@ -228,17 +229,14 @@ class FecCode {
         init_others();
     }
 
-    virtual void
-    decode_init(DecodeContext<T>* context, vec::Vector<T>* fragments_ids);
-
     virtual void decode_prepare(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>* words);
 
     virtual void decode_apply(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         vec::Vector<T>* output,
         vec::Vector<T>* words);
 };
@@ -584,8 +582,7 @@ bool FecCode<T>::decode_bufs(
     vec::Vector<T> words(gf, n_words);
     vec::Vector<T> output(gf, n_data);
 
-    DecodeContext<T>* context = init_context_dec(&fragments_ids);
-
+    std::unique_ptr<DecodeContext<T>> context = init_context_dec(fragments_ids);
     while (true) {
         words.zero_fill();
         if (type == FecType::SYSTEMATIC) {
@@ -615,7 +612,7 @@ bool FecCode<T>::decode_bufs(
 
         timeval t1 = tick();
         uint64_t start = rdtsc();
-        decode(context, &output, input_parities_props, offset, &words);
+        decode(*context, &output, input_parities_props, offset, &words);
         uint64_t end = rdtsc();
         uint64_t t2 = hrtime_usec(t1);
 
@@ -633,8 +630,6 @@ bool FecCode<T>::decode_bufs(
         offset += word_size;
     }
 
-    if (context)
-        delete context;
     return true;
 }
 
@@ -697,7 +692,7 @@ bool FecCode<T>::decode_bufs(
  */
 template <typename T>
 void FecCode<T>::decode(
-    DecodeContext<T>* context,
+    const DecodeContext<T>& context,
     vec::Vector<T>* output,
     const std::vector<Properties>& props,
     off_t offset,
@@ -710,24 +705,12 @@ void FecCode<T>::decode(
     decode_apply(context, output, words);
 }
 
-template <typename T>
-DecodeContext<T>* FecCode<T>::init_context_dec(vec::Vector<T>* fragments_ids)
-{
-    DecodeContext<T>* context =
-        new DecodeContext<T>(gf, *fft, *fft_2k, n_data, n);
-
-    decode_init(context, fragments_ids);
-
-    return context;
-}
-
 /* Initialize context for decoding
  * It supports for FEC using multiplicative FFT over FNT
  */
 template <typename T>
-void FecCode<T>::decode_init(
-    DecodeContext<T>* context,
-    vec::Vector<T>* fragments_ids)
+std::unique_ptr<DecodeContext<T>>
+FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids)
 {
     if (this->inv_r_powers == nullptr) {
         throw LogicError("FEC base: vector (inv_r)^i must be initialized");
@@ -746,10 +729,14 @@ void FecCode<T>::decode_init(
     // vector x=(x_0, x_1, ..., x_k-1)
     vec::Vector<T> vx(this->gf, k);
     for (int i = 0; i < k; ++i) {
-        vx.set(i, r_powers->get(fragments_ids->get(i)));
+        vx.set(i, r_powers->get(fragments_ids.get(i)));
     }
-    // initialize context
-    context->init(fragments_ids, vx);
+
+    std::unique_ptr<DecodeContext<T>> context =
+        std::unique_ptr<DecodeContext<T>>(new DecodeContext<T>(
+            gf, *fft, *fft_2k, fragments_ids, vx, n_data, n));
+
+    return context;
 }
 
 /* Prepare for decoding
@@ -757,14 +744,14 @@ void FecCode<T>::decode_init(
  */
 template <typename T>
 void FecCode<T>::decode_prepare(
-    DecodeContext<T>* context,
+    const DecodeContext<T>& context,
     const std::vector<Properties>& props,
     off_t offset,
     vec::Vector<T>* words)
 {
-    vec::Vector<T>* fragments_ids = context->fragments_ids;
+    const vec::Vector<T>& fragments_ids = context.get_fragments_id();
     for (int i = 0; i < this->n_data; ++i) {
-        const int j = fragments_ids->get(i);
+        const int j = fragments_ids.get(i);
         auto data = props[j].get(ValueLocation(offset, j));
 
         // Check if the symbol is a special case whick is marked by "@".
@@ -787,53 +774,53 @@ void FecCode<T>::decode_prepare(
  */
 template <typename T>
 void FecCode<T>::decode_apply(
-    DecodeContext<T>* context,
+    const DecodeContext<T>& context,
     vec::Vector<T>* output,
     vec::Vector<T>* words)
 {
-    unsigned len_2k = context->get_len_2k();
+    unsigned len_2k = context.get_len_2k();
 
-    vec::Vector<T>* fragments_ids = context->fragments_ids;
-    std::shared_ptr<vec::Poly<T>> inv_A_i = context->inv_A_i;
-    std::shared_ptr<vec::Poly<T>> A_fft_2k = context->A_fft_2k;
-    std::shared_ptr<vec::Poly<T>> poly1_n = context->poly1_n;
-    std::shared_ptr<vec::Poly<T>> poly2_n = context->poly2_n;
-    std::shared_ptr<vec::Poly<T>> poly1_2k = context->poly1_2k;
-    std::shared_ptr<vec::Poly<T>> poly2_2k = context->poly2_2k;
+    const vec::Vector<T>& fragments_ids = context.get_fragments_id();
+    vec::Vector<T>& inv_A_i = context.get_vector(CtxVec::INV_A_I);
+    vec::Vector<T>& A_fft_2k = context.get_vector(CtxVec::A_FFT_2K);
+    vec::Vector<T>& vec1_n = context.get_vector(CtxVec::N1);
+    vec::Vector<T>& vec2_n = context.get_vector(CtxVec::N2);
+    vec::Vector<T>& vec1_2k = context.get_vector(CtxVec::V2K1);
+    vec::Vector<T>& vec2_2k = context.get_vector(CtxVec::V2K2);
 
     unsigned k = this->n_data; // number of fragments received
 
-    // compute N(x) and stored in poly1_n
-    poly1_n->zero();
+    // compute N(x) and stored in vec1_n
+    vec1_n.zero_fill();
     for (int i = 0; i <= k - 1; ++i) {
-        poly1_n->set(
-            fragments_ids->get(i),
-            this->gf->mul(words->get(i), inv_A_i->get(fragments_ids->get(i))));
+        vec1_n.set(
+            fragments_ids.get(i),
+            this->gf->mul(words->get(i), inv_A_i.get(fragments_ids.get(i))));
     }
 
-    // compute poly2_n = FFT(poly1_n)
-    this->fft_full->fft_inv(poly2_n.get(), poly1_n.get());
+    // compute vec2_n = FFT(vec1_n)
+    this->fft_full->fft_inv(&vec2_n, &vec1_n);
 
-    // vec_tmp_2k: first k elements from poly2_n
+    // vec_tmp_2k: first k elements from vec2_n
     //             last (len_2k - k) elements are padded
-    vec::Slice<T> vec_tmp_k(poly2_n.get(), k);
+    vec::Slice<T> vec_tmp_k(&vec2_n, k);
     vec::ZeroExtended<T> vec_tmp_2k(&vec_tmp_k, len_2k);
 
     // compute FFT_2k(Q(x))
-    this->fft_2k->fft(poly1_2k.get(), &vec_tmp_2k);
+    this->fft_2k->fft(&vec1_2k, &vec_tmp_2k);
 
-    // multiply FFT_2k(A(x)) to FFT_2k(Q(x)), results are stored in poly1_2k
-    poly1_2k->hadamard_mul(A_fft_2k.get());
+    // multiply FFT_2k(A(x)) to FFT_2k(Q(x)), results are stored in vec1_2k
+    vec1_2k.hadamard_mul(&A_fft_2k);
 
     // compute iFFT_{2k}( FFT_{2k}(A(x)) \cdot FFT_{2k}(Q(x)) )
-    this->fft_2k->ifft(poly2_2k.get(), poly1_2k.get());
+    this->fft_2k->ifft(&vec2_2k, &vec1_2k);
 
     // perform negative
-    poly2_2k->neg();
+    vec2_2k.neg();
 
-    // get decoded symbols are the first k elements of poly2_2k
+    // get decoded symbols are the first k elements of vec2_2k
     for (unsigned i = 0; i < k; ++i)
-        output->set(i, poly2_2k->get(i));
+        output->set(i, vec2_2k.get(i));
 }
 
 } // namespace fec

@@ -136,17 +136,8 @@ class RsGf2nFftAdd : public FecCode<T> {
     vec::Vector<T>* betas = nullptr;
 
   protected:
-    DecodeContext<T>* init_context_dec(vec::Vector<T>* fragments_ids) override
-    {
-        DecodeContext<T>* context = new DecodeContext<T>(
-            this->gf, *fft, *(this->fft_2k), this->n_data, this->n);
-        decode_init(context, fragments_ids);
-
-        return context;
-    }
-
-    void decode_init(DecodeContext<T>* context, vec::Vector<T>* fragments_ids)
-        override
+    std::unique_ptr<DecodeContext<T>>
+    init_context_dec(vec::Vector<T>& fragments_ids) override
     {
         if (this->betas == nullptr) {
             throw LogicError("FEC FFT ADD: vector 'betas' must be initialized");
@@ -161,20 +152,29 @@ class RsGf2nFftAdd : public FecCode<T> {
 
         int vx_zero = -1;
         for (int i = 0; i < this->n_data; ++i) {
-            T val = betas->get(fragments_ids->get(i));
+            T val = betas->get(fragments_ids.get(i));
             vx.set(i, val);
             if (val == 0) {
                 vx_zero = i;
             }
         }
-        context->vx_zero = vx_zero;
 
-        // initialize context
-        context->init(fragments_ids, vx);
+        std::unique_ptr<DecodeContext<T>> context =
+            std::unique_ptr<DecodeContext<T>>(new DecodeContext<T>(
+                *(this->gf),
+                *fft,
+                *(this->fft_2k),
+                fragments_ids,
+                vx,
+                this->n_data,
+                this->n,
+                vx_zero));
+
+        return context;
     }
 
     void decode_prepare(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>* words) override
@@ -183,33 +183,33 @@ class RsGf2nFftAdd : public FecCode<T> {
     }
 
     void decode_apply(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         vec::Vector<T>* output,
         vec::Vector<T>* words) override
     {
-        vec::Vector<T>* fragments_ids = context->fragments_ids;
-        std::shared_ptr<vec::Poly<T>> A = context->A;
-        std::shared_ptr<vec::Poly<T>> inv_A_i = context->inv_A_i;
-        std::shared_ptr<vec::Poly<T>> poly1_n = context->poly1_n;
-        std::shared_ptr<vec::Poly<T>> S = context->S;
+        const vec::Vector<T>& fragments_ids = context.get_fragments_id();
+        vec::Poly<T>& A = context.get_poly(CtxPoly::A);
+        vec::Vector<T>& inv_A_i = context.get_vector(CtxVec::INV_A_I);
+        vec::Vector<T>& vec1_n = context.get_vector(CtxVec::N1);
+        vec::Poly<T>& S = context.get_poly(CtxPoly::S);
 
         int k = this->n_data; // number of fragments received
-        int vx_zero = context->vx_zero;
+        int vx_zero = context.vx_zero;
 
         // FIXME: split this step in decode_init as multiplicative FFT
         vec::Vector<T> vx(this->gf, k);
         for (int i = 0; i < this->n_data; ++i) {
-            vx.set(i, this->betas->get(fragments_ids->get(i)));
+            vx.set(i, this->betas->get(fragments_ids.get(i)));
         }
 
         // compute N'(x) = sum_i{n_i * x^z_i}
         // where n_i=v_i/A'_i(x_i)
-        poly1_n->zero();
+        vec1_n.zero_fill();
         for (int i = 0; i <= k - 1; ++i) {
-            poly1_n->set(
+            vec1_n.set(
                 i,
                 this->gf->mul(
-                    words->get(i), inv_A_i->get(fragments_ids->get(i))));
+                    words->get(i), inv_A_i.get(fragments_ids.get(i))));
         }
 
         // We have to find the numerator of the following expression:
@@ -225,30 +225,28 @@ class RsGf2nFftAdd : public FecCode<T> {
                     continue;
                 // perform Taylor series at 0
                 T xi_j_1 = this->gf->inv(this->gf->exp(vx.get(i), j));
-                val =
-                    this->gf->add(val, this->gf->mul(poly1_n->get(i), xi_j_1));
+                val = this->gf->add(val, this->gf->mul(vec1_n.get(i), xi_j_1));
             }
-            S->set(j, val);
+            S.set(j, val);
         }
-        S->mul(A.get(), k - 1);
+        S.mul(&A, k - 1);
         if (vx_zero > -1) {
-            assert(A->get(0) == 0);
+            assert(A.get(0) == 0);
             // P(x) = A(x)*S(x) + _n[vx_zero] * A(x) / x
             //  as S(x) does not include the term of vx_zero
             // Note: A(0) = 0 since vx_zero exists
-            int deg = A->get_deg();
-            T val = poly1_n->get(vx_zero);
+            int deg = A.get_deg();
+            T val = vec1_n.get(vx_zero);
             for (int i = 1; i <= deg; ++i)
-                S->set(
+                S.set(
                     i - 1,
-                    this->gf->add(
-                        S->get(i - 1), this->gf->mul(val, A->get(i))));
+                    this->gf->add(S.get(i - 1), this->gf->mul(val, A.get(i))));
         }
 
         // No need to mod x^n since only last n_data coefs are obtained
         // output is n_data length
         for (unsigned i = 0; i < this->n_data; ++i)
-            output->set(i, S->get(i));
+            output->set(i, S.get(i));
     }
 
   private:

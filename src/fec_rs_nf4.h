@@ -179,8 +179,8 @@ class RsNf4 : public FecCode<T> {
     int gf_n;
 
   protected:
-    void decode_init(DecodeContext<T>* context, vec::Vector<T>* fragments_ids)
-        override
+    std::unique_ptr<DecodeContext<T>>
+    init_context_dec(vec::Vector<T>& fragments_ids) override
     {
         if (this->inv_r_powers == nullptr) {
             throw LogicError("FEC base: vector (inv_r)^i must be initialized");
@@ -201,58 +201,34 @@ class RsNf4 : public FecCode<T> {
         for (int i = 0; i < k; ++i) {
             vx.set(
                 i,
-                this->gf->exp(
-                    this->r, ngff4->replicate(fragments_ids->get(i))));
+                this->gf->exp(this->r, ngff4->replicate(fragments_ids.get(i))));
         }
 
-        // initialize context
-        context->fragments_ids = fragments_ids;
+        std::unique_ptr<DecodeContext<T>> context =
+            std::unique_ptr<DecodeContext<T>>(new DecodeContext<T>(
+                *(this->gf),
+                *(this->fft),
+                *(this->fft_2k),
+                fragments_ids,
+                vx,
+                k,
+                this->n));
 
-        std::shared_ptr<vec::Poly<T>> A = context->A;
-        std::shared_ptr<vec::Poly<T>> inv_A_i = context->inv_A_i;
-
-        // compute A(x) = prod_j(x-x_j)
-        A->set(0, ngff4->get_unit());
-        for (int i = 0; i < k; ++i) {
-            A->mul_to_x_plus_coef(this->gf->sub(0, vx.get(i)));
-        }
-
-        // compute A'(x) since A_i(x_i) = A'_i(x_i)
-        vec::Poly<T> _A(this->gf, this->n);
-        _A.zero();
-        for (int i = 1; i <= A->get_deg(); ++i)
-            _A.set(i - 1, ngff4->mul(A->get(i), ngff4->replicate(i)));
-
-        // compute A_i(x_i)
-        this->fft->fft(inv_A_i.get(), &_A);
-
-        // compute 1/(x_i * A_i(x_i))
-        // we care only about elements corresponding to fragments_ids
-        for (unsigned i = 0; i < k; ++i) {
-            unsigned j = fragments_ids->get(i);
-            inv_A_i->set(
-                j, this->gf->inv(this->gf->mul(inv_A_i->get(j), vx.get(i))));
-        }
-
-        // compute FFT(A) of length 2k
-        unsigned len_2k = context->get_len_2k();
-        vec::ZeroExtended<T> A_2k(A.get(), len_2k);
-        std::shared_ptr<vec::Poly<T>> A_fft_2k = context->A_fft_2k;
-        this->fft_2k->fft(A_fft_2k.get(), &A_2k);
+        return context;
     }
 
     void decode_prepare(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>* words) override
     {
         T true_val;
-        vec::Vector<T>* fragments_ids = context->fragments_ids;
+        const vec::Vector<T>& fragments_ids = context.get_fragments_id();
         // std::cout << "fragments_ids:"; fragments_ids->dump();
         int k = this->n_data; // number of fragments received
         for (int i = 0; i < k; ++i) {
-            const int j = fragments_ids->get(i);
+            const int j = fragments_ids.get(i);
             auto data = props[j].get(ValueLocation(offset, j));
 
             if (data) {
@@ -266,7 +242,7 @@ class RsNf4 : public FecCode<T> {
     }
 
     void decode_apply(
-        DecodeContext<T>* context,
+        const DecodeContext<T>& context,
         vec::Vector<T>* output,
         vec::Vector<T>* words) override
     {
