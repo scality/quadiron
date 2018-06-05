@@ -52,42 +52,42 @@ class NF4 : public gf::Field<T> {
   public:
     explicit NF4(unsigned n);
     ~NF4();
-    T card(void) override;
-    T card_minus_one(void) override;
-    T get_inv_n_mod_p(int n) override;
-    bool check(T a) override;
-    T neg(T a) override;
-    T add(T a, T b) override;
-    T sub(T a, T b) override;
-    T mul(T a, T b) override;
-    T div(T a, T b) override;
-    T inv(T a) override;
-    T exp(T a, T b) override;
-    T log(T a, T b) override;
-    T weak_rand_tuple(void);
-    T weak_rand(void) override;
-    T get_unit(void);
-    T replicate(T a);
-    T pack(T a);
-    T pack(T a, uint32_t flag);
-    GroupedValues<T> unpack(T a);
-    T get_nth_root(T n) override;
-    void compute_omegas(vec::Vector<T>* W, int n, T w) override;
-    gf::Field<uint32_t>* get_sub_field();
-    void hadamard_mul(int n, T* x, T* y) override;
-    void hadamard_mul_doubled(int n, T* x, T* y) override;
-    void add_doubled(int n, T* x, T* y) override;
+    T card(void) const override;
+    T card_minus_one(void) const override;
+    T get_inv_n_mod_p(int n) const override;
+    bool check(T a) const override;
+    T neg(T a) const override;
+    T add(T a, T b) const override;
+    T sub(T a, T b) const override;
+    T mul(T a, T b) const override;
+    T div(T a, T b) const override;
+    T inv(T a) const override;
+    T exp(T a, T b) const override;
+    T log(T a, T b) const override;
+    T weak_rand_tuple(void) const;
+    T weak_rand(void) const override;
+    T get_unit(void) const;
+    T replicate(T a) const;
+    T pack(T a) const;
+    T pack(T a, uint32_t flag) const;
+    GroupedValues<T> unpack(T a) const;
+    T get_nth_root(T n) const override;
+    void compute_omegas(vec::Vector<T>* W, int n, T w) const override;
+    const gf::Field<uint32_t>& get_sub_field() const;
+    void hadamard_mul(int n, T* x, T* y) const override;
+    void hadamard_mul_doubled(int n, T* x, T* y) const override;
+    void add_doubled(int n, T* x, T* y) const override;
 
   private:
     T unit;
     T q;
     T h;
-    gf::Field<uint32_t>* sub_field;
+    std::unique_ptr<gf::Field<uint32_t>> sub_field;
     bool check_n(unsigned n);
     void init(void);
 
-    T expand16(uint16_t* arr);
-    T expand32(uint32_t* arr);
+    T expand16(uint16_t* arr) const;
+    T expand32(uint32_t* arr) const;
     // to debug
     void show_arr(uint32_t* arr);
 };
@@ -95,7 +95,8 @@ class NF4 : public gf::Field<T> {
 template <typename T>
 NF4<T>::NF4(unsigned n) : gf::Field<T>(T(65537), n)
 {
-    sub_field = new gf::Prime<uint32_t>(T(65537));
+    sub_field =
+        std::unique_ptr<gf::Field<uint32_t>>(new gf::Prime<uint32_t>(T(65537)));
 
     if (!check_n(n)) {
         // not supported yet
@@ -111,11 +112,10 @@ NF4<T>::NF4(unsigned n) : gf::Field<T>(T(65537), n)
 template <typename T>
 NF4<T>::~NF4()
 {
-    delete sub_field;
 }
 
 template <typename T>
-T NF4<T>::get_inv_n_mod_p(int n)
+T NF4<T>::get_inv_n_mod_p(int n) const
 {
     return replicate(gf::Field<T>::get_inv_n_mod_p(n));
 }
@@ -131,7 +131,7 @@ bool NF4<T>::check_n(unsigned n)
 }
 
 template <typename T>
-T NF4<T>::expand16(uint16_t* arr)
+T NF4<T>::expand16(uint16_t* arr) const
 {
     T c = arr[this->n - 1];
     for (int i = this->n - 2; i >= 0; i--) {
@@ -141,7 +141,7 @@ T NF4<T>::expand16(uint16_t* arr)
 }
 
 template <typename T>
-T NF4<T>::expand32(uint32_t* arr)
+T NF4<T>::expand32(uint32_t* arr) const
 {
     T c = arr[this->n - 1];
     for (int i = this->n - 2; i >= 0; i--) {
@@ -161,7 +161,7 @@ void NF4<T>::show_arr(uint32_t* arr)
 }
 
 template <typename T>
-T NF4<T>::replicate(T a)
+T NF4<T>::replicate(T a) const
 {
     T b = a;
     for (int i = 1; i < this->n; i++) {
@@ -179,31 +179,31 @@ void NF4<T>::init(void)
 }
 
 template <typename T>
-T NF4<T>::card(void)
+T NF4<T>::card(void) const
 {
     return q;
 }
 
 template <typename T>
-T NF4<T>::card_minus_one(void)
+T NF4<T>::card_minus_one(void) const
 {
     return h;
 }
 
 template <typename T>
-T NF4<T>::get_unit(void)
+T NF4<T>::get_unit(void) const
 {
     return unit;
 }
 
 template <typename T>
-T NF4<T>::neg(T a)
+T NF4<T>::neg(T a) const
 {
     return sub(0, a);
 }
 
 template <typename T>
-T NF4<T>::add(T a, T b)
+T NF4<T>::add(T a, T b) const
 {
     uint32_t arr[this->n];
 
@@ -220,7 +220,7 @@ T NF4<T>::add(T a, T b)
 }
 
 template <typename T>
-T NF4<T>::sub(T a, T b)
+T NF4<T>::sub(T a, T b) const
 {
     uint32_t arr[this->n];
     uint32_t ae, be;
@@ -248,7 +248,7 @@ T NF4<T>::sub(T a, T b)
 }
 
 template <typename T>
-T NF4<T>::mul(T a, T b)
+T NF4<T>::mul(T a, T b) const
 {
     uint32_t arr[this->n];
     uint64_t ae;
@@ -276,7 +276,7 @@ T NF4<T>::mul(T a, T b)
 }
 
 template <typename T>
-T NF4<T>::div(T a, T b)
+T NF4<T>::div(T a, T b) const
 {
     uint32_t arr[this->n];
 
@@ -292,7 +292,7 @@ T NF4<T>::div(T a, T b)
 }
 
 template <typename T>
-T NF4<T>::inv(T a)
+T NF4<T>::inv(T a) const
 {
     uint32_t arr[this->n];
 
@@ -307,7 +307,7 @@ T NF4<T>::inv(T a)
 }
 
 template <typename T>
-T NF4<T>::exp(T a, T b)
+T NF4<T>::exp(T a, T b) const
 {
     uint32_t arr[this->n];
 
@@ -323,7 +323,7 @@ T NF4<T>::exp(T a, T b)
 }
 
 template <typename T>
-T NF4<T>::log(T a, T b)
+T NF4<T>::log(T a, T b) const
 {
     uint32_t arr[this->n];
 
@@ -339,7 +339,7 @@ T NF4<T>::log(T a, T b)
 }
 
 template <typename T>
-T NF4<T>::weak_rand_tuple()
+T NF4<T>::weak_rand_tuple() const
 {
     T c = sub_field->weak_rand();
     for (int i = 1; i < this->n; i++) {
@@ -349,7 +349,7 @@ T NF4<T>::weak_rand_tuple()
 }
 
 template <typename T>
-T NF4<T>::weak_rand(void)
+T NF4<T>::weak_rand(void) const
 {
     T c = weak_rand_tuple();
     return unpack(c).values;
@@ -359,7 +359,7 @@ T NF4<T>::weak_rand(void)
  * Pack of n numbers each of 16 bits into n numbers each of 32 bits
  */
 template <typename T>
-T NF4<T>::pack(T a)
+T NF4<T>::pack(T a) const
 {
     uint32_t arr[this->n];
     arr[0] = (uint32_t)(a & MASK16);
@@ -377,7 +377,7 @@ T NF4<T>::pack(T a)
  *  If flag contains 2^i, ith number == 65537
  */
 template <typename T>
-T NF4<T>::pack(T a, uint32_t flag)
+T NF4<T>::pack(T a, uint32_t flag) const
 {
     uint32_t arr[this->n];
     if (flag & 1)
@@ -403,7 +403,7 @@ T NF4<T>::pack(T a, uint32_t flag)
  *  as zero
  */
 template <typename T>
-GroupedValues<T> NF4<T>::unpack(T a)
+GroupedValues<T> NF4<T>::unpack(T a) const
 {
     GroupedValues<T> b = GroupedValues<T>();
     uint32_t flag = 0;
@@ -433,7 +433,7 @@ GroupedValues<T> NF4<T>::unpack(T a)
 
 // Use for fft
 template <typename T>
-T NF4<T>::get_nth_root(T n)
+T NF4<T>::get_nth_root(T n) const
 {
     T sub_w = sub_field->get_nth_root(n);
     T w = replicate(sub_w);
@@ -441,7 +441,7 @@ T NF4<T>::get_nth_root(T n)
 }
 
 template <typename T>
-bool NF4<T>::check(T a)
+bool NF4<T>::check(T a) const
 {
     return (a >= 0 && a < q);
 }
@@ -454,7 +454,7 @@ bool NF4<T>::check(T a)
  * @param w n-th root of unity
  */
 template <typename T>
-void NF4<T>::compute_omegas(vec::Vector<T>* W, int n, T w)
+void NF4<T>::compute_omegas(vec::Vector<T>* W, int n, T w) const
 {
     for (int i = 0; i < n; i++) {
         W->set(i, this->exp(w, replicate(i)));
@@ -462,13 +462,13 @@ void NF4<T>::compute_omegas(vec::Vector<T>* W, int n, T w)
 }
 
 template <typename T>
-gf::Field<uint32_t>* NF4<T>::get_sub_field()
+const gf::Field<uint32_t>& NF4<T>::get_sub_field() const
 {
-    return sub_field;
+    return *(sub_field.get());
 }
 
 template <typename T>
-void NF4<T>::hadamard_mul(int n, T* x, T* y)
+void NF4<T>::hadamard_mul(int n, T* x, T* y) const
 {
     for (int i = 0; i < n; i++) {
         x[i] = mul(x[i], y[i]);
@@ -476,7 +476,7 @@ void NF4<T>::hadamard_mul(int n, T* x, T* y)
 }
 
 template <typename T>
-void NF4<T>::hadamard_mul_doubled(int n, T* x, T* y)
+void NF4<T>::hadamard_mul_doubled(int n, T* x, T* y) const
 {
     const int half = n / 2;
     T* x_next = x + half;
@@ -493,7 +493,7 @@ void NF4<T>::hadamard_mul_doubled(int n, T* x, T* y)
 }
 
 template <typename T>
-void NF4<T>::add_doubled(int n, T* x, T* y)
+void NF4<T>::add_doubled(int n, T* x, T* y) const
 {
     const int half = n / 2;
     T* x_next = x + half;
@@ -513,40 +513,41 @@ void NF4<T>::add_doubled(int n, T* x, T* y)
 /* Operations are vectorized by SIMD */
 
 template <>
-__uint128_t NF4<__uint128_t>::expand16(uint16_t* arr);
+__uint128_t NF4<__uint128_t>::expand16(uint16_t* arr) const;
 
 template <>
-__uint128_t NF4<__uint128_t>::expand32(uint32_t* arr);
+__uint128_t NF4<__uint128_t>::expand32(uint32_t* arr) const;
 
 template <>
-__uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b);
+__uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b) const;
 
 template <>
-__uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b);
+__uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b) const;
 
 template <>
-__uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b);
+__uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b) const;
 
 template <>
-__uint128_t NF4<__uint128_t>::pack(__uint128_t a);
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a) const;
 
 template <>
-__uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag);
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag) const;
 
 template <>
-GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a);
+GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a) const;
 
 template <>
-void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y);
+void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y)
+    const;
 
 template <>
 void NF4<__uint128_t>::hadamard_mul_doubled(
     int n,
     __uint128_t* x,
-    __uint128_t* y);
+    __uint128_t* y) const;
 
 template <>
-void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y);
+void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y) const;
 
 #endif // #ifdef NTTEC_USE_SIMD
 

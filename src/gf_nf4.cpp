@@ -38,43 +38,43 @@ namespace nttec {
 namespace gf {
 
 template <>
-__uint128_t NF4<__uint128_t>::expand16(uint16_t* arr)
+__uint128_t NF4<__uint128_t>::expand16(uint16_t* arr) const
 {
     return simd::expand16(arr, this->n);
 }
 
 template <>
-__uint128_t NF4<__uint128_t>::expand32(uint32_t* arr)
+__uint128_t NF4<__uint128_t>::expand32(uint32_t* arr) const
 {
     return simd::expand32(arr, this->n);
 }
 
 template <>
-__uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b)
+__uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b) const
 {
     return simd::add(a, b);
 }
 
 template <>
-__uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b)
+__uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b) const
 {
     return simd::sub(a, b);
 }
 
 template <>
-__uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b)
+__uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b) const
 {
     return simd::mul(a, b);
 }
 
 template <>
-void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y)
+void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y) const
 {
     simd::add_buf_to_two_bufs(n, x, y);
 }
 
 template <>
-void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y)
+void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y) const
 {
     simd::hadamard_mul(n, x, y);
 }
@@ -83,25 +83,25 @@ template <>
 void NF4<__uint128_t>::hadamard_mul_doubled(
     int n,
     __uint128_t* x,
-    __uint128_t* y)
+    __uint128_t* y) const
 {
     simd::hadamard_mul_doubled(n, x, y);
 }
 
 template <>
-GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a)
+GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a) const
 {
     return simd::unpack(a, this->n);
 }
 
 template <>
-__uint128_t NF4<__uint128_t>::pack(__uint128_t a)
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a) const
 {
     return simd::pack(a);
 }
 
 template <>
-__uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag)
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag) const
 {
     return simd::pack(a, flag);
 }
