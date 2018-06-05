@@ -60,7 +60,7 @@ template <typename T>
 class DecodeContext {
   public:
     DecodeContext(
-        gf::Field<T>* gf,
+        const gf::Field<T>& gf,
         fft::FourierTransform<T>& fft,
         fft::FourierTransform<T>& fft_2k,
         const vec::Vector<T>& fragments_ids,
@@ -73,7 +73,7 @@ class DecodeContext {
         this->k = k;
         this->n = n;
         this->size = size;
-        this->gf = gf;
+        this->gf = &gf;
         this->fft = &fft;
         this->fft_2k = &fft_2k;
         this->vx_zero = vx_zero;
@@ -223,7 +223,7 @@ class DecodeContext {
     unsigned n;
     unsigned len_2k;
     size_t size;
-    gf::Field<T>* gf;
+    const gf::Field<T>* gf;
     fft::FourierTransform<T>* fft;
     fft::FourierTransform<T>* fft_2k;
 

@@ -46,7 +46,7 @@ namespace fft {
 template <typename T>
 class Single : public FourierTransform<T> {
   public:
-    explicit Single(gf::Field<T>* gf, int n);
+    explicit Single(const gf::Field<T>& gf, int n);
     ~Single();
     void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
     void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
@@ -57,7 +57,7 @@ class Single : public FourierTransform<T> {
 };
 
 template <typename T>
-Single<T>::Single(gf::Field<T>* gf, int n) : FourierTransform<T>(gf, n)
+Single<T>::Single(const gf::Field<T>& gf, int n) : FourierTransform<T>(gf, n)
 {
 }
 

@@ -61,9 +61,10 @@ namespace vec {
 template <typename T>
 class Vector {
   public:
-    gf::RingModN<T>* rn;
-    Vector(gf::RingModN<T>* rn, int n, T* mem = nullptr, int mem_len = 0);
+    const gf::RingModN<T>* rn;
+    Vector(const gf::RingModN<T>& rn, int n, T* mem = nullptr, int mem_len = 0);
     virtual ~Vector();
+    const gf::RingModN<T>& get_gf(void) const;
     virtual const int get_n(void) const;
     const int get_mem_len(void) const;
     virtual void zero_fill(void);
@@ -101,9 +102,9 @@ class Vector {
 };
 
 template <typename T>
-Vector<T>::Vector(gf::RingModN<T>* rn, int n, T* mem, int mem_len)
+Vector<T>::Vector(const gf::RingModN<T>& rn, int n, T* mem, int mem_len)
 {
-    this->rn = rn;
+    this->rn = &rn;
     this->n = n;
     if (mem == nullptr) {
         this->mem = aligned_allocate<T>(n);
@@ -121,6 +122,12 @@ Vector<T>::~Vector()
 {
     if (new_mem)
         aligned_deallocate<T>(this->mem);
+}
+
+template <typename T>
+inline const gf::RingModN<T>& Vector<T>::get_gf(void) const
+{
+    return *rn;
 }
 
 template <typename T>

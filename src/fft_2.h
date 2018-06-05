@@ -48,7 +48,7 @@ namespace fft {
 template <typename T>
 class Size2 : public FourierTransform<T> {
   public:
-    explicit Size2(gf::Field<T>* gf);
+    explicit Size2(const gf::Field<T>& gf);
     ~Size2();
     void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
     void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
@@ -59,7 +59,7 @@ class Size2 : public FourierTransform<T> {
 };
 
 template <typename T>
-Size2<T>::Size2(gf::Field<T>* gf) : FourierTransform<T>(gf, 2)
+Size2<T>::Size2(const gf::Field<T>& gf) : FourierTransform<T>(gf, 2)
 {
 }
 

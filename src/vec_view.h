@@ -72,7 +72,7 @@ class View : public Vector<T> {
 
 template <typename T>
 View<T>::View(Vector<T>* vec, int n, int offset, int step)
-    : Vector<T>(vec->rn, n, vec->get_mem(), vec->get_mem_len())
+    : Vector<T>(vec->get_gf(), n, vec->get_mem(), vec->get_mem_len())
 {
     this->vec = vec;
     this->offset = offset;

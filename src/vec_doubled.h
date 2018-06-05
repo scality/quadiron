@@ -65,7 +65,7 @@ class Doubled : public Vector<T> {
 
 template <typename T>
 Doubled<T>::Doubled(Vector<T>* vec)
-    : Vector<T>(vec->rn, vec->get_n(), vec->get_mem(), vec->get_mem_len())
+    : Vector<T>(vec->get_gf(), vec->get_n(), vec->get_mem(), vec->get_mem_len())
 {
     this->vec = vec;
 }

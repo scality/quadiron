@@ -54,11 +54,7 @@ class RsNf4 : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsNf4()
-    {
-        if (ngff4)
-            delete ngff4;
-    }
+    ~RsNf4() {}
 
     inline void check_params() override
     {
@@ -70,10 +66,12 @@ class RsNf4 : public FecCode<T> {
     {
         gf_n = this->word_size / 2;
 
+        // NOTE: ngff4 is wrapped in this->gf that will release it
+        // Hence don't release ngff4 manually
         ngff4 = new gf::NF4<T>(gf_n);
-        this->gf = ngff4;
+        this->gf = std::unique_ptr<gf::Field<T>>(ngff4);
 
-        sub_field = ngff4->get_sub_field();
+        sub_field = &(ngff4->get_sub_field());
     }
 
     inline void init_fft() override
@@ -89,14 +87,14 @@ class RsNf4 : public FecCode<T> {
 
         int m = arith::get_smallest_power_of_2<int>(this->n_data);
         this->fft = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(ngff4, this->n, m));
+            new fft::Radix2<T>(*ngff4, this->n, m));
 
-        this->fft_full =
-            std::unique_ptr<fft::Radix2<T>>(new fft::Radix2<T>(ngff4, this->n));
+        this->fft_full = std::unique_ptr<fft::Radix2<T>>(
+            new fft::Radix2<T>(*ngff4, this->n));
 
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(this->gf, len_2k, len_2k));
+            new fft::Radix2<T>(*ngff4, len_2k, len_2k));
     }
 
     inline void init_others() override
@@ -104,13 +102,13 @@ class RsNf4 : public FecCode<T> {
         // vector stores r^{-i} for i = 0, ... , k
         const T inv_r = ngff4->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
-            new vec::Vector<T>(ngff4, this->n_data + 1));
+            new vec::Vector<T>(*ngff4, this->n_data + 1));
         for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, ngff4->exp(inv_r, i));
 
         // vector stores r^{i} for i = 0, ... , k
-        this->r_powers =
-            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(ngff4, this->n));
+        this->r_powers = std::unique_ptr<vec::Vector<T>>(
+            new vec::Vector<T>(*ngff4, this->n));
         for (int i = 0; i < this->n; i++)
             this->r_powers->set(i, ngff4->exp(this->r, i));
     }
@@ -174,7 +172,7 @@ class RsNf4 : public FecCode<T> {
     }
 
   private:
-    gf::Field<uint32_t>* sub_field;
+    const gf::Field<uint32_t>* sub_field;
     gf::NF4<T>* ngff4;
     int gf_n;
 
@@ -197,7 +195,7 @@ class RsNf4 : public FecCode<T> {
 
         int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        vec::Vector<T> vx(this->gf, k);
+        vec::Vector<T> vx(*(this->gf), k);
         for (int i = 0; i < k; ++i) {
             vx.set(
                 i,

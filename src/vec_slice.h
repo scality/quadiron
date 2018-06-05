@@ -70,7 +70,7 @@ class Slice : public Vector<T> {
 template <typename T>
 Slice<T>::Slice(Vector<T>* vec, int n, int offset)
     : Vector<T>(
-          vec->rn,
+          vec->get_gf(),
           n,
           vec->get_mem() + offset,
           vec->get_mem_len() > offset ? vec->get_mem_len() - offset : 0)

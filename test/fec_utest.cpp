@@ -120,14 +120,14 @@ class FECUtest {
         int code_len,
         bool props_flag = false)
     {
-        nttec::gf::Field<T>* gf = fec->get_gf();
+        const nttec::gf::Field<T>* gf = &(fec->get_gf());
 
-        nttec::vec::Vector<T> v(gf, n_data);
-        nttec::vec::Vector<T> _v(gf, n);
-        nttec::vec::Vector<T> _v2(gf, n_data);
-        nttec::vec::Vector<T> f(gf, n_data);
-        nttec::vec::Vector<T> v2(gf, n_data);
-        nttec::vec::Vector<T> v_p(gf, n_data);
+        nttec::vec::Vector<T> v(*gf, n_data);
+        nttec::vec::Vector<T> _v(*gf, n);
+        nttec::vec::Vector<T> _v2(*gf, n_data);
+        nttec::vec::Vector<T> f(*gf, n_data);
+        nttec::vec::Vector<T> v2(*gf, n_data);
+        nttec::vec::Vector<T> v_p(*gf, n_data);
         std::vector<int> ids;
         for (int i = 0; i < code_len; i++)
             ids.push_back(i);

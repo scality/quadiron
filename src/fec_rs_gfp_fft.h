@@ -80,11 +80,7 @@ class RsGfpFft : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsGfpFft()
-    {
-        if (this->gf)
-            delete this->gf;
-    }
+    ~RsGfpFft() {}
 
     inline void check_params() override {}
 
@@ -107,7 +103,7 @@ class RsGfpFft : public FecCode<T> {
         // we choose gf_p for a simple implementation
         assert(gf_p / 2 < this->limit_value);
 
-        this->gf = new gf::Prime<T>(gf_p);
+        this->gf = std::unique_ptr<gf::Field<T>>(new gf::Prime<T>(gf_p));
         assert(
             arith::jacobi<T>(this->gf->get_primitive_root(), this->gf->card())
             == -1);
@@ -126,23 +122,23 @@ class RsGfpFft : public FecCode<T> {
 
         if (arith::is_power_of_2<T>(this->n)) {
             this->fft = std::unique_ptr<fft::Radix2<T>>(
-                new fft::Radix2<T>(this->gf, this->n));
+                new fft::Radix2<T>(*(this->gf), this->n));
             this->fft_full = std::unique_ptr<fft::Radix2<T>>(
-                new fft::Radix2<T>(this->gf, this->n));
+                new fft::Radix2<T>(*(this->gf), this->n));
         } else {
             this->fft = std::unique_ptr<fft::CooleyTukey<T>>(
-                new fft::CooleyTukey<T>(this->gf, this->n));
+                new fft::CooleyTukey<T>(*(this->gf), this->n));
             this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
-                new fft::CooleyTukey<T>(this->gf, this->n));
+                new fft::CooleyTukey<T>(*(this->gf), this->n));
         }
 
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         if (arith::is_power_of_2<T>(len_2k)) {
             this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
-                new fft::Radix2<T>(this->gf, len_2k, len_2k));
+                new fft::Radix2<T>(*(this->gf), len_2k, len_2k));
         } else {
             this->fft_2k = std::unique_ptr<fft::CooleyTukey<T>>(
-                new fft::CooleyTukey<T>(this->gf, len_2k, len_2k));
+                new fft::CooleyTukey<T>(*(this->gf), len_2k, len_2k));
         }
     }
 
@@ -151,13 +147,13 @@ class RsGfpFft : public FecCode<T> {
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
-            new vec::Vector<T>(this->gf, this->n_data + 1));
+            new vec::Vector<T>(*(this->gf), this->n_data + 1));
         for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
 
         // vector stores r^{i} for i = 0, ... , k
         this->r_powers = std::unique_ptr<vec::Vector<T>>(
-            new vec::Vector<T>(this->gf, this->n));
+            new vec::Vector<T>(*(this->gf), this->n));
         for (int i = 0; i < this->n; i++)
             this->r_powers->set(i, this->gf->exp(this->r, i));
     }

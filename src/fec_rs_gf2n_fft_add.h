@@ -53,13 +53,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsGf2nFftAdd()
-    {
-        if (this->gf)
-            delete this->gf;
-        if (betas)
-            delete betas;
-    }
+    ~RsGf2nFftAdd() {}
 
     inline void check_params() override
     {
@@ -70,7 +64,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     inline void init_gf() override
     {
         unsigned gf_n = 8 * this->word_size;
-        this->gf = new gf::BinExtension<T>(gf_n);
+        this->gf = std::unique_ptr<gf::Field<T>>(new gf::BinExtension<T>(gf_n));
     }
 
     inline void init_fft() override
@@ -83,14 +77,15 @@ class RsGf2nFftAdd : public FecCode<T> {
         T m = arith::log2<T>(this->n);
 
         this->fft = std::unique_ptr<fft::Additive<T>>(
-            new fft::Additive<T>(this->gf, m));
+            new fft::Additive<T>(*(this->gf), m));
     }
 
     inline void init_others() override
     {
         // subspace spanned by <beta_i>
-        this->betas = new vec::Vector<T>(this->gf, this->n);
-        this->fft->compute_B(this->betas);
+        this->betas = std::unique_ptr<vec::Vector<T>>(
+            new vec::Vector<T>(*(this->gf), this->n));
+        this->fft->compute_B(betas.get());
     }
 
     int get_n_outputs() override
@@ -133,7 +128,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     }
 
   private:
-    vec::Vector<T>* betas = nullptr;
+    std::unique_ptr<vec::Vector<T>> betas = nullptr;
 
   protected:
     std::unique_ptr<DecodeContext<T>>
@@ -148,7 +143,7 @@ class RsGf2nFftAdd : public FecCode<T> {
 
         int k = this->n_data; // number of fragments received
         // vector x=(x_0, x_1, ..., x_k-1)
-        vec::Vector<T> vx(this->gf, k);
+        vec::Vector<T> vx(*(this->gf), k);
 
         int vx_zero = -1;
         for (int i = 0; i < this->n_data; ++i) {
@@ -197,7 +192,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         int vx_zero = context.vx_zero;
 
         // FIXME: split this step in decode_init as multiplicative FFT
-        vec::Vector<T> vx(this->gf, k);
+        vec::Vector<T> vx(*(this->gf), k);
         for (int i = 0; i < this->n_data; ++i) {
             vx.set(i, this->betas->get(fragments_ids.get(i)));
         }

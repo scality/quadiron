@@ -60,11 +60,7 @@ class RsGf2n : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsGf2n()
-    {
-        if (this->gf)
-            delete this->gf;
-    }
+    ~RsGf2n() {}
 
     inline void check_params() override
     {
@@ -79,7 +75,7 @@ class RsGf2n : public FecCode<T> {
     inline void init_gf() override
     {
         unsigned gf_n = 8 * this->word_size;
-        this->gf = new gf::BinExtension<T>(gf_n);
+        this->gf = std::unique_ptr<gf::Field<T>>(new gf::BinExtension<T>(gf_n));
     }
 
     inline void init_fft() override {}
@@ -87,7 +83,7 @@ class RsGf2n : public FecCode<T> {
     inline void init_others() override
     {
         this->mat = std::unique_ptr<vec::Matrix<T>>(
-            new vec::Matrix<T>(this->gf, this->n_parities, this->n_data));
+            new vec::Matrix<T>(*(this->gf), this->n_parities, this->n_data));
         if (mat_type == RsMatrixType::CAUCHY) {
             mat->cauchy();
         } else if (mat_type == RsMatrixType::VANDERMONDE) {
@@ -95,8 +91,8 @@ class RsGf2n : public FecCode<T> {
         }
 
         // has to be a n_data*n_data invertible square matrix
-        decode_mat = std::unique_ptr<vec::Matrix<T>>(
-            new vec::Matrix<T>(this->gf, mat->get_n_cols(), mat->get_n_cols()));
+        decode_mat = std::unique_ptr<vec::Matrix<T>>(new vec::Matrix<T>(
+            *(this->gf), mat->get_n_cols(), mat->get_n_cols()));
     }
 
     int get_n_outputs() override

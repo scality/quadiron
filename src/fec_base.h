@@ -179,9 +179,9 @@ class FecCode {
     virtual std::unique_ptr<DecodeContext<T>>
     init_context_dec(vec::Vector<T>& fragments_ids);
 
-    gf::Field<T>* get_gf()
+    const gf::Field<T>& get_gf()
     {
-        return this->gf;
+        return *gf;
     }
 
     void reset_stats_enc()
@@ -201,7 +201,7 @@ class FecCode {
   protected:
     // primitive nth root of unity
     T r;
-    gf::Field<T>* gf = nullptr;
+    std::unique_ptr<gf::Field<T>> gf = nullptr;
     std::unique_ptr<fft::FourierTransform<T>> fft = nullptr;
     std::unique_ptr<fft::FourierTransform<T>> fft_full = nullptr;
     std::unique_ptr<fft::FourierTransform<T>> fft_2k = nullptr;
@@ -383,8 +383,8 @@ void FecCode<T>::encode_bufs(
     assert(output_parities_bufs.size() == n_outputs);
     assert(output_parities_props.size() == n_outputs);
 
-    vec::Vector<T> words(gf, n_data);
-    vec::Vector<T> output(gf, get_n_outputs());
+    vec::Vector<T> words(*(this->gf), n_data);
+    vec::Vector<T> output(*(this->gf), get_n_outputs());
 
     reset_stats_enc();
 
@@ -534,7 +534,7 @@ bool FecCode<T>::decode_bufs(
 
     reset_stats_dec();
     // ids of received fragments, from 0 to codelen-1
-    vec::Vector<T> fragments_ids(gf, n_data);
+    vec::Vector<T> fragments_ids(*(this->gf), n_data);
 
     if (type == FecType::SYSTEMATIC) {
         for (unsigned i = 0; i < n_data; i++) {
@@ -550,7 +550,7 @@ bool FecCode<T>::decode_bufs(
             return true;
     }
 
-    vec::Vector<T> avail_parity_ids(gf, n_data - avail_data_nb);
+    vec::Vector<T> avail_parity_ids(*(this->gf), n_data - avail_data_nb);
 
     if (fragment_index < n_data) {
         // finish with parities available
@@ -579,8 +579,8 @@ bool FecCode<T>::decode_bufs(
         n_words = n_data;
     }
 
-    vec::Vector<T> words(gf, n_words);
-    vec::Vector<T> output(gf, n_data);
+    vec::Vector<T> words(*(this->gf), n_words);
+    vec::Vector<T> output(*(this->gf), n_data);
 
     std::unique_ptr<DecodeContext<T>> context = init_context_dec(fragments_ids);
     while (true) {
@@ -727,14 +727,14 @@ FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids)
 
     int k = this->n_data; // number of fragments received
     // vector x=(x_0, x_1, ..., x_k-1)
-    vec::Vector<T> vx(this->gf, k);
+    vec::Vector<T> vx(*(this->gf), k);
     for (int i = 0; i < k; ++i) {
         vx.set(i, r_powers->get(fragments_ids.get(i)));
     }
 
     std::unique_ptr<DecodeContext<T>> context =
         std::unique_ptr<DecodeContext<T>>(new DecodeContext<T>(
-            gf, *fft, *fft_2k, fragments_ids, vx, n_data, n));
+            *gf, *fft, *fft_2k, fragments_ids, vx, n_data, n));
 
     return context;
 }

@@ -86,7 +86,7 @@ template <typename T>
 class CooleyTukey : public FourierTransform<T> {
   public:
     CooleyTukey(
-        gf::Field<T>* gf,
+        const gf::Field<T>& gf,
         T n,
         int id = 0,
         std::vector<T>* factors = nullptr,
@@ -124,7 +124,7 @@ class CooleyTukey : public FourierTransform<T> {
  */
 template <typename T>
 CooleyTukey<T>::CooleyTukey(
-    gf::Field<T>* gf,
+    const gf::Field<T>& gf,
     T n,
     int id,
     std::vector<T>* factors,
@@ -136,17 +136,17 @@ CooleyTukey<T>::CooleyTukey(
         first_layer_fft = true;
         arith::get_prime_factors<T>(n, this->prime_factors);
         // w is of order-n
-        w = gf->get_nth_root(n);
+        w = gf.get_nth_root(n);
     } else {
         this->prime_factors = factors;
         first_layer_fft = false;
         w = _w;
     }
-    inv_w = gf->inv(w);
+    inv_w = gf.inv(w);
     n1 = prime_factors->at(id);
     n2 = n / n1;
 
-    w1 = gf->exp(w, n2); // order of w1 = n1
+    w1 = gf.exp(w, n2); // order of w1 = n1
     if (n1 == 2) {
         this->dft_outer = new fft::Size2<T>(gf);
     } else {
@@ -155,7 +155,7 @@ CooleyTukey<T>::CooleyTukey(
 
     if (n2 > 1) {
         loop = true;
-        w2 = gf->exp(w, n1); // order of w2 = n2
+        w2 = gf.exp(w, n1); // order of w2 = n2
         T _n2 = n / n1;
         // TODO: fix that fft::Radix2 does not work here
         // if (_is_power_of_2<T>(_n2))
@@ -163,7 +163,7 @@ CooleyTukey<T>::CooleyTukey(
         // else
         this->dft_inner =
             new CooleyTukey<T>(gf, _n2, id + 1, this->prime_factors, w2);
-        this->G = new vec::Vector<T>(this->gf, this->n);
+        this->G = new vec::Vector<T>(gf, this->n);
         this->Y = new vec::View<T>(this->G);
         this->X = new vec::View<T>(this->G);
     } else

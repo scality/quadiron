@@ -54,7 +54,7 @@ struct Term : std::map<int, T> {
 template <typename T>
 class Polynomial {
   public:
-    explicit Polynomial(gf::Field<T>* field);
+    explicit Polynomial(const gf::Field<T>& field);
     void clear();
     void copy(Polynomial<T>* src);
     void copy(Polynomial<T>* src, T offset);
@@ -99,17 +99,17 @@ class Polynomial {
     void dump();
 
   private:
-    gf::Field<T>* field;
+    const gf::Field<T>* field;
     T field_characteristic;
     Term<T> terms;
     int degree_cache;
 };
 
 template <typename T>
-Polynomial<T>::Polynomial(gf::Field<T>* field)
+Polynomial<T>::Polynomial(const gf::Field<T>& field)
 {
-    this->field = field;
-    this->field_characteristic = field->get_p();
+    this->field = &field;
+    this->field_characteristic = field.get_p();
     this->degree_cache = 0;
 }
 
@@ -199,7 +199,7 @@ void Polynomial<T>::_neg(Polynomial<T>* result, Polynomial<T>* a)
 {
     result->clear();
 
-    Polynomial<T> b(field);
+    Polynomial<T> b(*field);
     sub(result, &b, a);
 }
 
@@ -248,7 +248,7 @@ void Polynomial<T>::_div(
     Polynomial<T>* n,
     Polynomial<T>* d)
 {
-    Polynomial<T> _q(field), _r(field);
+    Polynomial<T> _q(*field), _r(*field);
 
     if (d->is_zero()) {
         throw DomainError("divisor is zero");
@@ -257,7 +257,7 @@ void Polynomial<T>::_div(
     _r.copy(n);
 
     while (!_r.is_zero() && (_r.degree() >= d->degree())) {
-        Polynomial<T> _t(field);
+        Polynomial<T> _t(*field);
         _t.set(_r.degree() - d->degree(), field->div(_r.lead(), d->lead()));
         _q.add(&_t);
         _t.mul(d);
@@ -281,7 +281,7 @@ void Polynomial<T>::_div(
 template <typename T>
 void Polynomial<T>::_gcd(Polynomial<T>* u, Polynomial<T>* v, Polynomial<T>* gcd)
 {
-    Polynomial<T> r(field);
+    Polynomial<T> r(*field);
 
     if (v->degree() == 0) {
         gcd->copy(u);
@@ -320,19 +320,19 @@ void Polynomial<T>::_extended_gcd(
     Polynomial<T>* quotient_gcd[2],
     Polynomial<T>* gcd)
 {
-    Polynomial<T> s(field);
-    Polynomial<T> old_s(field);
+    Polynomial<T> s(*field);
+    Polynomial<T> old_s(*field);
     old_s.set(0, 1);
-    Polynomial<T> t(field);
+    Polynomial<T> t(*field);
     t.set(0, 1);
-    Polynomial<T> old_t(field);
-    Polynomial<T> r(field);
+    Polynomial<T> old_t(*field);
+    Polynomial<T> r(*field);
     r.copy(b);
-    Polynomial<T> old_r(field);
+    Polynomial<T> old_r(*field);
     old_r.copy(a);
-    Polynomial<T> quotient(field);
-    Polynomial<T> tmp(field);
-    Polynomial<T> tmp2(field);
+    Polynomial<T> quotient(*field);
+    Polynomial<T> tmp(*field);
+    Polynomial<T> tmp2(*field);
 
     while (!r.is_zero()) {
         _div(&quotient, nullptr, &old_r, &r);
@@ -398,7 +398,7 @@ void Polynomial<T>::add(Polynomial<T>* b)
 template <typename T>
 void Polynomial<T>::sub(Polynomial<T>* b)
 {
-    Polynomial<T> a(field);
+    Polynomial<T> a(*field);
     a.copy(this);
     _sub(this, &a, b);
 }
@@ -406,7 +406,7 @@ void Polynomial<T>::sub(Polynomial<T>* b)
 template <typename T>
 void Polynomial<T>::mul(Polynomial<T>* b)
 {
-    Polynomial<T> a(field);
+    Polynomial<T> a(*field);
     a.copy(this);
     _mul(this, &a, b);
 }
@@ -467,7 +467,7 @@ void Polynomial<T>::mul_to_x_plus_coef(T coef)
 template <typename T>
 void Polynomial<T>::div(Polynomial<T>* b)
 {
-    Polynomial<T> a(field);
+    Polynomial<T> a(*field);
     a.copy(this);
     _div(this, nullptr, &a, b);
 }
@@ -475,7 +475,7 @@ void Polynomial<T>::div(Polynomial<T>* b)
 template <typename T>
 void Polynomial<T>::mod(Polynomial<T>* b)
 {
-    Polynomial<T> a(field);
+    Polynomial<T> a(*field);
     a.copy(this);
     _div(nullptr, this, &a, b);
 }

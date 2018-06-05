@@ -101,7 +101,7 @@ template <typename T>
 class GoodThomas : public FourierTransform<T> {
   public:
     GoodThomas(
-        gf::Field<T>* gf,
+        const gf::Field<T>& gf,
         T n,
         int id = 0,
         std::vector<T>* factors = nullptr,
@@ -140,7 +140,7 @@ class GoodThomas : public FourierTransform<T> {
  */
 template <typename T>
 GoodThomas<T>::GoodThomas(
-    gf::Field<T>* gf,
+    const gf::Field<T>& gf,
     T n,
     int id,
     std::vector<T>* factors,
@@ -152,7 +152,7 @@ GoodThomas<T>::GoodThomas(
         first_layer_fft = true;
         arith::get_coprime_factors<T>(n, this->prime_factors);
         // w is of order-n
-        w = gf->get_nth_root(n);
+        w = gf.get_nth_root(n);
     } else {
         this->prime_factors = factors;
         first_layer_fft = false;
@@ -166,7 +166,7 @@ GoodThomas<T>::GoodThomas(
     c = n2 * (this->_inverse_mod(n2, n1));
     d = n1 * (this->_inverse_mod(n1, n2));
 
-    w1 = gf->exp(w, n2); // order of w1 = n1
+    w1 = gf.exp(w, n2); // order of w1 = n1
     if (n1 == 2) {
         this->dft_outer = new fft::Size2<T>(gf);
     } else {
@@ -175,7 +175,7 @@ GoodThomas<T>::GoodThomas(
 
     if (n2 > 1) {
         loop = true;
-        w2 = gf->exp(w, n1); // order of w2 = n2
+        w2 = gf.exp(w, n1); // order of w2 = n2
         T _n2 = n / n1;
         if (arith::is_power_of_2<T>(_n2)) {
             this->dft_inner = new fft::Radix2<T>(gf, _n2);
@@ -183,7 +183,7 @@ GoodThomas<T>::GoodThomas(
             this->dft_inner = new fft::CooleyTukey<T>(
                 gf, _n2, id + 1, this->prime_factors, w2);
         }
-        this->G = new vec::Vector<T>(this->gf, this->n);
+        this->G = new vec::Vector<T>(gf, this->n);
         this->Y = new vec::View<T>(this->G);
         this->X = new vec::View<T>(this->G);
     } else

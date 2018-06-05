@@ -47,7 +47,7 @@ namespace vec {
 template <typename T>
 class Poly : public Vector<T> {
   public:
-    Poly(gf::Field<T>* field, int n);
+    Poly(const gf::Field<T>& field, int n);
     Poly(const Poly<T>& a);
     const int get_deg() const;
     void set_deg(int exponent);
@@ -63,23 +63,23 @@ class Poly : public Vector<T> {
     void dump() override;
 
   private:
-    gf::Field<T>* field;
+    const gf::Field<T>* field;
     T field_characteristic;
     T* buf;
     int degree;
 };
 
 template <typename T>
-Poly<T>::Poly(gf::Field<T>* field, int n) : Vector<T>(field, n)
+Poly<T>::Poly(const gf::Field<T>& field, int n) : Vector<T>(field, n)
 {
-    this->field = field;
-    this->field_characteristic = field->get_p();
+    this->field = &field;
+    this->field_characteristic = field.get_p();
     this->buf = this->get_mem();
     this->degree = -1;
 }
 
 template <typename T>
-Poly<T>::Poly(const Poly<T>& a) : Vector<T>(a.rn, a.get_n())
+Poly<T>::Poly(const Poly<T>& a) : Vector<T>(a.get_gf(), a.get_n())
 {
     this->field = (gf::Field<T>*)this->rn;
     this->buf = this->get_mem();

@@ -64,7 +64,7 @@ class ZeroExtended : public Vector<T> {
 
 template <typename T>
 ZeroExtended<T>::ZeroExtended(Vector<T>* vec, int n)
-    : Vector<T>(vec->rn, n, vec->get_mem(), vec->get_mem_len())
+    : Vector<T>(vec->get_gf(), n, vec->get_mem(), vec->get_mem_len())
 {
     this->vec = vec;
     this->n = n;

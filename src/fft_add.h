@@ -49,7 +49,7 @@ namespace fft {
 template <typename T>
 class Additive : public FourierTransform<T> {
   public:
-    Additive(gf::Field<T>* gf, T m, vec::Vector<T>* betas = nullptr);
+    Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas = nullptr);
     ~Additive();
     void compute_basis();
     void compute_beta_m_powers();
@@ -100,7 +100,7 @@ class Additive : public FourierTransform<T> {
  * @return
  */
 template <typename T>
-Additive<T>::Additive(gf::Field<T>* gf, T m, vec::Vector<T>* betas)
+Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
     : FourierTransform<T>(gf, arith::exp2<T>(m))
 {
     assert(m >= 1);
@@ -108,7 +108,7 @@ Additive<T>::Additive(gf::Field<T>* gf, T m, vec::Vector<T>* betas)
     create_betas = false;
     if (betas == nullptr) {
         // it supports only GF2N
-        assert(gf->get_sub_field()->card() == 2);
+        assert(gf.get_sub_field().card() == 2);
 
         create_betas = true;
         betas = new vec::Vector<T>(gf, m);
@@ -121,9 +121,9 @@ Additive<T>::Additive(gf::Field<T>* gf, T m, vec::Vector<T>* betas)
     }
     this->betas = betas;
     this->beta_1 = betas->get(0);
-    this->inv_beta_1 = gf->inv(this->beta_1);
+    this->inv_beta_1 = this->gf->inv(this->beta_1);
     this->beta_m = betas->get(m - 1);
-    this->inv_beta_m = gf->inv(this->beta_m);
+    this->inv_beta_m = this->gf->inv(this->beta_m);
 
     this->beta_m_powers = new vec::Vector<T>(gf, this->n);
     this->compute_beta_m_powers();
@@ -240,7 +240,7 @@ void Additive<T>::compute_subspace(
     // index of element in G
     std::vector<int> ids;
     // create sequence 2^i
-    vec::Vector<T> powers2(this->gf, dim);
+    vec::Vector<T> powers2(*(this->gf), dim);
     for (i = 0; i < dim; i++)
         powers2.set(i, arith::exp2<T>(i));
 
@@ -440,7 +440,7 @@ void Additive<T>::taylor_expand_t2(vec::Vector<T>* input, int n, bool do_copy)
 
     vec::Vector<T>* _input;
     if (do_copy) {
-        _input = new vec::Vector<T>(this->gf, input->get_n());
+        _input = new vec::Vector<T>(*(this->gf), input->get_n());
         _input->copy(input, input->get_n());
     } else
         _input = input;
