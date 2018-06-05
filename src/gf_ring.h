@@ -32,6 +32,7 @@
 #define __NTTEC_GF_RING_H__
 
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <vector>
 
@@ -53,118 +54,140 @@ class Vector;
 
 namespace gf {
 
-/** A ring of integers modulo N. */
+/** A ring of integers modulo N.
+ */
 template <typename T>
 class RingModN {
   public:
-    RingModN(T card);
+    RingModN(T card, bool calculate_root = true);
     virtual ~RingModN();
-    virtual T card(void);
-    virtual T card_minus_one(void);
-    virtual bool check(T a);
-    virtual T neg(T a);
-    virtual T add(T a, T b);
-    virtual T sub(T a, T b);
-    virtual T mul(T a, T b);
-    virtual T div(T a, T b);
-    T inv_bezout(T a);
-    virtual T inv(T a);
-    virtual T exp(T a, T b);
-    virtual T log(T a, T b);
-    T exp_naive(T base, T exponent);
-    T exp_quick(T base, T exponent);
-    T log_naive(T base, T exponent);
-    virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len);
+    void init();
+    void compute_factors_of_order();
+    void find_primitive_root();
+    virtual T card(void) const;
+    virtual T card_minus_one(void) const;
+    virtual bool check(T a) const;
+    virtual T neg(T a) const;
+    virtual T add(T a, T b) const;
+    virtual T sub(T a, T b) const;
+    virtual T mul(T a, T b) const;
+    virtual T div(T a, T b) const;
+    T inv_bezout(T a) const;
+    virtual T inv(T a) const;
+    virtual T exp(T a, T b) const;
+    virtual T log(T a, T b) const;
+    T exp_naive(T base, T exponent) const;
+    T exp_quick(T base, T exponent) const;
+    T log_naive(T base, T exponent) const;
+    virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len) const;
     virtual void mul_vec_to_vecp(
         vec::Vector<T>* u,
         vec::Buffers<T>* src,
-        vec::Buffers<T>* dest);
-    virtual void add_two_bufs(T* src, T* dest, size_t len);
-    virtual void add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest);
-    virtual void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len);
+        vec::Buffers<T>* dest) const;
+    virtual void add_two_bufs(T* src, T* dest, size_t len) const;
+    virtual void
+    add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest) const;
+    virtual void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) const;
     virtual void sub_vecp_to_vecp(
         vec::Buffers<T>* veca,
         vec::Buffers<T>* vecb,
-        vec::Buffers<T>* res);
-    void compute_factors_of_order();
-    bool is_quadratic_residue(T q);
-    virtual void compute_omegas(vec::Vector<T>* W, int n, T w);
-    void compute_omegas_cached(vec::Vector<T>* W, int n, T w);
-    virtual T weak_rand(void);
-    bool is_primitive_root(T nb);
-    void find_primitive_root();
-    T get_root();
-    T get_primitive_root();
-    bool check_primitive_root(T nb);
-    bool check_order_naive(T nb, T order);
+        vec::Buffers<T>* res) const;
+    bool is_quadratic_residue(T q) const;
+    virtual void compute_omegas(vec::Vector<T>* W, int n, T w) const;
+    void compute_omegas_cached(vec::Vector<T>* W, int n, T w) const;
+    virtual T weak_rand(void) const;
+    bool is_primitive_root(T nb) const;
+    T get_root() const;
+    T get_primitive_root() const;
+    bool check_primitive_root(T nb) const;
+    bool check_order_naive(T nb, T order) const;
     T do_step_get_order(
         T x,
         T h,
         std::vector<T>* primes,
-        std::vector<int>* exponent);
-    T get_order(T x);
-    virtual T get_nth_root(T n);
-    T get_code_len(T n);
-    T get_code_len_high_compo(T n);
-    virtual void hadamard_mul(int n, T* x, T* y);
-    virtual void hadamard_mul_doubled(int n, T* x, T* y);
-    virtual void add_doubled(int n, T* x, T* y);
+        std::vector<int>* exponent) const;
+    T get_order(T x) const;
+    virtual T get_nth_root(T n) const;
+    T get_code_len(T n) const;
+    T get_code_len_high_compo(T n) const;
+    virtual void hadamard_mul(int n, T* x, T* y) const;
+    virtual void hadamard_mul_doubled(int n, T* x, T* y) const;
+    virtual void add_doubled(int n, T* x, T* y) const;
 
-  private:
+  protected:
     T _card;
     T root;
-    bool compute_factors_of_order_done = false;
-    std::vector<T>* primes = nullptr;
-    std::vector<int>* exponent = nullptr;
-    std::vector<T>* all_primes_factors = nullptr;
-    std::vector<T>* proper_divisors = nullptr;
+    std::unique_ptr<std::vector<T>> primes = nullptr;
+    std::unique_ptr<std::vector<int>> exponent = nullptr;
+    std::unique_ptr<std::vector<T>> all_primes_factors = nullptr;
+    std::unique_ptr<std::vector<T>> proper_divisors = nullptr;
 };
-
+/**
+ * The calculation of primitive roots is performed in the constructor.
+ * @note: this operation uses operations such as mul, exp etc. that depends on
+ * the target finite field. Therefore, this operation should be executed only
+ * in the constructor of the target class. For example with gf::Extension
+ * extending from gf::Field that extends from gf::RingModN, this calculation
+ * should be executed in the constructor of gf::Extension. Hence, we need a
+ * variable to control it. That is the 3rd argument indicate whether the
+ * computing of primitive root is performed in the constructor of RingModN.
+ */
 template <typename T>
-RingModN<T>::RingModN(T card)
+RingModN<T>::RingModN(T card, bool calculate_root)
 {
     this->_card = card;
     this->root = 0;
 
-    this->primes = new std::vector<T>();
-    this->exponent = new std::vector<int>();
-    this->all_primes_factors = new std::vector<T>();
-    this->proper_divisors = new std::vector<T>();
+    this->primes = std::unique_ptr<std::vector<T>>(new std::vector<T>());
+    this->exponent = std::unique_ptr<std::vector<int>>(new std::vector<int>());
+    this->all_primes_factors =
+        std::unique_ptr<std::vector<T>>(new std::vector<T>());
+    this->proper_divisors =
+        std::unique_ptr<std::vector<T>>(new std::vector<T>());
+
+    // Init: computing primitive root
+    // NOTE: for a derived classe, it should perform this operation in its
+    // constructor since it need using its operations such as multiplication
+    if (calculate_root) {
+        this->init();
+    }
 }
 
 template <typename T>
 RingModN<T>::~RingModN()
 {
-    if (primes)
-        delete primes;
-    if (exponent)
-        delete exponent;
-    if (all_primes_factors)
-        delete all_primes_factors;
-    if (proper_divisors)
-        delete proper_divisors;
 }
 
 template <typename T>
-T RingModN<T>::card(void)
+void RingModN<T>::init()
+{
+    // compute factors of order
+    this->compute_factors_of_order();
+
+    // compute root of unity
+    this->find_primitive_root();
+}
+
+template <typename T>
+T RingModN<T>::card(void) const
 {
     return this->_card;
 }
 
 template <typename T>
-T RingModN<T>::card_minus_one(void)
+T RingModN<T>::card_minus_one(void) const
 {
     return this->_card - 1;
 }
 
 template <typename T>
-bool RingModN<T>::check(T a)
+bool RingModN<T>::check(T a) const
 {
     return (a >= 0 && a < this->_card);
 }
 
 template <typename T>
-T RingModN<T>::neg(T a)
+T RingModN<T>::neg(T a) const
 {
     assert(check(a));
 
@@ -172,7 +195,7 @@ T RingModN<T>::neg(T a)
 }
 
 template <typename T>
-T RingModN<T>::add(T a, T b)
+T RingModN<T>::add(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -185,7 +208,7 @@ T RingModN<T>::add(T a, T b)
 }
 
 template <typename T>
-T RingModN<T>::sub(T a, T b)
+T RingModN<T>::sub(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -197,7 +220,7 @@ T RingModN<T>::sub(T a, T b)
 }
 
 template <typename T>
-T RingModN<T>::mul(T a, T b)
+T RingModN<T>::mul(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -206,7 +229,7 @@ T RingModN<T>::mul(T a, T b)
 }
 
 template <typename T>
-T RingModN<T>::div(T a, T b)
+T RingModN<T>::div(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -224,7 +247,7 @@ T RingModN<T>::div(T a, T b)
  * @return
  */
 template <typename T>
-T RingModN<T>::inv_bezout(T a)
+T RingModN<T>::inv_bezout(T a) const
 {
     assert(check(a));
 
@@ -239,22 +262,22 @@ T RingModN<T>::inv_bezout(T a)
 }
 
 template <typename T>
-T RingModN<T>::inv(T a)
+T RingModN<T>::inv(T a) const
 {
     return inv_bezout(a);
 }
 
 template <typename T>
-T RingModN<T>::exp(T a, T b)
+T RingModN<T>::exp(T a, T b) const
 {
-    assert(check(a));
-    assert(check(b));
+    assert(RingModN<T>::check(a));
+    assert(RingModN<T>::check(b));
 
     return RingModN<T>::exp_quick(a, b);
 }
 
 template <typename T>
-T RingModN<T>::log(T a, T b)
+T RingModN<T>::log(T a, T b) const
 {
     assert(check(a));
 
@@ -270,7 +293,7 @@ T RingModN<T>::log(T a, T b)
  * @return
  */
 template <typename T>
-T RingModN<T>::exp_naive(T base, T exponent)
+T RingModN<T>::exp_naive(T base, T exponent) const
 {
     T result;
     T i;
@@ -297,7 +320,7 @@ T RingModN<T>::exp_naive(T base, T exponent)
  * @return
  */
 template <typename T>
-T RingModN<T>::exp_quick(T base, T exponent)
+T RingModN<T>::exp_quick(T base, T exponent) const
 {
     T result;
 
@@ -308,9 +331,12 @@ T RingModN<T>::exp_quick(T base, T exponent)
         return base;
 
     T tmp = this->exp_quick(base, exponent / 2);
+    // std::cout << base << "^" << exponent / 2 << "=" << tmp << "\n";
     result = this->mul(tmp, tmp);
+    // std::cout << "result = " << tmp << "^2 = " << result << "\n";
     if (exponent % 2 == 1)
         result = this->mul(result, base);
+    // std::cout << "final result = " << result << "\n";
     return result;
 }
 
@@ -325,7 +351,7 @@ T RingModN<T>::exp_quick(T base, T exponent)
  * return
  */
 template <typename T>
-T RingModN<T>::log_naive(T base, T exponent)
+T RingModN<T>::log_naive(T base, T exponent) const
 {
     T result;
 
@@ -341,7 +367,7 @@ T RingModN<T>::log_naive(T base, T exponent)
  * For each i, dest[i] = a * src[i]
  */
 template <typename T>
-void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len)
+void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) const
 {
     size_t i;
     DoubleSizeVal<T> coef = DoubleSizeVal<T>(a);
@@ -355,7 +381,7 @@ template <typename T>
 void RingModN<T>::mul_vec_to_vecp(
     vec::Vector<T>* u,
     vec::Buffers<T>* src,
-    vec::Buffers<T>* dest)
+    vec::Buffers<T>* dest) const
 {
     assert(u->get_n() == src->get_n());
     int i;
@@ -367,7 +393,7 @@ void RingModN<T>::mul_vec_to_vecp(
 }
 
 template <typename T>
-void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len)
+void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len) const
 {
     size_t i;
     for (i = 0; i < len; i++) {
@@ -378,6 +404,7 @@ void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len)
 
 template <typename T>
 void RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest)
+    const
 {
     assert(src->get_n() == dest->get_n());
     assert(src->get_size() == dest->get_size());
@@ -390,7 +417,7 @@ void RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest)
 }
 
 template <typename T>
-void RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len)
+void RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) const
 {
     size_t i;
     T result;
@@ -408,7 +435,7 @@ template <typename T>
 void RingModN<T>::sub_vecp_to_vecp(
     vec::Buffers<T>* veca,
     vec::Buffers<T>* vecb,
-    vec::Buffers<T>* res)
+    vec::Buffers<T>* res) const
 {
     assert(veca->get_n() == vecb->get_n());
     assert(veca->get_size() == vecb->get_size());
@@ -423,22 +450,17 @@ void RingModN<T>::sub_vecp_to_vecp(
 template <typename T>
 void RingModN<T>::compute_factors_of_order()
 {
-    if (this->compute_factors_of_order_done)
-        return;
-
-    T h = this->card_minus_one();
+    T h = RingModN<T>::card_minus_one();
     // prime factorisation of order, i.e. order = p_i^e_i where
     //  p_i, e_i are ith element of this->primes and this->exponent
-    arith::factor_prime<T>(h, this->primes, this->exponent);
+    arith::factor_prime<T>(h, primes.get(), exponent.get());
     // store all primes in a vector. A prime is replicated according to its
     //  exponent
     arith::get_prime_factors_final<T>(
-        this->primes, this->exponent, this->all_primes_factors);
+        primes.get(), exponent.get(), all_primes_factors.get());
     // calculate all proper divisor of order. A proper divisor = order/p_i for
     //  each prime divisor of order.
-    arith::get_proper_divisors<T>(h, this->primes, this->proper_divisors);
-
-    this->compute_factors_of_order_done = true;
+    arith::get_proper_divisors<T>(h, primes.get(), proper_divisors.get());
 }
 
 /**
@@ -451,7 +473,7 @@ void RingModN<T>::compute_factors_of_order()
  * @return boolean
  */
 template <typename T>
-bool RingModN<T>::is_quadratic_residue(T q)
+bool RingModN<T>::is_quadratic_residue(T q) const
 {
     T i;
 
@@ -471,7 +493,7 @@ bool RingModN<T>::is_quadratic_residue(T q)
  * @param w n-th root of unity
  */
 template <typename T>
-void RingModN<T>::compute_omegas(vec::Vector<T>* W, int n, T w)
+void RingModN<T>::compute_omegas(vec::Vector<T>* W, int n, T w) const
 {
     for (int i = 0; i < n; i++) {
         W->set(i, this->exp(w, i));
@@ -490,7 +512,7 @@ void RingModN<T>::compute_omegas(vec::Vector<T>* W, int n, T w)
  * @param w n-th root of unity
  */
 template <typename T>
-void RingModN<T>::compute_omegas_cached(vec::Vector<T>* W, int n, T w)
+void RingModN<T>::compute_omegas_cached(vec::Vector<T>* W, int n, T w) const
 {
     std::ostringstream filename;
 
@@ -517,7 +539,7 @@ void RingModN<T>::compute_omegas_cached(vec::Vector<T>* W, int n, T w)
 }
 
 template <typename T>
-T RingModN<T>::weak_rand(void)
+T RingModN<T>::weak_rand(void) const
 {
     std::uniform_int_distribution<uint32_t> dis(1, this->card() - 1);
     return dis(prng());
@@ -571,14 +593,11 @@ T RingModN<T>::weak_rand(void)
  *  Contradict to Step 3 of the algorithm.
  */
 template <typename T>
-bool RingModN<T>::is_primitive_root(T nb)
+bool RingModN<T>::is_primitive_root(T nb) const
 {
     bool ok = true;
     typename std::vector<T>::size_type i;
     T h = this->card_minus_one();
-    if (!this->compute_factors_of_order_done) {
-        this->compute_factors_of_order();
-    }
     // check nb^divisor == 1
     // std::cout << "checking.." << nb << std::endl;
     for (i = 0; i != this->proper_divisors->size(); ++i) {
@@ -606,24 +625,25 @@ void RingModN<T>::find_primitive_root()
         return;
     }
 
+    T h = RingModN<T>::card_minus_one();
+    if (h == 1) {
+        this->root = 1;
+        return;
+    }
+
     T nb = 2;
     bool ok;
     typename std::vector<T>::size_type i;
-    T h = this->card_minus_one();
-
-    if (!this->compute_factors_of_order_done) {
-        this->compute_factors_of_order();
-    }
 
     while (nb <= h) {
         ok = true;
         // check nb^divisor == 1
         // std::cout << "checking.." << nb << std::endl;
         for (i = 0; i != this->proper_divisors->size(); ++i) {
-            // std::cout << nb << "^" << proper_divisors->at(i) << "=";
+            // std::cout << nb << "^" << this->proper_divisors->at(i) << "\n";
             // std::cout << this->exp(nb, this->proper_divisors->at(i)) <<
             // std::endl;
-            if (this->exp(nb, this->proper_divisors->at(i)) == 1) {
+            if (RingModN<T>::exp(nb, this->proper_divisors->at(i)) == 1) {
                 ok = false;
                 break;
             }
@@ -641,7 +661,7 @@ void RingModN<T>::find_primitive_root()
 }
 
 template <typename T>
-T RingModN<T>::get_root()
+T RingModN<T>::get_root() const
 {
     return root;
 }
@@ -651,7 +671,7 @@ T RingModN<T>::do_step_get_order(
     T x,
     T h,
     std::vector<T>* primes,
-    std::vector<int>* exponent)
+    std::vector<int>* exponent) const
 {
     T y, p;
     int r;
@@ -704,13 +724,11 @@ T RingModN<T>::do_step_get_order(
  *   }
  */
 template <typename T>
-T RingModN<T>::get_order(T x)
+T RingModN<T>::get_order(T x) const
 {
     if (x == 0 || x == 1)
         return 1;
     T h = this->card_minus_one();
-    if (!this->compute_factors_of_order_done)
-        arith::factor_prime<T>(h, this->primes, this->exponent);
     std::vector<T> _primes(*primes);
     std::vector<int> _exponent(*exponent);
     T order = do_step_get_order(x, h, &_primes, &_exponent);
@@ -726,7 +744,7 @@ T RingModN<T>::get_order(T x)
  * @return true if `nb` is a primitive root, false otherwise.
  */
 template <typename T>
-bool RingModN<T>::check_primitive_root(T nb)
+bool RingModN<T>::check_primitive_root(T nb) const
 {
     T h = this->card_minus_one();
     return (get_order(nb) == h);
@@ -736,7 +754,7 @@ bool RingModN<T>::check_primitive_root(T nb)
  * Check naively order of a number
  */
 template <typename T>
-bool RingModN<T>::check_order_naive(T nb, T order)
+bool RingModN<T>::check_order_naive(T nb, T order) const
 {
     if (this->exp(nb, order) != 1)
         return false;
@@ -761,13 +779,10 @@ bool RingModN<T>::check_order_naive(T nb, T order)
  * @return root
  */
 template <typename T>
-T RingModN<T>::get_nth_root(T n)
+T RingModN<T>::get_nth_root(T n) const
 {
     T q_minus_one = this->card_minus_one();
     T d = arith::gcd<T>(n, q_minus_one);
-    if (!this->root) {
-        this->find_primitive_root();
-    }
     T nth_root = this->exp(this->root, q_minus_one / d);
     return nth_root;
 }
@@ -777,11 +792,8 @@ T RingModN<T>::get_nth_root(T n)
  * @return the primitive root.
  */
 template <typename T>
-T RingModN<T>::get_primitive_root()
+T RingModN<T>::get_primitive_root() const
 {
-    if (!this->root) {
-        this->find_primitive_root();
-    }
     return this->root;
 }
 
@@ -795,7 +807,7 @@ T RingModN<T>::get_primitive_root()
  * @return root
  */
 template <typename T>
-T RingModN<T>::get_code_len(T n)
+T RingModN<T>::get_code_len(T n) const
 {
     T nb = this->card_minus_one();
     if (nb < n)
@@ -815,20 +827,17 @@ T RingModN<T>::get_code_len(T n)
  * @return root
  */
 template <typename T>
-T RingModN<T>::get_code_len_high_compo(T n)
+T RingModN<T>::get_code_len_high_compo(T n) const
 {
     T nb = this->card_minus_one();
     if (nb < n)
         assert(false);
 
-    if (!this->compute_factors_of_order_done) {
-        this->compute_factors_of_order();
-    }
-    return arith::get_code_len_high_compo<T>(this->all_primes_factors, n);
+    return arith::get_code_len_high_compo<T>(all_primes_factors.get(), n);
 }
 
 template <typename T>
-void RingModN<T>::hadamard_mul(int n, T* x, T* y)
+void RingModN<T>::hadamard_mul(int n, T* x, T* y) const
 {
     for (int i = 0; i < n; i++) {
         x[i] = mul(x[i], y[i]);
@@ -836,7 +845,7 @@ void RingModN<T>::hadamard_mul(int n, T* x, T* y)
 }
 
 template <typename T>
-void RingModN<T>::hadamard_mul_doubled(int n, T* x, T* y)
+void RingModN<T>::hadamard_mul_doubled(int n, T* x, T* y) const
 {
     const int half = n / 2;
     T* x_next = x + half;
@@ -853,7 +862,7 @@ void RingModN<T>::hadamard_mul_doubled(int n, T* x, T* y)
 }
 
 template <typename T>
-void RingModN<T>::add_doubled(int n, T* x, T* y)
+void RingModN<T>::add_doubled(int n, T* x, T* y) const
 {
     const int half = n / 2;
     T* x_next = x + half;
@@ -877,50 +886,50 @@ void RingModN<uint32_t>::mul_coef_to_buf(
     uint32_t a,
     uint32_t* src,
     uint32_t* dest,
-    size_t len);
+    size_t len) const;
 
 template <>
-void RingModN<uint32_t>::add_two_bufs(
-    uint32_t* src,
-    uint32_t* dest,
-    size_t len);
+void RingModN<uint32_t>::add_two_bufs(uint32_t* src, uint32_t* dest, size_t len)
+    const;
 
 template <>
 void RingModN<uint32_t>::sub_two_bufs(
     uint32_t* bufa,
     uint32_t* bufb,
     uint32_t* res,
-    size_t len);
+    size_t len) const;
 
 template <>
-void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x, uint16_t* y);
+void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x, uint16_t* y) const;
 template <>
-void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x, uint32_t* y);
+void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x, uint32_t* y) const;
 // template <>
-// void RingModN<uint64_t>::hadamard_mul(int n, uint64_t* x, uint64_t* y);
+// void RingModN<uint64_t>::hadamard_mul(int n, uint64_t* x, uint64_t* y) const;
 // template <>
 // void RingModN<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t*
-// y);
+// y) const;
 
 template <>
-void RingModN<uint16_t>::hadamard_mul_doubled(int n, uint16_t* x, uint16_t* y);
+void RingModN<uint16_t>::hadamard_mul_doubled(int n, uint16_t* x, uint16_t* y)
+    const;
 template <>
-void RingModN<uint32_t>::hadamard_mul_doubled(int n, uint32_t* x, uint32_t* y);
+void RingModN<uint32_t>::hadamard_mul_doubled(int n, uint32_t* x, uint32_t* y)
+    const;
 // template <>
 // void RingModN<uint64_t>::hadamard_mul_doubled(int n, uint64_t* x,
-// uint64_t* y);
+// uint64_t* y) const;
 // template <> void RingModN<__uint128_t>::hadamard_mul_doubled(int n,
-// __uint128_t* x, __uint128_t* y);
+// __uint128_t* x, __uint128_t* y) const;
 
 template <>
-void RingModN<uint16_t>::add_doubled(int n, uint16_t* x, uint16_t* y);
+void RingModN<uint16_t>::add_doubled(int n, uint16_t* x, uint16_t* y) const;
 template <>
-void RingModN<uint32_t>::add_doubled(int n, uint32_t* x, uint32_t* y);
+void RingModN<uint32_t>::add_doubled(int n, uint32_t* x, uint32_t* y) const;
 // template <>
-// void RingModN<uint64_t>::add_doubled(int n, uint64_t* x, uint64_t* y);
+// void RingModN<uint64_t>::add_doubled(int n, uint64_t* x, uint64_t* y) const;
 // template <>
 // void RingModN<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t*
-// y);
+// y) const;
 
 #endif // #ifdef NTTEC_USE_SIMD
 
