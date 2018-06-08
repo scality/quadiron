@@ -67,7 +67,7 @@ class NF4 : public gf::Field<T> {
     T weak_rand_tuple(void) const;
     T weak_rand(void) const override;
     T get_unit(void) const;
-    T replicate(T a) const;
+    T replicate(T a) const override;
     T pack(T a) const;
     T pack(T a, uint32_t flag) const;
     GroupedValues<T> unpack(T a) const;
@@ -173,9 +173,9 @@ T NF4<T>::replicate(T a) const
 template <typename T>
 void NF4<T>::init(void)
 {
-    unit = replicate(1);
-    q = replicate(T(65537));
-    h = replicate(T(65536));
+    unit = NF4<T>::replicate(1);
+    q = NF4<T>::replicate(T(65537));
+    h = NF4<T>::replicate(T(65536));
 }
 
 template <typename T>

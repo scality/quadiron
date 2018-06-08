@@ -79,6 +79,7 @@ class RingModN {
     T exp_naive(T base, T exponent) const;
     T exp_quick(T base, T exponent) const;
     T log_naive(T base, T exponent) const;
+    virtual T replicate(T a) const;
     virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len) const;
     virtual void mul_vec_to_vecp(
         vec::Vector<T>* u,
@@ -361,6 +362,13 @@ T RingModN<T>::log_naive(T base, T exponent) const
     }
 
     throw NoSolution("solution not found");
+}
+
+/** This operation is only reserved for NF4 */
+template <typename T>
+T RingModN<T>::replicate(T a) const
+{
+    return a;
 }
 
 /*
