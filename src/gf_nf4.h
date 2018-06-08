@@ -95,6 +95,7 @@ class NF4 : public gf::Field<T> {
 template <typename T>
 NF4<T>::NF4(unsigned n) : gf::Field<T>(T(65537), n)
 {
+    this->isNF4 = true;
     sub_field =
         std::unique_ptr<gf::Field<uint32_t>>(new gf::Prime<uint32_t>(T(65537)));
 
