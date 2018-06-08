@@ -66,7 +66,7 @@ class Vector {
     virtual ~Vector();
     virtual const int get_n(void) const;
     const int get_mem_len(void) const;
-    void zero_fill(void);
+    virtual void zero_fill(void);
     void fill(T val);
     virtual void set(int i, T val);
     virtual T get(int i) const;
@@ -87,6 +87,7 @@ class Vector {
     void copy(Vector<T>* v, int n, int offset);
     void copy(Vector<T>* v, int n, int dest_offset, int src_offset);
     bool eq(Vector<T>* v);
+    virtual void neg();
     void to_poly(Polynomial<T>* poly);
     virtual void dump(void);
 
@@ -367,6 +368,13 @@ bool Vector<T>::eq(Vector<T>* v)
     }
 
     return true;
+}
+
+template <typename T>
+void Vector<T>::neg()
+{
+    for (int i = 0; i < this->n; i++)
+        mem[i] = rn->neg(mem[i]);
 }
 
 template <typename T>

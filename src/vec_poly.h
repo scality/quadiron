@@ -58,8 +58,8 @@ class Poly : public Vector<T> {
     T eval(T x);
     void mul(Poly<T>* b, int deg_out);
     void mul_to_x_plus_coef(T coef);
-    void neg();
-    void zero();
+    void neg() override;
+    void zero_fill() override;
     void dump() override;
 
   private:
@@ -235,7 +235,7 @@ void Poly<T>::neg()
 }
 
 template <typename T>
-void Poly<T>::zero()
+void Poly<T>::zero_fill()
 {
     std::memset(buf, 0, this->n * sizeof(*buf));
 }
