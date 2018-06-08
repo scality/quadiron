@@ -51,7 +51,7 @@ template <typename T>
 class NF4 : public gf::Field<T> {
   public:
     explicit NF4(unsigned n);
-    ~NF4();
+    ~NF4() = default;
     T card(void) const override;
     T card_minus_one(void) const override;
     T get_inv_n_mod_p(int n) const override;
@@ -107,11 +107,6 @@ NF4<T>::NF4(unsigned n) : gf::Field<T>(T(65537), n)
     q = 0;
     h = 0;
     init();
-}
-
-template <typename T>
-NF4<T>::~NF4()
-{
 }
 
 template <typename T>

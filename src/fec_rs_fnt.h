@@ -69,8 +69,6 @@ class RsFnt : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsFnt() {}
-
     inline void check_params() override
     {
         assert(this->word_size < 4);

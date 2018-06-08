@@ -80,8 +80,6 @@ class RsGfpFft : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsGfpFft() {}
-
     inline void check_params() override {}
 
     inline void init_gf() override

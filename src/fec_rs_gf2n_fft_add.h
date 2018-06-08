@@ -53,8 +53,6 @@ class RsGf2nFftAdd : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsGf2nFftAdd() {}
-
     inline void check_params() override
     {
         if (this->word_size > 16)

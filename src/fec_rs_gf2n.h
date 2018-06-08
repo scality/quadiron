@@ -60,8 +60,6 @@ class RsGf2n : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsGf2n() {}
-
     inline void check_params() override
     {
         assert(

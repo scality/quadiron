@@ -113,7 +113,7 @@ class FecCode {
         unsigned n_data,
         unsigned n_parities,
         size_t pkt_size = 8);
-    virtual ~FecCode();
+    virtual ~FecCode() = default;
 
     /**
      * Return the number actual parities for SYSTEMATIC it is exactly
@@ -267,11 +267,6 @@ FecCode<T>::FecCode(
         (type == FecType::SYSTEMATIC) ? this->n_parities : this->code_len;
     this->pkt_size = pkt_size;
     this->buf_size = pkt_size * word_size;
-}
-
-template <typename T>
-FecCode<T>::~FecCode()
-{
 }
 
 template <typename T>

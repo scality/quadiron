@@ -46,7 +46,7 @@ template <typename T>
 class Extension : public gf::Field<T> {
   public:
     explicit Extension(T p, int n);
-    ~Extension();
+    ~Extension() = default;
     void init();
     void find_primitive_root();
     T card(void) const override;
@@ -112,11 +112,6 @@ Extension<T>::Extension(T p, int n) : gf::Field<T>(p, n, false)
 
     // computing primitive root
     this->init();
-}
-
-template <typename T>
-Extension<T>::~Extension()
-{
 }
 
 template <typename T>

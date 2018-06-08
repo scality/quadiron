@@ -54,8 +54,6 @@ class RsNf4 : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsNf4() {}
-
     inline void check_params() override
     {
         assert(this->word_size >= 2);

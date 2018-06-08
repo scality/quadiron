@@ -107,7 +107,7 @@ class DecodeContext {
         init(vx);
     }
 
-    ~DecodeContext() {}
+    ~DecodeContext() = default;
 
     unsigned get_len_2k() const
     {

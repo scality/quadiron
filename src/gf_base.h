@@ -48,7 +48,7 @@ template <typename T>
 class Field : public RingModN<T> {
   public:
     Field(T p, int n, bool calculate_root = true);
-    virtual ~Field();
+    virtual ~Field() = default;
     const Field<T>& get_sub_field() const;
     T get_p() const;
     int get_n() const;
@@ -71,11 +71,6 @@ Field<T>::Field(T p, int n, bool calculate_root)
         this->sub_field = std::unique_ptr<Prime<T>>(nullptr);
     else
         this->sub_field = std::unique_ptr<Prime<T>>(new Prime<T>(p));
-}
-
-template <typename T>
-Field<T>::~Field()
-{
 }
 
 /**

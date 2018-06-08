@@ -60,7 +60,8 @@ template <typename T>
 class RingModN {
   public:
     RingModN(T card, bool calculate_root = true);
-    virtual ~RingModN();
+    virtual ~RingModN() = default;
+    bool isNF4 = false;
     void init();
     void compute_factors_of_order();
     void find_primitive_root();
@@ -152,11 +153,6 @@ RingModN<T>::RingModN(T card, bool calculate_root)
     if (calculate_root) {
         this->init();
     }
-}
-
-template <typename T>
-RingModN<T>::~RingModN()
-{
 }
 
 template <typename T>

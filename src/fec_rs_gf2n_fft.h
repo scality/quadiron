@@ -52,8 +52,6 @@ class RsGf2nFft : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsGf2nFft() {}
-
     inline void check_params() override
     {
         if (this->word_size > 16)
