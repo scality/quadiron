@@ -32,6 +32,7 @@
 #define __NTTEC_VEC_POLY_H__
 
 #include "gf_base.h"
+#include "gf_nf4.h"
 #include "vec_vector.h"
 
 namespace nttec {
@@ -53,6 +54,7 @@ class Poly : public Vector<T> {
     T get(int exponent) const override;
     void set(int exponent, T coef) override;
     void derivative();
+    void derivative_nf4();
     T eval(T x);
     void mul(Poly<T>* b, int deg_out);
     void mul_to_x_plus_coef(T coef);
@@ -140,6 +142,18 @@ void Poly<T>::derivative()
 {
     for (int deg = 1; deg <= degree; ++deg) {
         buf[deg - 1] = field->mul(deg % field_characteristic, buf[deg]);
+    }
+    buf[degree] = 0;
+    degree--;
+}
+
+/** Derivative particularly for NF4 */
+template <typename T>
+void Poly<T>::derivative_nf4()
+{
+    for (int deg = 1; deg <= degree; ++deg) {
+        const T _deg = field->replicate(deg % field_characteristic);
+        buf[deg - 1] = field->mul(_deg, buf[deg]);
     }
     buf[degree] = 0;
     degree--;
