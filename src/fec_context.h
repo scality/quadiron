@@ -54,6 +54,9 @@ enum class CtxVec { A_FFT_2K = 0, INV_A_I, N1, N2, V2K1, V2K2 };
 /* List of polynomials handled by context */
 enum class CtxPoly { A = 0, S };
 
+/* List of buffers handled by context */
+enum class CtxBuf { N1 = 0, N2, B2K1, B2K2, B2KMK };
+
 /** A class for context of decoding
  */
 template <typename T>
@@ -88,22 +91,45 @@ class DecodeContext {
         inv_A_i = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
         S = std::unique_ptr<vec::Poly<T>>(new vec::Poly<T>(gf, k));
 
-        vec1_n = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
-        vec2_n = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
-
-        vec1_2k =
-            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
-        vec2_2k =
-            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
-
         // zero-out all polynomials as they are used in full-length for FFT
         A->zero_fill();
         inv_A_i->zero_fill();
         S->zero_fill();
 
-        vec1_n->zero_fill();
-        vec2_n->zero_fill();
+        if (this->size == 0) {
+            vec1_n = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
+            vec2_n = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
 
+            vec1_2k =
+                std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
+            vec2_2k =
+                std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
+
+            vec1_n->zero_fill();
+            vec2_n->zero_fill();
+        } else {
+            buf1_n =
+                std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(n, size));
+            buf1_n->zero_fill();
+
+            buf2_n =
+                std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(n, size));
+
+            /* `buf1_2k` is composed of two parts each of `k` buffers
+             * - first `k` buffers are slice from 1st `k` buffers of `buf2_n`
+             * - last `(len_2k-k)` buffers point actually to a zero buffer
+             */
+            buf1_k = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(buf2_n.get(), 0, k));
+            buf1_2k = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(buf1_k.get(), 0, len_2k));
+
+            buf2_2k = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(this->len_2k, size));
+
+            buf1_len2k_minus_k = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(this->len_2k - k, size));
+        }
         init(vx);
     }
 
@@ -144,6 +170,22 @@ class DecodeContext {
             return *A;
         case CtxPoly::S:
             return *S;
+        }
+    }
+
+    vec::Buffers<T>& get_buffer(CtxBuf type) const
+    {
+        switch (type) {
+        case CtxBuf::N1:
+            return *buf1_n;
+        case CtxBuf::N2:
+            return *buf2_n;
+        case CtxBuf::B2K1:
+            return *buf1_2k;
+        case CtxBuf::B2K2:
+            return *buf2_2k;
+        case CtxBuf::B2KMK:
+            return *buf1_len2k_minus_k;
         }
     }
 
@@ -238,6 +280,13 @@ class DecodeContext {
     std::unique_ptr<vec::Vector<T>> vec2_n = nullptr;
     std::unique_ptr<vec::Vector<T>> vec1_2k = nullptr;
     std::unique_ptr<vec::Vector<T>> vec2_2k = nullptr;
+
+    std::unique_ptr<vec::Buffers<T>> buf1_k = nullptr;
+    std::unique_ptr<vec::Buffers<T>> buf1_n = nullptr;
+    std::unique_ptr<vec::Buffers<T>> buf2_n = nullptr;
+    std::unique_ptr<vec::Buffers<T>> buf1_2k = nullptr;
+    std::unique_ptr<vec::Buffers<T>> buf2_2k = nullptr;
+    std::unique_ptr<vec::Buffers<T>> buf1_len2k_minus_k = nullptr;
 };
 
 } // namespace fec
