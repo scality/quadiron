@@ -176,7 +176,7 @@ class RsNf4 : public FecCode<T> {
 
   protected:
     std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids) override
+    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
     {
         if (this->inv_r_powers == nullptr) {
             throw LogicError("FEC base: vector (inv_r)^i must be initialized");
@@ -208,7 +208,9 @@ class RsNf4 : public FecCode<T> {
                 fragments_ids,
                 vx,
                 k,
-                this->n));
+                this->n,
+                -1,
+                size));
 
         return context;
     }

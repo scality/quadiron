@@ -130,7 +130,7 @@ class RsGf2nFftAdd : public FecCode<T> {
 
   protected:
     std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids) override
+    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
     {
         if (this->betas == nullptr) {
             throw LogicError("FEC FFT ADD: vector 'betas' must be initialized");
