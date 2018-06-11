@@ -42,6 +42,9 @@ const m128i F4minus1_m128i = _mm_set1_epi32(65536); // NOLINT(cert-err58-cpp)
 const m128i F3_m128i = _mm_set1_epi32(257);         // NOLINT(cert-err58-cpp)
 const m128i F3minus1_m128i = _mm_set1_epi32(256);   // NOLINT(cert-err58-cpp)
 
+const m128i F3_m128i_u16 = _mm_set1_epi16(257);       // NOLINT(cert-err58-cpp)
+const m128i F3minus1_m128i_u16 = _mm_set1_epi16(256); // NOLINT(cert-err58-cpp)
+
 #include "simd_128_u16.h"
 #include "simd_128_u32.h"
 
