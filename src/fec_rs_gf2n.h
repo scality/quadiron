@@ -142,7 +142,7 @@ class RsGf2n : public FecCode<T> {
     }
 
     std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids) override
+    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
     {
         std::unique_ptr<DecodeContext<T>> context;
         return context;
