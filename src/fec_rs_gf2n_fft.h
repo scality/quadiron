@@ -52,25 +52,19 @@ class RsGf2nFft : public FecCode<T> {
         this->fec_init();
     }
 
-    ~RsGf2nFft()
-    {
-        if (this->gf)
-            delete this->gf;
-    }
-
-    inline void check_params()
+    inline void check_params() override
     {
         if (this->word_size > 16)
             assert(false); // not support yet
     }
 
-    inline void init_gf()
+    inline void init_gf() override
     {
         unsigned gf_n = 8 * this->word_size;
-        this->gf = new gf::BinExtension<T>(gf_n);
+        this->gf = std::unique_ptr<gf::Field<T>>(new gf::BinExtension<T>(gf_n));
     }
 
-    inline void init_fft()
+    inline void init_fft() override
     {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -81,23 +75,33 @@ class RsGf2nFft : public FecCode<T> {
         this->r = this->gf->get_nth_root(this->n);
 
         this->fft = std::unique_ptr<fft::CooleyTukey<T>>(
-            new fft::CooleyTukey<T>(this->gf, this->n));
+            new fft::CooleyTukey<T>(*(this->gf), this->n));
 
         this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
-            new fft::CooleyTukey<T>(this->gf, this->n));
+            new fft::CooleyTukey<T>(*(this->gf), this->n));
+
+        unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
+        this->fft_2k = std::unique_ptr<fft::CooleyTukey<T>>(
+            new fft::CooleyTukey<T>(*(this->gf), len_2k));
     }
 
-    inline void init_others()
+    inline void init_others() override
     {
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
         this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
-            new vec::Vector<T>(this->gf, this->n_data + 1));
+            new vec::Vector<T>(*(this->gf), this->n_data + 1));
         for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
+
+        // vector stores r^{i} for i = 0, ... , k
+        this->r_powers = std::unique_ptr<vec::Vector<T>>(
+            new vec::Vector<T>(*(this->gf), this->n));
+        for (int i = 0; i < this->n; i++)
+            this->r_powers->set(i, this->gf->exp(this->r, i));
     }
 
-    int get_n_outputs()
+    int get_n_outputs() override
     {
         return this->n;
     }
@@ -114,24 +118,33 @@ class RsGf2nFft : public FecCode<T> {
         vec::Vector<T>* output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words)
+        vec::Vector<T>* words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
     }
 
-    void decode_add_data(int fragment_index, int row)
+    void decode_add_data(int fragment_index, int row) override
     {
         // not applicable
         assert(false);
     }
 
-    void decode_add_parities(int fragment_index, int row)
+    void decode_add_parities(int fragment_index, int row) override
     {
         // we can't anticipate here
     }
 
-    void decode_build()
+    void decode_build() override
+    {
+        // nothing to do
+    }
+
+    void decode_prepare(
+        const DecodeContext<T>& context,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Vector<T>* words) override
     {
         // nothing to do
     }

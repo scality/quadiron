@@ -32,6 +32,7 @@
 #define __NTTEC_VEC_POLY_H__
 
 #include "gf_base.h"
+#include "gf_nf4.h"
 #include "vec_vector.h"
 
 namespace nttec {
@@ -46,37 +47,39 @@ namespace vec {
 template <typename T>
 class Poly : public Vector<T> {
   public:
-    Poly(gf::Field<T>* field, int n);
+    Poly(const gf::Field<T>& field, int n);
     Poly(const Poly<T>& a);
     const int get_deg() const;
-    T get(int exponent);
-    void set(int exponent, T coef);
+    void set_deg(int exponent);
+    T get(int exponent) const override;
+    void set(int exponent, T coef) override;
     void derivative();
+    void derivative_nf4();
     T eval(T x);
     void mul(Poly<T>* b, int deg_out);
     void mul_to_x_plus_coef(T coef);
-    void neg();
-    void zero();
-    void dump();
+    void neg() override;
+    void zero_fill() override;
+    void dump() override;
 
   private:
-    gf::Field<T>* field;
+    const gf::Field<T>* field;
     T field_characteristic;
     T* buf;
     int degree;
 };
 
 template <typename T>
-Poly<T>::Poly(gf::Field<T>* field, int n) : Vector<T>(field, n)
+Poly<T>::Poly(const gf::Field<T>& field, int n) : Vector<T>(field, n)
 {
-    this->field = field;
-    this->field_characteristic = field->get_p();
+    this->field = &field;
+    this->field_characteristic = field.get_p();
     this->buf = this->get_mem();
     this->degree = -1;
 }
 
 template <typename T>
-Poly<T>::Poly(const Poly<T>& a) : Vector<T>(a.rn, a.get_n())
+Poly<T>::Poly(const Poly<T>& a) : Vector<T>(a.get_gf(), a.get_n())
 {
     this->field = (gf::Field<T>*)this->rn;
     this->buf = this->get_mem();
@@ -93,7 +96,14 @@ const int Poly<T>::get_deg() const
 }
 
 template <typename T>
-T Poly<T>::get(int exponent)
+void Poly<T>::set_deg(int deg)
+{
+    assert(deg >= 0 && deg < this->n);
+    this->degree = deg;
+}
+
+template <typename T>
+T Poly<T>::get(int exponent) const
 {
     assert(exponent >= 0 && exponent < this->n);
 
@@ -122,9 +132,9 @@ void Poly<T>::set(int exponent, T coef)
  * \f$X^{n-1}\f$, not a multiplication of \f$n\f$ and \f$X^{n-1}\f$. It can be
  * expressed as below:
  * \f{eqnarray*}{
- *  derivative(X^n) &= (1 + 1 + ... + 1) X^{n-1}
- *                  &= (n % p) * X^{n-1}
- * \f{eqnarray*}{
+ *  derivative(X^n) &= (1 + 1 + ... + 1) X^{n-1} \\
+ *                  &= (n \% p) * X^{n-1}
+ * \f}
  * where \f$p\f$ is the characteristic of the field.
  */
 template <typename T>
@@ -132,6 +142,18 @@ void Poly<T>::derivative()
 {
     for (int deg = 1; deg <= degree; ++deg) {
         buf[deg - 1] = field->mul(deg % field_characteristic, buf[deg]);
+    }
+    buf[degree] = 0;
+    degree--;
+}
+
+/** Derivative particularly for NF4 */
+template <typename T>
+void Poly<T>::derivative_nf4()
+{
+    for (int deg = 1; deg <= degree; ++deg) {
+        const T _deg = field->replicate(deg % field_characteristic);
+        buf[deg - 1] = field->mul(_deg, buf[deg]);
     }
     buf[degree] = 0;
     degree--;
@@ -213,7 +235,7 @@ void Poly<T>::neg()
 }
 
 template <typename T>
-void Poly<T>::zero()
+void Poly<T>::zero_fill()
 {
     std::memset(buf, 0, this->n * sizeof(*buf));
 }

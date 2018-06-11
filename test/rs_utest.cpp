@@ -37,7 +37,7 @@ void rs_utest1()
     std::cout << "rs_utest1\n";
 
     nttec::gf::BinExtension<uint32_t> gf16(4);
-    nttec::vec::Matrix<uint32_t> mat(&gf16, 3, 3);
+    nttec::vec::Matrix<uint32_t> mat(gf16, 3, 3);
 
     mat.vandermonde_suitable_for_ec();
     // mat.dump();
@@ -65,9 +65,9 @@ void rs_utest2()
     std::cout << "rs_utest2\n";
 
     nttec::gf::BinExtension<uint32_t> gf8(3);
-    nttec::vec::Matrix<uint32_t> mat(&gf8, 5, 3);
-    nttec::vec::Vector<uint32_t> vec(&gf8, 3);
-    nttec::vec::Vector<uint32_t> output(&gf8, 5);
+    nttec::vec::Matrix<uint32_t> mat(gf8, 5, 3);
+    nttec::vec::Vector<uint32_t> vec(gf8, 3);
+    nttec::vec::Vector<uint32_t> output(gf8, 5);
 
     mat.set(0, 0, 1);
     mat.set(0, 1, 1);

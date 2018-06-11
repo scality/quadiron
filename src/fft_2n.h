@@ -71,14 +71,19 @@ namespace fft {
 template <typename T>
 class Radix2 : public FourierTransform<T> {
   public:
-    Radix2(gf::Field<T>* gf, int n, int m = 0, size_t pkt_size = 0, int N = 0);
+    Radix2(
+        const gf::Field<T>& gf,
+        int n,
+        int m = 0,
+        size_t pkt_size = 0,
+        int N = 0);
     ~Radix2();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft(vec::Buffers<T>* output, vec::Buffers<T>* input);
-    void ifft(vec::Buffers<T>* output, vec::Buffers<T>* input);
-    void fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input);
+    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
+    void ifft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
+    void fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
 
   private:
     void _fftp(vec::Buffers<T>* output, vec::Buffers<T>* input, bool inv);
@@ -123,17 +128,21 @@ class Radix2 : public FourierTransform<T> {
  * @return
  */
 template <typename T>
-Radix2<T>::Radix2(gf::Field<T>* gf, int n, int m, size_t pkt_size, int N)
+Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int m, size_t pkt_size, int N)
     : FourierTransform<T>(gf, n)
 {
-    w = gf->get_nth_root(n);
-    inv_w = gf->inv(w);
+    w = gf.get_nth_root(n);
+    inv_w = gf.inv(w);
     this->pkt_size = pkt_size;
     this->N = N;
     if (this->N == 0) {
         this->N = n;
     }
     this->m = m > 0 ? m : n;
+
+    // Note: we need k to calculate ifft where k is checked == N/2
+    // It's necessary for FFT of length N = 2.
+    k = n / 2;
 
     if (this->m == 1) {
         bypass = true;
@@ -143,12 +152,11 @@ Radix2<T>::Radix2(gf::Field<T>* gf, int n, int m, size_t pkt_size, int N)
         this->fft_trivial = new fft::Size2<T>(gf);
     } else { // (this->m > 1 && this->n > 2)
         bypass = false;
-        k = n / 2;
 
         W = new vec::Vector<T>(gf, n);
         inv_W = new vec::Vector<T>(gf, n);
-        gf->compute_omegas(W, n, w);
-        gf->compute_omegas(inv_W, n, inv_w);
+        gf.compute_omegas(W, n, w);
+        gf.compute_omegas(inv_W, n, inv_w);
 
         W_half = new vec::Vector<T>(gf, k);
         inv_W_half = new vec::Vector<T>(gf, k);
@@ -160,11 +168,11 @@ Radix2<T>::Radix2(gf::Field<T>* gf, int n, int m, size_t pkt_size, int N)
         int next_m = this->m / 2;
         this->fftk = new Radix2<T>(gf, k, next_m, pkt_size, this->N);
 
-        this->even = new vec::Vector<T>(this->gf, k);
-        this->_even = new vec::Vector<T>(this->gf, k);
+        this->even = new vec::Vector<T>(gf, k);
+        this->_even = new vec::Vector<T>(gf, k);
         this->veven = new vec::Doubled<T>(this->_even);
-        this->odd = new vec::Vector<T>(this->gf, k);
-        this->_odd = new vec::Vector<T>(this->gf, k);
+        this->odd = new vec::Vector<T>(gf, k);
+        this->_odd = new vec::Vector<T>(gf, k);
         this->vodd = new vec::Doubled<T>(this->_odd);
 
         if (this->pkt_size > 0)

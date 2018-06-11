@@ -56,8 +56,8 @@ template <typename T>
 class Slice : public Vector<T> {
   public:
     explicit Slice(Vector<T>* vec, int n = 0, int offset = 0);
-    T get(int i);
-    void set(int i, T val);
+    T get(int i) const override;
+    void set(int i, T val) override;
     void set_map(int offset);
     int get_offset(void);
 
@@ -70,7 +70,7 @@ class Slice : public Vector<T> {
 template <typename T>
 Slice<T>::Slice(Vector<T>* vec, int n, int offset)
     : Vector<T>(
-          vec->rn,
+          vec->get_gf(),
           n,
           vec->get_mem() + offset,
           vec->get_mem_len() > offset ? vec->get_mem_len() - offset : 0)
@@ -86,7 +86,7 @@ Slice<T>::Slice(Vector<T>* vec, int n, int offset)
 }
 
 template <typename T>
-inline T Slice<T>::get(int i)
+inline T Slice<T>::get(int i) const
 {
     assert(i >= 0 && i < this->n);
 

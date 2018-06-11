@@ -330,6 +330,18 @@ add_buf_to_two_bufs(int n, aint128* _x, aint128* _y, aint32 card = F4)
 inline void hadamard_mul(int n, aint128* _x, aint128* _y)
 {
     int i;
+    m128i* x = reinterpret_cast<m128i*>(_x);
+    m128i* y = reinterpret_cast<m128i*>(_y);
+
+    // multiply y to `x`
+    for (i = 0; i < n; i++) {
+        x[i] = mul(x[i], y[i], F4);
+    }
+}
+
+inline void hadamard_mul_doubled(int n, aint128* _x, aint128* _y)
+{
+    int i;
     const int half = n / 2;
     m128i* x = reinterpret_cast<m128i*>(_x);
     m128i* y = reinterpret_cast<m128i*>(_y);

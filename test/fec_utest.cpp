@@ -120,14 +120,14 @@ class FECUtest {
         int code_len,
         bool props_flag = false)
     {
-        nttec::gf::Field<T>* gf = fec->get_gf();
+        const nttec::gf::Field<T>* gf = &(fec->get_gf());
 
-        nttec::vec::Vector<T> v(gf, n_data);
-        nttec::vec::Vector<T> _v(gf, n);
-        nttec::vec::Vector<T> _v2(gf, n_data);
-        nttec::vec::Vector<T> f(gf, n_data);
-        nttec::vec::Vector<T> v2(gf, n_data);
-        nttec::vec::Vector<T> v_p(gf, n_data);
+        nttec::vec::Vector<T> v(*gf, n_data);
+        nttec::vec::Vector<T> _v(*gf, n);
+        nttec::vec::Vector<T> _v2(*gf, n_data);
+        nttec::vec::Vector<T> f(*gf, n_data);
+        nttec::vec::Vector<T> v2(*gf, n_data);
+        nttec::vec::Vector<T> v_p(*gf, n_data);
         std::vector<int> ids;
         for (int i = 0; i < code_len; i++)
             ids.push_back(i);
@@ -149,7 +149,9 @@ class FECUtest {
                 f.set(i, ids.at(i));
                 _v2.set(i, _v.get(ids.at(i)));
             }
-            fec->decode(&v2, props, 0, &f, &_v2);
+            std::unique_ptr<nttec::fec::DecodeContext<T>> context =
+                fec->init_context_dec(f);
+            fec->decode(*context, &v2, props, 0, &_v2);
             // std::cout << "v2:"; v2.dump();
             assert(v_p.eq(&v2));
         }

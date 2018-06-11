@@ -47,11 +47,11 @@ namespace fft {
 template <typename T>
 class Large : public FourierTransform<T> {
   public:
-    Large(gf::Field<T>* gf, int l, T w);
+    Large(const gf::Field<T>& gf, int l, T w);
     ~Large();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input);
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input);
+    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
 
   private:
     void
@@ -73,7 +73,7 @@ class Large : public FourierTransform<T> {
 };
 
 template <typename T>
-Large<T>::Large(gf::Field<T>* gf, int l, T w)
+Large<T>::Large(const gf::Field<T>& gf, int l, T w)
     : FourierTransform<T>(gf, arith::exp2<T>(l))
 {
     this->l = l;

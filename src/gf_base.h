@@ -47,35 +47,30 @@ class Prime;
 template <typename T>
 class Field : public RingModN<T> {
   public:
-    Field(T p, int n);
-    virtual ~Field();
-    Field<T>* get_sub_field();
-    T get_p();
-    int get_n();
+    Field(T p, int n, bool calculate_root = true);
+    virtual ~Field() = default;
+    const Field<T>& get_sub_field() const;
+    T get_p() const;
+    int get_n() const;
+    virtual T get_inv_n_mod_p(int n) const;
 
   protected:
     T p;
     int n;
-    Prime<T>* sub_field;
+    std::unique_ptr<Prime<T>> sub_field;
 };
 
 template <typename T>
-Field<T>::Field(T p, int n) : RingModN<T>(arith::exp<T>(p, n))
+Field<T>::Field(T p, int n, bool calculate_root)
+    : RingModN<T>(arith::exp<T>(p, n), calculate_root)
 {
     // XXX shall check that p is prime
     this->p = p;
     this->n = n;
     if (n == 1)
-        this->sub_field = nullptr;
+        this->sub_field = std::unique_ptr<Prime<T>>(nullptr);
     else
-        this->sub_field = new Prime<T>(p);
-}
-
-template <typename T>
-Field<T>::~Field()
-{
-    if (sub_field)
-        delete sub_field;
+        this->sub_field = std::unique_ptr<Prime<T>>(new Prime<T>(p));
 }
 
 /**
@@ -83,24 +78,30 @@ Field<T>::~Field()
  * itself if n == 1)
  */
 template <typename T>
-Field<T>* Field<T>::get_sub_field()
+const Field<T>& Field<T>::get_sub_field() const
 {
     if (this->sub_field)
-        return this->sub_field;
+        return *sub_field;
     else
-        return this;
+        return *this;
 }
 
 template <typename T>
-T Field<T>::get_p()
+T Field<T>::get_p() const
 {
     return p;
 }
 
 template <typename T>
-int Field<T>::get_n()
+int Field<T>::get_n() const
 {
     return n;
+}
+
+template <typename T>
+T Field<T>::get_inv_n_mod_p(int n) const
+{
+    return this->inv(n) % p;
 }
 
 } // namespace gf

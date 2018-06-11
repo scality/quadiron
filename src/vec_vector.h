@@ -40,6 +40,7 @@
 
 #include "core.h"
 #include "gf_ring.h"
+#include "vec_cast.h"
 #include "vec_doubled.h"
 
 namespace nttec {
@@ -49,108 +50,6 @@ class Polynomial;
 
 /** Low-level wrappers/helpers around memory buffer. */
 namespace vec {
-
-template <typename Ts, typename Td, typename Tw>
-inline void
-pack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
-{
-    int i;
-    std::vector<Tw*> tmp(n, nullptr);
-    for (i = 0; i < n; i++) {
-        tmp[i] = static_cast<Tw*>(static_cast<void*>(src->at(i)));
-        std::copy_n(tmp[i], size, dest->at(i));
-    }
-    tmp.shrink_to_fit();
-}
-
-/*
- * Cast buffers of source to a type corresponding to 'word_size'
- * Copy casted elements to buffers of destination
- *
- *  sizeof(Ts) <= sizeof(Td)
- *
- * @param src: source vector
- * @param dest: destination vector
- * @param n: number of buffers per vector
- * @param size: number of elements per destination buffer
- * @param word_size: number of bytes used to store data in each element of
- *  destination buffers
- * @return
- */
-template <typename Ts, typename Td>
-inline void pack(
-    std::vector<Ts*>* src,
-    std::vector<Td*>* dest,
-    int n,
-    size_t size,
-    size_t word_size)
-{
-    assert(sizeof(Td) >= word_size);
-    assert(word_size % sizeof(Ts) == 0);
-    // get only word_size bytes from each element
-    if (word_size == 1) {
-        pack_next<Ts, Td, uint8_t>(src, dest, n, size);
-    } else if (word_size == 2) {
-        pack_next<Ts, Td, uint16_t>(src, dest, n, size);
-    } else if (word_size == 4) {
-        pack_next<Ts, Td, uint32_t>(src, dest, n, size);
-    } else if (word_size == 8) {
-        pack_next<Ts, Td, uint64_t>(src, dest, n, size);
-    } else if (word_size == 16) {
-        pack_next<Ts, Td, __uint128_t>(src, dest, n, size);
-    }
-}
-
-template <typename Ts, typename Td, typename Tw>
-inline void
-unpack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
-{
-    int i;
-    std::vector<Tw*> tmp(n, nullptr);
-    for (i = 0; i < n; i++) {
-        tmp[i] = static_cast<Tw*>(static_cast<void*>(dest->at(i)));
-        std::copy_n(src->at(i), size, tmp[i]);
-    }
-    tmp.shrink_to_fit();
-}
-
-/*
- * Cast buffers of destination to a type corresponding to 'word_size'
- * Copy elements from source buffers to casted buffers
- *
- *  sizeof(Ts) >= sizeof(Td)
- *
- * @param src: source vector
- * @param dest: destination vector
- * @param n: number of buffers per vector
- * @param size: number of elements per source buffer
- * @param word_size: number of bytes used to store data in each element of
- *  source buffers
- * @return
- */
-template <typename Ts, typename Td>
-inline void unpack(
-    std::vector<Ts*>* src,
-    std::vector<Td*>* dest,
-    int n,
-    size_t size,
-    size_t word_size)
-{
-    assert(sizeof(Ts) >= word_size);
-    assert(word_size % sizeof(Td) == 0);
-    // get only word_size bytes from each element
-    if (word_size == 1) {
-        unpack_next<Ts, Td, uint8_t>(src, dest, n, size);
-    } else if (word_size == 2) {
-        unpack_next<Ts, Td, uint16_t>(src, dest, n, size);
-    } else if (word_size == 4) {
-        unpack_next<Ts, Td, uint32_t>(src, dest, n, size);
-    } else if (word_size == 8) {
-        unpack_next<Ts, Td, uint64_t>(src, dest, n, size);
-    } else if (word_size == 16) {
-        unpack_next<Ts, Td, __uint128_t>(src, dest, n, size);
-    }
-}
 
 /** A 1D vector.
  *
@@ -162,15 +61,16 @@ inline void unpack(
 template <typename T>
 class Vector {
   public:
-    gf::RingModN<T>* rn;
-    Vector(gf::RingModN<T>* rn, int n, T* mem = nullptr, int mem_len = 0);
+    const gf::RingModN<T>* rn;
+    Vector(const gf::RingModN<T>& rn, int n, T* mem = nullptr, int mem_len = 0);
     virtual ~Vector();
+    const gf::RingModN<T>& get_gf(void) const;
     virtual const int get_n(void) const;
     const int get_mem_len(void) const;
-    void zero_fill(void);
+    virtual void zero_fill(void);
     void fill(T val);
     virtual void set(int i, T val);
-    virtual T get(int i);
+    virtual T get(int i) const;
     T* get_mem() const;
     void set_mem(T* mem, int mem_len);
     void mul_scalar(T scalar);
@@ -188,6 +88,7 @@ class Vector {
     void copy(Vector<T>* v, int n, int offset);
     void copy(Vector<T>* v, int n, int dest_offset, int src_offset);
     bool eq(Vector<T>* v);
+    virtual void neg();
     void to_poly(Polynomial<T>* poly);
     virtual void dump(void);
 
@@ -201,9 +102,9 @@ class Vector {
 };
 
 template <typename T>
-Vector<T>::Vector(gf::RingModN<T>* rn, int n, T* mem, int mem_len)
+Vector<T>::Vector(const gf::RingModN<T>& rn, int n, T* mem, int mem_len)
 {
-    this->rn = rn;
+    this->rn = &rn;
     this->n = n;
     if (mem == nullptr) {
         this->mem = aligned_allocate<T>(n);
@@ -221,6 +122,12 @@ Vector<T>::~Vector()
 {
     if (new_mem)
         aligned_deallocate<T>(this->mem);
+}
+
+template <typename T>
+inline const gf::RingModN<T>& Vector<T>::get_gf(void) const
+{
+    return *rn;
 }
 
 template <typename T>
@@ -261,7 +168,7 @@ inline void Vector<T>::set(int i, T val)
 }
 
 template <typename T>
-inline T Vector<T>::get(int i)
+inline T Vector<T>::get(int i) const
 {
     assert(i >= 0 && i < n);
 
@@ -320,9 +227,9 @@ template <typename T>
 void Vector<T>::hadamard_mul(Vector<T>* v)
 {
     assert(n == v->get_n());
+    T* dest = mem;
     T* src = v->get_mem();
-    for (int i = 0; i < n; i++)
-        mem[i] = rn->mul(mem[i], src[i]);
+    rn->hadamard_mul(n, dest, src);
 }
 
 /**
@@ -338,7 +245,7 @@ void Vector<T>::hadamard_mul(Doubled<T>* v)
     // typical butterfly operation
     T* dest = mem;
     T* src = v->get_mem();
-    rn->hadamard_mul(n, dest, src);
+    rn->hadamard_mul_doubled(n, dest, src);
 }
 
 template <typename T>
@@ -359,7 +266,7 @@ void Vector<T>::add(Doubled<T>* v)
     // typical butterfly operation
     T* dest = mem;
     T* src = v->get_mem();
-    rn->add(n, dest, src);
+    rn->add_doubled(n, dest, src);
 }
 
 template <typename T>
@@ -468,6 +375,13 @@ bool Vector<T>::eq(Vector<T>* v)
     }
 
     return true;
+}
+
+template <typename T>
+void Vector<T>::neg()
+{
+    for (int i = 0; i < this->n; i++)
+        mem[i] = rn->neg(mem[i]);
 }
 
 template <typename T>

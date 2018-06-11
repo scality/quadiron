@@ -358,6 +358,32 @@ inline void hadamard_mul(int n, aint128* _x, aint128* _y)
     m256i* y = reinterpret_cast<m256i*>(_y);
 
     const unsigned ratio = sizeof(*x) / sizeof(*_x);
+    const int len_256 = n / ratio;
+    const int last_len = n - len_256 * ratio;
+
+    // multiply y to the first half of `x`
+    for (i = 0; i < len_256; i++) {
+        x[i] = mul(x[i], y[i], F4);
+    }
+
+    if (last_len > 0) {
+        // add last _y[] to x
+        for (i = len_256 * ratio; i < n; i++) {
+            m256i _x_p = _mm256_castsi128_si256((m128i)_x[i]);
+            m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
+
+            _x_p = mul(_x_p, _y_p, F4);
+        }
+    }
+}
+
+inline void hadamard_mul_doubled(int n, aint128* _x, aint128* _y)
+{
+    int i;
+    m256i* x = reinterpret_cast<m256i*>(_x);
+    m256i* y = reinterpret_cast<m256i*>(_y);
+
+    const unsigned ratio = sizeof(*x) / sizeof(*_x);
     const int len_y = n / 2;
     const int len_y_256 = len_y / ratio;
     const int last_len_y = len_y - len_y_256 * ratio;

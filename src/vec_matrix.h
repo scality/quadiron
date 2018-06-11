@@ -56,7 +56,7 @@ namespace vec {
 template <typename T>
 class Matrix {
   public:
-    Matrix(gf::RingModN<T>* rn, int n_rows, int n_cols);
+    Matrix(const gf::RingModN<T>& rn, int n_rows, int n_cols);
     virtual ~Matrix();
     virtual int get_n_rows();
     virtual int get_n_cols();
@@ -72,7 +72,7 @@ class Matrix {
     void dump(void);
 
   private:
-    gf::RingModN<T>* rn;
+    const gf::RingModN<T>* rn;
     int n_rows;
     int n_cols;
     T* mem;
@@ -86,9 +86,9 @@ class Matrix {
 };
 
 template <typename T>
-Matrix<T>::Matrix(gf::RingModN<T>* rn, int n_rows, int n_cols)
+Matrix<T>::Matrix(const gf::RingModN<T>& rn, int n_rows, int n_cols)
 {
-    this->rn = rn;
+    this->rn = &rn;
     this->n_rows = n_rows;
     this->n_cols = n_cols;
     this->mem = new T[n_rows * n_cols];
@@ -238,7 +238,7 @@ void Matrix<T>::inv(void)
     assert(n_rows == n_cols);
 
     // Build augmented matrix: [this | identity]
-    Matrix<T> tmp(this->rn, n_rows, n_cols * 2);
+    Matrix<T> tmp(*rn, n_rows, n_cols * 2);
     for (i = 0; i < n_rows; i++) {
         for (j = 0; j < n_cols; j++) {
             tmp.set(i, j, get(i, j));
@@ -337,7 +337,7 @@ void Matrix<T>::vandermonde_suitable_for_ec(void)
 
     dim = n_rows + n_cols;
 
-    Matrix<T> tmp(rn, dim, n_cols);
+    Matrix<T> tmp(*rn, dim, n_cols);
 
     tmp.vandermonde();
 
