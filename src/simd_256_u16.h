@@ -103,7 +103,7 @@ inline m256i mod_after_multiply(m256i a)
     m256i hi = _mm256_and_si256(a_shift, mask);
 
     m256i cmp = _mm256_cmpgt_epi16(hi, lo);
-    m256i _lo = _mm256_add_epi16(lo, _mm256_and_si256(F3_m256i, cmp));
+    m256i _lo = _mm256_add_epi16(lo, _mm256_and_si256(F3_m256i_u16, cmp));
 
     return _mm256_sub_epi16(_lo, hi);
 }
@@ -117,8 +117,8 @@ inline m256i mul(m256i a, m256i b)
 
     // filter elements of both of a & b = card-1
     m256i cmp = _mm256_and_si256(
-        _mm256_cmpeq_epi16(_a, F3minus1_m256i),
-        _mm256_cmpeq_epi16(_b, F3minus1_m256i));
+        _mm256_cmpeq_epi16(_a, F3minus1_m256i_u16),
+        _mm256_cmpeq_epi16(_b, F3minus1_m256i_u16));
 
     const m256i one = _mm256_set1_epi16(1);
     c = _mm256_add_epi16(c, _mm256_and_si256(one, cmp));
@@ -263,7 +263,8 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
             // perform multiplicaton
-            dest[i] = uint32_t(src[i]) * uint32_t(dest[i]) % card;
+            // dest[i] = uint32_t(src[i]) * uint32_t(dest[i]) % card;
+            dest[i] = (uint32_t(src[i]) * dest[i]) % card;
         }
     }
 }

@@ -105,7 +105,7 @@ inline m128i mod_after_multiply(m128i a)
     m128i hi = _mm_and_si128(a_shift, mask);
 
     m128i cmp = _mm_cmpgt_epi16(hi, lo);
-    m128i _lo = _mm_add_epi16(lo, _mm_and_si128(F3_m128i, cmp));
+    m128i _lo = _mm_add_epi16(lo, _mm_and_si128(F3_m128i_u16, cmp));
 
     return _mm_sub_epi16(_lo, hi);
 }
@@ -119,8 +119,8 @@ inline m128i mul(m128i a, m128i b)
 
     // filter elements of both of a & b = card-1
     m128i cmp = _mm_and_si128(
-        _mm_cmpeq_epi16(_a, F3minus1_m128i),
-        _mm_cmpeq_epi16(_b, F3minus1_m128i));
+        _mm_cmpeq_epi16(_a, F3minus1_m128i_u16),
+        _mm_cmpeq_epi16(_b, F3minus1_m128i_u16));
 
     const m128i one = _mm_set1_epi16(1);
     c = _mm_add_epi16(c, _mm_and_si128(one, cmp));
@@ -260,12 +260,13 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform multiplicaton
-        _dest[i] = mul(_src[i], _dest[i], card);
+        _dest[i] = mul(_src[i], _dest[i], F3);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
             // perform multiplicaton
-            dest[i] = uint32_t(src[i]) * uint32_t(dest[i]) % card;
+            // dest[i] = uint32_t(src[i]) * uint32_t(dest[i]) % card;
+            dest[i] = uint16_t((uint32_t(src[i]) * dest[i]) % card);
         }
     }
 }
