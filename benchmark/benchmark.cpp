@@ -497,12 +497,21 @@ bool Benchmark<T>::decode()
     reset_a_streams();
     reset_r_streams();
 
-    if (!fec->decode_bufs(
-            d_streams_shuffled,
-            c_streams_shuffled,
-            c_props_shuffled,
-            *r_streams))
-        return false;
+    if (operation_on_packet) {
+        if (!fec->decode_packet(
+                d_streams_shuffled,
+                c_streams_shuffled,
+                c_props_shuffled,
+                *r_streams))
+            return false;
+    } else {
+        if (!fec->decode_bufs(
+                d_streams_shuffled,
+                c_streams_shuffled,
+                c_props_shuffled,
+                *r_streams))
+            return false;
+    }
 
     if (!compare(d_chunks, r_chunks)) {
         std::cerr << errors_desc.at(ERR_FAILED_REPAIR_CHUNK) << std::endl;
