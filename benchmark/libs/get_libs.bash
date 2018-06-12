@@ -18,7 +18,12 @@ fi
 
 pushd isa-l
 ./autogen.sh
-./configure --prefix=$USR_DIR --libdir=$USR_DIR/lib
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Mac OSX
+    CC=clang ./configure --target=darwin AS=yasm --prefix=$USR_DIR --libdir=$USR_DIR/lib
+else
+    ./configure --prefix=$USR_DIR --libdir=$USR_DIR/lib
+fi
 make
 make install
 popd
