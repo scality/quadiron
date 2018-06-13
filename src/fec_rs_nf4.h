@@ -89,14 +89,14 @@ class RsNf4 : public FecCode<T> {
 
         int m = arith::get_smallest_power_of_2<int>(this->n_data);
         this->fft = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*ngff4, this->n, m));
+            new fft::Radix2<T>(*ngff4, this->n, m, this->pkt_size));
 
         this->fft_full = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*ngff4, this->n));
+            new fft::Radix2<T>(*ngff4, this->n, this->n, this->pkt_size));
 
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*ngff4, len_2k, len_2k));
+            new fft::Radix2<T>(*ngff4, len_2k, len_2k, this->pkt_size));
     }
 
     inline void init_others() override
