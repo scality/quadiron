@@ -49,16 +49,16 @@ class Extension : public gf::Field<T> {
     ~Extension() = default;
     void init();
     void find_primitive_root();
-    T card(void) const override;
-    T card_minus_one(void) const override;
-    T neg(T a) const override;
-    T add(T a, T b) const override;
-    T sub(T a, T b) const override;
-    T mul(T a, T b) const override;
-    T div(T a, T b) const override;
-    T inv(T a) const override;
-    T exp(T a, T b) const override;
-    T log(T a, T b) const override;
+    const T card(void) const override;
+    const T card_minus_one(void) const override;
+    const T neg(T a) const override;
+    const T add(T a, T b) const override;
+    const T sub(T a, T b) const override;
+    const T mul(T a, T b) const override;
+    const T div(T a, T b) const override;
+    const T inv(T a) const override;
+    const T exp(T a, T b) const override;
+    const T log(T a, T b) const override;
     T weak_rand(void) const override;
 
   private:
@@ -167,19 +167,19 @@ void Extension<T>::find_primitive_root()
 }
 
 template <typename T>
-T Extension<T>::card(void) const
+inline const T Extension<T>::card(void) const
 {
     return arith::exp<T>(this->p, this->n);
 }
 
 template <typename T>
-T Extension<T>::card_minus_one(void) const
+inline const T Extension<T>::card_minus_one(void) const
 {
     return Extension<T>::card() - 1;
 }
 
 template <typename T>
-T Extension<T>::neg(T a) const
+inline const T Extension<T>::neg(T a) const
 {
     assert(this->check(a));
 
@@ -187,7 +187,7 @@ T Extension<T>::neg(T a) const
 }
 
 template <typename T>
-T Extension<T>::add(T a, T b) const
+inline const T Extension<T>::add(T a, T b) const
 {
     assert(this->check(a));
     assert(this->check(b));
@@ -203,7 +203,7 @@ T Extension<T>::add(T a, T b) const
 }
 
 template <typename T>
-T Extension<T>::sub(T a, T b) const
+inline const T Extension<T>::sub(T a, T b) const
 {
     assert(this->check(a));
     assert(this->check(b));
@@ -219,7 +219,7 @@ T Extension<T>::sub(T a, T b) const
 }
 
 template <typename T>
-T Extension<T>::mul(T a, T b) const
+inline const T Extension<T>::mul(T a, T b) const
 {
     assert(this->check(a));
     assert(this->check(b));
@@ -236,7 +236,7 @@ T Extension<T>::mul(T a, T b) const
 }
 
 template <typename T>
-T Extension<T>::div(T a, T b) const
+inline const T Extension<T>::div(T a, T b) const
 {
     assert(this->check(a));
     assert(this->check(b));
@@ -253,7 +253,7 @@ T Extension<T>::div(T a, T b) const
 }
 
 template <typename T>
-T Extension<T>::inv(T a) const
+inline const T Extension<T>::inv(T a) const
 {
     assert(this->check(a));
 
@@ -281,7 +281,7 @@ T Extension<T>::inv(T a) const
 }
 
 template <typename T>
-T Extension<T>::exp(T a, T b) const
+inline const T Extension<T>::exp(T a, T b) const
 {
     assert(Extension<T>::check(a));
     assert(Extension<T>::check(b));
@@ -290,7 +290,7 @@ T Extension<T>::exp(T a, T b) const
 }
 
 template <typename T>
-T Extension<T>::log(T a, T b) const
+inline const T Extension<T>::log(T a, T b) const
 {
     assert(this->check(a));
 
