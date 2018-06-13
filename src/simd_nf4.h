@@ -102,6 +102,35 @@ inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
     return b;
 }
 
+inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
+{
+    uint32_t flag;
+    uint16_t ai[8];
+    aint128 values;
+
+    m128i _a = _mm_loadu_si128((m128i*)&a);
+    ai[0] = _mm_extract_epi16(_a, 0);
+    ai[1] = _mm_extract_epi16(_a, 1);
+    ai[2] = _mm_extract_epi16(_a, 2);
+    ai[3] = _mm_extract_epi16(_a, 3);
+    ai[4] = _mm_extract_epi16(_a, 4);
+    ai[5] = _mm_extract_epi16(_a, 5);
+    ai[6] = _mm_extract_epi16(_a, 6);
+    ai[7] = _mm_extract_epi16(_a, 7);
+
+    flag = ai[1];
+    flag += (ai[3] > 0) ? 2 : 0;
+    flag += (ai[5] > 0) ? 4 : 0;
+    flag += (ai[7] > 0) ? 8 : 0;
+
+    m128i val = _mm_set_epi64(
+        _mm_setzero_si64(), _mm_set_pi16(ai[6], ai[4], ai[2], ai[0]));
+    _mm_store_si128((m128i*)&values, val);
+
+    b.flag = flag;
+    b.values = values;
+}
+
 inline aint128 pack(__uint128_t a)
 {
     m128i _a = _mm_loadu_si128((m128i*)&a);
