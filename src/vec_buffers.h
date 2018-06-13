@@ -390,10 +390,10 @@ void Buffers<T>::dump(void)
     for (int i = 0; i < n; i++) {
         std::cout << "\n\t" << i << ": ";
         for (size_t j = 0; j < size - 1; j++) {
-            std::cout << unsigned((get(i))[j]) << "-";
+            std::cout << (get(i))[j] << "-";
         }
         if (size > 0) {
-            std::cout << unsigned((get(i))[size - 1]);
+            std::cout << (get(i))[size - 1];
         }
     }
     std::cout << "\n)\n";
