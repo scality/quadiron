@@ -49,7 +49,7 @@ static inline aint128 m128i_to_uint128(m128i v)
 }
 #endif // #ifdef QUADIRON_USE_AVX2
 
-inline aint128 expand16(aint16* arr, int n)
+inline aint128 expand16(uint16_t* arr, int n)
 {
     // since n <= 4
     uint16_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
@@ -61,7 +61,7 @@ inline aint128 expand16(aint16* arr, int n)
     return m128i_to_uint128(b);
 }
 
-inline aint128 expand32(aint32* arr, int n)
+inline aint128 expand32(uint32_t* arr, int n)
 {
     // since n <= 4
     uint32_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
@@ -72,7 +72,7 @@ inline aint128 expand32(aint32* arr, int n)
     return m128i_to_uint128(b);
 }
 
-inline GroupedValues<__uint128_t> unpack(aint128 a, int n)
+inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
 {
     aint32 flag = 0;
     uint32_t ai[4] __attribute__((aligned(ALIGN_SIZE)));
@@ -100,7 +100,7 @@ inline GroupedValues<__uint128_t> unpack(aint128 a, int n)
     return b;
 }
 
-inline aint128 pack(aint128 a)
+inline aint128 pack(__uint128_t a)
 {
     m128i _a = _mm_loadu_si128((m128i*)&a);
     m128i b = _mm_set_epi32(
@@ -112,7 +112,7 @@ inline aint128 pack(aint128 a)
     return m128i_to_uint128(b);
 }
 
-inline aint128 pack(aint128 a, aint32 flag)
+inline aint128 pack(__uint128_t a, uint32_t flag)
 {
     aint32 b0, b1, b2, b3;
     m128i _a = _mm_loadu_si128((m128i*)&a);
