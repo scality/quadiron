@@ -77,7 +77,7 @@ class Radix2 : public FourierTransform<T> {
         int m = 0,
         size_t pkt_size = 0,
         int N = 0);
-    ~Radix2();
+    ~Radix2() = default;
     void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
     void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
     void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
@@ -96,22 +96,22 @@ class Radix2 : public FourierTransform<T> {
     T w;
     T inv_w;
     size_t pkt_size;
-    vec::Vector<T>* W = nullptr;
-    vec::Vector<T>* inv_W = nullptr;
-    vec::Vector<T>* W_half = nullptr;
-    vec::Vector<T>* inv_W_half = nullptr;
+    std::unique_ptr<vec::Vector<T>> W = nullptr;
+    std::unique_ptr<vec::Vector<T>> inv_W = nullptr;
+    std::unique_ptr<vec::Vector<T>> W_half = nullptr;
+    std::unique_ptr<vec::Vector<T>> inv_W_half = nullptr;
 
-    fft::FourierTransform<T>* fft_trivial = nullptr;
-    fft::Radix2<T>* fftk = nullptr;
+    std::unique_ptr<fft::FourierTransform<T>> fft_trivial = nullptr;
+    std::unique_ptr<fft::Radix2<T>> fftk = nullptr;
 
-    vec::Vector<T>* even = nullptr;
-    vec::Vector<T>* _even = nullptr;
-    vec::Vector<T>* odd = nullptr;
-    vec::Vector<T>* _odd = nullptr;
-    vec::Doubled<T>* veven = nullptr;
-    vec::Doubled<T>* vodd = nullptr;
+    std::unique_ptr<vec::Vector<T>> even = nullptr;
+    std::unique_ptr<vec::Vector<T>> _even = nullptr;
+    std::unique_ptr<vec::Vector<T>> odd = nullptr;
+    std::unique_ptr<vec::Vector<T>> _odd = nullptr;
+    std::unique_ptr<vec::Doubled<T>> veven = nullptr;
+    std::unique_ptr<vec::Doubled<T>> vodd = nullptr;
 
-    vec::Buffers<T>* tmp_buf = nullptr;
+    std::unique_ptr<vec::Buffers<T>> tmp_buf = nullptr;
 };
 
 /**
@@ -146,71 +146,44 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int m, size_t pkt_size, int N)
 
     if (this->m == 1) {
         bypass = true;
-        this->fft_trivial = new fft::Single<T>(gf, this->n);
+        this->fft_trivial =
+            std::unique_ptr<fft::Single<T>>(new fft::Single<T>(gf, this->n));
     } else if (this->n <= 2) {
         bypass = true;
-        this->fft_trivial = new fft::Size2<T>(gf);
+        this->fft_trivial =
+            std::unique_ptr<fft::Size2<T>>(new fft::Size2<T>(gf));
     } else { // (this->m > 1 && this->n > 2)
         bypass = false;
 
-        W = new vec::Vector<T>(gf, n);
-        inv_W = new vec::Vector<T>(gf, n);
-        gf.compute_omegas(W, n, w);
-        gf.compute_omegas(inv_W, n, inv_w);
+        W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
+        inv_W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
+        gf.compute_omegas(W.get(), n, w);
+        gf.compute_omegas(inv_W.get(), n, inv_w);
 
-        W_half = new vec::Vector<T>(gf, k);
-        inv_W_half = new vec::Vector<T>(gf, k);
+        W_half = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
+        inv_W_half = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
         for (int i = 0; i < k; i++) {
             W_half->set(i, W->get(i));
             inv_W_half->set(i, inv_W->get(i));
         }
 
         int next_m = this->m / 2;
-        this->fftk = new Radix2<T>(gf, k, next_m, pkt_size, this->N);
+        this->fftk = std::unique_ptr<Radix2<T>>(
+            new Radix2<T>(gf, k, next_m, pkt_size, this->N));
 
-        this->even = new vec::Vector<T>(gf, k);
-        this->_even = new vec::Vector<T>(gf, k);
-        this->veven = new vec::Doubled<T>(this->_even);
-        this->odd = new vec::Vector<T>(gf, k);
-        this->_odd = new vec::Vector<T>(gf, k);
-        this->vodd = new vec::Doubled<T>(this->_odd);
+        this->even = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
+        this->_even =
+            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
+        this->veven =
+            std::unique_ptr<vec::Doubled<T>>(new vec::Doubled<T>(_even.get()));
+        this->odd = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
+        this->_odd = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
+        this->vodd =
+            std::unique_ptr<vec::Doubled<T>>(new vec::Doubled<T>(_odd.get()));
 
-        if (this->pkt_size > 0)
-            this->tmp_buf = new vec::Buffers<T>(k, pkt_size);
-    }
-}
-
-template <typename T>
-Radix2<T>::~Radix2()
-{
-    if (bypass) {
-        if (fft_trivial != nullptr)
-            delete fft_trivial;
-    } else {
-        if (fftk != nullptr)
-            delete fftk;
-        if (W != nullptr)
-            delete W;
-        if (inv_W != nullptr)
-            delete inv_W;
-        if (W_half != nullptr)
-            delete W_half;
-        if (inv_W_half != nullptr)
-            delete inv_W_half;
-        if (even != nullptr)
-            delete even;
-        if (_even != nullptr)
-            delete _even;
-        if (odd != nullptr)
-            delete odd;
-        if (_odd != nullptr)
-            delete _odd;
-        if (veven != nullptr)
-            delete veven;
-        if (vodd != nullptr)
-            delete vodd;
-        if (pkt_size > 0 && tmp_buf != nullptr)
-            delete tmp_buf;
+        // if (this->pkt_size > 0)
+        this->tmp_buf =
+            std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(k, pkt_size));
     }
 }
 
@@ -219,26 +192,26 @@ void Radix2<T>::_fft(vec::Vector<T>* output, vec::Vector<T>* input, bool inv)
 {
     for (int i = 0; i < this->n; i++) {
         if (i % 2 == 0)
-            this->even->set(i / 2, input->get(i));
+            even->set(i / 2, input->get(i));
         else
-            this->odd->set(i / 2, input->get(i));
+            odd->set(i / 2, input->get(i));
     }
     // this->even->dump();
     // this->odd->dump();
     if (inv) {
-        fftk->fft_inv(this->_even, this->even);
-        fftk->fft_inv(this->_odd, this->odd);
+        fftk->fft_inv(_even.get(), even.get());
+        fftk->fft_inv(_odd.get(), odd.get());
     } else {
-        fftk->fft(this->_even, this->even);
-        fftk->fft(this->_odd, this->odd);
+        fftk->fft(_even.get(), even.get());
+        fftk->fft(_odd.get(), odd.get());
     }
 
     if (inv)
-        output->copy(inv_W, this->n);
+        output->copy(inv_W.get(), this->n);
     else
-        output->copy(W, this->n);
-    output->hadamard_mul(this->vodd);
-    output->add(this->veven);
+        output->copy(W.get(), this->n);
+    output->hadamard_mul(vodd.get());
+    output->add(veven.get());
 }
 
 template <typename T>
@@ -301,26 +274,17 @@ void Radix2<T>::_fftp(vec::Buffers<T>* output, vec::Buffers<T>* input, bool inv)
      * output[i] = even[i] + w * odd[i] for 0 <= i < n/2
      * output[i] = even[i] - w * odd[i] otherwise
      */
-    // prepare tm_buf
-    vec::Buffers<T>* _o_odd = nullptr;
-    if (this->pkt_size == 0) {
-        _o_odd = new vec::Buffers<T>(half, size);
-        tmp_buf = _o_odd;
-    }
 
     // set tmp_buf = w * o_odd
     if (inv)
-        this->gf->mul_vec_to_vecp(inv_W_half, &o_odd, tmp_buf);
+        this->gf->mul_vec_to_vecp(inv_W_half.get(), &o_odd, tmp_buf.get());
     else
-        this->gf->mul_vec_to_vecp(W_half, &o_odd, tmp_buf);
+        this->gf->mul_vec_to_vecp(W_half.get(), &o_odd, tmp_buf.get());
 
     // substract o_even by tmp_buf and store in o_dd: o_even - w * o_odd
-    this->gf->sub_vecp_to_vecp(&o_even, tmp_buf, &o_odd);
+    this->gf->sub_vecp_to_vecp(&o_even, tmp_buf.get(), &o_odd);
     // add tmp_buf to o_even to get: o_even + w * o_odd
-    this->gf->add_vecp_to_vecp(tmp_buf, &o_even);
-
-    if (_o_odd != nullptr)
-        delete _o_odd;
+    this->gf->add_vecp_to_vecp(tmp_buf.get(), &o_even);
 }
 
 template <typename T>
