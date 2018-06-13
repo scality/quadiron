@@ -74,25 +74,27 @@ inline aint128 expand32(uint32_t* arr, int n)
 
 inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
 {
-    aint32 flag = 0;
-    uint32_t ai[4] __attribute__((aligned(ALIGN_SIZE)));
-    uint32_t bi[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
+    uint32_t flag;
+    uint16_t ai[8];
     aint128 values;
-    int i;
 
     m128i _a = _mm_loadu_si128((m128i*)&a);
-    ai[0] = _mm_extract_epi32(_a, 0);
-    ai[1] = _mm_extract_epi32(_a, 1);
-    ai[2] = _mm_extract_epi32(_a, 2);
-    ai[3] = _mm_extract_epi32(_a, 3);
-    for (i = 0; i < n; i++) {
-        if (ai[i] == 65536)
-            flag |= (1 << i);
-        else
-            bi[i] = (aint16)ai[i];
-    }
+    ai[0] = _mm_extract_epi16(_a, 0);
+    ai[1] = _mm_extract_epi16(_a, 1);
+    ai[2] = _mm_extract_epi16(_a, 2);
+    ai[3] = _mm_extract_epi16(_a, 3);
+    ai[4] = _mm_extract_epi16(_a, 4);
+    ai[5] = _mm_extract_epi16(_a, 5);
+    ai[6] = _mm_extract_epi16(_a, 6);
+    ai[7] = _mm_extract_epi16(_a, 7);
+
+    flag = ai[1];
+    flag += (ai[3] > 0) ? 2 : 0;
+    flag += (ai[5] > 0) ? 4 : 0;
+    flag += (ai[7] > 0) ? 8 : 0;
+
     m128i val = _mm_set_epi64(
-        _mm_setzero_si64(), _mm_set_pi16(bi[3], bi[2], bi[1], bi[0]));
+        _mm_setzero_si64(), _mm_set_pi16(ai[6], ai[4], ai[2], ai[0]));
     _mm_store_si128((m128i*)&values, val);
 
     GroupedValues<__uint128_t> b = {values, flag};
