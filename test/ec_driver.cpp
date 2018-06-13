@@ -360,7 +360,8 @@ template <typename T>
 void run_fec_rs_nf4(int word_size, int n_data, int n_parities, int rflag)
 {
     nttec::fec::RsNf4<T>* fec;
-    fec = new nttec::fec::RsNf4<T>(word_size, n_data, n_parities);
+    size_t pkt_size = 1024;
+    fec = new nttec::fec::RsNf4<T>(word_size, n_data, n_parities, pkt_size);
 
     if (tflag) {
         print_fec_type<T>(fec);
