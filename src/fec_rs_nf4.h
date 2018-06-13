@@ -147,9 +147,10 @@ class RsNf4 : public FecCode<T> {
         vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         // std::cout << "encoded:"; output->dump();
+        GroupedValues<T> true_val;
         for (unsigned i = 0; i < this->code_len; i++) {
             T val = output->get(i);
-            GroupedValues<T> true_val = ngff4->unpack(val);
+            ngff4->unpack(val, true_val);
             if (true_val.flag > 0) {
                 props[i].add(
                     ValueLocation(offset, i), std::to_string(true_val.flag));
@@ -278,10 +279,11 @@ class RsNf4 : public FecCode<T> {
         vec::BuffersZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         int size = output->get_size();
+        GroupedValues<T> true_val;
         for (unsigned frag_id = 0; frag_id < this->code_len; ++frag_id) {
             T* chunk = output->get(frag_id);
             for (size_t symb_id = 0; symb_id < size; symb_id++) {
-                GroupedValues<T> true_val = ngff4->unpack(chunk[symb_id]);
+                ngff4->unpack(chunk[symb_id], true_val);
                 if (true_val.flag > 0) {
                     const ValueLocation loc(
                         offset + symb_id * this->word_size, frag_id);
