@@ -212,7 +212,7 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        nttec::fft::Radix2<T> fft(gf, n);
+        nttec::fft::Radix2<T> fft(gf, n, n, size);
 
         int vec_n = fft.get_n();
 
