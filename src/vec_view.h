@@ -57,7 +57,7 @@ class View : public Vector<T> {
   public:
     explicit View(Vector<T>* vec, int n = 0, int offset = 0, int step = 1);
     const int get_n(void) const override;
-    T get(int i) const override;
+    const T& get(int i) const override;
     void set(int i, T val) override;
     void set_map(int offset, int step);
     void set_len(int n);
@@ -89,7 +89,7 @@ const int View<T>::get_n(void) const
 }
 
 template <typename T>
-T View<T>::get(int i) const
+inline const T& View<T>::get(int i) const
 {
     assert(i >= 0 && i < this->n);
 

@@ -62,7 +62,7 @@ class Matrix {
     virtual int get_n_cols();
     void zero_fill(void);
     void set(int i, int j, T val);
-    virtual T get(int i, int j);
+    virtual const T& get(int i, int j);
     void inv(void);
     void mul(vec::Vector<T>* output, vec::Vector<T>* v);
     void vandermonde(void);
@@ -134,7 +134,7 @@ void Matrix<T>::set(int i, int j, T val)
 }
 
 template <typename T>
-T Matrix<T>::get(int i, int j)
+inline const T& Matrix<T>::get(int i, int j)
 {
     assert(i >= 0 && i < n_rows);
     assert(j >= 0 && j < n_cols);
