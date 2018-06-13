@@ -79,22 +79,22 @@ class RingModN {
     bool isNF4 = false;
     void compute_factors_of_order();
     void find_primitive_root();
-    virtual T card(void) const;
-    virtual T card_minus_one(void) const;
+    virtual const T card(void) const;
+    virtual const T card_minus_one(void) const;
     virtual bool check(T a) const;
-    virtual T neg(T a) const;
-    virtual T add(T a, T b) const;
-    virtual T sub(T a, T b) const;
-    virtual T mul(T a, T b) const;
-    virtual T div(T a, T b) const;
-    T inv_bezout(T a) const;
-    virtual T inv(T a) const;
-    virtual T exp(T a, T b) const;
-    virtual T log(T a, T b) const;
-    T exp_naive(T base, T exponent) const;
-    T exp_quick(T base, T exponent) const;
-    T log_naive(T base, T exponent) const;
-    virtual T replicate(T a) const;
+    virtual const T neg(T a) const;
+    virtual const T add(T a, T b) const;
+    virtual const T sub(T a, T b) const;
+    virtual const T mul(T a, T b) const;
+    virtual const T div(T a, T b) const;
+    const T inv_bezout(T a) const;
+    virtual const T inv(T a) const;
+    virtual const T exp(T a, T b) const;
+    virtual const T log(T a, T b) const;
+    const T exp_naive(T base, T exponent) const;
+    const T exp_quick(T base, T exponent) const;
+    const T log_naive(T base, T exponent) const;
+    virtual const T replicate(T a) const;
     virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len) const;
     virtual void mul_vec_to_vecp(
         vec::Vector<T>* u,
@@ -169,13 +169,13 @@ void RingModN<T>::init()
 }
 
 template <typename T>
-T RingModN<T>::card(void) const
+inline const T RingModN<T>::card(void) const
 {
     return this->_card;
 }
 
 template <typename T>
-T RingModN<T>::card_minus_one(void) const
+inline const T RingModN<T>::card_minus_one(void) const
 {
     return this->_card - 1;
 }
@@ -187,7 +187,7 @@ bool RingModN<T>::check(T a) const
 }
 
 template <typename T>
-T RingModN<T>::neg(T a) const
+inline const T RingModN<T>::neg(T a) const
 {
     assert(check(a));
 
@@ -195,20 +195,19 @@ T RingModN<T>::neg(T a) const
 }
 
 template <typename T>
-T RingModN<T>::add(T a, T b) const
+inline const T RingModN<T>::add(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
 
     T c = a + b;
     if (c >= this->_card)
-        return c - this->_card;
-    else
-        return c;
+        c -= this->_card;
+    return c;
 }
 
 template <typename T>
-T RingModN<T>::sub(T a, T b) const
+inline const T RingModN<T>::sub(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -220,7 +219,7 @@ T RingModN<T>::sub(T a, T b) const
 }
 
 template <typename T>
-T RingModN<T>::mul(T a, T b) const
+inline const T RingModN<T>::mul(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -229,7 +228,7 @@ T RingModN<T>::mul(T a, T b) const
 }
 
 template <typename T>
-T RingModN<T>::div(T a, T b) const
+inline const T RingModN<T>::div(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -247,7 +246,7 @@ T RingModN<T>::div(T a, T b) const
  * @return
  */
 template <typename T>
-T RingModN<T>::inv_bezout(T a) const
+inline const T RingModN<T>::inv_bezout(T a) const
 {
     assert(check(a));
 
@@ -262,13 +261,13 @@ T RingModN<T>::inv_bezout(T a) const
 }
 
 template <typename T>
-T RingModN<T>::inv(T a) const
+inline const T RingModN<T>::inv(T a) const
 {
     return inv_bezout(a);
 }
 
 template <typename T>
-T RingModN<T>::exp(T a, T b) const
+inline const T RingModN<T>::exp(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -277,7 +276,7 @@ T RingModN<T>::exp(T a, T b) const
 }
 
 template <typename T>
-T RingModN<T>::log(T a, T b) const
+inline const T RingModN<T>::log(T a, T b) const
 {
     assert(check(a));
 
@@ -293,7 +292,7 @@ T RingModN<T>::log(T a, T b) const
  * @return
  */
 template <typename T>
-T RingModN<T>::exp_naive(T base, T exponent) const
+inline const T RingModN<T>::exp_naive(T base, T exponent) const
 {
     T result;
     T i;
@@ -320,7 +319,7 @@ T RingModN<T>::exp_naive(T base, T exponent) const
  * @return
  */
 template <typename T>
-T RingModN<T>::exp_quick(T base, T exponent) const
+inline const T RingModN<T>::exp_quick(T base, T exponent) const
 {
     T result;
 
@@ -351,7 +350,7 @@ T RingModN<T>::exp_quick(T base, T exponent) const
  * return
  */
 template <typename T>
-T RingModN<T>::log_naive(T base, T exponent) const
+inline const T RingModN<T>::log_naive(T base, T exponent) const
 {
     T result;
 
@@ -365,7 +364,7 @@ T RingModN<T>::log_naive(T base, T exponent) const
 
 /** This operation is only reserved for NF4 */
 template <typename T>
-T RingModN<T>::replicate(T a) const
+inline const T RingModN<T>::replicate(T a) const
 {
     return a;
 }
@@ -374,7 +373,7 @@ T RingModN<T>::replicate(T a) const
  * For each i, dest[i] = a * src[i]
  */
 template <typename T>
-void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) const
+inline void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) const
 {
     size_t i;
     DoubleSizeVal<T> coef = DoubleSizeVal<T>(a);
@@ -385,7 +384,7 @@ void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) const
 }
 
 template <typename T>
-void RingModN<T>::mul_vec_to_vecp(
+inline void RingModN<T>::mul_vec_to_vecp(
     vec::Vector<T>* u,
     vec::Buffers<T>* src,
     vec::Buffers<T>* dest) const
@@ -400,7 +399,7 @@ void RingModN<T>::mul_vec_to_vecp(
 }
 
 template <typename T>
-void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len) const
+inline void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len) const
 {
     size_t i;
     for (i = 0; i < len; i++) {
@@ -410,8 +409,8 @@ void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len) const
 }
 
 template <typename T>
-void RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest)
-    const
+inline void
+RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest) const
 {
     assert(src->get_n() == dest->get_n());
     assert(src->get_size() == dest->get_size());
@@ -424,7 +423,8 @@ void RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest)
 }
 
 template <typename T>
-void RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) const
+inline void
+RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) const
 {
     size_t i;
     for (i = 0; i < len; i++) {
@@ -433,7 +433,7 @@ void RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) const
 }
 
 template <typename T>
-void RingModN<T>::sub_vecp_to_vecp(
+inline void RingModN<T>::sub_vecp_to_vecp(
     vec::Buffers<T>* veca,
     vec::Buffers<T>* vecb,
     vec::Buffers<T>* res) const
@@ -493,7 +493,7 @@ bool RingModN<T>::is_quadratic_residue(T q) const
  * @param w n-th root of unity
  */
 template <typename T>
-void RingModN<T>::compute_omegas(vec::Vector<T>* W, int n, T w) const
+inline void RingModN<T>::compute_omegas(vec::Vector<T>* W, int n, T w) const
 {
     for (int i = 0; i < n; i++) {
         W->set(i, this->exp(w, i));
@@ -830,7 +830,7 @@ T RingModN<T>::get_code_len_high_compo(T n) const
 }
 
 template <typename T>
-void RingModN<T>::hadamard_mul(int n, T* x, T* y) const
+inline void RingModN<T>::hadamard_mul(int n, T* x, T* y) const
 {
     for (int i = 0; i < n; i++) {
         x[i] = mul(x[i], y[i]);
@@ -838,7 +838,7 @@ void RingModN<T>::hadamard_mul(int n, T* x, T* y) const
 }
 
 template <typename T>
-void RingModN<T>::hadamard_mul_doubled(int n, T* x, T* y) const
+inline void RingModN<T>::hadamard_mul_doubled(int n, T* x, T* y) const
 {
     const int half = n / 2;
     T* x_next = x + half;
@@ -855,7 +855,7 @@ void RingModN<T>::hadamard_mul_doubled(int n, T* x, T* y) const
 }
 
 template <typename T>
-void RingModN<T>::add_doubled(int n, T* x, T* y) const
+inline void RingModN<T>::add_doubled(int n, T* x, T* y) const
 {
     const int half = n / 2;
     T* x_next = x + half;
@@ -872,7 +872,7 @@ void RingModN<T>::add_doubled(int n, T* x, T* y) const
 }
 
 template <typename T>
-void RingModN<T>::neg(size_t n, T* x) const
+inline void RingModN<T>::neg(size_t n, T* x) const
 {
     // add y to the first half of `x`
     for (size_t i = 0; i < n; i++) {
@@ -881,7 +881,7 @@ void RingModN<T>::neg(size_t n, T* x) const
 }
 
 template <typename T>
-void RingModN<T>::neg(vec::Buffers<T>* buf) const
+inline void RingModN<T>::neg(vec::Buffers<T>* buf) const
 {
     size_t size = buf->get_size();
     for (int i = 0; i < buf->get_n(); i++) {
