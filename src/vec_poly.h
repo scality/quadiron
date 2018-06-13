@@ -51,7 +51,7 @@ class Poly : public Vector<T> {
     Poly(const Poly<T>& a);
     const int get_deg() const;
     void set_deg(int exponent);
-    T get(int exponent) const override;
+    const T& get(int exponent) const override;
     void set(int exponent, T coef) override;
     void derivative();
     void derivative_nf4();
@@ -103,7 +103,7 @@ void Poly<T>::set_deg(int deg)
 }
 
 template <typename T>
-T Poly<T>::get(int exponent) const
+inline const T& Poly<T>::get(int exponent) const
 {
     assert(exponent >= 0 && exponent < this->n);
 

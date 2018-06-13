@@ -55,10 +55,11 @@ class ZeroExtended : public Vector<T> {
   public:
     ZeroExtended(Vector<T>* vec, int n);
     const int get_n(void) const override;
-    T get(int i) const override;
+    const T& get(int i) const override;
 
   private:
     Vector<T>* vec;
+    T zero = 0;
     int n;
 };
 
@@ -77,11 +78,11 @@ const int ZeroExtended<T>::get_n(void) const
 }
 
 template <typename T>
-T ZeroExtended<T>::get(int i) const
+inline const T& ZeroExtended<T>::get(int i) const
 {
     assert(i >= 0 && i < n);
 
-    return (i < vec->get_n()) ? vec->get(i) : 0;
+    return (i < vec->get_n()) ? vec->get(i) : zero;
 }
 
 } // namespace vec
