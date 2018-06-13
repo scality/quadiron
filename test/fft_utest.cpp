@@ -202,7 +202,7 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
     // that is at least (n_parities + n_data).
     const unsigned n = gf.get_code_len(this->n_parities + this->n_data);
 
-    fft::Radix2<TypeParam> fft(gf, n);
+    fft::Radix2<TypeParam> fft(gf, n, n, size);
 
     const int vec_n = fft.get_n();
     quadiron::vec::Buffers<TypeParam> v(this->n_data, size);
