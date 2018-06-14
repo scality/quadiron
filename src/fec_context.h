@@ -252,7 +252,7 @@ class DecodeContext {
 
         // compute FFT(A) of length 2k
         if (this->fft_2k) {
-            vec::ZeroExtended<T> A_2k(A.get(), len_2k);
+            vec::ZeroExtended<T> A_2k(*A, len_2k);
             this->fft_2k->fft(*A_fft_2k, A_2k);
         }
     }
