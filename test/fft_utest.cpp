@@ -76,9 +76,9 @@ class FftTest : public ::testing::Test {
             }
             quadiron::vec::Vector<T> v2(gf, t * m);
 
-            fft->taylor_expand(&v2, &v1, n, t);
+            fft->taylor_expand(v2, v1, n, t);
             quadiron::vec::Vector<T> _v1(gf, n);
-            fft->inv_taylor_expand(&_v1, &v2, t);
+            fft->inv_taylor_expand(_v1, v2, t);
             ASSERT_EQ(_v1, v1);
         }
     }
@@ -90,9 +90,9 @@ class FftTest : public ::testing::Test {
             const int n = fft->get_n();
             quadiron::vec::Vector<T> v1 = this->random_vec(gf, n, n);
 
-            fft->taylor_expand_t2(&v1, n, true);
+            fft->taylor_expand_t2(v1, n, true);
             quadiron::vec::Vector<T> _v1(gf, n);
-            fft->inv_taylor_expand_t2(&_v1);
+            fft->inv_taylor_expand_t2(_v1);
             ASSERT_EQ(_v1, v1);
         }
     }
@@ -108,8 +108,8 @@ class FftTest : public ::testing::Test {
             quadiron::vec::Vector<T> v =
                 this->random_vec(gf, fft->get_n(), n_data);
 
-            fft->fft(&_v, &v);
-            fft->ifft(&v2, &_v);
+            fft->fft(_v, v);
+            fft->ifft(v2, _v);
             ASSERT_EQ(v, v2);
         }
     }
@@ -216,8 +216,8 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
                 mem[u] = gf.weak_rand();
             }
         }
-        fft.fft(&v2, &_v);
-        fft.ifft(&_v2, &v2);
+        fft.fft(v2, _v);
+        fft.ifft(_v2, v2);
 
         ASSERT_EQ(_v, _v2);
     }
@@ -308,7 +308,7 @@ TYPED_TEST(FftTest, TestFft2) // NOLINT
     v.set(1, 871);
     v.set(2, 49520);
 
-    fft.fft(&_v, &v);
+    fft.fft(_v, v);
     ASSERT_EQ(_v.get(0), 12600);
     ASSERT_EQ(_v.get(1), 27885);
     ASSERT_EQ(_v.get(2), 17398);
@@ -318,7 +318,7 @@ TYPED_TEST(FftTest, TestFft2) // NOLINT
     ASSERT_EQ(_v.get(6), 4591);
     ASSERT_EQ(_v.get(7), 42289);
 
-    fft.ifft(&v2, &_v);
+    fft.ifft(v2, _v);
     ASSERT_EQ(v, v2);
 }
 
