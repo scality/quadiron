@@ -244,7 +244,7 @@ class DecodeContext {
         }
 
         // compute A_i(x_i)
-        this->fft->fft(inv_A_i.get(), &_A);
+        this->fft->fft(*inv_A_i, _A);
 
         // compute 1/(x_i * A_i(x_i))
         // we care only about elements corresponding to fragments_ids
@@ -262,7 +262,7 @@ class DecodeContext {
         // compute FFT(A) of length 2k
         if (this->fft_2k) {
             vec::ZeroExtended<T> A_2k(A.get(), len_2k);
-            this->fft_2k->fft(A_fft_2k.get(), &A_2k);
+            this->fft_2k->fft(*A_fft_2k, A_2k);
         }
     }
 

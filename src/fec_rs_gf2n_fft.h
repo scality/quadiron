@@ -121,7 +121,7 @@ class RsGf2nFft : public FecCode<T> {
         vec::Vector<T>* words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, &vwords);
+        this->fft->fft(*output, vwords);
     }
 
     void decode_add_data(int fragment_index, int row) override
