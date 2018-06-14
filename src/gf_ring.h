@@ -83,9 +83,9 @@ class RingModN {
     virtual const T replicate(T a) const;
     virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len) const;
     virtual void mul_vec_to_vecp(
-        vec::Vector<T>* u,
-        vec::Buffers<T>* src,
-        vec::Buffers<T>* dest) const;
+        vec::Vector<T>& u,
+        vec::Buffers<T>& src,
+        vec::Buffers<T>& dest) const;
     virtual void add_two_bufs(T* src, T* dest, size_t len) const;
     virtual void
     add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest) const;
@@ -384,23 +384,23 @@ inline void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) const
 
 template <typename T>
 inline void RingModN<T>::mul_vec_to_vecp(
-    vec::Vector<T>* u,
-    vec::Buffers<T>* src,
-    vec::Buffers<T>* dest) const
+    vec::Vector<T>& u,
+    vec::Buffers<T>& src,
+    vec::Buffers<T>& dest) const
 {
-    assert(u->get_n() == src->get_n());
+    assert(u.get_n() == src.get_n());
     int i;
-    int n = u->get_n();
-    size_t len = src->get_size();
+    int n = u.get_n();
+    size_t len = src.get_size();
     T h = this->card_minus_one();
     for (i = 0; i < n; i++) {
-        T coef = u->get(i);
-        T* _src = src->get(i);
-        T* _dest = dest->get(i);
+        T coef = u.get(i);
+        T* _src = src.get(i);
+        T* _dest = dest.get(i);
         if (coef == 0) {
-            dest->fill(i, 0);
+            dest.fill(i, 0);
         } else if (coef == 1) {
-            dest->copy(i, _src);
+            dest.copy(i, _src);
         } else if (coef == h) {
             this->neg(len, _dest);
         } else if (coef > 1) {
