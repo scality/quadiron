@@ -39,7 +39,7 @@ class VectorUtest {
         nttec::gf::Prime<T> gfp(65537);
         nttec::vec::Vector<T> vec1(gfp, 16);
         nttec::vec::Vector<T> vec2(gfp, 8);
-        nttec::vec::Doubled<T> v2vec2(&vec2);
+        nttec::vec::Doubled<T> v2vec2(vec2);
 
         vec1.set(0, 1);
         vec1.set(1, 64);
@@ -94,7 +94,7 @@ class VectorUtest {
         nttec::gf::Prime<T> gfp(65537);
         nttec::vec::Vector<T> vec1(gfp, 8);
         nttec::vec::Vector<T> vec2(gfp, 4);
-        nttec::vec::Doubled<T> v2vec2(&vec2);
+        nttec::vec::Doubled<T> v2vec2(vec2);
 
         vec1.set(0, 5459);
         vec1.set(1, 11947);
