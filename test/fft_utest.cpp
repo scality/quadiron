@@ -138,9 +138,9 @@ class FFTUtest {
             for (unsigned i = 0; i < n_data; i++)
                 v.set(i, gf.weak_rand());
             // v.dump();
-            fft.fft(&_v, &v);
+            fft.fft(_v, v);
             // _v.dump();
-            fft.ifft(&v2, &_v);
+            fft.ifft(v2, _v);
             // v2.dump();
             assert(v.eq(&v2));
         }
@@ -183,9 +183,9 @@ class FFTUtest {
             for (unsigned i = 0; i < n_data; i++)
                 v.set(i, gf.weak_rand());
             // v.dump();
-            fft.fft(&_v, &v);
+            fft.fft(_v, v);
             // _v.dump();
-            fft.ifft(&v2, &_v);
+            fft.ifft(v2, _v);
             // v2.dump();
             assert(v.eq(&v2));
         }
@@ -228,9 +228,9 @@ class FFTUtest {
                 }
             }
             // _v.dump();
-            fft.fft(&v2, &_v);
+            fft.fft(v2, _v);
             // v2.dump();
-            fft.ifft(&_v2, &v2);
+            fft.ifft(_v2, v2);
             // _v2.dump();
             assert(_v.eq(&_v2));
         }
@@ -262,9 +262,9 @@ class FFTUtest {
             for (T i = 0; i < n_data; i++)
                 v.set(i, gf.weak_rand());
             // v.dump();
-            fft.fft(&_v, &v);
+            fft.fft(_v, v);
             // _v.dump();
-            fft.ifft(&v2, &_v);
+            fft.ifft(v2, _v);
             // v2.dump();
             assert(v.eq(&v2));
         }
@@ -297,9 +297,9 @@ class FFTUtest {
             for (T i = 0; i < n_data; i++)
                 v.set(i, gf.weak_rand());
             // v.dump();
-            fft.fft(&_v, &v);
+            fft.fft(_v, v);
             // _v.dump();
-            fft.ifft(&v2, &_v);
+            fft.ifft(v2, _v);
             // v2.dump();
             assert(v.eq(&v2));
         }
@@ -331,9 +331,9 @@ class FFTUtest {
                 for (T i = 0; i < n_data; i++)
                     v.set(i, gf.weak_rand());
                 // v.dump();
-                fft.fft(&_v, &v);
+                fft.fft(_v, v);
                 // _v.dump();
-                fft.ifft(&v2, &_v);
+                fft.ifft(v2, _v);
                 // v2.dump();
                 assert(v.eq(&v2));
             }
@@ -354,9 +354,9 @@ class FFTUtest {
         for (int i = 0; i < n; i++)
             v1.set(i, gf.weak_rand());
         // v1.dump();
-        fft->taylor_expand(&v2, &v1, n, t);
+        fft->taylor_expand(v2, v1, n, t);
         nttec::vec::Vector<T> _v1(gf, n);
-        fft->inv_taylor_expand(&_v1, &v2, t);
+        fft->inv_taylor_expand(_v1, v2, t);
         // _v1.dump();
         assert(_v1.eq(&v1));
     }
@@ -380,10 +380,10 @@ class FFTUtest {
         for (int i = 0; i < n; i++)
             v1.set(i, gf.weak_rand());
         // v1.dump();
-        fft->taylor_expand_t2(&v1, n, true);
+        fft->taylor_expand_t2(v1, n, true);
         // v1.dump();
         nttec::vec::Vector<T> _v1(gf, n);
-        fft->inv_taylor_expand_t2(&_v1);
+        fft->inv_taylor_expand_t2(_v1);
         // _v1.dump();
         assert(_v1.eq(&v1));
     }
@@ -412,9 +412,9 @@ class FFTUtest {
             for (int i = 0; i < n_data; i++)
                 v.set(i, gf.weak_rand());
             // v.dump();
-            fft->fft(&_v, &v);
+            fft->fft(_v, v);
             // _v.dump();
-            fft->ifft(&v2, &_v);
+            fft->ifft(v2, _v);
             // v2.dump();
             assert(v.eq(&v2));
         }
@@ -464,9 +464,9 @@ class FFTUtest {
             for (T i = 0; i < n_data; i++)
                 v.set(i, gf.weak_rand());
             // v.dump();
-            fft.fft(&_v, &v);
+            fft.fft(_v, v);
             // _v.dump();
-            fft.ifft(&v2, &_v);
+            fft.ifft(v2, _v);
             // v2.dump();
             assert(v.eq(&v2));
         }
@@ -488,9 +488,9 @@ class FFTUtest {
             v.zero_fill();
             v.set(0, gf.weak_rand());
             // v.dump();
-            fft.fft(&_v, &v);
+            fft.fft(_v, v);
             // _v.dump();
-            fft.ifft(&v2, &_v);
+            fft.ifft(v2, _v);
             // v2.dump();
             assert(v.eq(&v2));
         }
@@ -532,7 +532,7 @@ class FFTUtest {
         v.set(1, 871);
         v.set(2, 49520);
         // v.dump();
-        fft.fft(&_v, &v);
+        fft.fft(_v, v);
         // _v.dump();
         assert(_v.get(0) == 12600);
         assert(_v.get(1) == 27885);
@@ -542,7 +542,7 @@ class FFTUtest {
         assert(_v.get(5) == 36186);
         assert(_v.get(6) == 4591);
         assert(_v.get(7) == 42289);
-        fft.ifft(&v2, &_v);
+        fft.ifft(v2, _v);
         // v2.dump();
         assert(v.eq(&v2));
     }
@@ -585,9 +585,9 @@ class FFTUtest {
             for (T i = 0; i < n_data; i++)
                 v.set(i, gf.weak_rand());
             // v.dump();
-            fft.fft(&_v, &v);
+            fft.fft(_v, v);
             // _v.dump();
-            fft.ifft(&v2, &_v);
+            fft.ifft(v2, _v);
             // v2.dump();
             assert(v.eq(&v2));
         }
