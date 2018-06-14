@@ -175,7 +175,7 @@ class RsGfpFft : public FecCode<T> {
         off_t offset,
         vec::Vector<T>& words) override
     {
-        vec::ZeroExtended<T> vwords(&words, this->n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {
