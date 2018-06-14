@@ -157,8 +157,8 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int m, size_t pkt_size, int N)
 
         W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
         inv_W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
-        gf.compute_omegas(W.get(), n, w);
-        gf.compute_omegas(inv_W.get(), n, inv_w);
+        gf.compute_omegas(*W, n, w);
+        gf.compute_omegas(*inv_W, n, inv_w);
 
         W_half = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
         inv_W_half = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
@@ -282,9 +282,9 @@ void Radix2<T>::_fftp(vec::Buffers<T>& output, vec::Buffers<T>& input, bool inv)
         this->gf->mul_vec_to_vecp(*W_half, o_odd, *tmp_buf);
 
     // substract o_even by tmp_buf and store in o_dd: o_even - w * o_odd
-    this->gf->sub_vecp_to_vecp(&o_even, tmp_buf.get(), &o_odd);
+    this->gf->sub_vecp_to_vecp(o_even, *tmp_buf, o_odd);
     // add tmp_buf to o_even to get: o_even + w * o_odd
-    this->gf->add_vecp_to_vecp(tmp_buf.get(), &o_even);
+    this->gf->add_vecp_to_vecp(*tmp_buf, o_even);
 }
 
 template <typename T>
