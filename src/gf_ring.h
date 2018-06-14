@@ -102,15 +102,15 @@ class RingModN {
         vec::Buffers<T>& dest) const;
     virtual void add_two_bufs(T* src, T* dest, size_t len) const;
     virtual void
-    add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest) const;
+    add_vecp_to_vecp(vec::Buffers<T>& src, vec::Buffers<T>& dest) const;
     virtual void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) const;
     virtual void sub_vecp_to_vecp(
-        vec::Buffers<T>* veca,
-        vec::Buffers<T>* vecb,
-        vec::Buffers<T>* res) const;
+        vec::Buffers<T>& veca,
+        vec::Buffers<T>& vecb,
+        vec::Buffers<T>& res) const;
     bool is_quadratic_residue(T q) const;
-    virtual void compute_omegas(vec::Vector<T>* W, int n, T w) const;
-    void compute_omegas_cached(vec::Vector<T>* W, int n, T w) const;
+    virtual void compute_omegas(vec::Vector<T>& W, int n, T w) const;
+    void compute_omegas_cached(vec::Vector<T>& W, int n, T w) const;
     virtual T weak_rand(void) const;
     bool is_primitive_root(T nb) const;
     T get_root() const;
@@ -120,8 +120,8 @@ class RingModN {
     T do_step_get_order(
         T x,
         T h,
-        std::vector<T>* primes,
-        std::vector<int>* exponents) const;
+        std::vector<T>& primes,
+        std::vector<int>& exponents) const;
     T get_order(T x) const;
     virtual T get_nth_root(T n) const;
     T get_code_len(T n) const;
@@ -130,7 +130,7 @@ class RingModN {
     virtual void hadamard_mul_doubled(int n, T* x, T* y) const;
     virtual void add_doubled(int n, T* x, T* y) const;
     virtual void neg(size_t n, T* x) const;
-    virtual void neg(vec::Buffers<T>* buf) const;
+    virtual void neg(vec::Buffers<T>& buf) const;
 
     RingModN(RingModN&&) = default;
 
@@ -422,15 +422,15 @@ inline void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len) const
 
 template <typename T>
 inline void
-RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>* src, vec::Buffers<T>* dest) const
+RingModN<T>::add_vecp_to_vecp(vec::Buffers<T>& src, vec::Buffers<T>& dest) const
 {
-    assert(src->get_n() == dest->get_n());
-    assert(src->get_size() == dest->get_size());
+    assert(src.get_n() == dest.get_n());
+    assert(src.get_size() == dest.get_size());
     int i;
-    int n = src->get_n();
-    size_t len = src->get_size();
+    int n = src.get_n();
+    size_t len = src.get_size();
     for (i = 0; i < n; i++) {
-        this->add_two_bufs(src->get(i), dest->get(i), len);
+        this->add_two_bufs(src.get(i), dest.get(i), len);
     }
 }
 
@@ -446,17 +446,17 @@ RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) const
 
 template <typename T>
 inline void RingModN<T>::sub_vecp_to_vecp(
-    vec::Buffers<T>* veca,
-    vec::Buffers<T>* vecb,
-    vec::Buffers<T>* res) const
+    vec::Buffers<T>& veca,
+    vec::Buffers<T>& vecb,
+    vec::Buffers<T>& res) const
 {
-    assert(veca->get_n() == vecb->get_n());
-    assert(veca->get_size() == vecb->get_size());
+    assert(veca.get_n() == vecb.get_n());
+    assert(veca.get_size() == vecb.get_size());
     int i;
-    int n = veca->get_n();
-    size_t len = veca->get_size();
+    int n = veca.get_n();
+    size_t len = veca.get_size();
     for (i = 0; i < n; i++) {
-        this->sub_two_bufs(veca->get(i), vecb->get(i), res->get(i), len);
+        this->sub_two_bufs(veca.get(i), vecb.get(i), res.get(i), len);
     }
 }
 
@@ -505,10 +505,10 @@ bool RingModN<T>::is_quadratic_residue(T q) const
  * @param w n-th root of unity
  */
 template <typename T>
-inline void RingModN<T>::compute_omegas(vec::Vector<T>* W, int n, T w) const
+inline void RingModN<T>::compute_omegas(vec::Vector<T>& W, int n, T w) const
 {
     for (int i = 0; i < n; i++) {
-        W->set(i, this->exp(w, i));
+        W.set(i, this->exp(w, i));
     }
 }
 
@@ -524,7 +524,7 @@ inline void RingModN<T>::compute_omegas(vec::Vector<T>* W, int n, T w) const
  * @param w n-th root of unity
  */
 template <typename T>
-void RingModN<T>::compute_omegas_cached(vec::Vector<T>* W, int n, T w) const
+void RingModN<T>::compute_omegas_cached(vec::Vector<T>& W, int n, T w) const
 {
     std::ostringstream filename;
 
@@ -534,8 +534,8 @@ void RingModN<T>::compute_omegas_cached(vec::Vector<T>* W, int n, T w) const
         std::ofstream file;
         file.open(filename.str().c_str(), std::ios::out);
         for (int i = 0; i < n; i++) {
-            W->set(i, this->exp(w, i));
-            file << W->get(i) << "\n";
+            W.set(i, this->exp(w, i));
+            file << W.get(i) << "\n";
         }
     } else {
         std::ifstream file;
@@ -543,7 +543,7 @@ void RingModN<T>::compute_omegas_cached(vec::Vector<T>* W, int n, T w) const
         file.open(filename.str().c_str(), std::ios::in);
         T tmp;
         while (file >> tmp) {
-            W->set(i, tmp);
+            W.set(i, tmp);
             i++;
         }
         assert(i == n);
@@ -675,16 +675,16 @@ template <typename T>
 T RingModN<T>::do_step_get_order(
     T x,
     T h,
-    std::vector<T>* primes,
-    std::vector<int>* exponents) const
+    std::vector<T>& primes,
+    std::vector<int>& exponents) const
 {
     T y, p;
     int r;
-    while (!primes->empty()) {
-        p = primes->back();
-        r = exponents->back();
-        primes->pop_back();
-        exponents->pop_back();
+    while (!primes.empty()) {
+        p = primes.back();
+        r = exponents.back();
+        primes.pop_back();
+        exponents.pop_back();
         y = h / p;
         if (this->exp(x, y) != 1) {
             // remove (p, r)
@@ -696,8 +696,8 @@ T RingModN<T>::do_step_get_order(
         }
         // exp(x, y) == 1
         if (r > 1) {
-            primes->push_back(p);
-            exponents->push_back(r - 1);
+            primes.push_back(p);
+            exponents.push_back(r - 1);
         }
         // do next
         return do_step_get_order(x, y, primes, exponents);
@@ -736,7 +736,7 @@ T RingModN<T>::get_order(T x) const
     T h = this->card_minus_one();
     std::vector<T> _primes(primes);
     std::vector<int> _exponent(exponents);
-    T order = do_step_get_order(x, h, &_primes, &_exponent);
+    T order = do_step_get_order(x, h, _primes, _exponent);
 
     if (order == 1)
         return h;
@@ -893,11 +893,11 @@ inline void RingModN<T>::neg(size_t n, T* x) const
 }
 
 template <typename T>
-inline void RingModN<T>::neg(vec::Buffers<T>* buf) const
+inline void RingModN<T>::neg(vec::Buffers<T>& buf) const
 {
-    size_t size = buf->get_size();
-    for (int i = 0; i < buf->get_n(); i++) {
-        neg(size, buf->get(i));
+    size_t size = buf.get_size();
+    for (int i = 0; i < buf.get_n(); i++) {
+        neg(size, buf.get(i));
     }
 }
 
