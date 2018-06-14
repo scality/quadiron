@@ -173,7 +173,7 @@ class BuffersUtest {
 
         nttec::vec::Buffers<T> _vec1(*vec, 0, n1);
         nttec::vec::Buffers<T>* _vec2 =
-            new nttec::vec::BuffersZeroExtended<T>(vec, n2);
+            new nttec::vec::BuffersZeroExtended<T>(*vec, n2);
 
         assert(vec1.eq(_vec1));
         assert(vec2.eq(*_vec2));
