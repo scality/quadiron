@@ -393,8 +393,20 @@ inline void RingModN<T>::mul_vec_to_vecp(
     int i;
     int n = u->get_n();
     size_t len = src->get_size();
+    T h = this->card_minus_one();
     for (i = 0; i < n; i++) {
-        this->mul_coef_to_buf(u->get(i), src->get(i), dest->get(i), len);
+        T coef = u->get(i);
+        T* _src = src->get(i);
+        T* _dest = dest->get(i);
+        if (coef == 0) {
+            dest->fill(i, 0);
+        } else if (coef == 1) {
+            dest->copy(i, _src);
+        } else if (coef == h) {
+            this->neg(len, _dest);
+        } else if (coef > 1) {
+            this->mul_coef_to_buf(coef, _src, _dest, len);
+        }
     }
 }
 
