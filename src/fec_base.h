@@ -1135,7 +1135,7 @@ void FecCode<T>::decode_apply(
     this->fft_2k->ifft(buf3, buf2_2k);
 
     // negatize output
-    this->gf->neg(output);
+    this->gf->neg(*output);
 }
 
 } // namespace fec
