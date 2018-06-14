@@ -142,7 +142,7 @@ class FECUtest {
             // FIXME: ngff4 will modify v after encode
             v_p.copy(&v);
             // std::cout << " v:"; v.dump();
-            fec->encode(&_v, props, 0, &v);
+            fec->encode(_v, props, 0, v);
             // std::cout << "_v:"; _v.dump();
             std::random_shuffle(ids.begin(), ids.end());
             for (int i = 0; i < n_data; i++) {
@@ -151,7 +151,7 @@ class FECUtest {
             }
             std::unique_ptr<nttec::fec::DecodeContext<T>> context =
                 fec->init_context_dec(f);
-            fec->decode(*context, &v2, props, 0, &_v2);
+            fec->decode(*context, v2, props, 0, _v2);
             // std::cout << "v2:"; v2.dump();
             assert(v_p.eq(&v2));
         }
