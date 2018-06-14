@@ -144,7 +144,7 @@ class RsNf4 : public FecCode<T> {
             words.set(i, ngff4->pack(words.get(i)));
         }
         // std::cout << "pack words:"; words.dump();
-        vec::ZeroExtended<T> vwords(&words, this->n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
         // std::cout << "encoded:"; output.dump();
         GroupedValues<T> true_val;

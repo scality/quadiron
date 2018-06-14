@@ -826,7 +826,7 @@ void FecCode<T>::decode_apply(
     // vec_tmp_2k: first k elements from vec2_n
     //             last (len_2k - k) elements are padded
     vec::Slice<T> vec_tmp_k(&vec2_n, k);
-    vec::ZeroExtended<T> vec_tmp_2k(&vec_tmp_k, len_2k);
+    vec::ZeroExtended<T> vec_tmp_2k(vec_tmp_k, len_2k);
 
     // compute FFT_2k(Q(x))
     this->fft_2k->fft(vec1_2k, vec_tmp_2k);

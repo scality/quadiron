@@ -120,7 +120,7 @@ class RsGf2nFft : public FecCode<T> {
         off_t offset,
         vec::Vector<T>& words) override
     {
-        vec::ZeroExtended<T> vwords(&words, this->n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
     }
 

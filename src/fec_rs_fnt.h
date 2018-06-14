@@ -143,7 +143,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Vector<T>& words) override
     {
-        vec::ZeroExtended<T> vwords(&words, this->n);
+        vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
         // max_value = 2^x
         T thres = this->gf->card() - 1;
