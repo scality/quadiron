@@ -117,7 +117,7 @@ void Size2<T>::ifft(vec::Buffers<T>* output, vec::Buffers<T>* input)
 {
     fft_inv(output, input);
     if (this->inv_n_mod_p > 1)
-        this->gf->mul_vec_to_vecp(this->vec_inv_n, output, output);
+        this->gf->mul_vec_to_vecp(*(this->vec_inv_n), *output, *output);
 }
 
 } // namespace fft
