@@ -175,11 +175,11 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int m, size_t pkt_size, int N)
         this->_even =
             std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
         this->veven =
-            std::unique_ptr<vec::Doubled<T>>(new vec::Doubled<T>(_even.get()));
+            std::unique_ptr<vec::Doubled<T>>(new vec::Doubled<T>(*_even));
         this->odd = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
         this->_odd = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, k));
         this->vodd =
-            std::unique_ptr<vec::Doubled<T>>(new vec::Doubled<T>(_odd.get()));
+            std::unique_ptr<vec::Doubled<T>>(new vec::Doubled<T>(*_odd));
 
         // if (this->pkt_size > 0)
         this->tmp_buf =
