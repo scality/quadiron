@@ -120,9 +120,9 @@ class DecodeContext {
              * - last `(len_2k-k)` buffers point actually to a zero buffer
              */
             buf1_k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(buf2_n.get(), 0, k));
+                new vec::Buffers<T>(*buf2_n, 0, k));
             buf1_2k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(buf1_k.get(), 0, len_2k));
+                new vec::Buffers<T>(*buf1_k, 0, len_2k));
 
             buf2_2k = std::unique_ptr<vec::Buffers<T>>(
                 new vec::Buffers<T>(this->len_2k, size));

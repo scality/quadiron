@@ -1133,7 +1133,7 @@ void FecCode<T>::decode_apply(
     // buf3 concats `output` and a temporary buffer
     //  - first k buffers point to output
     //  - last (len_2k - k) buffers point to buf1_len2k_minus_k
-    vec::Buffers<T> buf3(&output, &buf1_len2k_minus_k);
+    vec::Buffers<T> buf3(output, buf1_len2k_minus_k);
 
     this->fft_2k->ifft(buf3, buf2_2k);
 
