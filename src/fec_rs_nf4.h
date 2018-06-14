@@ -130,22 +130,22 @@ class RsNf4 : public FecCode<T> {
      * @param words must be n_data
      */
     void encode(
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
-        // std::cout << "words:"; words->dump();
+        // std::cout << "words:"; words.dump();
         for (unsigned i = 0; i < this->n_data; i++) {
-            words->set(i, ngff4->pack(words->get(i)));
+            words.set(i, ngff4->pack(words.get(i)));
         }
-        // std::cout << "pack words:"; words->dump();
-        vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(*output, vwords);
-        // std::cout << "encoded:"; output->dump();
+        // std::cout << "pack words:"; words.dump();
+        vec::ZeroExtended<T> vwords(&words, this->n);
+        this->fft->fft(output, vwords);
+        // std::cout << "encoded:"; output.dump();
         GroupedValues<T> true_val;
         for (unsigned i = 0; i < this->code_len; i++) {
-            T val = output->get(i);
+            T val = output.get(i);
             ngff4->unpack(val, true_val);
             if (true_val.flag > 0) {
                 props[i].add(
@@ -154,9 +154,9 @@ class RsNf4 : public FecCode<T> {
                 // std::endl; std::cout << "encode: val:" << val << " <- " <<
                 // true_val.val << std::endl;
             }
-            output->set(i, true_val.values);
+            output.set(i, true_val.values);
         }
-        // std::cout << "unpacked:"; output->dump();
+        // std::cout << "unpacked:"; output.dump();
     }
 
     void decode_add_data(int fragment_index, int row) override
@@ -225,7 +225,7 @@ class RsNf4 : public FecCode<T> {
         const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
         T true_val;
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
@@ -237,47 +237,47 @@ class RsNf4 : public FecCode<T> {
 
             if (data) {
                 uint32_t flag = std::stoul(*data);
-                true_val = ngff4->pack(words->get(i), flag);
+                true_val = ngff4->pack(words.get(i), flag);
             } else {
-                true_val = ngff4->pack(words->get(i));
+                true_val = ngff4->pack(words.get(i));
             }
-            words->set(i, true_val);
+            words.set(i, true_val);
         }
     }
 
     void decode_apply(
         const DecodeContext<T>& context,
-        vec::Vector<T>* output,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& output,
+        vec::Vector<T>& words) override
     {
         // decode_apply: do the same thing as in fec_base
         FecCode<T>::decode_apply(context, output, words);
         // unpack decoded symbols
         for (unsigned i = 0; i < this->n_data; ++i) {
-            output->set(i, ngff4->unpack(output->get(i)).values);
+            output.set(i, ngff4->unpack(output.get(i)).values);
         }
     }
 
     /********** Encoding & Decoding using Buffers **********/
 
     void encode(
-        vec::Buffers<T>* output,
+        vec::Buffers<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Buffers<T>* words) override
+        vec::Buffers<T>& words) override
     {
         for (unsigned i = 0; i < this->n_data; ++i) {
-            T* chunk = words->get(i);
+            T* chunk = words.get(i);
             for (size_t j = 0; j < this->pkt_size; ++j) {
                 chunk[j] = ngff4->pack(chunk[j]);
             }
         }
-        vec::BuffersZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(*output, vwords);
-        size_t size = output->get_size();
+        vec::BuffersZeroExtended<T> vwords(&words, this->n);
+        this->fft->fft(output, vwords);
+        size_t size = output.get_size();
         GroupedValues<T> true_val;
         for (unsigned frag_id = 0; frag_id < this->code_len; ++frag_id) {
-            T* chunk = output->get(frag_id);
+            T* chunk = output.get(frag_id);
             for (size_t symb_id = 0; symb_id < size; symb_id++) {
                 ngff4->unpack(chunk[symb_id], true_val);
                 if (true_val.flag > 0) {
@@ -294,13 +294,13 @@ class RsNf4 : public FecCode<T> {
         const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Buffers<T>* words) override
+        vec::Buffers<T>& words) override
     {
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
         off_t offset_max = offset + this->buf_size;
         for (unsigned i = 0; i < this->n_data; ++i) {
             const int frag_id = fragments_ids.get(i);
-            T* chunk = words->get(i);
+            T* chunk = words.get(i);
 
             // the vector will contain marked symbols that will be packed
             // firstly. Since locations are stored in unordered map, the vector
@@ -340,14 +340,14 @@ class RsNf4 : public FecCode<T> {
 
     void decode_apply(
         const DecodeContext<T>& context,
-        vec::Buffers<T>* output,
-        vec::Buffers<T>* words) override
+        vec::Buffers<T>& output,
+        vec::Buffers<T>& words) override
     {
         // decode_apply: do the same thing as in fec_base
         FecCode<T>::decode_apply(context, output, words);
         // unpack decoded symbols
         for (unsigned i = 0; i < this->n_data; ++i) {
-            T* chunk = output->get(i);
+            T* chunk = output.get(i);
             for (unsigned j = 0; j < this->pkt_size; ++j) {
                 chunk[j] = ngff4->unpack(chunk[j]).values;
             }
