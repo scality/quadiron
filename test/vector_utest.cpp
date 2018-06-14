@@ -86,7 +86,7 @@ TYPED_TEST(VectorTest, TestHadamardMultiplication) // NOLINT
          64513});
     vec::Vector<TypeParam> vec2(
         gfp, {6505, 23324, 7736, 43678, 27296, 50697, 59274, 48649});
-    vec::Doubled<TypeParam> v2vec2(&vec2);
+    vec::Doubled<TypeParam> v2vec2(vec2);
 
     vec1.hadamard_mul(&v2vec2);
     ASSERT_EQ(vec1, expected);
@@ -110,7 +110,7 @@ TYPED_TEST(VectorTest, TestAddition) // NOLINT
     vec::Vector<TypeParam> vec1(
         gfp, {5459, 11947, 44310, 21807, 60078, 53590, 21227, 43730});
     vec::Vector<TypeParam> vec2(gfp, {39466, 40329, 16012, 15149});
-    vec::Doubled<TypeParam> v2vec2(&vec2);
+    vec::Doubled<TypeParam> v2vec2(vec2);
 
     vec1.add(&v2vec2);
 
