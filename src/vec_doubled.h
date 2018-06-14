@@ -55,19 +55,19 @@ namespace vec {
 template <typename T>
 class Doubled : public Vector<T> {
   public:
-    explicit Doubled(Vector<T>* vec);
+    explicit Doubled(const Vector<T>& vec);
     const int get_n(void) const override;
     const T& get(int i) const override;
 
   private:
-    Vector<T>* vec;
+    const Vector<T>* vec;
 };
 
 template <typename T>
-Doubled<T>::Doubled(Vector<T>* vec)
-    : Vector<T>(vec->get_gf(), vec->get_n(), vec->get_mem(), vec->get_mem_len())
+Doubled<T>::Doubled(const Vector<T>& vec)
+    : Vector<T>(vec.get_gf(), vec.get_n(), vec.get_mem(), vec.get_mem_len())
 {
-    this->vec = vec;
+    this->vec = &vec;
 }
 
 template <typename T>
