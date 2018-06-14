@@ -145,7 +145,7 @@ class RsNf4 : public FecCode<T> {
         }
         // std::cout << "pack words:"; words->dump();
         vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, &vwords);
+        this->fft->fft(*output, vwords);
         // std::cout << "encoded:"; output->dump();
         GroupedValues<T> true_val;
         for (unsigned i = 0; i < this->code_len; i++) {
@@ -277,7 +277,7 @@ class RsNf4 : public FecCode<T> {
             }
         }
         vec::BuffersZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, &vwords);
+        this->fft->fft(*output, vwords);
         int size = output->get_size();
         GroupedValues<T> true_val;
         for (unsigned frag_id = 0; frag_id < this->code_len; ++frag_id) {

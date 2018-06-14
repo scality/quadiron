@@ -83,7 +83,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         // subspace spanned by <beta_i>
         this->betas = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(*(this->gf), this->n));
-        this->fft->compute_B(betas.get());
+        this->fft->compute_B(*betas);
     }
 
     int get_n_outputs() override
@@ -106,7 +106,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         vec::Vector<T>* words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, &vwords);
+        this->fft->fft(*output, vwords);
     }
 
     void decode_add_data(int fragment_index, int row) override

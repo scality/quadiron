@@ -821,7 +821,7 @@ void FecCode<T>::decode_apply(
     }
 
     // compute vec2_n = FFT(vec1_n)
-    this->fft_full->fft_inv(&vec2_n, &vec1_n);
+    this->fft_full->fft_inv(vec2_n, vec1_n);
 
     // vec_tmp_2k: first k elements from vec2_n
     //             last (len_2k - k) elements are padded
@@ -829,13 +829,13 @@ void FecCode<T>::decode_apply(
     vec::ZeroExtended<T> vec_tmp_2k(&vec_tmp_k, len_2k);
 
     // compute FFT_2k(Q(x))
-    this->fft_2k->fft(&vec1_2k, &vec_tmp_2k);
+    this->fft_2k->fft(vec1_2k, vec_tmp_2k);
 
     // multiply FFT_2k(A(x)) to FFT_2k(Q(x)), results are stored in vec1_2k
     vec1_2k.hadamard_mul(&A_fft_2k);
 
     // compute iFFT_{2k}( FFT_{2k}(A(x)) \cdot FFT_{2k}(Q(x)) )
-    this->fft_2k->ifft(&vec2_2k, &vec1_2k);
+    this->fft_2k->ifft(vec2_2k, vec1_2k);
 
     // perform negative
     vec2_2k.neg();
@@ -1121,11 +1121,11 @@ void FecCode<T>::decode_apply(
     }
 
     // compute buf2_n
-    this->fft_full->fft_inv(&buf2_n, &buf1_n);
+    this->fft_full->fft_inv(buf2_n, buf1_n);
 
     // buf1_2k: first k buffers point to first k buffers of buf2_n
     //          las k buffers point to a padded zero buffer
-    this->fft_2k->fft(&buf2_2k, &buf1_2k);
+    this->fft_2k->fft(buf2_2k, buf1_2k);
 
     // multiply FFT(A) and buf2_2k
     this->gf->mul_vec_to_vecp(A_fft_2k, buf2_2k, buf2_2k);
@@ -1135,7 +1135,7 @@ void FecCode<T>::decode_apply(
     //  - last (len_2k - k) buffers point to buf1_len2k_minus_k
     vec::Buffers<T> buf3(output, &buf1_len2k_minus_k);
 
-    this->fft_2k->ifft(&buf3, &buf2_2k);
+    this->fft_2k->ifft(buf3, buf2_2k);
 
     // negatize output
     this->gf->neg(output);
