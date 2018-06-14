@@ -232,7 +232,7 @@ class FFTUtest {
             // v2.dump();
             fft.ifft(_v2, v2);
             // _v2.dump();
-            assert(_v.eq(&_v2));
+            assert(_v.eq(_v2));
         }
     }
 
