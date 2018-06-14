@@ -79,7 +79,7 @@ class NF4 : public gf::Field<T> {
     GroupedValues<T> unpack(T a) const;
     void unpack(T a, GroupedValues<T>& b) const;
     T get_nth_root(T n) const override;
-    void compute_omegas(vec::Vector<T>* W, int n, T w) const override;
+    void compute_omegas(vec::Vector<T>& W, int n, T w) const override;
     const gf::Field<uint32_t>& get_sub_field() const;
     void hadamard_mul(int n, T* x, T* y) const override;
     void hadamard_mul_doubled(int n, T* x, T* y) const override;
@@ -481,10 +481,10 @@ bool NF4<T>::check(T a) const
  * @param w n-th root of unity
  */
 template <typename T>
-inline void NF4<T>::compute_omegas(vec::Vector<T>* W, int n, T w) const
+inline void NF4<T>::compute_omegas(vec::Vector<T>& W, int n, T w) const
 {
     for (int i = 0; i < n; i++) {
-        W->set(i, this->exp(w, replicate(i)));
+        W.set(i, this->exp(w, replicate(i)));
     }
 }
 
