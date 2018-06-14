@@ -78,16 +78,16 @@ class Radix2 : public FourierTransform<T> {
         size_t pkt_size = 0,
         int N = 0);
     ~Radix2() = default;
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void fft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
-    void ifft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
-    void fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
+    void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
+    void ifft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
+    void fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
 
   private:
-    void _fftp(vec::Buffers<T>* output, vec::Buffers<T>* input, bool inv);
-    void _fft(vec::Vector<T>* output, vec::Vector<T>* input, bool inv);
+    void _fftp(vec::Buffers<T>& output, vec::Buffers<T>& input, bool inv);
+    void _fft(vec::Vector<T>& output, vec::Vector<T>& input, bool inv);
 
     bool bypass;
     int k;
@@ -188,36 +188,36 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int m, size_t pkt_size, int N)
 }
 
 template <typename T>
-void Radix2<T>::_fft(vec::Vector<T>* output, vec::Vector<T>* input, bool inv)
+void Radix2<T>::_fft(vec::Vector<T>& output, vec::Vector<T>& input, bool inv)
 {
     for (int i = 0; i < this->n; i++) {
         if (i % 2 == 0)
-            even->set(i / 2, input->get(i));
+            even->set(i / 2, input.get(i));
         else
-            odd->set(i / 2, input->get(i));
+            odd->set(i / 2, input.get(i));
     }
     // this->even->dump();
     // this->odd->dump();
     if (inv) {
-        fftk->fft_inv(_even.get(), even.get());
-        fftk->fft_inv(_odd.get(), odd.get());
+        fftk->fft_inv(*_even, *even);
+        fftk->fft_inv(*_odd, *odd);
     } else {
-        fftk->fft(_even.get(), even.get());
-        fftk->fft(_odd.get(), odd.get());
+        fftk->fft(*_even, *even);
+        fftk->fft(*_odd, *odd);
     }
 
     if (inv)
-        output->copy(inv_W.get(), this->n);
+        output.copy(inv_W.get(), this->n);
     else
-        output->copy(W.get(), this->n);
-    output->hadamard_mul(vodd.get());
-    output->add(veven.get());
+        output.copy(W.get(), this->n);
+    output.hadamard_mul(vodd.get());
+    output.add(veven.get());
 }
 
 template <typename T>
-void Radix2<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
+void Radix2<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
-    // input->dump();
+    // input.dump();
 
     if (bypass)
         return fft_trivial->fft(output, input);
@@ -226,7 +226,7 @@ void Radix2<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 template <typename T>
-void Radix2<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
+void Radix2<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     if (bypass)
         return fft_trivial->fft_inv(output, input);
@@ -235,7 +235,7 @@ void Radix2<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 template <typename T>
-void Radix2<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
+void Radix2<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     fft_inv(output, input);
 
@@ -243,31 +243,31 @@ void Radix2<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
      * We need to divide output to `N` for the inverse formular
      */
     if ((this->k == this->N / 2) && (this->inv_n_mod_p > 1))
-        output->mul_scalar(this->inv_n_mod_p);
+        output.mul_scalar(this->inv_n_mod_p);
 }
 
 template <typename T>
-void Radix2<T>::_fftp(vec::Buffers<T>* output, vec::Buffers<T>* input, bool inv)
+void Radix2<T>::_fftp(vec::Buffers<T>& output, vec::Buffers<T>& input, bool inv)
 {
     int half = this->n / 2;
-    size_t size = input->get_size();
+    size_t size = input.get_size();
     std::vector<T*> even_mem(half, nullptr);
     std::vector<T*> odd_mem(half, nullptr);
     vec::Buffers<T> i_even(half, size, &even_mem);
     vec::Buffers<T> i_odd(half, size, &odd_mem);
 
     // separate even and odd elements of input
-    input->separate_even_odd(&i_even, &i_odd);
+    input.separate_even_odd(&i_even, &i_odd);
 
-    vec::Buffers<T> o_even(output, 0, half);
-    vec::Buffers<T> o_odd(output, half, this->n);
+    vec::Buffers<T> o_even(&output, 0, half);
+    vec::Buffers<T> o_odd(&output, half, this->n);
 
     if (inv) {
-        fftk->fft_inv(&o_even, &i_even);
-        fftk->fft_inv(&o_odd, &i_odd);
+        fftk->fft_inv(o_even, i_even);
+        fftk->fft_inv(o_odd, i_odd);
     } else {
-        fftk->fft(&o_even, &i_even);
-        fftk->fft(&o_odd, &i_odd);
+        fftk->fft(o_even, i_even);
+        fftk->fft(o_odd, i_odd);
     }
 
     /*
@@ -288,7 +288,7 @@ void Radix2<T>::_fftp(vec::Buffers<T>* output, vec::Buffers<T>* input, bool inv)
 }
 
 template <typename T>
-void Radix2<T>::fft(vec::Buffers<T>* output, vec::Buffers<T>* input)
+void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     if (bypass)
         return fft_trivial->fft(output, input);
@@ -297,7 +297,7 @@ void Radix2<T>::fft(vec::Buffers<T>* output, vec::Buffers<T>* input)
 }
 
 template <typename T>
-void Radix2<T>::fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input)
+void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     if (bypass)
         return fft_trivial->fft_inv(output, input);
@@ -306,7 +306,7 @@ void Radix2<T>::fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input)
 }
 
 template <typename T>
-void Radix2<T>::ifft(vec::Buffers<T>* output, vec::Buffers<T>* input)
+void Radix2<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     fft_inv(output, input);
 
@@ -314,7 +314,7 @@ void Radix2<T>::ifft(vec::Buffers<T>* output, vec::Buffers<T>* input)
      * We need to divide output to `N` for the inverse formular
      */
     if ((this->k == this->N / 2) && (this->inv_n_mod_p > 1))
-        this->gf->mul_vec_to_vecp(*(this->vec_inv_n), *output, *output);
+        this->gf->mul_vec_to_vecp(*(this->vec_inv_n), output, output);
 }
 
 } // namespace fft

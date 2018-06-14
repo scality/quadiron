@@ -92,12 +92,12 @@ class CooleyTukey : public FourierTransform<T> {
         std::vector<T>* factors = nullptr,
         T _w = 0);
     ~CooleyTukey();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
 
   private:
-    void _fft(vec::Vector<T>* output, vec::Vector<T>* input, bool inv);
+    void _fft(vec::Vector<T>& output, vec::Vector<T>& input, bool inv);
 
     bool loop;
     bool first_layer_fft;
@@ -212,20 +212,20 @@ void CooleyTukey<T>::mul_twiddle_factors(bool inv)
 
 template <typename T>
 void CooleyTukey<T>::_fft(
-    vec::Vector<T>* output,
-    vec::Vector<T>* input,
+    vec::Vector<T>& output,
+    vec::Vector<T>& input,
     bool inv)
 {
-    X->set_vec(input);
+    X->set_vec(&input);
     X->set_len(n2);
     Y->set_len(n2);
     for (T i1 = 0; i1 < n1; i1++) {
         Y->set_map(i1, n1);
         X->set_map(i1, n1);
         if (inv)
-            this->dft_inner->fft_inv(Y, X);
+            this->dft_inner->fft_inv(*Y, *X);
         else
-            this->dft_inner->fft(Y, X);
+            this->dft_inner->fft(*Y, *X);
         // std::cout << "X:"; X->dump();
         // std::cout << "Y:"; Y->dump();
     }
@@ -233,23 +233,23 @@ void CooleyTukey<T>::_fft(
     // multiply to twiddle factors
     mul_twiddle_factors(inv);
 
-    X->set_vec(output);
+    X->set_vec(&output);
     X->set_len(n1);
     Y->set_len(n1);
     for (T k2 = 0; k2 < n2; k2++) {
         Y->set_map(k2 * n1, 1);
         X->set_map(k2, n2);
         if (inv)
-            this->dft_outer->fft_inv(X, Y);
+            this->dft_outer->fft_inv(*X, *Y);
         else
-            this->dft_outer->fft(X, Y);
+            this->dft_outer->fft(*X, *Y);
         // std::cout << "Y:"; Y->dump();
         // std::cout << "X:"; X->dump();
     }
 }
 
 template <typename T>
-void CooleyTukey<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
+void CooleyTukey<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     if (!loop)
         return dft_outer->fft(output, input);
@@ -258,7 +258,7 @@ void CooleyTukey<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 template <typename T>
-void CooleyTukey<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
+void CooleyTukey<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     if (!loop)
         dft_outer->fft_inv(output, input);
@@ -267,7 +267,7 @@ void CooleyTukey<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 template <typename T>
-void CooleyTukey<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
+void CooleyTukey<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     fft_inv(output, input);
 
@@ -276,7 +276,7 @@ void CooleyTukey<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
      */
 
     if (this->first_layer_fft && (this->inv_n_mod_p > 1)) {
-        output->mul_scalar(this->inv_n_mod_p);
+        output.mul_scalar(this->inv_n_mod_p);
     }
 }
 

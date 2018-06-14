@@ -48,12 +48,12 @@ class Single : public FourierTransform<T> {
   public:
     explicit Single(const gf::Field<T>& gf, int n);
     ~Single() = default;
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void fft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
-    void ifft(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
-    void fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input) override;
+    void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
+    void ifft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
+    void fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
 };
 
 template <typename T>
@@ -62,10 +62,10 @@ Single<T>::Single(const gf::Field<T>& gf, int n) : FourierTransform<T>(gf, n)
 }
 
 template <typename T>
-void Single<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
+void Single<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
-    T val = input->get(0);
-    output->fill(val);
+    T val = input.get(0);
+    output.fill(val);
 }
 
 /*
@@ -74,24 +74,24 @@ void Single<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
  *
  */
 template <typename T>
-void Single<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
+void Single<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     fft(output, input);
 }
 
 template <typename T>
-void Single<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
+void Single<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
-    output->zero_fill();
-    output->set(0, input->get(0));
+    output.zero_fill();
+    output.set(0, input.get(0));
 }
 
 template <typename T>
-void Single<T>::fft(vec::Buffers<T>* output, vec::Buffers<T>* input)
+void Single<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
-    T* buf = input->get(0);
+    T* buf = input.get(0);
     for (int i = 0; i < this->n; i++)
-        output->copy(i, buf);
+        output.copy(i, buf);
 }
 
 /*
@@ -100,16 +100,16 @@ void Single<T>::fft(vec::Buffers<T>* output, vec::Buffers<T>* input)
  *
  */
 template <typename T>
-void Single<T>::fft_inv(vec::Buffers<T>* output, vec::Buffers<T>* input)
+void Single<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     fft(output, input);
 }
 
 template <typename T>
-void Single<T>::ifft(vec::Buffers<T>* output, vec::Buffers<T>* input)
+void Single<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
-    output->zero_fill();
-    output->copy(0, input->get(0));
+    output.zero_fill();
+    output.copy(0, input.get(0));
 }
 
 } // namespace fft
