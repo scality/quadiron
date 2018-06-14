@@ -219,7 +219,7 @@ class FFTUtest {
         nttec::vec::Buffers<T> v(n_data, size);
         nttec::vec::Buffers<T> v2(vec_n, size);
         nttec::vec::Buffers<T> _v2(vec_n, size);
-        nttec::vec::BuffersZeroExtended<T> _v(&v, vec_n);
+        nttec::vec::BuffersZeroExtended<T> _v(v, vec_n);
         for (int j = 0; j < 100000; j++) {
             for (unsigned i = 0; i < n_data; i++) {
                 T* mem = v.get(i);
