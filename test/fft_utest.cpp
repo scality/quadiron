@@ -208,7 +208,7 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
     quadiron::vec::Buffers<TypeParam> v(this->n_data, size);
     quadiron::vec::Buffers<TypeParam> v2(vec_n, size);
     quadiron::vec::Buffers<TypeParam> _v2(vec_n, size);
-    quadiron::vec::BuffersZeroExtended<TypeParam> _v(&v, vec_n);
+    quadiron::vec::BuffersZeroExtended<TypeParam> _v(v, vec_n);
     for (int j = 0; j < 100000; j++) {
         for (unsigned i = 0; i < this->n_data; i++) {
             TypeParam* mem = v.get(i);

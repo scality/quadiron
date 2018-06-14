@@ -272,7 +272,7 @@ class RsNf4 : public FecCode<T> {
                 chunk[j] = ngff4->pack(chunk[j]);
             }
         }
-        vec::BuffersZeroExtended<T> vwords(&words, this->n);
+        vec::BuffersZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
         size_t size = output.get_size();
         GroupedValues<T> true_val;
