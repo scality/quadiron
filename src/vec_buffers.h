@@ -89,9 +89,9 @@ template <typename T>
 class Buffers {
   public:
     Buffers(int n, size_t size, std::vector<T*>* mem = nullptr);
-    Buffers(Buffers<T>* vec, int n = 0);
-    Buffers(Buffers<T>* vec, int begin, int end);
-    Buffers(Buffers<T>* vec1, Buffers<T>* vec2);
+    Buffers(const Buffers<T>& vec, int n = 0);
+    Buffers(const Buffers<T>& vec, int begin, int end);
+    Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2);
     virtual ~Buffers();
     virtual int get_n(void) const;
     virtual size_t get_size(void) const;
@@ -99,14 +99,14 @@ class Buffers {
     void zero_fill(void);
     void fill(int i, T value);
     virtual void set(int i, T* buf);
-    virtual T* get(int i);
+    virtual T* get(int i) const;
     std::vector<T*>* get_mem() const;
     void set_mem(std::vector<T*>* mem);
-    void copy(Buffers<T>* v);
+    void copy(const Buffers<T>& v);
     void copy(int i, T* buf);
     void separate_even_odd();
-    void separate_even_odd(Buffers<T>* even, Buffers<T>* odd);
-    bool eq(Buffers<T>* v);
+    void separate_even_odd(const Buffers<T>& even, const Buffers<T>& odd);
+    bool eq(const Buffers<T>& v);
     virtual void dump(void);
 
   protected:
@@ -152,13 +152,13 @@ Buffers<T>::Buffers(int n, size_t size, std::vector<T*>* mem)
  * @param n - number of buffers pointed by the constructed vector
  */
 template <typename T>
-Buffers<T>::Buffers(Buffers<T>* vec, int n)
+Buffers<T>::Buffers(const Buffers<T>& vec, int n)
 {
     assert(n >= 0);
     int i;
-    int vec_n = vec->get_n();
+    int vec_n = vec.get_n();
 
-    this->size = vec->get_size();
+    this->size = vec.get_size();
     this->n = (n == 0) ? vec_n : n;
     this->mem = new std::vector<T*>(this->n, nullptr);
     this->mem_len = n * size;
@@ -171,7 +171,7 @@ Buffers<T>::Buffers(Buffers<T>* vec, int n)
 
     int copy_len = (this->n <= vec_n) ? this->n : vec_n;
     for (i = 0; i < copy_len; i++) {
-        std::copy_n(vec->get(i), this->size, this->mem->at(i));
+        std::copy_n(vec.get(i), this->size, this->mem->at(i));
     }
 
     if (this->n > vec_n) { // padding zeros
@@ -193,17 +193,17 @@ Buffers<T>::Buffers(Buffers<T>* vec, int n)
  *                pointed by the output Buffers
  */
 template <typename T>
-Buffers<T>::Buffers(Buffers<T>* vec, int begin, int end)
+Buffers<T>::Buffers(const Buffers<T>& vec, int begin, int end)
 {
     assert(begin >= 0 && begin < end);
 
     this->n = end - begin;
-    this->size = vec->get_size();
+    this->size = vec.get_size();
     this->mem_len = this->n * this->size;
-    std::vector<T*>* vec_mem = vec->get_mem();
+    std::vector<T*>* vec_mem = vec.get_mem();
 
     // slice from input buffers
-    if (end <= vec->get_n()) {
+    if (end <= vec.get_n()) {
         this->mem_alloc_case = SLICE_ALLOC;
 
         this->mem = new std::vector<T*>(
@@ -216,29 +216,29 @@ Buffers<T>::Buffers(Buffers<T>* vec, int begin, int end)
 
         this->mem =
             new std::vector<T*>(vec_mem->begin() + begin, vec_mem->end());
-        this->mem->insert(this->mem->end(), end - vec->get_n(), this->zeros);
+        this->mem->insert(this->mem->end(), end - vec.get_n(), this->zeros);
     }
 }
 
 template <typename T>
-Buffers<T>::Buffers(Buffers<T>* vec1, Buffers<T>* vec2)
+Buffers<T>::Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2)
 {
-    assert(vec1->get_size() == vec2->get_size());
+    assert(vec1.get_size() == vec2.get_size());
 
-    int n1 = vec1->get_n();
-    int n2 = vec2->get_n();
+    int n1 = vec1.get_n();
+    int n2 = vec2.get_n();
 
     this->n = n1 + n2;
-    this->size = vec1->get_size();
+    this->size = vec1.get_size();
     this->mem_len = this->n * this->size;
 
     this->mem_alloc_case = COMBINED;
 
     this->mem = new std::vector<T*>();
     this->mem->insert(
-        this->mem->end(), vec1->get_mem()->begin(), vec1->get_mem()->end());
+        this->mem->end(), vec1.get_mem()->begin(), vec1.get_mem()->end());
     this->mem->insert(
-        this->mem->end(), vec2->get_mem()->begin(), vec2->get_mem()->end());
+        this->mem->end(), vec2.get_mem()->begin(), vec2.get_mem()->end());
 }
 
 template <typename T>
@@ -300,7 +300,7 @@ inline void Buffers<T>::set(int i, T* buf)
 }
 
 template <typename T>
-inline T* Buffers<T>::get(int i)
+inline T* Buffers<T>::get(int i) const
 {
     assert(i >= 0 && i < n);
     return this->mem->at(i);
@@ -319,13 +319,13 @@ inline void Buffers<T>::set_mem(std::vector<T*>* mem)
 }
 
 template <typename T>
-void Buffers<T>::copy(Buffers<T>* v)
+void Buffers<T>::copy(const Buffers<T>& v)
 {
-    assert(v->get_n() == n);
-    assert(v->get_size() <= size);
-    size_t v_size = v->get_size();
+    assert(v.get_n() == n);
+    assert(v.get_size() <= size);
+    size_t v_size = v.get_size();
     for (int i = 0; i < n; i++)
-        std::copy_n(v->get(i), v_size, this->mem->at(i));
+        std::copy_n(v.get(i), v_size, this->mem->at(i));
 }
 
 template <typename T>
@@ -353,12 +353,14 @@ void Buffers<T>::separate_even_odd()
 }
 
 template <typename T>
-void Buffers<T>::separate_even_odd(Buffers<T>* even, Buffers<T>* odd)
+void Buffers<T>::separate_even_odd(
+    const Buffers<T>& even,
+    const Buffers<T>& odd)
 {
     int j = 0;
     int i;
-    std::vector<T*>* even_mem = even->get_mem();
-    std::vector<T*>* odd_mem = odd->get_mem();
+    std::vector<T*>* even_mem = even.get_mem();
+    std::vector<T*>* odd_mem = odd.get_mem();
     for (i = 0; i < n; i += 2) {
         even_mem->at(j) = get(i);    // even
         odd_mem->at(j) = get(i + 1); // odd
@@ -367,14 +369,14 @@ void Buffers<T>::separate_even_odd(Buffers<T>* even, Buffers<T>* odd)
 }
 
 template <typename T>
-bool Buffers<T>::eq(Buffers<T>* v)
+bool Buffers<T>::eq(const Buffers<T>& v)
 {
-    if ((v->get_n() != n) || (v->get_size() != size))
+    if ((v.get_n() != n) || (v.get_size() != size))
         return false;
 
     for (int i = 0; i < n; i++) {
         T* a = get(i);
-        T* b = v->get(i);
+        T* b = v.get(i);
         for (size_t j = 0; j < size; j++) {
             if (a[j] != b[j])
                 return false;
