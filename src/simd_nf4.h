@@ -128,7 +128,7 @@ inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
     _mm_store_si128((m128i*)&values, val);
 
     b.flag = flag;
-    b.values = values;
+    b.values = values; // NOLINT(clang-analyzer-core.uninitialized.Assign)
 }
 
 inline aint128 pack(__uint128_t a)
