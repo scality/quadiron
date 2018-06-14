@@ -107,12 +107,12 @@ class GoodThomas : public FourierTransform<T> {
         std::vector<T>* factors = nullptr,
         T _w = 0);
     ~GoodThomas();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
 
   private:
-    void _fft(vec::Vector<T>* output, vec::Vector<T>* input, bool inv);
+    void _fft(vec::Vector<T>& output, vec::Vector<T>& input, bool inv);
     T _inverse_mod(T nb, T mod);
 
     bool loop;
@@ -220,41 +220,41 @@ T GoodThomas<T>::_inverse_mod(T nb, T mod)
 
 template <typename T>
 void GoodThomas<T>::_fft(
-    vec::Vector<T>* output,
-    vec::Vector<T>* input,
+    vec::Vector<T>& output,
+    vec::Vector<T>& input,
     bool inv)
 {
-    X->set_vec(input);
+    X->set_vec(&input);
     X->set_len(n2);
     Y->set_len(n2);
     for (T i1 = 0; i1 < n1; i1++) {
         Y->set_map(i1, n1);
         X->set_map((a * i1) % this->n, b);
         if (inv)
-            this->dft_inner->fft_inv(Y, X);
+            this->dft_inner->fft_inv(*Y, *X);
         else
-            this->dft_inner->fft(Y, X);
+            this->dft_inner->fft(*Y, *X);
         // std::cout << "X:"; X->dump();
         // std::cout << "Y:"; Y->dump();
     }
 
-    X->set_vec(output);
+    X->set_vec(&output);
     X->set_len(n1);
     Y->set_len(n1);
     for (T k2 = 0; k2 < n2; k2++) {
         Y->set_map(k2 * n1, 1);
         X->set_map((d * k2) % this->n, c);
         if (inv)
-            this->dft_outer->fft_inv(X, Y);
+            this->dft_outer->fft_inv(*X, *Y);
         else
-            this->dft_outer->fft(X, Y);
+            this->dft_outer->fft(*X, *Y);
         // std::cout << "Y:"; Y->dump();
         // std::cout << "X:"; X->dump();
     }
 }
 
 template <typename T>
-void GoodThomas<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
+void GoodThomas<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     if (!loop)
         return dft_outer->fft(output, input);
@@ -263,7 +263,7 @@ void GoodThomas<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 template <typename T>
-void GoodThomas<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
+void GoodThomas<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     if (!loop)
         dft_outer->fft_inv(output, input);
@@ -272,7 +272,7 @@ void GoodThomas<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 template <typename T>
-void GoodThomas<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
+void GoodThomas<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     fft_inv(output, input);
 
@@ -280,7 +280,7 @@ void GoodThomas<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
      * We need to divide output to `N` for the inverse formular
      */
     if (this->first_layer_fft && (this->inv_n_mod_p > 1)) {
-        output->mul_scalar(this->inv_n_mod_p);
+        output.mul_scalar(this->inv_n_mod_p);
     }
 }
 

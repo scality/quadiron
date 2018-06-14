@@ -49,13 +49,13 @@ class Large : public FourierTransform<T> {
   public:
     Large(const gf::Field<T>& gf, int l, T w);
     ~Large();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
 
   private:
     void
-    _fft(vec::Vector<T>* output, vec::Vector<T>* input, vec::Vector<T>* _W);
+    _fft(vec::Vector<T>& output, vec::Vector<T>& input, vec::Vector<T>& _W);
 
     int l;
     T w;
@@ -65,7 +65,7 @@ class Large : public FourierTransform<T> {
     vec::Matrix<T>* tmp2;
     vec::Matrix<T>* tmp3;
     vec::Matrix<T>* tmp4;
-    vec::Vector<T>* tmp5;
+    vec::Vector<T>& tmp5;
     int _get_p(int i, int j);
     int _get_p0(int i, int j, int s);
     int _get_p1(int i, int j, int s);
@@ -212,9 +212,9 @@ void Large<T>::_pre_compute_consts()
 
 template <typename T>
 void Large<T>::_fft(
-    vec::Vector<T>* output,
-    vec::Vector<T>* input,
-    vec::Vector<T>* _W)
+    vec::Vector<T>& output,
+    vec::Vector<T>& input,
+    vec::Vector<T>& _W)
 {
     vec::Matrix<T> phi(this->gf, this->l + 1, this->n);
 
@@ -234,27 +234,27 @@ void Large<T>::_fft(
 
     // compute FFT
     for (int i = 0; i <= this->n - 1; i++)
-        output->set(i, phi.get(this->l, tmp5->get(i)));
+        output.set(i, phi.get(this->l, tmp5->get(i)));
 }
 
 template <typename T>
-void Large<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
+void Large<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     _fft(output, input, W);
 }
 
 template <typename T>
-void Large<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
+void Large<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     _fft(output, input, inv_W);
 }
 
 template <typename T>
-void Large<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
+void Large<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     fft_inv(output, input);
     if (this->inv_n_mod_p > 1)
-        output->mul_scalar(this->inv_n_mod_p);
+        output.mul_scalar(this->inv_n_mod_p);
 }
 
 } // namespace fft
