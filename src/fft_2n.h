@@ -277,9 +277,9 @@ void Radix2<T>::_fftp(vec::Buffers<T>* output, vec::Buffers<T>* input, bool inv)
 
     // set tmp_buf = w * o_odd
     if (inv)
-        this->gf->mul_vec_to_vecp(inv_W_half.get(), &o_odd, tmp_buf.get());
+        this->gf->mul_vec_to_vecp(*inv_W_half, o_odd, *tmp_buf);
     else
-        this->gf->mul_vec_to_vecp(W_half.get(), &o_odd, tmp_buf.get());
+        this->gf->mul_vec_to_vecp(*W_half, o_odd, *tmp_buf);
 
     // substract o_even by tmp_buf and store in o_dd: o_even - w * o_odd
     this->gf->sub_vecp_to_vecp(&o_even, tmp_buf.get(), &o_odd);
@@ -314,7 +314,7 @@ void Radix2<T>::ifft(vec::Buffers<T>* output, vec::Buffers<T>* input)
      * We need to divide output to `N` for the inverse formular
      */
     if ((this->k == this->N / 2) && (this->inv_n_mod_p > 1))
-        this->gf->mul_vec_to_vecp(this->vec_inv_n, output, output);
+        this->gf->mul_vec_to_vecp(*(this->vec_inv_n), *output, *output);
 }
 
 } // namespace fft
