@@ -81,7 +81,7 @@ class BuffersUtest {
         std::vector<T*>* mem1 = vec1->get_mem();
         // vec1->dump();
 
-        nttec::vec::Buffers<T> vec2(vec1, begin, end);
+        nttec::vec::Buffers<T> vec2(*vec1, begin, end);
         std::vector<T*>* mem2 = vec2.get_mem();
         assert(vec2.get_n() == end - begin);
         assert(vec2.get_size() == vec1->get_size());
@@ -99,7 +99,7 @@ class BuffersUtest {
         nttec::vec::Buffers<T> vec3(end - begin, size, &mem3);
         // vec3.dump();
 
-        assert(vec2.eq(&vec3));
+        assert(vec2.eq(vec3));
 
         delete vec1;
     }
@@ -115,7 +115,7 @@ class BuffersUtest {
 
         nttec::vec::Buffers<T>* vec1 = gen_buffers_rand_data(n, size);
         nttec::vec::Buffers<T> vec2(n, size);
-        vec2.copy(vec1);
+        vec2.copy(*vec1);
 
         std::vector<T*>* even_mem = new std::vector<T*>(half, nullptr);
         std::vector<T*>* odd_mem = new std::vector<T*>(half, nullptr);
@@ -123,16 +123,16 @@ class BuffersUtest {
             new nttec::vec::Buffers<T>(half, size, even_mem);
         nttec::vec::Buffers<T>* i_odd =
             new nttec::vec::Buffers<T>(half, size, odd_mem);
-        vec1->separate_even_odd(i_even, i_odd);
+        vec1->separate_even_odd(*i_even, *i_odd);
 
         // vec1->dump();
         vec1->separate_even_odd();
         // vec1->dump();
 
-        nttec::vec::Buffers<T> _i_even(vec1, 0, half);
-        nttec::vec::Buffers<T> _i_odd(vec1, half, n);
-        assert(i_even->eq(&_i_even)); // NOLINT
-        assert(i_odd->eq(&_i_odd));   // NOLINT
+        nttec::vec::Buffers<T> _i_even(*vec1, 0, half);
+        nttec::vec::Buffers<T> _i_odd(*vec1, half, n);
+        assert(i_even->eq(_i_even)); // NOLINT
+        assert(i_odd->eq(_i_odd));   // NOLINT
 
         // vec2.dump();
 
@@ -168,20 +168,20 @@ class BuffersUtest {
         int n2 = 10;
 
         nttec::vec::Buffers<T>* vec = gen_buffers_rand_data(n, size);
-        nttec::vec::Buffers<T> vec1(vec, n1);
-        nttec::vec::Buffers<T> vec2(vec, n2);
+        nttec::vec::Buffers<T> vec1(*vec, n1);
+        nttec::vec::Buffers<T> vec2(*vec, n2);
 
-        nttec::vec::Buffers<T> _vec1(vec, 0, n1);
+        nttec::vec::Buffers<T> _vec1(*vec, 0, n1);
         nttec::vec::Buffers<T>* _vec2 =
             new nttec::vec::BuffersZeroExtended<T>(vec, n2);
 
-        assert(vec1.eq(&_vec1));
-        assert(vec2.eq(_vec2));
+        assert(vec1.eq(_vec1));
+        assert(vec2.eq(*_vec2));
 
         delete vec;
 
-        nttec::vec::Buffers<T> vec3(&vec2, n1);
-        assert(vec3.eq(&vec1));
+        nttec::vec::Buffers<T> vec3(vec2, n1);
+        assert(vec3.eq(vec1));
 
         delete _vec2;
     }
@@ -242,7 +242,7 @@ class BuffersUtest {
         // std::cout << "vec_char:"; vec_char.dump();
         // std::cout << "vec_T_tmp:"; vec_T_tmp.dump();
         // check
-        assert(vec_T_tmp.eq(words));
+        assert(vec_T_tmp.eq(*words));
 
         /*
          * unpack bufs of type T to bufs of type uint8_t
@@ -255,7 +255,7 @@ class BuffersUtest {
         // std::cout << "vec_T_tmp:"; vec_T_tmp.dump();
         // std::cout << "vec_char_tmp:"; vec_char_tmp.dump();
         // check
-        assert(vec_char_tmp.eq(&vec_char));
+        assert(vec_char_tmp.eq(vec_char));
 
         delete words;
     }
