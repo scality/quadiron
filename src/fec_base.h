@@ -1128,7 +1128,7 @@ void FecCode<T>::decode_apply(
     this->fft_2k->fft(&buf2_2k, &buf1_2k);
 
     // multiply FFT(A) and buf2_2k
-    this->gf->mul_vec_to_vecp(&A_fft_2k, &buf2_2k, &buf2_2k);
+    this->gf->mul_vec_to_vecp(A_fft_2k, buf2_2k, buf2_2k);
 
     // buf3 concats `output` and a temporary buffer
     //  - first k buffers point to output
