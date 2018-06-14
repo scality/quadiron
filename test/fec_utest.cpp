@@ -71,7 +71,7 @@ class FecTestCommon : public ::testing::Test {
             }
             // FIXME: ngff4 will modify v after encode
             v_p.copy(&v);
-            fec.encode(&_v, props, 0, &v);
+            fec.encode(_v, props, 0, v);
             std::random_shuffle(ids.begin(), ids.end());
             for (int i = 0; i < n_data; i++) {
                 f.set(i, ids.at(i));
@@ -79,7 +79,7 @@ class FecTestCommon : public ::testing::Test {
             }
             std::unique_ptr<fec::DecodeContext<T>> context =
                 fec.init_context_dec(f);
-            fec.decode(*context, &v2, props, 0, &_v2);
+            fec.decode(*context, v2, props, 0, _v2);
             ASSERT_EQ(v_p, v2);
         }
     }
