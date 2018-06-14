@@ -124,15 +124,15 @@ class FecCode {
     virtual int get_n_outputs() = 0;
 
     virtual void encode(
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) = 0;
+        vec::Vector<T>& words) = 0;
     virtual void encode(
-        vec::Buffers<T>* output,
+        vec::Buffers<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Buffers<T>* words){};
+        vec::Buffers<T>& words){};
     virtual void decode_add_data(int fragment_index, int row) = 0;
     virtual void decode_add_parities(int fragment_index, int row) = 0;
     virtual void decode_build(void) = 0;
@@ -149,17 +149,17 @@ class FecCode {
      */
     virtual void decode(
         const DecodeContext<T>& context,
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words);
+        vec::Vector<T>& words);
 
     virtual void decode(
         const DecodeContext<T>& context,
-        vec::Buffers<T>* output,
+        vec::Buffers<T>& output,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Buffers<T>* words);
+        vec::Buffers<T>& words);
 
     bool readw(T* ptr, std::istream* stream);
     bool writew(T val, std::ostream* stream);
@@ -246,23 +246,23 @@ class FecCode {
         const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words);
+        vec::Vector<T>& words);
 
     virtual void decode_apply(
         const DecodeContext<T>& context,
-        vec::Vector<T>* output,
-        vec::Vector<T>* words);
+        vec::Vector<T>& output,
+        vec::Vector<T>& words);
 
     virtual void decode_prepare(
         const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Buffers<T>* words);
+        vec::Buffers<T>& words);
 
     virtual void decode_apply(
         const DecodeContext<T>& context,
-        vec::Buffers<T>* output,
-        vec::Buffers<T>* words);
+        vec::Buffers<T>& output,
+        vec::Buffers<T>& words);
 };
 
 /**
@@ -424,7 +424,7 @@ void FecCode<T>::encode_bufs(
 
         timeval t1 = tick();
         uint64_t start = rdtsc();
-        encode(&output, output_parities_props, offset, &words);
+        encode(output, output_parities_props, offset, words);
         uint64_t end = rdtsc();
         uint64_t t2 = hrtime_usec(t1);
 
@@ -497,7 +497,7 @@ void FecCode<T>::encode_packet(
 
         timeval t1 = tick();
         uint64_t start = rdtsc();
-        encode(&output, output_parities_props, offset, &words);
+        encode(output, output_parities_props, offset, words);
         uint64_t end = rdtsc();
         uint64_t t2 = hrtime_usec(t1);
 
@@ -634,7 +634,7 @@ bool FecCode<T>::decode_bufs(
 
         timeval t1 = tick();
         uint64_t start = rdtsc();
-        decode(*context, &output, input_parities_props, offset, &words);
+        decode(*context, output, input_parities_props, offset, words);
         uint64_t end = rdtsc();
         uint64_t t2 = hrtime_usec(t1);
 
@@ -715,10 +715,10 @@ bool FecCode<T>::decode_bufs(
 template <typename T>
 void FecCode<T>::decode(
     const DecodeContext<T>& context,
-    vec::Vector<T>* output,
+    vec::Vector<T>& output,
     const std::vector<Properties>& props,
     off_t offset,
-    vec::Vector<T>* words)
+    vec::Vector<T>& words)
 {
     // prepare for decoding
     decode_prepare(context, props, offset, words);
@@ -769,7 +769,7 @@ void FecCode<T>::decode_prepare(
     const DecodeContext<T>& context,
     const std::vector<Properties>& props,
     off_t offset,
-    vec::Vector<T>* words)
+    vec::Vector<T>& words)
 {
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
     for (int i = 0; i < this->n_data; ++i) {
@@ -782,7 +782,7 @@ void FecCode<T>::decode_prepare(
         // Following check is used for FFT over FNT where the single special
         // case symbol equals card - 1
         if (data && *data == "@") {
-            words->set(i, this->gf->card() - 1);
+            words.set(i, this->gf->card() - 1);
         }
     }
 }
@@ -797,8 +797,8 @@ void FecCode<T>::decode_prepare(
 template <typename T>
 void FecCode<T>::decode_apply(
     const DecodeContext<T>& context,
-    vec::Vector<T>* output,
-    vec::Vector<T>* words)
+    vec::Vector<T>& output,
+    vec::Vector<T>& words)
 {
     unsigned len_2k = context.get_len_2k();
 
@@ -817,7 +817,7 @@ void FecCode<T>::decode_apply(
     for (int i = 0; i <= k - 1; ++i) {
         vec1_n.set(
             fragments_ids.get(i),
-            this->gf->mul(words->get(i), inv_A_i.get(fragments_ids.get(i))));
+            this->gf->mul(words.get(i), inv_A_i.get(fragments_ids.get(i))));
     }
 
     // compute vec2_n = FFT(vec1_n)
@@ -842,7 +842,7 @@ void FecCode<T>::decode_apply(
 
     // get decoded symbols are the first k elements of vec2_2k
     for (unsigned i = 0; i < k; ++i)
-        output->set(i, vec2_2k.get(i));
+        output.set(i, vec2_2k.get(i));
 }
 
 /********** Decoding over vec::PolyBuf **********/
@@ -991,7 +991,7 @@ bool FecCode<T>::decode_packet(
 
         timeval t1 = tick();
         uint64_t start = rdtsc();
-        decode(*context, &output, input_parities_props, offset, &words);
+        decode(*context, output, input_parities_props, offset, words);
         uint64_t end = rdtsc();
         uint64_t t2 = hrtime_usec(t1);
 
@@ -1029,10 +1029,10 @@ bool FecCode<T>::decode_packet(
 template <typename T>
 void FecCode<T>::decode(
     const DecodeContext<T>& context,
-    vec::Buffers<T>* output,
+    vec::Buffers<T>& output,
     const std::vector<Properties>& props,
     off_t offset,
-    vec::Buffers<T>* words)
+    vec::Buffers<T>& words)
 {
     // prepare for decoding
     decode_prepare(context, props, offset, words);
@@ -1049,7 +1049,7 @@ void FecCode<T>::decode_prepare(
     const DecodeContext<T>& context,
     const std::vector<Properties>& props,
     off_t offset,
-    vec::Buffers<T>* words)
+    vec::Buffers<T>& words)
 {
     // FIXME: could we integrate this preparation into vec::pack?
     // It will reduce a loop on all data
@@ -1059,7 +1059,7 @@ void FecCode<T>::decode_prepare(
     T thres = (this->gf->card() - 1);
     for (unsigned i = 0; i < this->n_data; i++) {
         const int frag_id = fragments_ids.get(i);
-        T* chunk = words->get(i);
+        T* chunk = words.get(i);
         // loop over marked symbols
         for (auto const& data : props[frag_id].get_map()) {
             off_t loc_offset = data.first.get_offset();
@@ -1095,8 +1095,8 @@ void FecCode<T>::decode_prepare(
 template <typename T>
 void FecCode<T>::decode_apply(
     const DecodeContext<T>& context,
-    vec::Buffers<T>* output,
-    vec::Buffers<T>* words)
+    vec::Buffers<T>& output,
+    vec::Buffers<T>& words)
 {
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
     vec::Vector<T>& inv_A_i = context.get_vector(CtxVec::INV_A_I);
@@ -1115,7 +1115,7 @@ void FecCode<T>::decode_apply(
     for (int i = 0; i <= k - 1; ++i) {
         this->gf->mul_coef_to_buf(
             inv_A_i.get(fragments_ids.get(i)),
-            words->get(i),
+            words.get(i),
             buf1_n.get(fragments_ids.get(i)),
             pkt_size);
     }
@@ -1133,12 +1133,12 @@ void FecCode<T>::decode_apply(
     // buf3 concats `output` and a temporary buffer
     //  - first k buffers point to output
     //  - last (len_2k - k) buffers point to buf1_len2k_minus_k
-    vec::Buffers<T> buf3(output, &buf1_len2k_minus_k);
+    vec::Buffers<T> buf3(&output, &buf1_len2k_minus_k);
 
     this->fft_2k->ifft(buf3, buf2_2k);
 
     // negatize output
-    this->gf->neg(*output);
+    this->gf->neg(output);
 }
 
 } // namespace fec
