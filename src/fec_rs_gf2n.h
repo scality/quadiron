@@ -99,12 +99,12 @@ class RsGf2n : public FecCode<T> {
     }
 
     void encode(
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
-        mat->mul(output, words);
+        mat->mul(&output, &words);
     }
 
     void decode_add_data(int fragment_index, int row) override
@@ -133,12 +133,12 @@ class RsGf2n : public FecCode<T> {
 
     void decode(
         const DecodeContext<T>& context,
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
-        decode_mat->mul(output, words);
+        decode_mat->mul(&output, &words);
     }
 
     std::unique_ptr<DecodeContext<T>>

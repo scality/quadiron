@@ -170,18 +170,18 @@ class RsGfpFft : public FecCode<T> {
      * @param words must be n_data
      */
     void encode(
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
-        vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(*output, vwords);
+        vec::ZeroExtended<T> vwords(&words, this->n);
+        this->fft->fft(output, vwords);
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {
-            if (output->get(i) >= this->limit_value) {
+            if (output.get(i) >= this->limit_value) {
                 props[i].add(ValueLocation(offset, i), "@");
-                output->set(i, output->get(i) % this->limit_value);
+                output.set(i, output.get(i) % this->limit_value);
             }
         }
     }
@@ -214,7 +214,7 @@ class RsGfpFft : public FecCode<T> {
         const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
         int k = this->n_data; // number of fragments received
@@ -226,7 +226,7 @@ class RsGfpFft : public FecCode<T> {
             // In encoded data, its value was subtracted by the predefined
             // limite_value. This operation restore its value.
             if (data && *data == "@") {
-                words->set(i, words->get(i) + limit_value);
+                words.set(i, words.get(i) + limit_value);
             }
         }
     }
