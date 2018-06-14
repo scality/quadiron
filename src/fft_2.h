@@ -94,7 +94,7 @@ void Size2<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 template <typename T>
 void Size2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
-    output.copy(&input);
+    output.copy(input);
     size_t buf_len = input.get_size();
     this->gf->add_two_bufs(input.get(1), output.get(0), buf_len);
     this->gf->sub_two_bufs(input.get(0), output.get(1), output.get(1), buf_len);

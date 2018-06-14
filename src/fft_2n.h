@@ -257,10 +257,10 @@ void Radix2<T>::_fftp(vec::Buffers<T>& output, vec::Buffers<T>& input, bool inv)
     vec::Buffers<T> i_odd(half, size, &odd_mem);
 
     // separate even and odd elements of input
-    input.separate_even_odd(&i_even, &i_odd);
+    input.separate_even_odd(i_even, i_odd);
 
-    vec::Buffers<T> o_even(&output, 0, half);
-    vec::Buffers<T> o_odd(&output, half, this->n);
+    vec::Buffers<T> o_even(output, 0, half);
+    vec::Buffers<T> o_odd(output, half, this->n);
 
     if (inv) {
         fftk->fft_inv(o_even, i_even);
