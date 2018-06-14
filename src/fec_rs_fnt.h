@@ -162,7 +162,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
-        vec::BuffersZeroExtended<T> vwords(&words, this->n);
+        vec::BuffersZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
         // check for out of range value in output
         int size = output.get_size();
