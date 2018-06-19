@@ -164,8 +164,8 @@ class FecCode {
     bool readw(T* ptr, std::istream* stream);
     bool writew(T val, std::ostream* stream);
 
-    bool read_pkt(char* pkt, std::istream* stream);
-    bool write_pkt(char* pkt, std::ostream* stream);
+    bool read_pkt(char* pkt, std::istream& stream);
+    bool write_pkt(char* pkt, std::ostream& stream);
 
     void encode_bufs(
         std::vector<std::istream*> input_data_bufs,
@@ -362,18 +362,18 @@ inline bool FecCode<T>::writew(T val, std::ostream* stream)
 }
 
 template <typename T>
-inline bool FecCode<T>::read_pkt(char* pkt, std::istream* stream)
+inline bool FecCode<T>::read_pkt(char* pkt, std::istream& stream)
 {
-    if (stream->read(pkt, buf_size)) {
+    if (stream.read(pkt, buf_size)) {
         return true;
     }
     return false;
 }
 
 template <typename T>
-inline bool FecCode<T>::write_pkt(char* pkt, std::ostream* stream)
+inline bool FecCode<T>::write_pkt(char* pkt, std::ostream& stream)
 {
-    if (stream->write(pkt, buf_size))
+    if (stream.write(pkt, buf_size))
         return true;
     return false;
 }
@@ -476,7 +476,8 @@ void FecCode<T>::encode_packet(
     while (true) {
         // TODO: get number of read bytes -> true buf size
         for (unsigned i = 0; i < n_data; i++) {
-            if (!read_pkt((char*)(words_mem_char.at(i)), input_data_bufs[i])) {
+            if (!read_pkt(
+                    (char*)(words_mem_char.at(i)), *(input_data_bufs[i]))) {
                 cont = false;
                 break;
             }
@@ -501,7 +502,8 @@ void FecCode<T>::encode_packet(
             output_mem_T, output_mem_char, output_len, pkt_size, word_size);
 
         for (unsigned i = 0; i < n_outputs; i++) {
-            write_pkt((char*)(output_mem_char.at(i)), output_parities_bufs[i]);
+            write_pkt(
+                (char*)(output_mem_char.at(i)), *(output_parities_bufs[i]));
         }
         offset += buf_size;
     }
@@ -945,7 +947,7 @@ bool FecCode<T>::decode_packet(
                 unsigned data_idx = fragments_ids.get(i);
                 if (!read_pkt(
                         (char*)(words_mem_char.at(i)),
-                        input_data_bufs[data_idx])) {
+                        *(input_data_bufs[data_idx]))) {
                     cont = false;
                     break;
                 }
@@ -955,7 +957,7 @@ bool FecCode<T>::decode_packet(
             unsigned parity_idx = avail_parity_ids.get(i);
             if (!read_pkt(
                     (char*)(words_mem_char.at(avail_data_nb + i)),
-                    input_parities_bufs[parity_idx])) {
+                    *(input_parities_bufs[parity_idx]))) {
                 cont = false;
                 break;
             }
@@ -982,7 +984,8 @@ bool FecCode<T>::decode_packet(
 
         for (unsigned i = 0; i < n_data; i++) {
             if (output_data_bufs[i] != nullptr) {
-                write_pkt((char*)(output_mem_char.at(i)), output_data_bufs[i]);
+                write_pkt(
+                    (char*)(output_mem_char.at(i)), *(output_data_bufs[i]));
             }
         }
         offset += buf_size;
