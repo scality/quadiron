@@ -925,11 +925,6 @@ bool FecCode<T>::decode_packet(
 
     decode_build();
 
-    int n_words = code_len;
-    if (type == FecType::SYSTEMATIC) {
-        n_words = n_data;
-    }
-
     // vector of buffers storing data read from chunk
     vec::Buffers<uint8_t> words_char(n_data, buf_size);
     std::vector<uint8_t*>* words_mem_char = words_char.get_mem();
