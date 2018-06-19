@@ -216,7 +216,6 @@ class FecCode {
     T r;
     std::unique_ptr<gf::Field<T>> gf = nullptr;
     std::unique_ptr<fft::FourierTransform<T>> fft = nullptr;
-    std::unique_ptr<fft::FourierTransform<T>> fft_full = nullptr;
     std::unique_ptr<fft::FourierTransform<T>> fft_2k = nullptr;
     // This vector MUST be initialized by derived Class using multiplicative FFT
     std::unique_ptr<vec::Vector<T>> inv_r_powers = nullptr;
@@ -745,9 +744,6 @@ FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids, size_t size)
     if (this->fft == nullptr) {
         throw LogicError("FEC base: FFT must be initialized");
     }
-    if (this->fft_full == nullptr) {
-        throw LogicError("FEC base: FFT full must be initialized");
-    }
 
     int k = this->n_data; // number of fragments received
     // vector x=(x_0, x_1, ..., x_k-1)
@@ -823,7 +819,7 @@ void FecCode<T>::decode_apply(
     }
 
     // compute vec2_n = FFT(vec1_n)
-    this->fft_full->fft_inv(vec2_n, vec1_n);
+    this->fft->fft_inv(vec2_n, vec1_n);
 
     // vec_tmp_2k: first k elements from vec2_n
     //             last (len_2k - k) elements are padded
@@ -1124,7 +1120,7 @@ void FecCode<T>::decode_apply(
     }
 
     // compute buf2_n
-    this->fft_full->fft_inv(buf2_n, buf1_n);
+    this->fft->fft_inv(buf2_n, buf1_n);
 
     // buf1_2k: first k buffers point to first k buffers of buf2_n
     //          las k buffers point to a padded zero buffer

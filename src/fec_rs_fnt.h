@@ -100,9 +100,6 @@ class RsFnt : public FecCode<T> {
         this->fft = std::unique_ptr<fft::Radix2<T>>(
             new fft::Radix2<T>(*(this->gf), this->n, m, this->pkt_size));
 
-        this->fft_full = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*(this->gf), this->n, this->n, this->pkt_size));
-
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
             new fft::Radix2<T>(*(this->gf), len_2k, len_2k, this->pkt_size));

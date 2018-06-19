@@ -96,9 +96,6 @@ class RsNf4 : public FecCode<T> {
         this->fft = std::unique_ptr<fft::Radix2<T>>(
             new fft::Radix2<T>(*ngff4, this->n, m, this->pkt_size));
 
-        this->fft_full = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*ngff4, this->n, this->n, this->pkt_size));
-
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
             new fft::Radix2<T>(*ngff4, len_2k, len_2k, this->pkt_size));
@@ -196,9 +193,6 @@ class RsNf4 : public FecCode<T> {
         }
         if (this->fft == nullptr) {
             throw LogicError("FEC base: FFT must be initialized");
-        }
-        if (this->fft_full == nullptr) {
-            throw LogicError("FEC base: FFT full must be initialized");
         }
 
         int k = this->n_data; // number of fragments received
