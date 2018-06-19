@@ -1011,6 +1011,34 @@ void RingModN<uint32_t>::sub_two_bufs(
     size_t len) const;
 
 template <>
+void RingModN<uint16_t>::butterfly_ct(
+    uint16_t coef,
+    uint16_t* buf1,
+    uint16_t* buf2,
+    size_t len) const;
+
+template <>
+void RingModN<uint32_t>::butterfly_ct(
+    uint32_t coef,
+    uint32_t* buf1,
+    uint32_t* buf2,
+    size_t len) const;
+
+template <>
+void RingModN<uint16_t>::butterfly_gs(
+    uint16_t coef,
+    uint16_t* buf1,
+    uint16_t* buf2,
+    size_t len) const;
+
+template <>
+void RingModN<uint32_t>::butterfly_gs(
+    uint32_t coef,
+    uint32_t* buf1,
+    uint32_t* buf2,
+    size_t len) const;
+
+template <>
 void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x, uint16_t* y) const;
 template <>
 void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x, uint32_t* y) const;
