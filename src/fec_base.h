@@ -49,6 +49,12 @@
 #include "vec_slice.h"
 #include "vec_vector.h"
 
+#ifdef QUADIRON_USE_SIMD
+
+#include "simd.h"
+
+#endif // #ifdef QUADIRON_USE_SIMD
+
 namespace quadiron {
 
 /** Forward Error Correction code implementations. */
