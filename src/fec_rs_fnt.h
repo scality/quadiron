@@ -141,6 +141,14 @@ class RsFnt : public FecCode<T> {
         vec::Vector<T>& words) override
     {
         this->fft->fft(output, words);
+        encode_post_process(output, props, offset);
+    }
+
+    void encode_post_process(
+        vec::Vector<T>& output,
+        std::vector<Properties>& props,
+        off_t offset) override
+    {
         // max_value = 2^x
         T thres = this->gf->card() - 1;
         // check for out of range value in output
@@ -159,17 +167,24 @@ class RsFnt : public FecCode<T> {
         vec::Buffers<T>& words) override
     {
         this->fft->fft(output, words);
+        encode_post_process(output, props, offset);
+    }
+
+    void encode_post_process(
+        vec::Buffers<T>& output,
+        std::vector<Properties>& props,
+        off_t offset) override
+    {
         // check for out of range value in output
-        int size = output.get_size();
+        unsigned size = output.get_size();
         T thres = (this->gf->card() - 1);
-        for (unsigned i = 0; i < this->code_len; i++) {
+        for (unsigned i = 0; i < this->code_len; ++i) {
             T* chunk = output.get(i);
-            for (int j = 0; j < size; j++) {
+            for (unsigned j = 0; j < size; ++j) {
                 if (chunk[j] & thres) {
-                    const ValueLocation loc(offset + j * this->word_size, i);
+                    const ValueLocation loc(offset + j, i);
 
                     props[i].add(loc, "@");
-                    chunk[j] = 0;
                 }
             }
         }
