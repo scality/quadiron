@@ -128,11 +128,19 @@ class FecCode {
         std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>& words) = 0;
+    virtual void encode_post_process(
+        vec::Vector<T>& output,
+        std::vector<Properties>& props,
+        off_t offset){};
     virtual void encode(
         vec::Buffers<T>& output,
         std::vector<Properties>& props,
         off_t offset,
         vec::Buffers<T>& words){};
+    virtual void encode_post_process(
+        vec::Buffers<T>& output,
+        std::vector<Properties>& props,
+        off_t offset){};
     virtual void decode_add_data(int fragment_index, int row) = 0;
     virtual void decode_add_parities(int fragment_index, int row) = 0;
     virtual void decode_build(void) = 0;
