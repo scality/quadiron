@@ -361,6 +361,42 @@ inline void butterfly_gs(
     }
 }
 
+inline void encode_post_process(
+    vec::Buffers<uint32_t>& output,
+    std::vector<Properties>& props,
+    off_t offset,
+    unsigned code_len,
+    uint32_t threshold,
+    size_t vecs_nb)
+{
+    const unsigned vec_size = ALIGN_SIZE / sizeof(uint32_t);
+
+    const m256i _threshold = _mm256_set1_epi32(threshold);
+    const uint32_t max = 1 << (sizeof(uint32_t) * 8 - 1);
+    const m256i mask_hi = _mm256_set1_epi32(max);
+    const unsigned element_size = sizeof(uint32_t);
+
+    for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
+        uint32_t* chunk = output.get(frag_id);
+        m256i* buf = reinterpret_cast<m256i*>(chunk);
+        for (unsigned vec_id = 0; vec_id < vecs_nb; ++vec_id) {
+            m256i a = _mm256_load_si256(&(buf[vec_id]));
+            m256i b = _mm256_cmpeq_epi32(_threshold, a);
+            m256i c = _mm256_and_si256(mask_hi, b);
+            uint32_t d = _mm256_movemask_epi8(c);
+
+            while (d > 0) {
+                unsigned byte_idx = __builtin_ctz(d);
+                unsigned element_idx = byte_idx / element_size;
+                off_t _offset = offset + vec_id * vec_size + element_idx;
+                const ValueLocation loc(_offset, frag_id);
+                props[frag_id].add(loc, "@");
+                d ^= 1 << byte_idx;
+            }
+        }
+    }
+}
+
 /* ==================== Operations for NF4 =================== */
 typedef __m128i m128i;
 
