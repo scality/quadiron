@@ -456,7 +456,7 @@ void FecCode<T>::encode_bufs(
             T tmp = output.get(i);
             writew(tmp, output_parities_bufs[i]);
         }
-        offset += word_size;
+        offset++;
     }
 }
 
@@ -537,7 +537,7 @@ void FecCode<T>::encode_packet(
             write_pkt(
                 (char*)(output_mem_char->at(i)), *(output_parities_bufs[i]));
         }
-        offset += buf_size;
+        offset += pkt_size;
     }
 }
 
@@ -674,7 +674,7 @@ bool FecCode<T>::decode_bufs(
             }
         }
 
-        offset += word_size;
+        offset++;
     }
 
     return true;
@@ -1026,7 +1026,7 @@ bool FecCode<T>::decode_packet(
                     (char*)(output_mem_char->at(i)), *(output_data_bufs[i]));
             }
         }
-        offset += buf_size;
+        offset += pkt_size;
     }
 
     return true;
@@ -1072,7 +1072,7 @@ void FecCode<T>::decode_prepare(
     // FIXME: could we integrate this preparation into vec::pack?
     // It will reduce a loop on all data
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
-    off_t offset_max = offset + buf_size;
+    off_t offset_max = offset + pkt_size;
 
     T thres = (this->gf->card() - 1);
     for (unsigned i = 0; i < this->n_data; i++) {
@@ -1082,8 +1082,8 @@ void FecCode<T>::decode_prepare(
         for (auto const& data : props[frag_id].get_map()) {
             off_t loc_offset = data.first.get_offset();
             if (loc_offset >= offset && loc_offset < offset_max) {
-                // As loc.offset := offset + j * this->word_size
-                const size_t j = (loc_offset - offset) / this->word_size;
+                // As loc.offset := offset + j
+                const size_t j = (loc_offset - offset);
 
                 // Check if the symbol is a special case whick is marked by "@".
                 // Note: this check is necessary when word_size is not large
