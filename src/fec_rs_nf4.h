@@ -275,8 +275,7 @@ class RsNf4 : public FecCode<T> {
             for (size_t symb_id = 0; symb_id < size; symb_id++) {
                 ngff4->unpack(chunk[symb_id], true_val);
                 if (true_val.flag > 0) {
-                    const ValueLocation loc(
-                        offset + symb_id * this->word_size, frag_id);
+                    const ValueLocation loc(offset + symb_id, frag_id);
                     props[frag_id].add(loc, std::to_string(true_val.flag));
                 }
                 chunk[symb_id] = true_val.values;
@@ -291,7 +290,7 @@ class RsNf4 : public FecCode<T> {
         vec::Buffers<T>& words) override
     {
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
-        off_t offset_max = offset + this->buf_size;
+        off_t offset_max = offset + this->pkt_size;
         for (unsigned i = 0; i < this->n_data; ++i) {
             const int frag_id = fragments_ids.get(i);
             T* chunk = words.get(i);
@@ -304,8 +303,8 @@ class RsNf4 : public FecCode<T> {
             for (auto const& data : props[frag_id].get_map()) {
                 const off_t loc_offset = data.first.get_offset();
                 if (loc_offset >= offset && loc_offset < offset_max) {
-                    // As loc.offset := offset + j * this->word_size
-                    const size_t j = (loc_offset - offset) / this->word_size;
+                    // As loc.offset := offset + j
+                    const size_t j = loc_offset - offset;
                     packed_symbs.push_back(j);
                     // pack symbol at index `j`
                     uint32_t flag = std::stoul(data.second);
