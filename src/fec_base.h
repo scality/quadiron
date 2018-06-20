@@ -418,6 +418,11 @@ void FecCode<T>::encode_bufs(
     vec::Vector<T> words(*(this->gf), n_data);
     vec::Vector<T> output(*(this->gf), get_n_outputs());
 
+    // clear property vectors
+    for (unsigned i = 0; i < n_outputs; i++) {
+        output_parities_props[i].clear();
+    }
+
     reset_stats_enc();
 
     while (true) {
@@ -464,6 +469,11 @@ void FecCode<T>::encode_packet(
     assert(input_data_bufs.size() == n_data);
     assert(output_parities_bufs.size() == n_outputs);
     assert(output_parities_props.size() == n_outputs);
+
+    // clear property vectors
+    for (unsigned i = 0; i < n_outputs; i++) {
+        output_parities_props[i].clear();
+    }
 
     bool cont = true;
     off_t offset = 0;
