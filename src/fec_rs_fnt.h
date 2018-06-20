@@ -209,6 +209,24 @@ class RsFnt : public FecCode<T> {
     }
 };
 
+#ifdef NTTEC_USE_SIMD
+
+/* Operations are vectorized by SIMD */
+
+template <>
+void RsFnt<uint16_t>::encode_post_process(
+    vec::Buffers<uint16_t>& output,
+    std::vector<Properties>& props,
+    off_t offset);
+
+template <>
+void RsFnt<uint32_t>::encode_post_process(
+    vec::Buffers<uint32_t>& output,
+    std::vector<Properties>& props,
+    off_t offset);
+
+#endif // #ifdef NTTEC_USE_SIMD
+
 } // namespace fec
 } // namespace nttec
 
