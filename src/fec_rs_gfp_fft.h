@@ -173,6 +173,14 @@ class RsGfpFft : public FecCode<T> {
     {
         vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
+        encode_post_process(output, props, offset);
+    }
+
+    void encode_post_process(
+        vec::Vector<T>& output,
+        std::vector<Properties>& props,
+        off_t offset) override
+    {
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {
             if (output.get(i) >= this->limit_value) {
