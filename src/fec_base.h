@@ -49,6 +49,12 @@
 #include "vec_slice.h"
 #include "vec_vector.h"
 
+#ifdef NTTEC_USE_SIMD
+
+#include "simd.h"
+
+#endif // #ifdef NTTEC_USE_SIMD
+
 namespace nttec {
 
 /** Forward Error Correction code implementations. */
