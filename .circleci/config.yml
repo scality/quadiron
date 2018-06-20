@@ -9,9 +9,4 @@ jobs:
       - run: cd build && make check-format
       - run: cd build && make check-lint
       - run: cd build && make check
-      # w/o SIMD
-      - run: cd build && cmake .. -DNTTEC_USE_SIMD=OFF && make benchmark
-      # w/ SSE4
-      - run: cd build && cmake .. -DNTTEC_USE_SIMD=SSE4 && make benchmark
-      # w/ AVX2
-      - run: cd build && cmake .. -DNTTEC_USE_SIMD=AVX2 && make benchmark
+      - run: cd build && make benchmark
