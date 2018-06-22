@@ -184,7 +184,7 @@ class RsGfpFft : public FecCode<T> {
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {
             if (output.get(i) >= this->limit_value) {
-                props[i].add(ValueLocation(offset, i), "@");
+                props[i].add(offset, 1);
                 output.set(i, output.get(i) % this->limit_value);
             }
         }
@@ -224,12 +224,12 @@ class RsGfpFft : public FecCode<T> {
         int k = this->n_data; // number of fragments received
         for (int i = 0; i < k; ++i) {
             const int j = fragments_ids.get(i);
-            auto data = props[j].get(ValueLocation(offset, j));
+            auto data = props[j].get(offset);
 
-            // Check if the symbol is a special case whick is marked by "@".
+            // Check if the symbol is a special case whick is marked by 1.
             // In encoded data, its value was subtracted by the predefined
             // limite_value. This operation restore its value.
-            if (data && *data == "@") {
+            if (data == 1) {
                 words.set(i, words.get(i) + limit_value);
             }
         }

@@ -157,8 +157,7 @@ class RsNf4 : public FecCode<T> {
             T val = output.get(i);
             ngff4->unpack(val, true_val);
             if (true_val.flag > 0) {
-                props[i].add(
-                    ValueLocation(offset, i), std::to_string(true_val.flag));
+                props[i].add(offset, true_val.flag);
                 // std::cout << "\ni:" << true_val.flag << " at buf" << buf <<
                 // std::endl; std::cout << "encode: val:" << val << " <- " <<
                 // true_val.val << std::endl;
@@ -239,11 +238,10 @@ class RsNf4 : public FecCode<T> {
         int k = this->n_data; // number of fragments received
         for (int i = 0; i < k; ++i) {
             const int j = fragments_ids.get(i);
-            auto data = props[j].get(ValueLocation(offset, j));
+            auto data = props[j].get(offset);
 
             if (data) {
-                uint32_t flag = std::stoul(*data);
-                true_val = ngff4->pack(words.get(i), flag);
+                true_val = ngff4->pack(words.get(i), data);
             } else {
                 true_val = ngff4->pack(words.get(i));
             }
@@ -295,9 +293,8 @@ class RsNf4 : public FecCode<T> {
             for (size_t symb_id = 0; symb_id < size; symb_id++) {
                 ngff4->unpack(chunk[symb_id], true_val);
                 if (true_val.flag > 0) {
-                    const ValueLocation loc(
-                        offset + symb_id * this->word_size, frag_id);
-                    props[frag_id].add(loc, std::to_string(true_val.flag));
+                    const off_t loc = offset + symb_id * this->word_size;
+                    props[frag_id].add(loc, true_val.flag);
                 }
                 chunk[symb_id] = true_val.values;
             }
@@ -322,14 +319,13 @@ class RsNf4 : public FecCode<T> {
             std::vector<size_t> packed_symbs;
             // pack marked symbols
             for (auto const& data : props[frag_id].get_map()) {
-                off_t loc_offset = data.first.get_offset();
+                off_t loc_offset = data.first;
                 if (loc_offset >= offset && loc_offset < offset_max) {
                     // As loc.offset := offset + j * this->word_size
                     const size_t j = (loc_offset - offset) / this->word_size;
                     packed_symbs.push_back(j);
                     // pack symbol at index `j`
-                    uint32_t flag = std::stoul(data.second);
-                    chunk[j] = ngff4->pack(chunk[j], flag);
+                    chunk[j] = ngff4->pack(chunk[j], data.second);
                 }
             }
             // sort the list of packed symbols

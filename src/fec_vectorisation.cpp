@@ -67,8 +67,7 @@ void RsFnt<uint16_t>::encode_post_process(
             uint16_t* chunk = output.get(i);
             for (int j = vecs_nb * vec_size; j < size; ++j) {
                 if (chunk[j] == threshold) {
-                    const ValueLocation loc(offset + j, i);
-                    props[i].add(loc, "@");
+                    props[i].add(offset + j, 1);
                 }
             }
         }
@@ -100,8 +99,7 @@ void RsFnt<uint32_t>::encode_post_process(
             uint32_t* chunk = output.get(i);
             for (int j = vecs_nb * vec_size; j < size; ++j) {
                 if (chunk[j] == threshold) {
-                    const ValueLocation loc(offset + j, i);
-                    props[i].add(loc, "@");
+                    props[i].add(offset + j, 1);
                 }
             }
         }
