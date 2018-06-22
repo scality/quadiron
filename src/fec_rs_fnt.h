@@ -154,7 +154,7 @@ class RsFnt : public FecCode<T> {
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {
             if (output.get(i) & thres) {
-                props[i].add(ValueLocation(offset, i), "@");
+                props[i].add(offset, 1);
                 output.set(i, 0);
             }
         }
@@ -182,9 +182,7 @@ class RsFnt : public FecCode<T> {
             T* chunk = output.get(i);
             for (unsigned j = 0; j < size; ++j) {
                 if (chunk[j] & thres) {
-                    const ValueLocation loc(offset + j, i);
-
-                    props[i].add(loc, "@");
+                    props[i].add(offset + j, 1);
                 }
             }
         }
