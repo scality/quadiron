@@ -182,6 +182,9 @@ int Benchmark<T>::init()
     case EC_TYPE_RS_ISAL:
         fec = new nttec::fec::RsIsal<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
+    case EC_TYPE_RS_LEO:
+        fec = new nttec::fec::RsLeo<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
@@ -648,6 +651,7 @@ void xusage()
               << "\t\t\trs-fnt: " << ec_desc.at(EC_TYPE_RS_FNT) << '\n'
               << "\t\t\trs-nf4: " << ec_desc.at(EC_TYPE_RS_NF4) << '\n'
               << "\t\t\trs-isal: " << ec_desc.at(EC_TYPE_RS_ISAL) << '\n'
+              << "\t\t\trs-leo: " << ec_desc.at(EC_TYPE_RS_LEO) << '\n'
               << "\t\t\tall: All available Reed-solomon codes\n"
               << "\t-s \tScenario for benchmark, either\n"
               << "\t\t\tenc_only: Only encodings\n"
@@ -800,6 +804,7 @@ int main(int argc, char** argv)
     // Currently support operating on packet:RS_FNT
     if (params->fec_type != EC_TYPE_RS_FNT
         && params->fec_type != EC_TYPE_RS_ISAL
+        && params->fec_type != EC_TYPE_RS_LEO
         && params->fec_type != EC_TYPE_RS_NF4) {
         params->operation_on_packet = false;
     }
