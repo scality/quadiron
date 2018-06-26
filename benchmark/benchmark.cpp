@@ -32,6 +32,9 @@
 
 #include "benchmark.h"
 
+// random generator function:
+int myrandom (int i) { return std::rand()%i;}
+
 template <typename T>
 Benchmark<T>::Benchmark(Params_t* params)
 {
@@ -193,7 +196,8 @@ int Benchmark<T>::init()
         this->n_c = this->m;
     }
 
-    this->prng = new PRNG(time(nullptr));
+    this->prng = new PRNG(time(0));
+    std::srand(time(0));
 
     // Allocate memory for data
     int i;
@@ -437,7 +441,7 @@ void Benchmark<T>::get_avail_chunks(
     std::vector<std::istream*>* avail_c_chunks,
     std::vector<quadiron::Properties>& avail_c_props)
 {
-    std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end());
+    std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end(), myrandom);
 
     int i;
     for (i = 0; i < k; i++) {
