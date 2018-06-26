@@ -45,6 +45,14 @@ link_directories(./libs/usr/lib)
 link_libraries(isal)
 link_libraries(boost_program_options)
 
+############
+# LEOPARD
+############
+include_directories(SYSTEM ./libs/leopard)
+link_directories(./libs/leopard/build)
+
+link_libraries(libleopard)
+
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
   message(WARNING "Benchmark results with an un-optimised build may be misleading")
