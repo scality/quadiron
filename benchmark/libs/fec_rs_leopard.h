@@ -96,6 +96,14 @@ class RsLeo : public FecCode<T> {
             leo_encode_work_count(this->n_data, this->n_parities);
         decode_work_count =
             leo_decode_work_count(this->n_data, this->n_parities);
+
+        unsigned enc_data_len = encode_work_count - this->n_parities;
+        unsigned dec_data_len = decode_work_count - this->n_data;
+
+        enc_data = std::unique_ptr<vec::Buffers<T>>(
+            new vec::Buffers<T>(enc_data_len, this->pkt_size));
+        dec_data = std::unique_ptr<vec::Buffers<T>>(
+            new vec::Buffers<T>(dec_data_len, this->pkt_size));
     }
 
     int get_n_outputs() override
@@ -117,8 +125,10 @@ class RsLeo : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
+        vec::Buffers<T> work_data(output, *enc_data);
+        std::vector<T*>* vec_work = work_data.get_mem();
+
         std::vector<T*>* vec_data = words.get_mem();
-        std::vector<T*>* vec_coding = output.get_mem();
 
         LeopardResult encodeResult = leo_encode(
             this->buf_size,
@@ -126,7 +136,7 @@ class RsLeo : public FecCode<T> {
             this->n_parities,
             encode_work_count,
             (void**)&vec_data->at(0),
-            (void**)&vec_coding->at(0));
+            (void**)&vec_work->at(0));
         if (encodeResult != Leopard_Success) {
             if (encodeResult == Leopard_TooMuchData) {
                 std::cout << "Skipping this test: Parameters are unsupported "
@@ -169,8 +179,11 @@ class RsLeo : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
+        vec::Buffers<T> work_data(output, *dec_data);
+
         std::vector<T*>* vec_data = words.get_mem();
         std::vector<T*>* vec_coding = output.get_mem();
+        std::vector<T*>* vec_work = work_data.get_mem();
 
         LeopardResult decodeResult = leo_decode(
             this->buf_size,
@@ -179,7 +192,7 @@ class RsLeo : public FecCode<T> {
             decode_work_count,
             (void**)&vec_data->at(0),
             (void**)&vec_coding->at(0),
-            (void**)&vec_coding->at(0));
+            (void**)&vec_work->at(0));
 
         if (decodeResult != Leopard_Success) {
             std::cout << "Error: Leopard decode failed with result="
@@ -191,6 +204,8 @@ class RsLeo : public FecCode<T> {
   private:
     unsigned encode_work_count;
     unsigned decode_work_count;
+    std::unique_ptr<vec::Buffers<T>> enc_data = nullptr;
+    std::unique_ptr<vec::Buffers<T>> dec_data = nullptr;
 };
 
 } // namespace fec
