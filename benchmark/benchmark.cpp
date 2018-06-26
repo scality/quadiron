@@ -195,6 +195,9 @@ int Benchmark<T>::init()
             quadiron::fec::RsMatrixType::VANDERMONDE,
             pkt_size);
         break;
+    case EC_TYPE_RS_LEO:
+        fec = new quadiron::fec::RsLeo<T>(word_size, k, m, quadiron::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
@@ -663,6 +666,7 @@ void xusage()
               << "\t\t\trs-fnt-sys: " << ec_desc.at(EC_TYPE_RS_FNT_SYS) << '\n'
               << "\t\t\trs-nf4: " << ec_desc.at(EC_TYPE_RS_NF4) << '\n'
               << "\t\t\trs-isal: " << ec_desc.at(EC_TYPE_RS_ISAL) << '\n'
+              << "\t\t\trs-leo: " << ec_desc.at(EC_TYPE_RS_LEO) << '\n'
               << "\t\t\tall: All available Reed-solomon codes\n"
               << "\t-s \tScenario for benchmark, either\n"
               << "\t\t\tenc_only: Only encodings\n"
@@ -816,6 +820,7 @@ int main(int argc, char** argv)
     if (params->fec_type != EC_TYPE_RS_FNT
         && params->fec_type != EC_TYPE_RS_FNT_SYS
         && params->fec_type != EC_TYPE_RS_ISAL
+        && params->fec_type != EC_TYPE_RS_LEO
         && params->fec_type != EC_TYPE_RS_NF4) {
         params->operation_on_packet = false;
     }
