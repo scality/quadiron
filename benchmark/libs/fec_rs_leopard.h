@@ -104,6 +104,11 @@ class RsLeo : public FecCode<T> {
             new vec::Buffers<T>(enc_data_len, this->pkt_size));
         dec_data = std::unique_ptr<vec::Buffers<T>>(
             new vec::Buffers<T>(dec_data_len, this->pkt_size));
+
+        original_data = std::unique_ptr<std::vector<T*>>(
+            new std::vector<T*>(this->n_data, nullptr));
+        encode_work_data = std::unique_ptr<std::vector<T*>>(
+            new std::vector<T*>(encode_work_count, nullptr));
     }
 
     int get_n_outputs() override
@@ -211,10 +216,10 @@ class RsLeo : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
+        prepare_for_new_dec(words);
+
         vec::Buffers<T> work_data(output, *dec_data);
 
-        std::vector<T*> vec_data = const_cast<std::vector<T*>&>(words.get_mem());
-        std::vector<T*> vec_coding = const_cast<std::vector<T*>&>(output.get_mem());
         std::vector<T*> vec_work = const_cast<std::vector<T*>&>(work_data.get_mem());
 
         LeopardResult decodeResult = leo_decode(
@@ -222,8 +227,8 @@ class RsLeo : public FecCode<T> {
             this->n_data,
             this->n_parities,
             decode_work_count,
-            (void**)&vec_data.at(0),
-            (void**)&vec_coding.at(0),
+            (void**)&original_data->at(0),
+            (void**)&encode_work_data->at(0),
             (void**)&vec_work.at(0));
 
         if (decodeResult != Leopard_Success) {
@@ -246,6 +251,10 @@ class RsLeo : public FecCode<T> {
     unsigned decode_work_count;
     std::unique_ptr<vec::Buffers<T>> enc_data = nullptr;
     std::unique_ptr<vec::Buffers<T>> dec_data = nullptr;
+
+    const vec::Vector<T>* fragments_ids;
+    std::unique_ptr<std::vector<T*>> original_data = nullptr;
+    std::unique_ptr<std::vector<T*>> encode_work_data = nullptr;
 };
 
 } // namespace fec
