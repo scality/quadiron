@@ -104,6 +104,11 @@ class RsLeo : public FecCode<T> {
             new vec::Buffers<T>(enc_data_len, this->pkt_size));
         dec_data = std::unique_ptr<vec::Buffers<T>>(
             new vec::Buffers<T>(dec_data_len, this->pkt_size));
+
+        original_data = std::unique_ptr<std::vector<T*>>(
+            new std::vector<T*>(this->n_data, nullptr));
+        encode_work_data = std::unique_ptr<std::vector<T*>>(
+            new std::vector<T*>(encode_work_count, nullptr));
     }
 
     int get_n_outputs() override
@@ -137,6 +142,7 @@ class RsLeo : public FecCode<T> {
             encode_work_count,
             (void**)&vec_data->at(0),
             (void**)&vec_work->at(0));
+
         if (encodeResult != Leopard_Success) {
             if (encodeResult == Leopard_TooMuchData) {
                 std::cout << "Skipping this test: Parameters are unsupported "
@@ -150,15 +156,46 @@ class RsLeo : public FecCode<T> {
         }
     }
 
-    void decode_add_data(int fragment_index, int row) override {}
+    void reset_for_new_dec()
+    {
+        std::fill(original_data->begin(), original_data->end(), nullptr);
+        std::fill(encode_work_data->begin(), encode_work_data->end(), nullptr);
+    }
 
-    void decode_add_parities(int fragment_index, int row) override {}
+    void
+    prepare_for_new_dec(vec::Buffers<T>& words)
+    {
+        for (unsigned i = 0; i < this->n_data; ++i) {
+            unsigned frag_id = fragments_ids->get(i);
+            if (frag_id < this->n_data) {
+                original_data->at(frag_id) = words.get(i);
+            } else {
+                unsigned parity_id = frag_id - this->n_data;
+                encode_work_data->at(parity_id) = words.get(i);
+            }
+        }
+    }
+
+    void decode_add_data(int fragment_index, int row) override
+    {
+        if (fragment_index == 0) {
+            reset_for_new_dec();
+        }
+    }
+
+    void decode_add_parities(int fragment_index, int row) override
+    {
+        if (fragment_index == 0) {
+            reset_for_new_dec();
+        }
+    }
 
     void decode_build() override {}
 
     std::unique_ptr<DecodeContext<T>>
     init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
     {
+        this->fragments_ids = &fragments_ids;
         std::unique_ptr<DecodeContext<T>> context;
         return context;
     }
@@ -179,10 +216,10 @@ class RsLeo : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
+        prepare_for_new_dec(words);
+
         vec::Buffers<T> work_data(output, *dec_data);
 
-        std::vector<T*>* vec_data = words.get_mem();
-        std::vector<T*>* vec_coding = output.get_mem();
         std::vector<T*>* vec_work = work_data.get_mem();
 
         LeopardResult decodeResult = leo_decode(
@@ -190,14 +227,22 @@ class RsLeo : public FecCode<T> {
             this->n_data,
             this->n_parities,
             decode_work_count,
-            (void**)&vec_data->at(0),
-            (void**)&vec_coding->at(0),
+            (void**)&original_data->at(0),
+            (void**)&encode_work_data->at(0),
             (void**)&vec_work->at(0));
 
         if (decodeResult != Leopard_Success) {
             std::cout << "Error: Leopard decode failed with result="
                       << decodeResult << ": " << leo_result_string(decodeResult)
                       << std::endl;
+        }
+
+        // copy received data fragments from words
+        for (unsigned i = 0; i < this->n_data; ++i) {
+            unsigned frag_id = fragments_ids->get(i);
+            if (frag_id < this->n_data) {
+                output.copy(frag_id, words.get(i));
+            }
         }
     }
 
@@ -206,6 +251,10 @@ class RsLeo : public FecCode<T> {
     unsigned decode_work_count;
     std::unique_ptr<vec::Buffers<T>> enc_data = nullptr;
     std::unique_ptr<vec::Buffers<T>> dec_data = nullptr;
+
+    const vec::Vector<T>* fragments_ids;
+    std::unique_ptr<std::vector<T*>> original_data = nullptr;
+    std::unique_ptr<std::vector<T*>> encode_work_data = nullptr;
 };
 
 } // namespace fec
