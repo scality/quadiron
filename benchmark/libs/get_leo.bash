@@ -12,7 +12,8 @@ else
 fi
 
 pushd leopard
-mkdir build && cd build
+mkdir build
+pushd build
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # Mac OSX
     CXX=clang++ cmake -G 'Unix Makefiles' ..
@@ -20,4 +21,5 @@ else
     cmake -G 'Unix Makefiles' ..
 fi
 make
+popd
 popd
