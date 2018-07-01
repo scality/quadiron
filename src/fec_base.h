@@ -909,48 +909,43 @@ bool FecCode<T>::decode_packet(
     assert(output_data_bufs.size() == n_data);
 
     // ids of received fragments, from 0 to codelen-1
-    vec::Vector<T> fragments_ids(*(this->gf), n_data);
+    vec::Vector<T> fragments_ids_raw(*(this->gf), code_len);
 
     if (type == FecType::SYSTEMATIC) {
         for (unsigned i = 0; i < n_data; i++) {
             if (input_data_bufs[i] != nullptr) {
                 decode_add_data(fragment_index, i);
-                fragments_ids.set(fragment_index, i);
+                fragments_ids_raw.set(fragment_index, i);
                 fragment_index++;
             }
         }
         avail_data_nb = fragment_index;
-        // data is in clear so nothing to do
-        if (fragment_index == n_data)
-            return true;
     }
 
-    vec::Vector<T> avail_parity_ids(*(this->gf), n_data - avail_data_nb);
+    vec::Vector<T> avail_parity_ids(*(this->gf), code_len - avail_data_nb);
 
-    if (fragment_index < n_data) {
-        // finish with parities available
-        for (unsigned i = 0; i < n_outputs; i++) {
-            if (input_parities_bufs[i] != nullptr) {
-                decode_add_parities(fragment_index, i);
-                unsigned j = (type == FecType::SYSTEMATIC) ? n_data + i : i;
-                fragments_ids.set(fragment_index, j);
-                avail_parity_ids.set(parity_index, i);
-                fragment_index++;
-                parity_index++;
-                // stop when we have enough parities
-                if (fragment_index == n_data)
-                    break;
-            }
+    // finish with parities available
+    for (unsigned i = 0; i < n_outputs; i++) {
+        if (input_parities_bufs[i] != nullptr) {
+            decode_add_parities(fragment_index, i);
+            unsigned j = (type == FecType::SYSTEMATIC) ? n_data + i : i;
+            fragments_ids_raw.set(fragment_index, j);
+            avail_parity_ids.set(parity_index, i);
+            fragment_index++;
+            parity_index++;
         }
-        // unable to decode
-        if (fragment_index < n_data)
-            return false;
     }
+    // unable to decode
+    if (fragment_index < n_data)
+        return false;
+
+    unsigned n_rec = fragment_index;
+    vec::Slice<T> fragments_ids(&fragments_ids_raw, n_rec);
 
     decode_build();
 
     // vector of buffers storing data read from chunk
-    vec::Buffers<uint8_t> words_char(n_data, buf_size);
+    vec::Buffers<uint8_t> words_char(n_rec, buf_size);
     std::vector<uint8_t*>* words_mem_char = words_char.get_mem();
     std::vector<T*>* words_mem_T = nullptr;
     if (full_word_size)
@@ -989,7 +984,8 @@ bool FecCode<T>::decode_packet(
                 }
             }
         }
-        for (unsigned i = 0; i < n_data - avail_data_nb; ++i) {
+
+        for (unsigned i = 0; i < n_rec - avail_data_nb; ++i) {
             unsigned parity_idx = avail_parity_ids.get(i);
             if (!read_pkt(
                     (char*)(words_mem_char->at(avail_data_nb + i)),
