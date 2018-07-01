@@ -53,6 +53,14 @@ link_directories(./libs/leopard/build)
 
 link_libraries(libleopard)
 
+############
+# WireHair
+############
+include_directories(SYSTEM ./libs/wirehair)
+link_directories(./libs/wirehair/build)
+
+link_libraries(wirehair)
+
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
   message(WARNING "Benchmark results with an un-optimised build may be misleading")
