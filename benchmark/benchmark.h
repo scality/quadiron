@@ -46,6 +46,7 @@
 
 #include "libs/fec_rs_isal.h"
 #include "libs/fec_rs_leopard.h"
+#include "libs/fec_rs_wirehair.h"
 
 enum ec_type {
     EC_TYPE_ALL = 0,
@@ -59,6 +60,7 @@ enum ec_type {
     EC_TYPE_RS_GF2N_FFT,
     EC_TYPE_RS_ISAL,
     EC_TYPE_RS_LEO,
+    EC_TYPE_RS_WH,
     EC_TYPE_END,
 };
 
@@ -80,8 +82,10 @@ const std::map<ec_type, std::string> ec_desc = {
      "Reed-solomon codes over GF(65537) using FFT on pack of codewords"},
     {EC_TYPE_RS_ISAL,
      "Reed-solomon codes over GF(256) using the ISA-L library"},
-     {EC_TYPE_RS_LEO,
-      "Reed-solomon codes over GF(2^n) using the Leopard library"},
+    {EC_TYPE_RS_LEO,
+    "Reed-solomon codes over GF(2^n) using the Leopard library"},
+    {EC_TYPE_RS_WH,
+    "Reed-solomon codes over GF(2^n) using the WireHair library"},
 };
 
 // NOLINTNEXTLINE(cert-err58-cpp)
@@ -97,6 +101,7 @@ const std::map<ec_type, std::string> ec_desc_short = {
     {EC_TYPE_RS_NF4, "rs-nf4"},
     {EC_TYPE_RS_ISAL, "rs-isal"},
     {EC_TYPE_RS_LEO, "rs-leo"},
+    {EC_TYPE_RS_WH, "rs-wirehair"},
 };
 
 enum gf2nrs_type {
@@ -140,6 +145,7 @@ const std::map<std::string, ec_type> fec_type_map = {
     {"rs-nf4", EC_TYPE_RS_NF4},
     {"rs-isal", EC_TYPE_RS_ISAL},
     {"rs-leo", EC_TYPE_RS_LEO},
+    {"rs-wirehair", EC_TYPE_RS_WH},
 };
 
 enum scenario_type {
@@ -174,6 +180,7 @@ struct Params_t {
     size_t word_size = 2;
     int k = 3;
     int m = 2;
+    int n_rec = 0;
     bool operation_on_packet = true;
     size_t pkt_size = 1024;
     size_t chunk_size = 512;
@@ -301,6 +308,7 @@ class Benchmark {
     int m;
     int n;
     int n_c;
+    int n_rec;
     size_t word_size;
     ec_type fec_type;
     bool operation_on_packet;
