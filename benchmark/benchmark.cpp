@@ -45,6 +45,7 @@ Benchmark<T>::Benchmark(Params_t* params)
     this->m = params->m;
     this->n = params->k + params->m;
     this->n_c = this->n; // if systematic, it will be updated in init()
+    this->n_rec = params->n_rec;
     this->operation_on_packet = params->operation_on_packet;
     this->pkt_size = params->pkt_size;
     this->chunk_size = params->chunk_size;
@@ -184,6 +185,9 @@ int Benchmark<T>::init()
         break;
     case EC_TYPE_RS_LEO:
         fec = new nttec::fec::RsLeo<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        break;
+    case EC_TYPE_RS_WH:
+        fec = new nttec::fec::RsWH<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
@@ -441,7 +445,7 @@ void Benchmark<T>::get_avail_chunks(
     std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end(), myrandom);
 
     int i;
-    for (i = 0; i < k; i++) {
+    for (i = 0; i < n_rec; i++) {
         avail_d_chunks->at(i) = nullptr;
     }
     for (i = 0; i < n_c; i++) {
@@ -450,7 +454,7 @@ void Benchmark<T>::get_avail_chunks(
     }
     if (systematic_ec) {
         int avail_d_chunks_nb = 0;
-        for (i = 0; i < k; i++) {
+        for (i = 0; i < n_rec; i++) {
             int j = c_chunks_id->at(i);
             if (j < k) {
                 avail_d_chunks->at(j) = a_streams->at(j);
@@ -464,7 +468,7 @@ void Benchmark<T>::get_avail_chunks(
         if (avail_d_chunks_nb == k)
             get_avail_chunks(avail_d_chunks, avail_c_chunks, avail_c_props);
     } else {
-        for (i = 0; i < k; i++) {
+        for (i = 0; i < n_rec; i++) {
             int j = c_chunks_id->at(i);
             avail_c_chunks->at(j) = a_streams->at(j);
             avail_c_props.at(j) = c_props.at(j);
@@ -496,7 +500,7 @@ bool Benchmark<T>::encode()
 template <typename T>
 bool Benchmark<T>::decode()
 {
-    std::vector<std::istream*> d_streams_shuffled(k, nullptr);
+    std::vector<std::istream*> d_streams_shuffled(n_rec, nullptr);
     std::vector<std::istream*> c_streams_shuffled(n_c, nullptr);
     std::vector<nttec::Properties> c_props_shuffled(n_c);
 
@@ -652,6 +656,7 @@ void xusage()
               << "\t\t\trs-nf4: " << ec_desc.at(EC_TYPE_RS_NF4) << '\n'
               << "\t\t\trs-isal: " << ec_desc.at(EC_TYPE_RS_ISAL) << '\n'
               << "\t\t\trs-leo: " << ec_desc.at(EC_TYPE_RS_LEO) << '\n'
+              << "\t\t\trs-wirehair: " << ec_desc.at(EC_TYPE_RS_WH) << '\n'
               << "\t\t\tall: All available Reed-solomon codes\n"
               << "\t-s \tScenario for benchmark, either\n"
               << "\t\t\tenc_only: Only encodings\n"
@@ -748,7 +753,7 @@ int main(int argc, char** argv)
     int opt;
 
     params = new Params_t();
-    while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:g:p:f:")) != -1) {
+    while ((opt = getopt(argc, argv, "t:e:w:k:m:c:n:s:x:g:p:f:r:")) != -1) {
         switch (opt) {
         case 't':
             params->sizeof_T = std::stoi(optarg);
@@ -796,6 +801,9 @@ int main(int argc, char** argv)
         case 'f':
             params->compact_print = std::stoi(optarg);
             break;
+        case 'r':
+            params->n_rec = std::stoi(optarg);
+            break;
         default:
             xusage();
         }
@@ -805,6 +813,7 @@ int main(int argc, char** argv)
     if (params->fec_type != EC_TYPE_RS_FNT
         && params->fec_type != EC_TYPE_RS_ISAL
         && params->fec_type != EC_TYPE_RS_LEO
+        && params->fec_type != EC_TYPE_RS_WH
         && params->fec_type != EC_TYPE_RS_NF4) {
         params->operation_on_packet = false;
     }
@@ -814,8 +823,13 @@ int main(int argc, char** argv)
         params->sizeof_T = 1;
     }
 
-    if (params->fec_type == EC_TYPE_RS_LEO) {
+    if (params->fec_type == EC_TYPE_RS_LEO ||
+        params->fec_type == EC_TYPE_RS_WH) {
         params->sizeof_T = params->word_size;
+    }
+
+    if (params->fec_type != EC_TYPE_RS_WH) {
+        params->n_rec = params->k;
     }
 
     if (params->pkt_size <= 0) {
