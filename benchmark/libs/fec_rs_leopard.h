@@ -31,7 +31,7 @@
 #ifndef __NTTEC_FEC_RS_LEO_H__
 #define __NTTEC_FEC_RS_LEO_H__
 
-// use <isa-l.h> instead when linking against installed
+// use <leopard.h> instead when linking against installed
 #include "leopard.h"
 
 #include "fec_base.h"
@@ -44,7 +44,7 @@ namespace fec {
 
 typedef unsigned char u8;
 /** Reed-Solomon (RS) Erasure code over GF(2<sup>n</sup>) (Cauchy or
- *  Vandermonde) using the ISA-L library
+ *  Vandermonde) using the Leopard library
  */
 template <typename T>
 class RsLeo : public FecCode<T> {
