@@ -12,6 +12,7 @@ else
 fi
 
 pushd wirehair
+patch -p1 < ../wirehair.patch
 mkdir build
 pushd build
 if [[ "$OSTYPE" == "darwin"* ]]; then
