@@ -354,6 +354,10 @@ class Benchmark {
     bool compare(std::vector<uint8_t*>* arr1, std::vector<uint8_t*>* arr2);
     void dump(const char* name, std::vector<uint8_t*>* chunks);
     void dump_chunk(const char* name, uint8_t* chunk);
+    void alloc_chunks(
+        std::vector<uint8_t*>* chunks,
+        unsigned chunks_nb,
+        size_t chunk_size);
     void reset_d_streams();
     void reset_c_streams();
     void reset_a_streams();

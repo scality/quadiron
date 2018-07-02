@@ -157,6 +157,19 @@ Benchmark<T>::~Benchmark()
 }
 
 template <typename T>
+void Benchmark<T>::alloc_chunks(
+    std::vector<uint8_t*>* chunks,
+    unsigned chunks_nb,
+    size_t chunk_size)
+{
+    size_t size = chunk_size * chunks_nb;
+    chunks->at(0) = nttec::aligned_allocate<uint8_t>(size);
+    for (unsigned i = 1; i < chunks_nb; ++i) {
+        chunks->at(i) = chunks->at(i - 1) + chunk_size;
+    }
+}
+
+template <typename T>
 int Benchmark<T>::init()
 {
     switch (fec_type) {
@@ -200,7 +213,8 @@ int Benchmark<T>::init()
         fec = new quadiron::fec::RsLeo<T>(word_size, k, m, quadiron::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     case EC_TYPE_RS_WH:
-        fec = new nttec::fec::RsWH<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        fec = new nttec::fec::RsWH<T>(
+            word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
@@ -839,8 +853,8 @@ int main(int argc, char** argv)
         params->sizeof_T = 1;
     }
 
-    if (params->fec_type == EC_TYPE_RS_LEO ||
-        params->fec_type == EC_TYPE_RS_WH) {
+    if (params->fec_type == EC_TYPE_RS_LEO
+        || params->fec_type == EC_TYPE_RS_WH) {
         params->sizeof_T = params->word_size;
     }
 
