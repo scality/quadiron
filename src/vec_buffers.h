@@ -136,8 +136,10 @@ Buffers<T>::Buffers(int n, size_t size, std::vector<T*>* mem)
     if (mem == nullptr) {
         this->mem_alloc_case = FULL_ALLOC;
         this->mem = new std::vector<T*>(n, nullptr);
-        for (int i = 0; i < n; i++) {
-            this->mem->at(i) = aligned_allocate<T>(size);
+        size_t total_size = n * size;
+        this->mem->at(0) = aligned_allocate<T>(total_size);
+        for (int i = 1; i < n; i++) {
+            this->mem->at(i) = this->mem->at(i - 1) + size;
         }
     } else {
         this->mem_alloc_case = NO_ALLOC;
@@ -165,8 +167,10 @@ Buffers<T>::Buffers(const Buffers<T>& vec, int n)
 
     this->mem_alloc_case = FULL_ALLOC;
 
-    for (i = 0; i < this->n; i++) {
-        this->mem->at(i) = aligned_allocate<T>(this->size);
+    size_t total_size = n * size;
+    this->mem->at(0) = aligned_allocate<T>(total_size);
+    for (int i = 1; i < n; i++) {
+        this->mem->at(i) = this->mem->at(i - 1) + size;
     }
 
     int copy_len = (this->n <= vec_n) ? this->n : vec_n;
@@ -246,9 +250,7 @@ Buffers<T>::~Buffers()
 {
     if (this->mem_alloc_case != NO_ALLOC && this->mem != nullptr) {
         if (this->mem_alloc_case == FULL_ALLOC) {
-            for (int i = 0; i < n; i++) {
-                aligned_deallocate<T>(this->mem->at(i));
-            }
+            aligned_deallocate<T>(this->mem->at(0));
         } else if (this->mem_alloc_case == ZERO_EXTEND) {
             aligned_deallocate<T>(this->zeros);
         }
