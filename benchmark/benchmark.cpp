@@ -33,7 +33,10 @@
 #include "benchmark.h"
 
 // random generator function:
-int myrandom (int i) { return std::rand()%i;}
+int myrandom(int i)
+{
+    return std::rand() % i;
+}
 
 template <typename T>
 Benchmark<T>::Benchmark(Params_t* params)
@@ -129,21 +132,15 @@ Benchmark<T>::~Benchmark()
     }
 
     if (d_chunks != nullptr) {
-        for (int i = 0; i < k; i++) {
-            nttec::aligned_deallocate<uint8_t>(d_chunks->at(i));
-        }
+        nttec::aligned_deallocate<uint8_t>(d_chunks->at(0));
         delete d_chunks;
     }
     if (c_chunks != nullptr) {
-        for (int i = 0; i < n_c; i++) {
-            nttec::aligned_deallocate<uint8_t>(c_chunks->at(i));
-        }
+        nttec::aligned_deallocate<uint8_t>(c_chunks->at(0));
         delete c_chunks;
     }
     if (r_chunks != nullptr) {
-        for (int i = 0; i < k; i++) {
-            nttec::aligned_deallocate<uint8_t>(r_chunks->at(i));
-        }
+        nttec::aligned_deallocate<uint8_t>(r_chunks->at(0));
         delete r_chunks;
     }
 
@@ -151,6 +148,19 @@ Benchmark<T>::~Benchmark()
         delete enc_stats;
     if (dec_stats != nullptr)
         delete dec_stats;
+}
+
+template <typename T>
+void Benchmark<T>::alloc_chunks(
+    std::vector<uint8_t*>* chunks,
+    unsigned chunks_nb,
+    size_t chunk_size)
+{
+    size_t size = chunk_size * chunks_nb;
+    chunks->at(0) = nttec::aligned_allocate<uint8_t>(size);
+    for (unsigned i = 1; i < chunks_nb; ++i) {
+        chunks->at(i) = chunks->at(i - 1) + chunk_size;
+    }
 }
 
 template <typename T>
@@ -181,13 +191,16 @@ int Benchmark<T>::init()
         fec = new nttec::fec::RsFnt<T>(word_size, k, m, pkt_size);
         break;
     case EC_TYPE_RS_ISAL:
-        fec = new nttec::fec::RsIsal<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        fec = new nttec::fec::RsIsal<T>(
+            word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     case EC_TYPE_RS_LEO:
-        fec = new nttec::fec::RsLeo<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        fec = new nttec::fec::RsLeo<T>(
+            word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     case EC_TYPE_RS_WH:
-        fec = new nttec::fec::RsWH<T>(word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        fec = new nttec::fec::RsWH<T>(
+            word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
@@ -207,15 +220,9 @@ int Benchmark<T>::init()
     c_chunks = new std::vector<uint8_t*>(n_c);
     r_chunks = new std::vector<uint8_t*>(k);
 
-    for (i = 0; i < k; i++) {
-        d_chunks->at(i) = nttec::aligned_allocate<uint8_t>(chunk_size);
-    }
-    for (i = 0; i < n_c; i++) {
-        c_chunks->at(i) = nttec::aligned_allocate<uint8_t>(chunk_size);
-    }
-    for (i = 0; i < k; i++) {
-        r_chunks->at(i) = nttec::aligned_allocate<uint8_t>(chunk_size);
-    }
+    alloc_chunks(d_chunks, k, chunk_size);
+    alloc_chunks(c_chunks, n_c, chunk_size);
+    alloc_chunks(r_chunks, k, chunk_size);
 
     // Allocate memory for iostreambufs
     d_istreambufs = new std::vector<istreambuf<char>*>(k);
@@ -823,8 +830,8 @@ int main(int argc, char** argv)
         params->sizeof_T = 1;
     }
 
-    if (params->fec_type == EC_TYPE_RS_LEO ||
-        params->fec_type == EC_TYPE_RS_WH) {
+    if (params->fec_type == EC_TYPE_RS_LEO
+        || params->fec_type == EC_TYPE_RS_WH) {
         params->sizeof_T = params->word_size;
     }
 
