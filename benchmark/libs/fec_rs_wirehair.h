@@ -119,18 +119,8 @@ class RsWH : public FecCode<T> {
         std::vector<T*>* vec_output = output.get_mem();
         std::vector<T*>* vec_data = words.get_mem();
 
-        // FIXME: enhance to not copy to message
-        for (size_t i = 0; i < this->n_data; ++i) {
-            std::copy_n(
-                vec_data->at(i),
-                this->pkt_size,
-                &(message->at(i * this->pkt_size)));
-        }
-
-        // WirehairCodec encoder = wirehair_encoder_create(
-        //     nullptr, vec_data->at(0), message_size, block_size);
         WirehairCodec encoder = wirehair_encoder_create(
-            nullptr, &message->at(0), message_size, block_size);
+            nullptr, vec_data->at(0), message_size, block_size);
 
         if (!encoder) {
             std::cout << "!!! Failed to create encoder" << std::endl;
@@ -184,6 +174,7 @@ class RsWH : public FecCode<T> {
     {
         size_t block_size = this->buf_size;
         std::vector<T*>* vec_data = words.get_mem();
+        std::vector<T*>* vec_output = output.get_mem();
 
         WirehairCodec decoder =
             wirehair_decoder_create(nullptr, message_size, block_size);
@@ -193,7 +184,6 @@ class RsWH : public FecCode<T> {
             return;
         }
 
-        // unsigned receivedFragsNb = this->n_data;
         unsigned receivedFragsNb = fragments_ids->get_n();
         bool decoding_success = false;
 
@@ -211,20 +201,11 @@ class RsWH : public FecCode<T> {
 
         if (decoding_success) {
             WirehairResult recoverResult =
-                // wirehair_recover(decoder, vec_output->at(0), message_size);
-                wirehair_recover(decoder, &message->at(0), message_size);
+                wirehair_recover(decoder, vec_output->at(0), message_size);
+                // wirehair_recover(decoder, &message->at(0), message_size);
 
             if (recoverResult != Wirehair_Success) {
                 std::cout << "wirehair_recover failed" << std::endl;
-            } else {
-                // FIXME: enhance to not copy to output
-                std::vector<T*>* vec_output = output.get_mem();
-                for (size_t i = 0; i < this->n_data; ++i) {
-                    std::copy_n(
-                        &(message->at(i * this->pkt_size)),
-                        this->pkt_size,
-                        vec_output->at(i));
-                }
             }
         } else {
             std::cout << "wirehair_decode failed" << std::endl;
