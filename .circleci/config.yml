@@ -53,6 +53,7 @@ jobs:
           command: >
             mkdir build && cd build &&
             cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DQUADIRON_USE_SIMD=ON 'Unix Makefiles' .. &&
+            bash ../benchmark/libs/get_libs.bash &&
             make
       - run:
           name: Format
