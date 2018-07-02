@@ -6,6 +6,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: get other libs
+          command: bash ../benchmark/libs/get_libs.bash
+      - run:
           name: Compile with Clang 6 (Debug mode)
           command: >
             rm -rf build && mkdir build && cd build &&
@@ -63,6 +66,9 @@ jobs:
       - run:
           name: Benchmark
           command: cd build && make benchmark
+      - run:
+          name: Comparison
+          command: cd build && ../scripts/benchmark_all.sh benchmark/bin/Release/nttec_bench
 
 workflows:
   version: 2
