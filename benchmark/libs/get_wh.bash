@@ -9,10 +9,10 @@ if [ -d ./wirehair/.git ]; then
     popd
 else
     git clone git@github.com:catid/wirehair.git
+    patch -p1 < ../wirehair.patch
 fi
 
 pushd wirehair
-patch -p1 < ../wirehair.patch
 mkdir build
 pushd build
 if [[ "$OSTYPE" == "darwin"* ]]; then
