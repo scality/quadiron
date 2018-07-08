@@ -951,7 +951,7 @@ bool FecCode<T>::decode_packet(
     if (full_word_size)
         words_mem_T = vec::cast_mem_of_vecp<uint8_t, T>(&words_char);
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> words(n_data, pkt_size, words_mem_T);
+    vec::Buffers<T> words(n_rec, pkt_size, words_mem_T);
     words_mem_T = words.get_mem();
 
     int output_len = n_data;
