@@ -202,6 +202,10 @@ int Benchmark<T>::init()
         fec = new nttec::fec::RsWH<T>(
             word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
+    case EC_TYPE_RS_CCAT:
+        fec = new nttec::fec::RsCCat<T>(
+            word_size, k, m, nttec::fec::RsMatrixType::CAUCHY, pkt_size);
+        break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
@@ -821,6 +825,7 @@ int main(int argc, char** argv)
         && params->fec_type != EC_TYPE_RS_ISAL
         && params->fec_type != EC_TYPE_RS_LEO
         && params->fec_type != EC_TYPE_RS_WH
+        && params->fec_type != EC_TYPE_RS_CCAT
         && params->fec_type != EC_TYPE_RS_NF4) {
         params->operation_on_packet = false;
     }
@@ -831,11 +836,13 @@ int main(int argc, char** argv)
     }
 
     if (params->fec_type == EC_TYPE_RS_LEO
-        || params->fec_type == EC_TYPE_RS_WH) {
+        || params->fec_type == EC_TYPE_RS_WH
+        ||  params->fec_type == EC_TYPE_RS_CCAT) {
         params->sizeof_T = params->word_size;
     }
 
-    if (params->fec_type != EC_TYPE_RS_WH) {
+    if (params->fec_type != EC_TYPE_RS_WH &&
+        params->fec_type != EC_TYPE_RS_CCAT) {
         params->n_rec = params->k;
     }
 

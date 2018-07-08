@@ -46,6 +46,7 @@
 #include "libs/fec_rs_isal.h"
 #include "libs/fec_rs_leopard.h"
 #include "libs/fec_rs_wirehair.h"
+#include "libs/fec_rs_ccat.h"
 
 enum ec_type {
     EC_TYPE_ALL = 0,
@@ -59,6 +60,7 @@ enum ec_type {
     EC_TYPE_RS_ISAL,
     EC_TYPE_RS_LEO,
     EC_TYPE_RS_WH,
+    EC_TYPE_RS_CCAT,
     EC_TYPE_END,
 };
 
@@ -81,6 +83,8 @@ const std::map<ec_type, std::string> ec_desc = {
     "Reed-solomon codes over GF(2^n) using the Leopard library"},
     {EC_TYPE_RS_WH,
     "Reed-solomon codes over GF(2^n) using the WireHair library"},
+    {EC_TYPE_RS_WH,
+    "Reed-solomon codes over GF(2^n) using the CauchyCaterpillar library"},
 };
 
 // NOLINTNEXTLINE(cert-err58-cpp)
@@ -96,6 +100,7 @@ const std::map<ec_type, std::string> ec_desc_short = {
     {EC_TYPE_RS_ISAL, "rs-isal"},
     {EC_TYPE_RS_LEO, "rs-leo"},
     {EC_TYPE_RS_WH, "rs-wirehair"},
+    {EC_TYPE_RS_CCAT, "rs-ccat"},
 };
 
 enum gf2nrs_type {
@@ -139,6 +144,7 @@ const std::map<std::string, ec_type> fec_type_map = {
     {"rs-isal", EC_TYPE_RS_ISAL},
     {"rs-leo", EC_TYPE_RS_LEO},
     {"rs-wirehair", EC_TYPE_RS_WH},
+    {"rs-ccat", EC_TYPE_RS_CCAT},
 };
 
 enum scenario_type {
