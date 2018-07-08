@@ -61,6 +61,14 @@ link_directories(./libs/wirehair/build)
 
 link_libraries(wirehair)
 
+########################
+# CauchyCaterpillar
+########################
+include_directories(SYSTEM ./libs/CauchyCaterpillar)
+link_directories(./libs/CauchyCaterpillar/build)
+
+link_libraries(ccat)
+
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
   message(WARNING "Benchmark results with an un-optimised build may be misleading")
