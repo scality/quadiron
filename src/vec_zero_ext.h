@@ -28,12 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_VEC_ZERO_EXT_H__
-#define __NTTEC_VEC_ZERO_EXT_H__
+#ifndef __QUAD_VEC_ZERO_EXT_H__
+#define __QUAD_VEC_ZERO_EXT_H__
 
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 namespace vec {
 
 /** A vector of size `n` virtually extented with zeros.
@@ -85,6 +85,6 @@ T ZeroExtended<T>::get(int i) const
 }
 
 } // namespace vec
-} // namespace nttec
+} // namespace quad
 
 #endif

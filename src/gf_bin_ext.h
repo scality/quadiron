@@ -28,15 +28,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_GF_BIN_EXT_H__
-#define __NTTEC_GF_BIN_EXT_H__
+#ifndef __QUAD_GF_BIN_EXT_H__
+#define __QUAD_GF_BIN_EXT_H__
 
 #include <limits>
 
 #include "exceptions.h"
 #include "gf_base.h"
 
-namespace nttec {
+namespace quad {
 namespace gf {
 
 /** An extension Galois Field extended from GF(2)
@@ -638,6 +638,6 @@ void BinExtension<T>::add_doubled(int n, T* x, T* y) const
     }
 }
 } // namespace gf
-} // namespace nttec
+} // namespace quad
 
 #endif

@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_GF_NF4_H__
-#define __NTTEC_GF_NF4_H__
+#ifndef __QUAD_GF_NF4_H__
+#define __QUAD_GF_NF4_H__
 
 #include <iostream>
 
@@ -40,7 +40,7 @@
 #define MASK16 0xFFFF
 #define MASK32 0xFFFFFFFF
 
-namespace nttec {
+namespace quad {
 namespace gf {
 
 /** A group of `n` elements of GF(F<sub>4</sub>=65537).
@@ -505,7 +505,7 @@ void NF4<T>::add_doubled(int n, T* x, T* y) const
     }
 }
 
-#ifdef NTTEC_USE_SIMD
+#ifdef QUADIRON_USE_SIMD
 /* Operations are vectorized by SIMD */
 
 template <>
@@ -545,9 +545,9 @@ void NF4<__uint128_t>::hadamard_mul_doubled(
 template <>
 void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y) const;
 
-#endif // #ifdef NTTEC_USE_SIMD
+#endif // #ifdef QUADIRON_USE_SIMD
 
 } // namespace gf
-} // namespace nttec
+} // namespace quad
 
 #endif

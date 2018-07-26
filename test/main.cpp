@@ -27,7 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "nttec.h"
+#include "quadiron.h"
 
 extern void arith_utest();
 extern void gf_utest();
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 {
     struct test* p;
 
-    nttec::prng().seed(0);
+    quad::prng().seed(0);
 
     if (2 == argc) {
         std::stringstream ss(argv[1]);

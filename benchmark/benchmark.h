@@ -28,15 +28,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_BENCH_BENCHMARK_H__
-#define __NTTEC_BENCH_BENCHMARK_H__
+#ifndef __QUAD_BENCH_BENCHMARK_H__
+#define __QUAD_BENCH_BENCHMARK_H__
 
 #include <iomanip>
 #include <thread>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "nttec.h"
+#include "quadiron.h"
 
 #include "core.h"
 #include "iostreambuf.h"
@@ -289,7 +289,7 @@ class Benchmark {
     size_t chunk_size;
     uint32_t samples_nb;
     PRNG* prng = nullptr;
-    nttec::fec::FecCode<T>* fec = nullptr;
+    quad::fec::FecCode<T>* fec = nullptr;
     Params_t* params = nullptr;
 
     bool systematic_ec = false;
@@ -317,7 +317,7 @@ class Benchmark {
     // streams of repair chunks
     std::vector<std::ostream*>* r_streams = nullptr;
     // props vector
-    std::vector<nttec::Properties> c_props;
+    std::vector<quad::Properties> c_props;
 
     int init();
     int check_params();
@@ -333,7 +333,7 @@ class Benchmark {
     void get_avail_chunks(
         std::vector<std::istream*>* avail_d_chunks,
         std::vector<std::istream*>* avail_c_chunks,
-        std::vector<nttec::Properties>& avail_c_props);
+        std::vector<quad::Properties>& avail_c_props);
     bool encode();
     bool decode();
     void show(Stats_t* stats);

@@ -71,29 +71,29 @@ endif()
 #
 # Determine suitable SIMD level
 #
-if(NTTEC_USE_SIMD STREQUAL "AVX2")
+if(QUADIRON_USE_SIMD STREQUAL "AVX2")
   if(NOT AVX2_FOUND)
-    set(NTTEC_USE_SIMD ${HIGHEST_SIMD})
-    MESSAGE(WARNING "AVX2 enabled but not supported: fallback on ${NTTEC_USE_SIMD}.")
+    set(QUADIRON_USE_SIMD ${HIGHEST_SIMD})
+    MESSAGE(WARNING "AVX2 enabled but not supported: fallback on ${QUADIRON_USE_SIMD}.")
   endif()
-elseif(NTTEC_USE_SIMD STREQUAL "SSE4")
+elseif(QUADIRON_USE_SIMD STREQUAL "SSE4")
   if(NOT SSE4_1_FOUND)
-    set(NTTEC_USE_SIMD ${HIGHEST_SIMD})
-    MESSAGE(WARNING "SSE4 enabled but not supported: fallback on ${NTTEC_USE_SIMD}.")
+    set(QUADIRON_USE_SIMD ${HIGHEST_SIMD})
+    MESSAGE(WARNING "SSE4 enabled but not supported: fallback on ${QUADIRON_USE_SIMD}.")
   endif()
-elseif(NTTEC_USE_SIMD STREQUAL "ON")
+elseif(QUADIRON_USE_SIMD STREQUAL "ON")
   # if level is not specified, choose highest value
-  set(NTTEC_USE_SIMD ${HIGHEST_SIMD})
-elseif(NOT NTTEC_USE_SIMD)
-  set(NTTEC_USE_SIMD "OFF")
+  set(QUADIRON_USE_SIMD ${HIGHEST_SIMD})
+elseif(NOT QUADIRON_USE_SIMD)
+  set(QUADIRON_USE_SIMD "OFF")
 else()
-  MESSAGE(WARNING "Given ${NTTEC_USE_SIMD} is not recognised for SIMD option. Set it OFF.")
-  set(NTTEC_USE_SIMD "OFF")
+  MESSAGE(WARNING "Given ${QUADIRON_USE_SIMD} is not recognised for SIMD option. Set it OFF.")
+  set(QUADIRON_USE_SIMD "OFF")
 endif()
 
 #
 # Add definition to distinguish SSE and AVX
 #
-if(NTTEC_USE_SIMD)
-  add_definitions(-DNTTEC_USE_${NTTEC_USE_SIMD})
+if(QUADIRON_USE_SIMD)
+  add_definitions(-DQUADIRON_USE_${QUADIRON_USE_SIMD})
 endif()

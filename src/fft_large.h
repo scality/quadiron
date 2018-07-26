@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FFT_LARGE_H__
-#define __NTTEC_FFT_LARGE_H__
+#ifndef __QUAD_FFT_LARGE_H__
+#define __QUAD_FFT_LARGE_H__
 
 #include "arith.h"
 #include "fft_base.h"
@@ -37,7 +37,7 @@
 #include "vec_matrix.h"
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 namespace fft {
 
 /** FFT implementation specialized for large FFT size.
@@ -258,6 +258,6 @@ void Large<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 } // namespace fft
-} // namespace nttec
+} // namespace quad
 
 #endif

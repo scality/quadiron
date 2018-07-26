@@ -27,7 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "nttec.h"
+#include "quadiron.h"
 
 template <typename T>
 class GFUtest {
@@ -36,9 +36,9 @@ class GFUtest {
     {
         std::cout << "simple tests\n";
 
-        nttec::gf::Extension<T> gf256(
+        quad::gf::Extension<T> gf256(
             2, 8); // dumb way to declare a binary field but for sake of testing
-        nttec::Polynomial<T> _x(gf256.get_sub_field());
+        quad::Polynomial<T> _x(gf256.get_sub_field());
         _x.set(6, 1);
         _x.set(4, 1);
         _x.set(1, 1);
@@ -55,8 +55,8 @@ class GFUtest {
         assert(_x.get(1) == 1);
         assert(_x.get(0) == 0);
 
-        nttec::gf::Extension<T> gf27(3, 3);
-        nttec::Polynomial<T> _y(gf27.get_sub_field());
+        quad::gf::Extension<T> gf27(3, 3);
+        quad::Polynomial<T> _y(gf27.get_sub_field());
         _y.set(2, 1);
         _y.set(0, 1);
         T y = gf27.inv(_y.to_num());
@@ -67,7 +67,7 @@ class GFUtest {
         assert(_y.get(0) == 0);
     }
 
-    void test_negation(nttec::gf::Field<T>* gf)
+    void test_negation(quad::gf::Field<T>* gf)
     {
         int i;
 
@@ -84,7 +84,7 @@ class GFUtest {
         }
     }
 
-    void test_negation_gf_nf4(nttec::gf::NF4<T>* gf)
+    void test_negation_gf_nf4(quad::gf::NF4<T>* gf)
     {
         int i;
 
@@ -101,7 +101,7 @@ class GFUtest {
         }
     }
 
-    void test_reciprocal(nttec::gf::Field<T>* gf)
+    void test_reciprocal(quad::gf::Field<T>* gf)
     {
         int i;
         int n_found = 0;
@@ -112,7 +112,7 @@ class GFUtest {
             x = gf->weak_rand();
             try {
                 y = gf->inv(x);
-            } catch (const nttec::Exception& e) {
+            } catch (const quad::Exception& e) {
                 continue;
             }
             assert(gf->mul(x, y) == 1);
@@ -121,7 +121,7 @@ class GFUtest {
         assert(n_found > 0);
     }
 
-    void test_reciprocal_gf_nf4(nttec::gf::NF4<T>* gf)
+    void test_reciprocal_gf_nf4(quad::gf::NF4<T>* gf)
     {
         int i;
         int n_found = 0;
@@ -132,7 +132,7 @@ class GFUtest {
             x = gf->weak_rand_tuple();
             try {
                 y = gf->inv(x);
-            } catch (const nttec::Exception& e) {
+            } catch (const quad::Exception& e) {
                 continue;
             }
             assert(gf->mul(x, y) == gf->get_unit());
@@ -141,7 +141,7 @@ class GFUtest {
         assert(n_found > 0);
     }
 
-    void test_log(nttec::gf::Field<T>* gf)
+    void test_log(quad::gf::Field<T>* gf)
     {
         int i;
         int n_found = 0;
@@ -170,13 +170,13 @@ class GFUtest {
         assert(n_found > 0);
     }
 
-    void test_pack_unpack(nttec::gf::NF4<T>* gf)
+    void test_pack_unpack(quad::gf::NF4<T>* gf)
     {
         int i;
 
         for (i = 0; i < 100; i++) {
             T x, y;
-            nttec::GroupedValues<T> z;
+            quad::GroupedValues<T> z;
 
             // std::cout << "i=" << i << "\n";
 
@@ -190,14 +190,14 @@ class GFUtest {
         }
     }
 
-    void test_find_primitive_root(nttec::gf::Field<T>* gf)
+    void test_find_primitive_root(quad::gf::Field<T>* gf)
     {
         gf->find_primitive_root();
         // std::cout << "root " << gf->root << std::endl;
         assert(gf->check_primitive_root(gf->get_root()));
     }
 
-    void test_get_order(nttec::gf::Field<T>* gf)
+    void test_get_order(quad::gf::Field<T>* gf)
     {
         int i;
         T x;
@@ -213,7 +213,7 @@ class GFUtest {
         }
     }
 
-    void test_get_nth_root(nttec::gf::Field<T>* gf)
+    void test_get_nth_root(quad::gf::Field<T>* gf)
     {
         int i;
         T x;
@@ -232,7 +232,7 @@ class GFUtest {
     {
         std::cout << "test_negation_gf5\n";
 
-        nttec::gf::Prime<T> gf5(5);
+        quad::gf::Prime<T> gf5(5);
         test_negation(&gf5);
     }
 
@@ -240,7 +240,7 @@ class GFUtest {
     {
         std::cout << "test_reciprocal_gf5\n";
 
-        nttec::gf::Prime<T> gf5(5);
+        quad::gf::Prime<T> gf5(5);
         test_reciprocal(&gf5);
     }
 
@@ -248,7 +248,7 @@ class GFUtest {
     {
         std::cout << "test_log_gf5\n";
 
-        nttec::gf::Prime<T> gf5(5);
+        quad::gf::Prime<T> gf5(5);
         test_log(&gf5);
     }
 
@@ -256,7 +256,7 @@ class GFUtest {
     {
         std::cout << "test_prime_root_gf5\n";
 
-        nttec::gf::Prime<T> gf5(5);
+        quad::gf::Prime<T> gf5(5);
         test_find_primitive_root(&gf5);
         test_get_order(&gf5);
         test_get_nth_root(&gf5);
@@ -266,7 +266,7 @@ class GFUtest {
     {
         std::cout << "test_negation_gf9\n";
 
-        nttec::gf::Extension<T> gf9(3, 2);
+        quad::gf::Extension<T> gf9(3, 2);
         test_negation(&gf9);
     }
 
@@ -274,7 +274,7 @@ class GFUtest {
     {
         std::cout << "test_reciprocal_gf9\n";
 
-        nttec::gf::Extension<T> gf9(3, 2);
+        quad::gf::Extension<T> gf9(3, 2);
         test_reciprocal(&gf9);
     }
 
@@ -282,7 +282,7 @@ class GFUtest {
     {
         std::cout << "test_log_gf9\n";
 
-        nttec::gf::Extension<T> gf9(3, 2);
+        quad::gf::Extension<T> gf9(3, 2);
         test_log(&gf9);
     }
 
@@ -290,7 +290,7 @@ class GFUtest {
     {
         std::cout << "test_prime_root_gf9\n";
 
-        nttec::gf::Extension<T> gf9(3, 2);
+        quad::gf::Extension<T> gf9(3, 2);
         test_find_primitive_root(&gf9);
         test_get_order(&gf9);
         test_get_nth_root(&gf9);
@@ -300,7 +300,7 @@ class GFUtest {
     {
         std::cout << "test_negation_gf256\n";
 
-        nttec::gf::BinExtension<T> gf256(8);
+        quad::gf::BinExtension<T> gf256(8);
         test_negation(&gf256);
     }
 
@@ -308,7 +308,7 @@ class GFUtest {
     {
         std::cout << "test_reciprocal_gf256\n";
 
-        nttec::gf::BinExtension<T> gf256(8);
+        quad::gf::BinExtension<T> gf256(8);
         test_reciprocal(&gf256);
     }
 
@@ -316,7 +316,7 @@ class GFUtest {
     {
         std::cout << "test_log_gf256\n";
 
-        nttec::gf::BinExtension<T> gf256(8);
+        quad::gf::BinExtension<T> gf256(8);
         test_log(&gf256);
     }
 
@@ -324,7 +324,7 @@ class GFUtest {
     {
         std::cout << "test_prime_root_gf256\n";
 
-        nttec::gf::BinExtension<T> gf256(8);
+        quad::gf::BinExtension<T> gf256(8);
         test_find_primitive_root(&gf256);
         test_get_order(&gf256);
         test_get_nth_root(&gf256);
@@ -334,7 +334,7 @@ class GFUtest {
     {
         std::cout << "test_negation_gf(2^" << n << ")\n";
 
-        nttec::gf::BinExtension<T> gf2n(n);
+        quad::gf::BinExtension<T> gf2n(n);
         test_negation(&gf2n);
     }
 
@@ -342,7 +342,7 @@ class GFUtest {
     {
         std::cout << "test_reciprocal_gf(2^" << n << ")\n";
 
-        nttec::gf::BinExtension<T> gf2n(n);
+        quad::gf::BinExtension<T> gf2n(n);
         test_reciprocal(&gf2n);
     }
 
@@ -350,7 +350,7 @@ class GFUtest {
     {
         std::cout << "test_log_gf(2^" << n << ")\n";
 
-        nttec::gf::BinExtension<T> gf2n(n);
+        quad::gf::BinExtension<T> gf2n(n);
         test_log(&gf2n);
     }
 
@@ -358,7 +358,7 @@ class GFUtest {
     {
         std::cout << "test_prime_root_gf(2^" << n << ")\n";
 
-        nttec::gf::BinExtension<T> gf2n(n);
+        quad::gf::BinExtension<T> gf2n(n);
         test_find_primitive_root(&gf2n);
         test_get_order(&gf2n);
         test_get_nth_root(&gf2n);
@@ -368,9 +368,9 @@ class GFUtest {
     {
         std::cout << "gf_utest_gf_nf4_with_n=" << n << "\n";
 
-        nttec::prng().seed(time(0));
+        quad::prng().seed(time(0));
 
-        nttec::gf::NF4<T> gf(n);
+        quad::gf::NF4<T> gf(n);
 
         test_negation_gf_nf4(&gf);
         test_reciprocal_gf_nf4(&gf);
@@ -391,7 +391,7 @@ class GFUtest {
     {
         std::cout << "gf_utest\n";
 
-        nttec::prng().seed(time(0));
+        quad::prng().seed(time(0));
 
         simple_tests();
         test_negation_gf5();
@@ -414,7 +414,7 @@ class GFUtest {
     {
         std::cout << "gf_utest 2^" << n << "\n";
 
-        nttec::prng().seed(time(0));
+        quad::prng().seed(time(0));
 
         test_negation_gf2_bign(n);
         test_reciprocal_gf2_bign(n);
@@ -427,7 +427,7 @@ class GFUtest {
     {
         std::cout << "gf_utest_nogf2n\n";
 
-        nttec::prng().seed(time(0));
+        quad::prng().seed(time(0));
 
         test_negation_gf5();
         test_reciprocal_gf5();

@@ -27,15 +27,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_CORE_H__
-#define __NTTEC_CORE_H__
+#ifndef __QUAD_CORE_H__
+#define __QUAD_CORE_H__
 
 #include <cstdint>
 #include <random>
 
 #include "big_int.h"
 
-namespace nttec {
+namespace quad {
 
 template <typename Type>
 struct DoubleSize {
@@ -96,7 +96,7 @@ struct GroupedValues {
     uint32_t flag;
 };
 
-/** Return the version string of NTTEC.
+/** Return the version string of QuadIron.
  *
  * The version string has the form MAJOR.MINOR.PATCH-REVISION, where '-REVISION'
  * is optional (only present for development version).
@@ -113,18 +113,18 @@ static inline std::mt19937& prng()
     return PRNG;
 }
 
-#ifdef NTTEC_USE_SSE4
+#ifdef QUADIRON_USE_SSE4
 #define ALIGN_SIZE 16
 #endif
 
-#ifdef NTTEC_USE_AVX2
+#ifdef QUADIRON_USE_AVX2
 #define ALIGN_SIZE 32
 #endif
 
 template <typename T>
 inline T* aligned_allocate(size_t size)
 {
-#ifdef NTTEC_USE_SIMD
+#ifdef QUADIRON_USE_SIMD
     size_t len = ALIGN_SIZE + size * sizeof(T);
     uint8_t* ptr = new uint8_t[len];
     if (!ptr)
@@ -150,7 +150,7 @@ inline void aligned_deallocate(T* data)
 {
     if (!data)
         return;
-#ifdef NTTEC_USE_SIMD
+#ifdef QUADIRON_USE_SIMD
     uint8_t* ptr = (uint8_t*)data;
     unsigned offset = *(ptr - 1);
     ptr -= ALIGN_SIZE - offset;
@@ -160,6 +160,6 @@ inline void aligned_deallocate(T* data)
 #endif
 }
 
-} // namespace nttec
+} // namespace quad
 
 #endif

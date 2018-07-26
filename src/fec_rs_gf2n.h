@@ -28,15 +28,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FEC_RS_GF2N_H__
-#define __NTTEC_FEC_RS_GF2N_H__
+#ifndef __QUAD_FEC_RS_GF2N_H__
+#define __QUAD_FEC_RS_GF2N_H__
 
 #include "fec_base.h"
 #include "gf_bin_ext.h"
 #include "vec_matrix.h"
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 namespace fec {
 
 enum class RsMatrixType { VANDERMONDE, CAUCHY };
@@ -154,6 +154,6 @@ class RsGf2n : public FecCode<T> {
 };
 
 } // namespace fec
-} // namespace nttec
+} // namespace quad
 
 #endif

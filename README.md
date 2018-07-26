@@ -1,8 +1,8 @@
-# NTTEC
+# QuadIron
 
-[![CircleCI][badgepub]](https://circleci.com/gh/scality/nttec)
+[![CircleCI][badgepub]](https://circleci.com/gh/scality/quadiron)
 
-The NTTEC library is a C++ library, written in C++11, that offers a
+The QuadIron library is a C++ library, written in C++11, that offers a
 streaming API to use the different flavors of NTT-based erasure codes.
 
 The library focuses primarily on high fragmentation i.e. n >> k.
@@ -30,18 +30,18 @@ make
 
 **WARNING**: If you are compiling the code with Clang, don't use a 4.X version:
 there is [a bug](https://bugs.llvm.org/show_bug.cgi?id=36723) that affects SIMD
-code in NTTEC.
+code in QuadIron.
 
 ### Targets
 
 - `doc`: build the documentation using Doxygen
-- `bench`: build the NTTEC benchmark (build mode "Release" is recommended)
-- `shared`: build the NTTEC shared library
-- `static`: build the NTTEC static library
+- `bench`: build the QuadIron benchmark (build mode "Release" is recommended)
+- `shared`: build the QuadIron shared library
+- `static`: build the QuadIron static library
 - `unit_tests`: build the unit tests.
 - `check`: run the test suite
-- `tools`: build the NTTEC tools
-- `benchmark`: run the NTTEC benchmark (build mode "Release" is recommended)
+- `tools`: build the QuadIron tools
+- `benchmark`: run the QuadIron benchmark (build mode "Release" is recommended)
 - `package`: generate a binary installer
 - `package_source`: generate a source installer (a tarball with the sources)
 - `install`: install the library in `CMAKE_INSTALL_PREFIX`.
@@ -62,4 +62,4 @@ To generate the code coverage reports:
 Note that, even though code coverage is supported by both Clang and GCC, result
 with GCC seems more reliable (not surprising as we are using gcov).
 
-[badgepub]: https://circleci.com/gh/vrancurel/nttec.svg?style=shield&circle-token=:circle-token
+[badgepub]: https://circleci.com/gh/vrancurel/quadiron.svg?style=shield&circle-token=:circle-token

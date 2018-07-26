@@ -32,7 +32,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "nttec.h"
+#include "quadiron.h"
 
 int vflag = 0;
 int tflag = 0;
@@ -68,14 +68,14 @@ char* xstrdup(const char* str)
  */
 template <typename T>
 void create_coding_files(
-    nttec::fec::FecCode<T>* fec,
+    quad::fec::FecCode<T>* fec,
     bool operation_on_packet = false)
 {
     char filename[1024];
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
     std::vector<std::ostream*> c_files(fec->n_outputs, nullptr);
     std::vector<std::ostream*> c_props_files(fec->n_outputs, nullptr);
-    std::vector<nttec::Properties> c_props(fec->n_outputs);
+    std::vector<quad::Properties> c_props(fec->n_outputs);
 
     for (unsigned i = 0; i < fec->n_data; i++) {
         snprintf(filename, sizeof(filename), "%s.d%d", prefix, i);
@@ -123,13 +123,13 @@ void create_coding_files(
  *
  */
 template <typename T>
-bool repair_data_files(nttec::fec::FecCode<T>* fec)
+bool repair_data_files(quad::fec::FecCode<T>* fec)
 {
     char filename[1024];
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
     std::vector<std::istream*> c_files(fec->n_outputs, nullptr);
     std::vector<std::istream*> c_props_files(fec->n_outputs, nullptr);
-    std::vector<nttec::Properties> c_props(fec->n_outputs);
+    std::vector<quad::Properties> c_props(fec->n_outputs);
     std::vector<std::ostream*> r_files(fec->n_data, nullptr);
 
     // re-read data
@@ -203,7 +203,7 @@ bool repair_data_files(nttec::fec::FecCode<T>* fec)
 }
 
 template <typename T>
-void print_stats(nttec::fec::FecCode<T>* fec)
+void print_stats(quad::fec::FecCode<T>* fec)
 {
     std::cerr << "enc,"
               << (fec->n_encode_ops != 0
@@ -218,13 +218,13 @@ void print_stats(nttec::fec::FecCode<T>* fec)
 }
 
 template <typename T>
-void print_fec_type(nttec::fec::FecCode<T>* fec)
+void print_fec_type(quad::fec::FecCode<T>* fec)
 {
     switch (fec->type) {
-    case nttec::fec::FecType::SYSTEMATIC:
+    case quad::fec::FecType::SYSTEMATIC:
         std::cout << "SYSTEMATIC\n";
         break;
-    case nttec::fec::FecType::NON_SYSTEMATIC:
+    case quad::fec::FecType::NON_SYSTEMATIC:
         std::cout << "NON_SYSTEMATIC\n";
         break;
     default:
@@ -238,18 +238,18 @@ void run_fec_rs_gf2n(
     int word_size,
     int n_data,
     int n_parities,
-    nttec::fec::RsMatrixType mflag,
+    quad::fec::RsMatrixType mflag,
     int rflag)
 {
-    nttec::fec::RsGf2n<T>* fec;
-    typename nttec::fec::RsMatrixType gf2nrs_type;
+    quad::fec::RsGf2n<T>* fec;
+    typename quad::fec::RsMatrixType gf2nrs_type;
     ;
-    if (mflag == nttec::fec::RsMatrixType::VANDERMONDE) {
-        gf2nrs_type = nttec::fec::RsMatrixType::VANDERMONDE;
+    if (mflag == quad::fec::RsMatrixType::VANDERMONDE) {
+        gf2nrs_type = quad::fec::RsMatrixType::VANDERMONDE;
     } else {
-        gf2nrs_type = nttec::fec::RsMatrixType::CAUCHY;
+        gf2nrs_type = quad::fec::RsMatrixType::CAUCHY;
     }
-    fec = new nttec::fec::RsGf2n<T>(word_size, n_data, n_parities, gf2nrs_type);
+    fec = new quad::fec::RsGf2n<T>(word_size, n_data, n_parities, gf2nrs_type);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -268,8 +268,8 @@ void run_fec_rs_gf2n(
 template <typename T>
 void run_fec_rs_gf2n_fft(int word_size, int n_data, int n_parities, int rflag)
 {
-    nttec::fec::RsGf2nFft<T>* fec;
-    fec = new nttec::fec::RsGf2nFft<T>(word_size, n_data, n_parities);
+    quad::fec::RsGf2nFft<T>* fec;
+    fec = new quad::fec::RsGf2nFft<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -292,8 +292,8 @@ void run_fec_rs_gf2n_fft_add(
     int n_parities,
     int rflag)
 {
-    nttec::fec::RsGf2nFftAdd<T>* fec;
-    fec = new nttec::fec::RsGf2nFftAdd<T>(word_size, n_data, n_parities);
+    quad::fec::RsGf2nFftAdd<T>* fec;
+    fec = new quad::fec::RsGf2nFftAdd<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -318,8 +318,8 @@ void run_fec_rs_gfp_fft(
 {
     assert(sizeof(T) > word_size);
 
-    nttec::fec::RsGfpFft<T>* fec;
-    fec = new nttec::fec::RsGfpFft<T>(word_size, n_data, n_parities);
+    quad::fec::RsGfpFft<T>* fec;
+    fec = new quad::fec::RsGfpFft<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -338,9 +338,9 @@ void run_fec_rs_gfp_fft(
 template <typename T>
 void run_fec_rs_fnt(int word_size, int n_data, int n_parities, int rflag)
 {
-    nttec::fec::RsFnt<T>* fec;
+    quad::fec::RsFnt<T>* fec;
     size_t pkt_size = 1024;
-    fec = new nttec::fec::RsFnt<T>(word_size, n_data, n_parities, pkt_size);
+    fec = new quad::fec::RsFnt<T>(word_size, n_data, n_parities, pkt_size);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -359,8 +359,8 @@ void run_fec_rs_fnt(int word_size, int n_data, int n_parities, int rflag)
 template <typename T>
 void run_fec_rs_nf4(int word_size, int n_data, int n_parities, int rflag)
 {
-    nttec::fec::RsNf4<T>* fec;
-    fec = new nttec::fec::RsNf4<T>(word_size, n_data, n_parities);
+    quad::fec::RsNf4<T>* fec;
+    fec = new quad::fec::RsNf4<T>(word_size, n_data, n_parities);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -405,7 +405,7 @@ int main(int argc, char** argv)
     int rflag = 0;
     int uflag = 0;
     ec_type eflag = EC_TYPE_UNDEF;
-    nttec::fec::RsMatrixType mflag = nttec::fec::RsMatrixType::VANDERMONDE;
+    quad::fec::RsMatrixType mflag = quad::fec::RsMatrixType::VANDERMONDE;
     unsigned word_size = 0;
 
     n_data = n_parities = -1;
@@ -414,10 +414,10 @@ int main(int argc, char** argv)
         case 'e':
             if (!strcmp(optarg, "rs-gf2n-v")) {
                 eflag = EC_TYPE_RS_GF2N;
-                mflag = nttec::fec::RsMatrixType::VANDERMONDE;
+                mflag = quad::fec::RsMatrixType::VANDERMONDE;
             } else if (!strcmp(optarg, "rs-gf2n-c")) {
                 eflag = EC_TYPE_RS_GF2N;
-                mflag = nttec::fec::RsMatrixType::CAUCHY;
+                mflag = quad::fec::RsMatrixType::CAUCHY;
             } else if (!strcmp(optarg, "rs-gf2n-fft")) {
                 eflag = EC_TYPE_RS_GF2N_FFT;
             } else if (!strcmp(optarg, "rs-gf2n-fft-add")) {

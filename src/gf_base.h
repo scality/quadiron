@@ -28,14 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_GF_BASE_H__
-#define __NTTEC_GF_BASE_H__
+#ifndef __QUAD_GF_BASE_H__
+#define __QUAD_GF_BASE_H__
 
 #include "arith.h"
 #include "core.h"
 #include "gf_ring.h"
 
-namespace nttec {
+namespace quad {
 
 /** Galois Fields handling. */
 namespace gf {
@@ -105,6 +105,6 @@ T Field<T>::get_inv_n_mod_p(int n) const
 }
 
 } // namespace gf
-} // namespace nttec
+} // namespace quad
 
 #endif

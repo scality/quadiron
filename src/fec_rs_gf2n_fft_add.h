@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FEC_RS_GF2N_FFT_ADD_H__
-#define __NTTEC_FEC_RS_GF2N_FFT_ADD_H__
+#ifndef __QUAD_FEC_RS_GF2N_FFT_ADD_H__
+#define __QUAD_FEC_RS_GF2N_FFT_ADD_H__
 
 #include "arith.h"
 #include "fec_base.h"
@@ -39,7 +39,7 @@
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 
-namespace nttec {
+namespace quad {
 namespace fec {
 
 /** Reed-Solomon (RS) Erasure code over GF(2<sup>n</sup>) using additive FFT. */
@@ -248,6 +248,6 @@ class RsGf2nFftAdd : public FecCode<T> {
 };
 
 } // namespace fec
-} // namespace nttec
+} // namespace quad
 
 #endif

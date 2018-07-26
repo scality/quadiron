@@ -28,15 +28,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_NF4_H__
-#define __NTTEC_SIMD_NF4_H__
+#ifndef __QUAD_SIMD_NF4_H__
+#define __QUAD_SIMD_NF4_H__
 
 #include <x86intrin.h>
 
-namespace nttec {
+namespace quad {
 namespace simd {
 
-#ifdef NTTEC_USE_AVX2
+#ifdef QUADIRON_USE_AVX2
 typedef __m128i m128i;
 
 /** Return aint128 integer from a _m128i register */
@@ -47,7 +47,7 @@ static inline aint128 m128i_to_uint128(m128i v)
 
     return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
 }
-#endif // #ifdef NTTEC_USE_AVX2
+#endif // #ifdef QUADIRON_USE_AVX2
 
 inline aint128 expand16(aint16* arr, int n)
 {
@@ -143,6 +143,6 @@ inline aint128 pack(aint128 a, aint32 flag)
 }
 
 } // namespace simd
-} // namespace nttec
+} // namespace quad
 
 #endif

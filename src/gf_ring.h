@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_GF_RING_H__
-#define __NTTEC_GF_RING_H__
+#ifndef __QUAD_GF_RING_H__
+#define __QUAD_GF_RING_H__
 
 #include <fstream>
 #include <memory>
@@ -43,7 +43,7 @@
 #include "exceptions.h"
 #include "vec_buffers.h"
 
-namespace nttec {
+namespace quad {
 
 namespace vec {
 
@@ -343,7 +343,7 @@ T RingModN<T>::exp_quick(T base, T exponent) const
  * @param base
  * @param exponent
  *
- * @throw nttec::NoSolution if no solution exists.
+ * @throw quad::NoSolution if no solution exists.
  *
  * return
  */
@@ -882,7 +882,7 @@ void RingModN<T>::add_doubled(int n, T* x, T* y) const
     }
 }
 
-#ifdef NTTEC_USE_SIMD
+#ifdef QUADIRON_USE_SIMD
 /* Operations are vectorized by SIMD */
 
 template <>
@@ -935,9 +935,9 @@ void RingModN<uint32_t>::add_doubled(int n, uint32_t* x, uint32_t* y) const;
 // void RingModN<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t*
 // y) const;
 
-#endif // #ifdef NTTEC_USE_SIMD
+#endif // #ifdef QUADIRON_USE_SIMD
 
 } // namespace gf
-} // namespace nttec
+} // namespace quad
 
 #endif

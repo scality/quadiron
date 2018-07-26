@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_POLYNOMIAL_H__
-#define __NTTEC_POLYNOMIAL_H__
+#ifndef __QUAD_POLYNOMIAL_H__
+#define __QUAD_POLYNOMIAL_H__
 
 #include <iostream>
 #include <map>
@@ -38,7 +38,7 @@
 #include "core.h"
 #include "gf_base.h"
 
-namespace nttec {
+namespace quad {
 
 namespace vec {
 
@@ -612,6 +612,6 @@ void Polynomial<T>::dump()
     std::cout << "\n";
 }
 
-} // namespace nttec
+} // namespace quad
 
 #endif

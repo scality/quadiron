@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FEC_CONTEXT_H__
-#define __NTTEC_FEC_CONTEXT_H__
+#ifndef __QUAD_FEC_CONTEXT_H__
+#define __QUAD_FEC_CONTEXT_H__
 
 #include <algorithm>
 #include <cassert>
@@ -44,7 +44,7 @@
 #include "vec_poly.h"
 #include "vec_zero_ext.h"
 
-namespace nttec {
+namespace quad {
 
 namespace fec {
 
@@ -241,6 +241,6 @@ class DecodeContext {
 };
 
 } // namespace fec
-} // namespace nttec
+} // namespace quad
 
 #endif

@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_BENCH_PRNG_H__
-#define __NTTEC_BENCH_PRNG_H__
+#ifndef __QUAD_BENCH_PRNG_H__
+#define __QUAD_BENCH_PRNG_H__
 
 #include <cstdint>
 #include <cstdlib>

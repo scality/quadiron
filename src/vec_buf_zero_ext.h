@@ -28,15 +28,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_VEC_BUF_ZERO_EXT_H__
-#define __NTTEC_VEC_BUF_ZERO_EXT_H__
+#ifndef __QUAD_VEC_BUF_ZERO_EXT_H__
+#define __QUAD_VEC_BUF_ZERO_EXT_H__
 
 #include <cstring>
 #include <vector>
 
 #include "vec_buffers.h"
 
-namespace nttec {
+namespace quad {
 namespace vec {
 
 /** A vector of `n` buffers virtually extented with a `zero_chunk`.
@@ -105,6 +105,6 @@ BuffersZeroExtended<T>::~BuffersZeroExtended()
 }
 
 } // namespace vec
-} // namespace nttec
+} // namespace quad
 
 #endif

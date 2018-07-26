@@ -27,7 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "nttec.h"
+#include "quadiron.h"
 
 template <typename T>
 class FECUtest {
@@ -38,7 +38,7 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        nttec::fec::RsFnt<T> fec(2, n_data, n_parities);
+        quad::fec::RsFnt<T> fec(2, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities, true);
     }
 
@@ -48,11 +48,11 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        for (int i = 1; i < nttec::arith::log2<T>(sizeof(T)); i++) {
+        for (int i = 1; i < quad::arith::log2<T>(sizeof(T)); i++) {
             unsigned word_size = 1 << i;
             std::cout << "Test fec::RsNgff4 with word_size=" << word_size
                       << '\n';
-            nttec::fec::RsNf4<T> fec(word_size, n_data, n_parities);
+            quad::fec::RsNf4<T> fec(word_size, n_data, n_parities);
             run_test(&fec, fec.n, n_data, n_data + n_parities, true);
         }
     }
@@ -71,7 +71,7 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        nttec::fec::RsGf2nFft<T> fec(wordsize, n_data, n_parities);
+        quad::fec::RsGf2nFft<T> fec(wordsize, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities);
     }
 
@@ -90,7 +90,7 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        nttec::fec::RsGf2nFftAdd<T> fec(wordsize, n_data, n_parities);
+        quad::fec::RsGf2nFftAdd<T> fec(wordsize, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities);
     }
 
@@ -109,33 +109,33 @@ class FECUtest {
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
-        nttec::fec::RsGfpFft<T> fec(word_size, n_data, n_parities);
+        quad::fec::RsGfpFft<T> fec(word_size, n_data, n_parities);
         run_test(&fec, fec.n, n_data, n_data + n_parities, true);
     }
 
     void run_test(
-        nttec::fec::FecCode<T>* fec,
+        quad::fec::FecCode<T>* fec,
         int n,
         int n_data,
         int code_len,
         bool props_flag = false)
     {
-        const nttec::gf::Field<T>* gf = &(fec->get_gf());
+        const quad::gf::Field<T>* gf = &(fec->get_gf());
 
-        nttec::vec::Vector<T> v(*gf, n_data);
-        nttec::vec::Vector<T> _v(*gf, n);
-        nttec::vec::Vector<T> _v2(*gf, n_data);
-        nttec::vec::Vector<T> f(*gf, n_data);
-        nttec::vec::Vector<T> v2(*gf, n_data);
-        nttec::vec::Vector<T> v_p(*gf, n_data);
+        quad::vec::Vector<T> v(*gf, n_data);
+        quad::vec::Vector<T> _v(*gf, n);
+        quad::vec::Vector<T> _v2(*gf, n_data);
+        quad::vec::Vector<T> f(*gf, n_data);
+        quad::vec::Vector<T> v2(*gf, n_data);
+        quad::vec::Vector<T> v_p(*gf, n_data);
         std::vector<int> ids;
         for (int i = 0; i < code_len; i++)
             ids.push_back(i);
-        std::vector<nttec::Properties> props(code_len);
+        std::vector<quad::Properties> props(code_len);
         for (int j = 0; j < 1000; j++) {
             if (props_flag) {
                 for (int i = 0; i < code_len; i++)
-                    props[i] = nttec::Properties();
+                    props[i] = quad::Properties();
             }
             for (int i = 0; i < n_data; i++)
                 v.set(i, gf->weak_rand());
@@ -149,7 +149,7 @@ class FECUtest {
                 f.set(i, ids.at(i));
                 _v2.set(i, _v.get(ids.at(i)));
             }
-            std::unique_ptr<nttec::fec::DecodeContext<T>> context =
+            std::unique_ptr<quad::fec::DecodeContext<T>> context =
                 fec->init_context_dec(f);
             fec->decode(*context, &v2, props, 0, &_v2);
             // std::cout << "v2:"; v2.dump();

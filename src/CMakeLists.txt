@@ -152,9 +152,9 @@ cpack_add_component(headers
   DEPENDS      libraries
 )
 
-############################
-# Export NTTEC configuration
-############################
+###############################
+# Export QuadIron configuration
+###############################
 include(CMakePackageConfigHelpers)
 
 install(EXPORT ${UPCASE_PROJECT_NAME}

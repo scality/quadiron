@@ -30,10 +30,10 @@
 
 #include "gf_ring.h"
 
-#ifdef NTTEC_USE_SIMD
+#ifdef QUADIRON_USE_SIMD
 #include "simd.h"
 
-namespace nttec {
+namespace quad {
 namespace gf {
 
 template <>
@@ -146,6 +146,6 @@ void RingModN<uint32_t>::hadamard_mul_doubled(
 // }
 
 } // namespace gf
-} // namespace nttec
+} // namespace quad
 
-#endif // #ifdef NTTEC_USE_SIMD
+#endif // #ifdef QUADIRON_USE_SIMD

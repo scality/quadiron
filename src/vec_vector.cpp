@@ -29,7 +29,7 @@
  */
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 namespace vec {
 
 void _vec_hadamard_mul_257(int n, uint32_t* x, uint32_t* y)
@@ -241,4 +241,4 @@ void Vector<uint64_t>::add(Doubled<uint64_t>* v)
 }
 
 } // namespace vec
-} // namespace nttec
+} // namespace quad

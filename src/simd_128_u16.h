@@ -28,12 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_128_U16_H__
-#define __NTTEC_SIMD_128_U16_H__
+#ifndef __QUAD_SIMD_128_U16_H__
+#define __QUAD_SIMD_128_U16_H__
 
 #include <x86intrin.h>
 
-namespace nttec {
+namespace quad {
 namespace simd {
 
 /* ==================== Essential Operations =================== */
@@ -233,6 +233,6 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 }
 
 } // namespace simd
-} // namespace nttec
+} // namespace quad
 
 #endif

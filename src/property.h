@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_PROPERTY_H__
-#define __NTTEC_PROPERTY_H__
+#ifndef __QUAD_PROPERTY_H__
+#define __QUAD_PROPERTY_H__
 
 #include <cstdint>
 #include <iosfwd>
@@ -38,7 +38,7 @@
 
 #include <sys/types.h>
 
-namespace nttec {
+namespace quad {
 
 /** The location of a value in a buffer. */
 struct ValueLocation {
@@ -73,13 +73,13 @@ struct ValueLocation {
     }
 };
 
-} // namespace nttec
+} // namespace quad
 
 namespace std {
 
 template <>
-struct hash<nttec::ValueLocation> {
-    std::size_t operator()(const nttec::ValueLocation& k) const
+struct hash<quad::ValueLocation> {
+    std::size_t operator()(const quad::ValueLocation& k) const
     {
         return std::hash<off_t>()(k.offset)
                + std::hash<uint32_t>()(k.fragment_id);
@@ -88,7 +88,7 @@ struct hash<nttec::ValueLocation> {
 
 } // namespace std
 
-namespace nttec {
+namespace quad {
 
 /** Ancillary data attached to values.
  *
@@ -120,6 +120,6 @@ class Properties {
     friend std::ostream& operator<<(std::ostream& os, const Properties& props);
 };
 
-} // namespace nttec
+} // namespace quad
 
 #endif

@@ -31,7 +31,7 @@ cmake_minimum_required(VERSION 3.5)
 # Project informations
 ######################
 
-project(nttec CXX)
+project(quadiron CXX)
 
 enable_testing()
 
@@ -84,13 +84,13 @@ file(MAKE_DIRECTORY ${GENERATE_DIR})
 # Setting for SIMD level
 ########################
 include(FindSIMD)
-set(NTTEC_USE_SIMD "${NTTEC_USE_SIMD}"
+set(QUADIRON_USE_SIMD "${QUADIRON_USE_SIMD}"
   CACHE
   STRING
   "Build with SIMD vectorizations."
   FORCE
 )
-set_property(CACHE NTTEC_USE_SIMD PROPERTY STRINGS ${SIMD_LIST})
+set_property(CACHE QUADIRON_USE_SIMD PROPERTY STRINGS ${SIMD_LIST})
 
 ####################
 # Default build type
@@ -130,12 +130,12 @@ set(COMMON_CXX_FLAGS
 )
 
 # Option for enabling/disabling SIMD flags is for both of debug and release
-if (NTTEC_USE_SIMD STREQUAL "SSE4")
+if (QUADIRON_USE_SIMD STREQUAL "SSE4")
   SET(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -msse4.1")
-  add_definitions(-DNTTEC_USE_SIMD=1)
-elseif (NTTEC_USE_SIMD STREQUAL "AVX2")
+  add_definitions(-DQUADIRON_USE_SIMD=1)
+elseif (QUADIRON_USE_SIMD STREQUAL "AVX2")
   SET(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -mavx2")
-  add_definitions(-DNTTEC_USE_SIMD=2)
+  add_definitions(-DQUADIRON_USE_SIMD=2)
 endif()
 
 # Manually add -Werror, for some reasons I can't make it works in the foreach…
@@ -173,13 +173,13 @@ foreach(flag ${RELEASE_CXX_FLAGS})
   endif(has_flag_${flag})
 endforeach(flag)
 
-#############
-# NTTEC build
-#############
+################
+# QuadIron build
+################
 
 find_package(codecov)
 
-# NTTEC
+# QuadIron
 add_subdirectory(src)
 # Documentation
 add_subdirectory(documentation)

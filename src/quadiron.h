@@ -28,12 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_NTTEC_H__
-#define __NTTEC_NTTEC_H__
+#ifndef __QUAD_QUADIRON_H__
+#define __QUAD_QUADIRON_H__
 
-/** @namespace nttec
+/** @namespace quad
  *
- * The root namespace of the NTTEC library.
+ * The root namespace of the QuadIron library.
  */
 
 #include "arith.h"

@@ -28,10 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_H__
-#define __NTTEC_SIMD_H__
+#ifndef __QUAD_SIMD_H__
+#define __QUAD_SIMD_H__
 
-#ifdef NTTEC_USE_SIMD
+#ifdef QUADIRON_USE_SIMD
 
 const unsigned F4 = 65537;
 const unsigned F3 = 257;
@@ -42,7 +42,7 @@ typedef uint32_t aint32 __attribute__((aligned(ALIGN_SIZE)));
 typedef uint64_t aint64 __attribute__((aligned(ALIGN_SIZE)));
 typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
 
-namespace nttec {
+namespace quad {
 /** The namespace simd contains functions for GF-NF4 that are accelerated by
  *  using SIMD operations over 128bits
  *
@@ -53,16 +53,16 @@ namespace simd {
 // Vectorized operations are implemented in appropriated headers simd*.h
 
 } // namespace simd
-} // namespace nttec
+} // namespace quad
 
-#ifdef NTTEC_USE_SSE4
+#ifdef QUADIRON_USE_SSE4
 #include "simd_128.h"
-#elif defined NTTEC_USE_AVX2
+#elif defined QUADIRON_USE_AVX2
 #include "simd_256.h"
 #endif
 
 #include "simd_nf4.h"
 
-#endif // #ifdef NTTEC_USE_SIMD
+#endif // #ifdef QUADIRON_USE_SIMD
 
 #endif

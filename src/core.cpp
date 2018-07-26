@@ -30,11 +30,11 @@
 #include "build_info.h"
 #include "core.h"
 
-namespace nttec {
+namespace quad {
 
 const char* get_version()
 {
     return VERSION;
 }
 
-} // namespace nttec
+} // namespace quad

@@ -28,12 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_VEC_SLICE_H__
-#define __NTTEC_VEC_SLICE_H__
+#ifndef __QUAD_VEC_SLICE_H__
+#define __QUAD_VEC_SLICE_H__
 
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 namespace vec {
 
 /** A slice of an existing vector.
@@ -122,6 +122,6 @@ int Slice<T>::get_offset()
 }
 
 } // namespace vec
-} // namespace nttec
+} // namespace quad
 
 #endif
