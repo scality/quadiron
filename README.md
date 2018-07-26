@@ -40,7 +40,6 @@ code in QuadIron.
 - `static`: build the QuadIron static library
 - `unit_tests`: build the unit tests.
 - `check`: run the test suite
-- `tools`: build the QuadIron tools
 - `benchmark`: run the QuadIron benchmark (build mode "Release" is recommended)
 - `package`: generate a binary installer
 - `package_source`: generate a source installer (a tarball with the sources)
