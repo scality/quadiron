@@ -115,6 +115,8 @@ class RingModN {
     virtual void hadamard_mul(int n, T* x, T* y) const;
     virtual void hadamard_mul_doubled(int n, T* x, T* y) const;
     virtual void add_doubled(int n, T* x, T* y) const;
+    virtual void neg(size_t n, T* x) const;
+    virtual void neg(vec::Buffers<T>* buf) const;
 
   protected:
     T _card;
@@ -882,8 +884,39 @@ void RingModN<T>::add_doubled(int n, T* x, T* y) const
     }
 }
 
+template <typename T>
+void RingModN<T>::neg(size_t n, T* x) const
+{
+    // add y to the first half of `x`
+    for (int i = 0; i < n; i++) {
+        x[i] = sub(0, x[i]);
+    }
+}
+
+template <typename T>
+void RingModN<T>::neg(vec::Buffers<T>* buf) const
+{
+    size_t size = buf->get_size();
+    for (int i = 0; i < buf->get_n(); i++) {
+        neg(size, buf->get(i));
+    }
+}
+
 #ifdef QUADIRON_USE_SIMD
 /* Operations are vectorized by SIMD */
+
+template <>
+void RingModN<uint16_t>::neg(size_t n, uint16_t* x) const;
+
+template <>
+void RingModN<uint32_t>::neg(size_t n, uint32_t* x) const;
+
+template <>
+void RingModN<uint16_t>::mul_coef_to_buf(
+    uint16_t a,
+    uint16_t* src,
+    uint16_t* dest,
+    size_t len) const;
 
 template <>
 void RingModN<uint32_t>::mul_coef_to_buf(
@@ -893,8 +926,19 @@ void RingModN<uint32_t>::mul_coef_to_buf(
     size_t len) const;
 
 template <>
+void RingModN<uint16_t>::add_two_bufs(uint16_t* src, uint16_t* dest, size_t len)
+    const;
+
+template <>
 void RingModN<uint32_t>::add_two_bufs(uint32_t* src, uint32_t* dest, size_t len)
     const;
+
+template <>
+void RingModN<uint16_t>::sub_two_bufs(
+    uint16_t* bufa,
+    uint16_t* bufb,
+    uint16_t* res,
+    size_t len) const;
 
 template <>
 void RingModN<uint32_t>::sub_two_bufs(

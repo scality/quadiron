@@ -78,6 +78,20 @@ inline m256i sub(m256i a, m256i b, aint16 card)
     return _mm256_sub_epi16(_a1, _b);
 }
 
+/** Negate `a`
+ * @return 0 if (a == 0), else card - a
+ */
+inline m256i neg(m256i a, aint16 card = F3)
+{
+    const m256i _card = _mm256_set1_epi16(card);
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_setzero_si256();
+
+    m256i cmp = _mm256_cmpgt_epi16(_a, _b);
+
+    return _mm256_sub_epi16(_mm256_and_si256(cmp, _card), _a);
+}
+
 inline m256i mod_after_multiply(m256i a)
 {
     const m256i mask = _mm256_set1_epi16(F3 - 2);
@@ -88,7 +102,7 @@ inline m256i mod_after_multiply(m256i a)
     m256i hi = _mm256_and_si256(a_shift, mask);
 
     m256i cmp = _mm256_cmpgt_epi16(hi, lo);
-    m256i _lo = _mm256_add_epi16(lo, _mm256_and_si256(F3_m256i, cmp));
+    m256i _lo = _mm256_add_epi16(lo, _mm256_and_si256(F3_m256i_u16, cmp));
 
     return _mm256_sub_epi16(_lo, hi);
 }
@@ -102,8 +116,8 @@ inline m256i mul(m256i a, m256i b)
 
     // filter elements of both of a & b = card-1
     m256i cmp = _mm256_and_si256(
-        _mm256_cmpeq_epi16(_a, F3minus1_m256i),
-        _mm256_cmpeq_epi16(_b, F3minus1_m256i));
+        _mm256_cmpeq_epi16(_a, F3minus1_m256i_u16),
+        _mm256_cmpeq_epi16(_b, F3minus1_m256i_u16));
 
     const m256i one = _mm256_set1_epi16(1);
     c = _mm256_add_epi16(c, _mm256_and_si256(one, cmp));
@@ -121,6 +135,27 @@ inline m256i mul(m256i a, m256i b, aint16 card)
     // FIXME: generalize card
     assert(card == F3);
     return mul(a, b);
+}
+
+/** Apply an element-wise negation to a buffer
+ */
+inline void neg(size_t len, aint16* buf, aint16 card = F3)
+{
+    m256i* _buf = reinterpret_cast<m256i*>(buf);
+    unsigned ratio = sizeof(*_buf) / sizeof(*buf);
+    size_t _len = len / ratio;
+    size_t _last_len = len - _len * ratio;
+
+    size_t i;
+    for (i = 0; i < _len; i++) {
+        _buf[i] = neg(_buf[i], card);
+    }
+    if (_last_len > 0) {
+        for (i = _len * ratio; i < len; i++) {
+            if (buf[i])
+                buf[i] = card - buf[i];
+        }
+    }
 }
 
 /** Perform a multiplication of a coefficient `a` to each element of `src` and
@@ -225,7 +260,7 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
             // perform multiplicaton
-            dest[i] = uint32_t(src[i]) * uint32_t(dest[i]) % card;
+            dest[i] = (uint32_t(src[i]) * dest[i]) % card;
         }
     }
 }

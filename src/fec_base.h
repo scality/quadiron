@@ -154,6 +154,13 @@ class FecCode {
         off_t offset,
         vec::Vector<T>* words);
 
+    virtual void decode(
+        const DecodeContext<T>& context,
+        vec::Buffers<T>* output,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Buffers<T>* words);
+
     bool readw(T* ptr, std::istream* stream);
     bool writew(T val, std::ostream* stream);
 
@@ -177,7 +184,13 @@ class FecCode {
         std::vector<std::ostream*> output_data_bufs);
 
     virtual std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids);
+    init_context_dec(vec::Vector<T>& fragments_ids, size_t size = 0);
+
+    bool decode_packet(
+        std::vector<std::istream*> input_data_bufs,
+        std::vector<std::istream*> input_parities_bufs,
+        const std::vector<Properties>& input_parities_props,
+        std::vector<std::ostream*> output_data_bufs);
 
     const gf::Field<T>& get_gf()
     {
@@ -239,6 +252,17 @@ class FecCode {
         const DecodeContext<T>& context,
         vec::Vector<T>* output,
         vec::Vector<T>* words);
+
+    virtual void decode_prepare(
+        const DecodeContext<T>& context,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Buffers<T>* words);
+
+    virtual void decode_apply(
+        const DecodeContext<T>& context,
+        vec::Buffers<T>* output,
+        vec::Buffers<T>* words);
 };
 
 /**
@@ -432,21 +456,25 @@ void FecCode<T>::encode_packet(
     off_t offset = 0;
     bool full_word_size = (word_size == sizeof(T));
 
+    // vector of buffers storing data read from chunk
     vec::Buffers<uint8_t> words_char(n_data, buf_size);
     std::vector<uint8_t*>* words_mem_char = words_char.get_mem();
     std::vector<T*>* words_mem_T = nullptr;
     if (full_word_size)
         words_mem_T = vec::cast_mem_of_vecp<uint8_t, T>(&words_char);
+    // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> words(n_data, pkt_size, words_mem_T);
     words_mem_T = words.get_mem();
 
     int output_len = get_n_outputs();
 
+    // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> output(output_len, pkt_size);
     std::vector<T*>* output_mem_T = output.get_mem();
     std::vector<uint8_t*>* output_mem_char = nullptr;
     if (full_word_size)
         output_mem_char = vec::cast_mem_of_vecp<T, uint8_t>(&output);
+    // vector of buffers storing data in output chunk
     vec::Buffers<uint8_t> output_char(output_len, buf_size, output_mem_char);
     output_mem_char = output_char.get_mem();
 
@@ -454,7 +482,6 @@ void FecCode<T>::encode_packet(
 
     while (true) {
         // TODO: get number of read bytes -> true buf size
-        // words.zero_fill();
         for (unsigned i = 0; i < n_data; i++) {
             if (!read_pkt((char*)(words_mem_char->at(i)), input_data_bufs[i])) {
                 cont = false;
@@ -705,7 +732,7 @@ void FecCode<T>::decode(
  */
 template <typename T>
 std::unique_ptr<DecodeContext<T>>
-FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids)
+FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids, size_t size)
 {
     if (this->inv_r_powers == nullptr) {
         throw LogicError("FEC base: vector (inv_r)^i must be initialized");
@@ -729,7 +756,7 @@ FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids)
 
     std::unique_ptr<DecodeContext<T>> context =
         std::unique_ptr<DecodeContext<T>>(new DecodeContext<T>(
-            *gf, *fft, *fft_2k, fragments_ids, vx, n_data, n));
+            *gf, *fft, *fft_2k, fragments_ids, vx, n_data, n, -1, size));
 
     return context;
 }
@@ -816,6 +843,302 @@ void FecCode<T>::decode_apply(
     // get decoded symbols are the first k elements of vec2_2k
     for (unsigned i = 0; i < k; ++i)
         output->set(i, vec2_2k.get(i));
+}
+
+/********** Decoding over vec::PolyBuf **********/
+
+/**
+ * Decode buffers
+ *
+ * @param input_data_bufs if SYSTEMATIC must be exactly n_data otherwise it is
+ * unused (use nullptr when missing)
+ * @param input_parities_bufs if SYSTEMATIC must be exactly n_parities otherwise
+ * get_n_outputs() (use nullptr when missing)
+ * @param input_parities_props if SYSTEMATIC must be exactly n_parities
+ * otherwise get_n_outputs() caller is supposed to provide specific information
+ * bound to parities
+ * @param output_data_bufs must be exactly n_data (use nullptr when not
+ * missing/wanted)
+ *
+ * @pre All streams must be of equal size
+ *
+ * @return true if decode succeeded, else false
+ */
+template <typename T>
+bool FecCode<T>::decode_packet(
+    std::vector<std::istream*> input_data_bufs,
+    std::vector<std::istream*> input_parities_bufs,
+    const std::vector<Properties>& input_parities_props,
+    std::vector<std::ostream*> output_data_bufs)
+{
+    bool cont = true;
+    off_t offset = 0;
+    bool full_word_size = (word_size == sizeof(T));
+
+    unsigned fragment_index = 0;
+    unsigned parity_index = 0;
+    unsigned avail_data_nb = 0;
+
+    if (type == FecType::SYSTEMATIC) {
+        assert(input_data_bufs.size() == n_data);
+    }
+    assert(input_parities_bufs.size() == n_outputs);
+    assert(input_parities_props.size() == n_outputs);
+    assert(output_data_bufs.size() == n_data);
+
+    // ids of received fragments, from 0 to codelen-1
+    vec::Vector<T> fragments_ids(*(this->gf), n_data);
+
+    if (type == FecType::SYSTEMATIC) {
+        for (unsigned i = 0; i < n_data; i++) {
+            if (input_data_bufs[i] != nullptr) {
+                decode_add_data(fragment_index, i);
+                fragments_ids.set(fragment_index, i);
+                fragment_index++;
+            }
+        }
+        avail_data_nb = fragment_index;
+        // data is in clear so nothing to do
+        if (fragment_index == n_data)
+            return true;
+    }
+
+    vec::Vector<T> avail_parity_ids(*(this->gf), n_data - avail_data_nb);
+
+    if (fragment_index < n_data) {
+        // finish with parities available
+        for (unsigned i = 0; i < n_outputs; i++) {
+            if (input_parities_bufs[i] != nullptr) {
+                decode_add_parities(fragment_index, i);
+                unsigned j = (type == FecType::SYSTEMATIC) ? n_data + i : i;
+                fragments_ids.set(fragment_index, j);
+                avail_parity_ids.set(parity_index, i);
+                fragment_index++;
+                parity_index++;
+                // stop when we have enough parities
+                if (fragment_index == n_data)
+                    break;
+            }
+        }
+        // unable to decode
+        if (fragment_index < n_data)
+            return false;
+    }
+
+    decode_build();
+
+    int n_words = code_len;
+    if (type == FecType::SYSTEMATIC) {
+        n_words = n_data;
+    }
+
+    // vector of buffers storing data read from chunk
+    vec::Buffers<uint8_t> words_char(n_data, buf_size);
+    std::vector<uint8_t*>* words_mem_char = words_char.get_mem();
+    std::vector<T*>* words_mem_T = nullptr;
+    if (full_word_size)
+        words_mem_T = vec::cast_mem_of_vecp<uint8_t, T>(&words_char);
+    // vector of buffers storing data that are performed in encoding, i.e. FFT
+    vec::Buffers<T> words(n_data, pkt_size, words_mem_T);
+    words_mem_T = words.get_mem();
+
+    int output_len = n_data;
+
+    // vector of buffers storing data that are performed in decoding, i.e. FFT
+    vec::Buffers<T> output(output_len, pkt_size);
+    std::vector<T*>* output_mem_T = output.get_mem();
+    std::vector<uint8_t*>* output_mem_char = nullptr;
+    if (full_word_size)
+        output_mem_char = vec::cast_mem_of_vecp<T, uint8_t>(&output);
+    // vector of buffers storing data in output chunk
+    vec::Buffers<uint8_t> output_char(output_len, buf_size, output_mem_char);
+    output_mem_char = output_char.get_mem();
+
+    std::unique_ptr<DecodeContext<T>> context =
+        init_context_dec(fragments_ids, pkt_size);
+
+    reset_stats_dec();
+
+    while (true) {
+        // TODO: get number of read bytes -> true buf size
+        if (type == FecType::SYSTEMATIC) {
+            for (unsigned i = 0; i < avail_data_nb; i++) {
+                unsigned data_idx = fragments_ids.get(i);
+                if (!read_pkt(
+                        (char*)(words_mem_char->at(i)),
+                        input_data_bufs[data_idx])) {
+                    cont = false;
+                    break;
+                }
+            }
+        }
+        for (unsigned i = 0; i < n_data - avail_data_nb; ++i) {
+            unsigned parity_idx = avail_parity_ids.get(i);
+            if (!read_pkt(
+                    (char*)(words_mem_char->at(avail_data_nb + i)),
+                    input_parities_bufs[parity_idx])) {
+                cont = false;
+                break;
+            }
+        }
+
+        if (!cont)
+            break;
+
+        if (!full_word_size)
+            vec::pack<uint8_t, T>(
+                words_mem_char, words_mem_T, n_data, pkt_size, word_size);
+
+        timeval t1 = tick();
+        uint64_t start = rdtsc();
+        decode(*context, &output, input_parities_props, offset, &words);
+        uint64_t end = rdtsc();
+        uint64_t t2 = hrtime_usec(t1);
+
+        total_dec_usec += t2;
+        total_decode_cycles += (end - start) / word_size;
+        n_decode_ops++;
+
+        if (!full_word_size)
+            vec::unpack<T, uint8_t>(
+                output_mem_T, output_mem_char, output_len, pkt_size, word_size);
+
+        for (unsigned i = 0; i < n_data; i++) {
+            if (output_data_bufs[i] != nullptr) {
+                write_pkt((char*)(output_mem_char->at(i)), output_data_bufs[i]);
+            }
+        }
+        offset += buf_size;
+    }
+
+    return true;
+}
+
+/**
+ * Perform a Lagrange interpolation to find the coefficients of the
+ * polynomial
+ *
+ * @note If all fragments are available ifft(words) is enough
+ *
+ * @param output must be exactly n_data
+ * @param props special values dictionary must be exactly n_data
+ * @param offset used to locate special values
+ * @param fragments_ids unused
+ * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
+ */
+template <typename T>
+void FecCode<T>::decode(
+    const DecodeContext<T>& context,
+    vec::Buffers<T>* output,
+    const std::vector<Properties>& props,
+    off_t offset,
+    vec::Buffers<T>* words)
+{
+    // prepare for decoding
+    decode_prepare(context, props, offset, words);
+
+    // Lagrange interpolation
+    decode_apply(context, output, words);
+}
+
+/* Prepare for decoding
+ * It supports for FEC using multiplicative FFT over FNT
+ */
+template <typename T>
+void FecCode<T>::decode_prepare(
+    const DecodeContext<T>& context,
+    const std::vector<Properties>& props,
+    off_t offset,
+    vec::Buffers<T>* words)
+{
+    // FIXME: could we integrate this preparation into vec::pack?
+    // It will reduce a loop on all data
+    const vec::Vector<T>& fragments_ids = context.get_fragments_id();
+    off_t offset_max = offset + buf_size;
+
+    T thres = (this->gf->card() - 1);
+    for (unsigned i = 0; i < this->n_data; i++) {
+        const int frag_id = fragments_ids.get(i);
+        T* chunk = words->get(i);
+        // loop over marked symbols
+        for (auto const& data : props[frag_id].get_map()) {
+            off_t loc_offset = data.first.get_offset();
+            if (loc_offset >= offset && loc_offset < offset_max) {
+                // As loc.offset := offset + j * this->word_size
+                const size_t j = (loc_offset - offset) / this->word_size;
+
+                // Check if the symbol is a special case whick is marked by "@".
+                // Note: this check is necessary when word_size is not large
+                // enough to cover all symbols of the field. Following check is
+                // used for FFT over FNT where the single special case symbol
+                // equals card - 1
+                if (data.second == "@") {
+                    chunk[j] = thres;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Perform a Lagrange interpolation to find the coefficients of the
+ * polynomial
+ *
+ * @note If all fragments are available ifft(words) is enough
+ *
+ * @param output must be exactly n_data
+ * @param props special values dictionary must be exactly n_data
+ * @param offset used to locate special values
+ * @param fragments_ids unused
+ * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
+ */
+template <typename T>
+void FecCode<T>::decode_apply(
+    const DecodeContext<T>& context,
+    vec::Buffers<T>* output,
+    vec::Buffers<T>* words)
+{
+    const vec::Vector<T>& fragments_ids = context.get_fragments_id();
+    vec::Vector<T>& inv_A_i = context.get_vector(CtxVec::INV_A_I);
+    vec::Vector<T>& A_fft_2k = context.get_vector(CtxVec::A_FFT_2K);
+    vec::Buffers<T>& buf1_n = context.get_buffer(CtxBuf::N1);
+    vec::Buffers<T>& buf2_n = context.get_buffer(CtxBuf::N2);
+    vec::Buffers<T>& buf1_2k = context.get_buffer(CtxBuf::B2K1);
+    vec::Buffers<T>& buf2_2k = context.get_buffer(CtxBuf::B2K2);
+    vec::Buffers<T>& buf1_len2k_minus_k = context.get_buffer(CtxBuf::B2KMK);
+
+    unsigned k = this->n_data; // number of fragments received
+
+    // compute N'(x) = sum_i{n_i * x^z_i}
+    // where n_i=v_i/A'_i(x_i)
+    buf1_n.zero_fill();
+    for (int i = 0; i <= k - 1; ++i) {
+        this->gf->mul_coef_to_buf(
+            inv_A_i.get(fragments_ids.get(i)),
+            words->get(i),
+            buf1_n.get(fragments_ids.get(i)),
+            pkt_size);
+    }
+
+    // compute buf2_n
+    this->fft_full->fft_inv(&buf2_n, &buf1_n);
+
+    // buf1_2k: first k buffers point to first k buffers of buf2_n
+    //          las k buffers point to a padded zero buffer
+    this->fft_2k->fft(&buf2_2k, &buf1_2k);
+
+    // multiply FFT(A) and buf2_2k
+    this->gf->mul_vec_to_vecp(&A_fft_2k, &buf2_2k, &buf2_2k);
+
+    // buf3 concats `output` and a temporary buffer
+    //  - first k buffers point to output
+    //  - last (len_2k - k) buffers point to buf1_len2k_minus_k
+    vec::Buffers<T> buf3(output, &buf1_len2k_minus_k);
+
+    this->fft_2k->ifft(&buf3, &buf2_2k);
+
+    // negatize output
+    this->gf->neg(output);
 }
 
 } // namespace fec

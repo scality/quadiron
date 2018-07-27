@@ -42,6 +42,26 @@
 namespace quad {
 namespace vec {
 
+/// Available cases of allocating memory
+enum class BufMemAlloc {
+    /// Do not allocate any memory
+    NONE = 0,
+
+    /// Allocate only a vector of pointers each points to an allocated memory
+    SLICE,
+
+    /// Allocate a zero buffers and push back to the vector memory
+    ZERO_EXTEND,
+
+    /// Allocate only a vector of pointers that are from two vectors of two
+    /// input buffers vector
+    COMBINED,
+
+    /// Fully allocate memory including a vector of pointers each for a
+    /// memory of `size` elements
+    FULL,
+};
+
 /** A vector of `n` buffers (array of T).
  *
  * A Buffers contains pointers to `n` buffers such as
@@ -73,11 +93,13 @@ class Buffers {
     Buffers(int n, size_t size, std::vector<T*>* mem = nullptr);
     Buffers(Buffers<T>* vec, int n = 0);
     Buffers(Buffers<T>* vec, int begin, int end);
+    Buffers(Buffers<T>* vec1, Buffers<T>* vec2);
     virtual ~Buffers();
-    virtual int get_n(void);
-    virtual size_t get_size(void);
+    virtual int get_n(void) const;
+    virtual size_t get_size(void) const;
     int get_mem_len(void);
     void zero_fill(void);
+    void fill(int i, T value);
     virtual void set(int i, T* buf);
     virtual T* get(int i);
     std::vector<T*>* get_mem();
@@ -96,13 +118,8 @@ class Buffers {
     int n;
 
   private:
-    /* Three cases of allocating memory
-     * 0: fully allocate memory including a vector of pointers each for a memory
-     *    of `size` elements
-     * 1: allocate only a vector of pointers each points to an allocated memory
-     * 2: do not allocate any memory
-     */
-    int mem_alloc_case = 0;
+    BufMemAlloc mem_alloc_case = BufMemAlloc::FULL;
+    T* zeros = nullptr;
 };
 
 /**
@@ -119,12 +136,13 @@ Buffers<T>::Buffers(int n, size_t size, std::vector<T*>* mem)
     this->size = size;
     this->mem_len = n * size;
     if (mem == nullptr) {
+        this->mem_alloc_case = BufMemAlloc::FULL;
         this->mem = new std::vector<T*>(n, nullptr);
         for (int i = 0; i < n; i++) {
             this->mem->at(i) = aligned_allocate<T>(size);
         }
     } else {
-        this->mem_alloc_case = 2;
+        this->mem_alloc_case = BufMemAlloc::NONE;
         this->mem = mem;
     }
 }
@@ -147,6 +165,8 @@ Buffers<T>::Buffers(Buffers<T>* vec, int n)
     this->mem = new std::vector<T*>(this->n, nullptr);
     this->mem_len = n * size;
 
+    this->mem_alloc_case = BufMemAlloc::FULL;
+
     for (i = 0; i < this->n; i++) {
         this->mem->at(i) = aligned_allocate<T>(this->size);
     }
@@ -165,7 +185,8 @@ Buffers<T>::Buffers(Buffers<T>* vec, int n)
 
 /**
  * Constructor of Buffers by slicing from a given vector. Buffers are sliced
- * from `begin` (inclusive) to `end` (exclusive)
+ * from `begin` (inclusive) to `end` (exclusive). If `end` is out of the input
+ * vector, zero buffers are padded.
  *
  * @param vec - a given Buffers instance
  * @param begin - index of buffer pointed by vec, that is the 1st buffer
@@ -177,24 +198,62 @@ template <typename T>
 Buffers<T>::Buffers(Buffers<T>* vec, int begin, int end)
 {
     assert(begin >= 0 && begin < end);
-    assert(end <= vec->get_n());
 
     this->n = end - begin;
     this->size = vec->get_size();
     this->mem_len = this->n * this->size;
-    this->mem_alloc_case = 1;
-    this->mem = new std::vector<T*>(
-        vec->get_mem()->begin() + begin, vec->get_mem()->begin() + end);
+    std::vector<T*>* vec_mem = vec->get_mem();
+
+    // slice from input buffers
+    if (end <= vec->get_n()) {
+        this->mem_alloc_case = BufMemAlloc::SLICE;
+
+        this->mem = new std::vector<T*>(
+            vec_mem->begin() + begin, vec_mem->begin() + end);
+    } else { // slice and padding zeros
+        this->mem_alloc_case = BufMemAlloc::ZERO_EXTEND;
+
+        this->zeros = aligned_allocate<T>(this->size);
+        std::memset(this->zeros, 0, this->size * sizeof(T));
+
+        this->mem =
+            new std::vector<T*>(vec_mem->begin() + begin, vec_mem->end());
+        this->mem->insert(this->mem->end(), end - vec->get_n(), this->zeros);
+    }
+}
+
+template <typename T>
+Buffers<T>::Buffers(Buffers<T>* vec1, Buffers<T>* vec2)
+{
+    assert(vec1->get_size() == vec2->get_size());
+
+    int n1 = vec1->get_n();
+    int n2 = vec2->get_n();
+
+    this->n = n1 + n2;
+    this->size = vec1->get_size();
+    this->mem_len = this->n * this->size;
+
+    this->mem_alloc_case = BufMemAlloc::COMBINED;
+
+    this->mem = new std::vector<T*>();
+    this->mem->reserve(this->n);
+    this->mem->insert(
+        this->mem->end(), vec1->get_mem()->begin(), vec1->get_mem()->end());
+    this->mem->insert(
+        this->mem->end(), vec2->get_mem()->begin(), vec2->get_mem()->end());
 }
 
 template <typename T>
 Buffers<T>::~Buffers()
 {
-    if (this->mem_alloc_case < 2 && this->mem != nullptr) {
-        if (this->mem_alloc_case == 0) {
+    if (this->mem_alloc_case != BufMemAlloc::NONE && this->mem != nullptr) {
+        if (this->mem_alloc_case == BufMemAlloc::FULL) {
             for (int i = 0; i < n; i++) {
                 aligned_deallocate<T>(this->mem->at(i));
             }
+        } else if (this->mem_alloc_case == BufMemAlloc::ZERO_EXTEND) {
+            aligned_deallocate<T>(this->zeros);
         }
         this->mem->shrink_to_fit();
         delete this->mem;
@@ -202,13 +261,13 @@ Buffers<T>::~Buffers()
 }
 
 template <typename T>
-inline int Buffers<T>::get_n(void)
+inline int Buffers<T>::get_n(void) const
 {
     return n;
 }
 
 template <typename T>
-inline size_t Buffers<T>::get_size(void)
+inline size_t Buffers<T>::get_size(void) const
 {
     return size;
 }
@@ -227,11 +286,17 @@ void Buffers<T>::zero_fill(void)
 }
 
 template <typename T>
+void Buffers<T>::fill(int i, T value)
+{
+    std::fill_n(mem->at(i), size, value);
+}
+
+template <typename T>
 inline void Buffers<T>::set(int i, T* buf)
 {
     assert(i >= 0 && i < n);
 
-    if ((mem_alloc_case == 0) && (this->mem->at(i) != nullptr))
+    if ((mem_alloc_case == BufMemAlloc::NONE) && (this->mem->at(i) != nullptr))
         aligned_deallocate<T>(this->mem->at(i));
 
     this->mem->at(i) = buf;
@@ -327,8 +392,11 @@ void Buffers<T>::dump(void)
 {
     for (int i = 0; i < n; i++) {
         std::cout << "\n\t" << i << ": ";
-        for (size_t j = 0; j < size; j++) {
+        for (size_t j = 0; j < size - 1; j++) {
             std::cout << unsigned((get(i))[j]) << "-";
+        }
+        if (size > 0) {
+            std::cout << unsigned((get(i))[size - 1]);
         }
     }
     std::cout << "\n)\n";
