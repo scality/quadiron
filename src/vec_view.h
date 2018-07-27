@@ -33,7 +33,7 @@
 
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace vec {
 
 /** A view of an existing vector.
@@ -130,6 +130,6 @@ void View<T>::set(int i, T val)
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

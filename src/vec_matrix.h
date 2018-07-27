@@ -36,7 +36,7 @@
 #include "gf_ring.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace vec {
 
 /** A 2D matrix
@@ -455,6 +455,6 @@ void Matrix<T>::dump(void)
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

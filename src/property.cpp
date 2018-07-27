@@ -32,7 +32,7 @@
 
 #include "property.h"
 
-namespace quad {
+namespace quadiron {
 
 ValueLocation::ValueLocation(const std::string& str)
 {
@@ -87,4 +87,4 @@ std::ostream& operator<<(std::ostream& os, const Properties& props)
     return os;
 }
 
-} // namespace quad
+} // namespace quadiron

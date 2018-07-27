@@ -43,7 +43,7 @@
 #include "vec_cast.h"
 #include "vec_doubled.h"
 
-namespace quad {
+namespace quadiron {
 
 template <typename T>
 class Polynomial;
@@ -417,6 +417,6 @@ void Vector<uint64_t>::hadamard_mul(Doubled<uint64_t>* v);
 #endif
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

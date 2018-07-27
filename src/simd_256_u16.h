@@ -33,7 +33,7 @@
 
 #include <x86intrin.h>
 
-namespace quad {
+namespace quadiron {
 namespace simd {
 
 /** Perform a%card where a is a addition of two numbers whose elements are
@@ -266,6 +266,6 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 }
 
 } // namespace simd
-} // namespace quad
+} // namespace quadiron
 
 #endif

@@ -39,7 +39,7 @@
 
 #include "core.h"
 
-namespace quad {
+namespace quadiron {
 namespace vec {
 
 /// Available cases of allocating memory
@@ -403,6 +403,6 @@ void Buffers<T>::dump(void)
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

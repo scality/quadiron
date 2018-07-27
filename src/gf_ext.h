@@ -34,7 +34,7 @@
 #include "arith.h"
 #include "gf_base.h"
 
-namespace quad {
+namespace quadiron {
 
 template <typename T>
 class Polynomial;
@@ -316,6 +316,6 @@ retry:
 }
 
 } // namespace gf
-} // namespace quad
+} // namespace quadiron
 
 #endif

@@ -36,7 +36,7 @@
 #include "vec_matrix.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace fec {
 
 enum class RsMatrixType { VANDERMONDE, CAUCHY };
@@ -154,6 +154,6 @@ class RsGf2n : public FecCode<T> {
 };
 
 } // namespace fec
-} // namespace quad
+} // namespace quadiron
 
 #endif

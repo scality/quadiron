@@ -35,7 +35,7 @@
 #include "vec_buffers.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 
 /** Various Fast Fourier Transform (FFT) implementations. */
 namespace fft {
@@ -102,6 +102,6 @@ const gf::Field<T>& FourierTransform<T>::get_gf()
 }
 
 } // namespace fft
-} // namespace quad
+} // namespace quadiron
 
 #endif

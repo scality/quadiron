@@ -33,7 +33,7 @@
 
 #include "gf_base.h"
 
-namespace quad {
+namespace quadiron {
 namespace gf {
 
 /** A Galois Field whose order is a prime number. */
@@ -65,6 +65,6 @@ T Prime<T>::inv_exp(T a)
 }
 
 } // namespace gf
-} // namespace quad
+} // namespace quadiron
 
 #endif

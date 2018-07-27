@@ -33,7 +33,7 @@
 
 #include <x86intrin.h>
 
-namespace quad {
+namespace quadiron {
 namespace simd {
 
 #ifdef QUADIRON_USE_AVX2
@@ -143,6 +143,6 @@ inline aint128 pack(aint128 a, aint32 flag)
 }
 
 } // namespace simd
-} // namespace quad
+} // namespace quadiron
 
 #endif

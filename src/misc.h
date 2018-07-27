@@ -31,7 +31,7 @@
 #ifndef __QUAD_MISC_H__
 #define __QUAD_MISC_H__
 
-namespace quad {
+namespace quadiron {
 
 #if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)
@@ -49,6 +49,6 @@ static __inline__ unsigned long long rdtsc(void)
 }
 #endif
 
-} // namespace quad
+} // namespace quadiron
 
 #endif

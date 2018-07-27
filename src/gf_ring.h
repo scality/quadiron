@@ -43,7 +43,7 @@
 #include "exceptions.h"
 #include "vec_buffers.h"
 
-namespace quad {
+namespace quadiron {
 
 namespace vec {
 
@@ -345,7 +345,7 @@ T RingModN<T>::exp_quick(T base, T exponent) const
  * @param base
  * @param exponent
  *
- * @throw quad::NoSolution if no solution exists.
+ * @throw quadiron::NoSolution if no solution exists.
  *
  * return
  */
@@ -982,6 +982,6 @@ void RingModN<uint32_t>::add_doubled(int n, uint32_t* x, uint32_t* y) const;
 #endif // #ifdef QUADIRON_USE_SIMD
 
 } // namespace gf
-} // namespace quad
+} // namespace quadiron
 
 #endif

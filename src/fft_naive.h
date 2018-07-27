@@ -36,7 +36,7 @@
 #include "vec_matrix.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace fft {
 
 /** Naïve implementation of the Discrete Fourier Transform (DFT).
@@ -135,6 +135,6 @@ void Naive<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 } // namespace fft
-} // namespace quad
+} // namespace quadiron
 
 #endif

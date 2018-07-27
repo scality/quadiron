@@ -33,8 +33,8 @@ void mat_utest1()
 {
     std::cout << "mat_utest1\n";
 
-    quad::gf::Prime<uint32_t> gf11(11);
-    quad::vec::Matrix<uint32_t> mat(gf11, 3, 3);
+    quadiron::gf::Prime<uint32_t> gf11(11);
+    quadiron::vec::Matrix<uint32_t> mat(gf11, 3, 3);
 
     mat.set(0, 0, 2);
     mat.set(0, 1, 1);
@@ -63,8 +63,8 @@ void mat_utest2()
 {
     std::cout << "mat_utest2\n";
 
-    quad::gf::Prime<uint32_t> gf29(29);
-    quad::vec::Matrix<uint32_t> mat(gf29, 3, 3);
+    quadiron::gf::Prime<uint32_t> gf29(29);
+    quadiron::vec::Matrix<uint32_t> mat(gf29, 3, 3);
 
     mat.set(0, 0, 22);
     mat.set(0, 1, 27);

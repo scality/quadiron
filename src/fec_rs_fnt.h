@@ -41,7 +41,7 @@
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 
-namespace quad {
+namespace quadiron {
 namespace fec {
 
 /** Reed-Solomon (RS) erasure code based on Fermat Number Transform (FNT).
@@ -198,6 +198,6 @@ class RsFnt : public FecCode<T> {
 };
 
 } // namespace fec
-} // namespace quad
+} // namespace quadiron
 
 #endif

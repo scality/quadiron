@@ -37,7 +37,7 @@
 #include "vec_slice.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace fft {
 
 /** Implementation of an additive FFT algorithm.
@@ -672,6 +672,6 @@ void Additive<T>::inv_taylor_expand(
 }
 
 } // namespace fft
-} // namespace quad
+} // namespace quadiron
 
 #endif

@@ -38,7 +38,7 @@
 
 #include <sys/types.h>
 
-namespace quad {
+namespace quadiron {
 
 /** The location of a value in a buffer. */
 struct ValueLocation {
@@ -78,13 +78,13 @@ struct ValueLocation {
     }
 };
 
-} // namespace quad
+} // namespace quadiron
 
 namespace std {
 
 template <>
-struct hash<quad::ValueLocation> {
-    std::size_t operator()(const quad::ValueLocation& k) const
+struct hash<quadiron::ValueLocation> {
+    std::size_t operator()(const quadiron::ValueLocation& k) const
     {
         return std::hash<off_t>()(k.offset)
                + std::hash<uint32_t>()(k.fragment_id);
@@ -93,7 +93,7 @@ struct hash<quad::ValueLocation> {
 
 } // namespace std
 
-namespace quad {
+namespace quadiron {
 
 /** Ancillary data attached to values.
  *
@@ -130,6 +130,6 @@ class Properties {
     friend std::ostream& operator<<(std::ostream& os, const Properties& props);
 };
 
-} // namespace quad
+} // namespace quadiron
 
 #endif

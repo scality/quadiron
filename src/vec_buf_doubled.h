@@ -33,7 +33,7 @@
 
 #include "vec_buffers.h"
 
-namespace quad {
+namespace quadiron {
 namespace vec {
 
 /** A vector of `n` buffers virtually extented to `2n`.
@@ -93,6 +93,6 @@ T* BuffersDoubled<T>::get(int i)
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

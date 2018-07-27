@@ -35,7 +35,7 @@
 #include "gf_nf4.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace vec {
 
 /** A vector of size \f$n\f$ represents a polynomial \f$P(X)\f$ of degree
@@ -253,6 +253,6 @@ void Poly<T>::dump()
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

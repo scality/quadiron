@@ -38,7 +38,7 @@
 #include "core.h"
 #include "gf_base.h"
 
-namespace quad {
+namespace quadiron {
 
 namespace vec {
 
@@ -612,6 +612,6 @@ void Polynomial<T>::dump()
     std::cout << "\n";
 }
 
-} // namespace quad
+} // namespace quadiron
 
 #endif

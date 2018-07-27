@@ -33,7 +33,7 @@
 #ifdef QUADIRON_USE_SIMD
 #include "simd.h"
 
-namespace quad {
+namespace quadiron {
 namespace gf {
 
 template <>
@@ -185,6 +185,6 @@ void RingModN<uint32_t>::hadamard_mul_doubled(
 // }
 
 } // namespace gf
-} // namespace quad
+} // namespace quadiron
 
 #endif // #ifdef QUADIRON_USE_SIMD

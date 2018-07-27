@@ -36,7 +36,7 @@
 #include "vec_buffers.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace fft {
 
 /** FFT specialization for when all but the first element are zeros.
@@ -113,6 +113,6 @@ void Single<T>::ifft(vec::Buffers<T>* output, vec::Buffers<T>* input)
 }
 
 } // namespace fft
-} // namespace quad
+} // namespace quadiron
 
 #endif

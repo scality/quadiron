@@ -32,16 +32,16 @@
 template <typename T>
 class FFTUtest {
   public:
-    void test_gcd1(const quad::gf::Field<T>& gf)
+    void test_gcd1(const quadiron::gf::Field<T>& gf)
     {
-        quad::SignedDoubleSizeVal<T> bezout[2];
+        quadiron::SignedDoubleSizeVal<T> bezout[2];
 
         assert(gf.inv(20) == 34);
         //
         int i;
         for (i = 0; i < 100; i++) {
             T x = gf.weak_rand();
-            assert(1 == quad::arith::extended_gcd<T>(97, x, bezout, nullptr));
+            assert(1 == quadiron::arith::extended_gcd<T>(97, x, bezout, nullptr));
             // std::cerr << bezout[0] << "*" << 97 << " " << bezout[1] << "*";
             // stdd:cerr << x << "=1\n";
             T y = gf.inv(x);
@@ -56,7 +56,7 @@ class FFTUtest {
     {
         std::cout << "test_gcd\n";
 
-        quad::gf::Prime<T> gf(97);
+        quadiron::gf::Prime<T> gf(97);
         test_gcd1(gf);
     }
 
@@ -64,17 +64,17 @@ class FFTUtest {
     {
         std::cout << "test_quadratic_residues\n";
 
-        quad::gf::Prime<T> gf32(32);
+        quadiron::gf::Prime<T> gf32(32);
         int i;
         for (i = 0; i < 32; i++) {
             assert(gf32.is_quadratic_residue(gf32.exp(i, 2)));
         }
 
-        quad::gf::Prime<T> gf7(7);
+        quadiron::gf::Prime<T> gf7(7);
         assert(gf7.is_quadratic_residue(2));
         assert(!gf7.is_quadratic_residue(5));
 
-        quad::gf::Prime<T> gf8(8);
+        quadiron::gf::Prime<T> gf8(8);
         assert(gf8.is_quadratic_residue(1));
         assert(!gf8.is_quadratic_residue(3));
     }
@@ -86,11 +86,11 @@ class FFTUtest {
      *
      * @return
      */
-    quad::vec::Vector<T>*
-    _convert_string2vec(quad::gf::Field<T>* gf, int n, char num[])
+    quadiron::vec::Vector<T>*
+    _convert_string2vec(quadiron::gf::Field<T>* gf, int n, char num[])
     {
         int i;
-        quad::vec::Vector<T>* vec = new quad::vec::Vector<T>(gf, n);
+        quadiron::vec::Vector<T>* vec = new quadiron::vec::Vector<T>(gf, n);
         int len = strlen(num);
 
         for (i = 0; i < len; i++) {
@@ -108,14 +108,14 @@ class FFTUtest {
         unsigned n;
         unsigned r;
         T q = 65537;
-        quad::gf::Prime<T> gf(q);
+        quadiron::gf::Prime<T> gf(q);
         unsigned R = gf.get_primitive_root();
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
         std::cout << "Test fft::Naive\n";
 
-        assert(quad::arith::jacobi<T>(R, q) == -1);
+        assert(quadiron::arith::jacobi<T>(R, q) == -1);
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -128,11 +128,11 @@ class FFTUtest {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        quad::fft::Naive<T> fft(gf, n, r);
+        quadiron::fft::Naive<T> fft(gf, n, r);
 
-        quad::vec::Vector<T> v(gf, fft.get_n());
-        quad::vec::Vector<T> _v(gf, fft.get_n());
-        quad::vec::Vector<T> v2(gf, fft.get_n());
+        quadiron::vec::Vector<T> v(gf, fft.get_n());
+        quadiron::vec::Vector<T> _v(gf, fft.get_n());
+        quadiron::vec::Vector<T> v2(gf, fft.get_n());
         for (int j = 0; j < 100000; j++) {
             v.zero_fill();
             for (unsigned i = 0; i < n_data; i++)
@@ -157,14 +157,14 @@ class FFTUtest {
     {
         unsigned n;
         unsigned q = 65537;
-        quad::gf::Prime<T> gf(q);
+        quadiron::gf::Prime<T> gf(q);
         unsigned R = gf.get_primitive_root();
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
         std::cout << "Test fft::Radix2 vec\n";
 
-        assert(quad::arith::jacobi<T>(R, q) == -1);
+        assert(quadiron::arith::jacobi<T>(R, q) == -1);
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -173,11 +173,11 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        quad::fft::Radix2<T> fft(gf, n);
+        quadiron::fft::Radix2<T> fft(gf, n);
 
-        quad::vec::Vector<T> v(gf, fft.get_n());
-        quad::vec::Vector<T> _v(gf, fft.get_n());
-        quad::vec::Vector<T> v2(gf, fft.get_n());
+        quadiron::vec::Vector<T> v(gf, fft.get_n());
+        quadiron::vec::Vector<T> _v(gf, fft.get_n());
+        quadiron::vec::Vector<T> v2(gf, fft.get_n());
         for (int j = 0; j < 100000; j++) {
             v.zero_fill();
             for (unsigned i = 0; i < n_data; i++)
@@ -195,7 +195,7 @@ class FFTUtest {
     {
         unsigned n;
         unsigned q = 65537;
-        quad::gf::Prime<T> gf(q);
+        quadiron::gf::Prime<T> gf(q);
         unsigned R = gf.get_primitive_root();
         unsigned n_data = 3;
         unsigned n_parities = 3;
@@ -203,7 +203,7 @@ class FFTUtest {
 
         std::cout << "Test fft::Radix2 vecp\n";
 
-        assert(quad::arith::jacobi<T>(R, q) == -1);
+        assert(quadiron::arith::jacobi<T>(R, q) == -1);
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -212,14 +212,14 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        quad::fft::Radix2<T> fft(gf, n);
+        quadiron::fft::Radix2<T> fft(gf, n);
 
         int vec_n = fft.get_n();
 
-        quad::vec::Buffers<T> v(n_data, size);
-        quad::vec::Buffers<T> v2(vec_n, size);
-        quad::vec::Buffers<T> _v2(vec_n, size);
-        quad::vec::BuffersZeroExtended<T> _v(&v, vec_n);
+        quadiron::vec::Buffers<T> v(n_data, size);
+        quadiron::vec::Buffers<T> v2(vec_n, size);
+        quadiron::vec::Buffers<T> _v2(vec_n, size);
+        quadiron::vec::BuffersZeroExtended<T> _v(&v, vec_n);
         for (int j = 0; j < 100000; j++) {
             for (unsigned i = 0; i < n_data; i++) {
                 T* mem = v.get(i);
@@ -239,7 +239,7 @@ class FFTUtest {
     void test_fft_gt()
     {
         T n;
-        quad::gf::BinExtension<T> gf(4);
+        quadiron::gf::BinExtension<T> gf(4);
         T n_data = 3;
         T n_parities = 3;
 
@@ -252,11 +252,11 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        quad::fft::GoodThomas<T> fft(gf, n);
+        quadiron::fft::GoodThomas<T> fft(gf, n);
 
-        quad::vec::Vector<T> v(gf, fft.get_n());
-        quad::vec::Vector<T> _v(gf, fft.get_n());
-        quad::vec::Vector<T> v2(gf, fft.get_n());
+        quadiron::vec::Vector<T> v(gf, fft.get_n());
+        quadiron::vec::Vector<T> _v(gf, fft.get_n());
+        quadiron::vec::Vector<T> v2(gf, fft.get_n());
         for (int j = 0; j < 10000; j++) {
             v.zero_fill();
             for (T i = 0; i < n_data; i++)
@@ -274,7 +274,7 @@ class FFTUtest {
     {
         T n;
         T q = 65537;
-        quad::gf::Prime<T> gf(q);
+        quadiron::gf::Prime<T> gf(q);
         T n_data = 3;
         T n_parities = 3;
 
@@ -287,11 +287,11 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        quad::fft::CooleyTukey<T> fft(gf, n);
+        quadiron::fft::CooleyTukey<T> fft(gf, n);
 
-        quad::vec::Vector<T> v(gf, fft.get_n());
-        quad::vec::Vector<T> _v(gf, fft.get_n());
-        quad::vec::Vector<T> v2(gf, fft.get_n());
+        quadiron::vec::Vector<T> v(gf, fft.get_n());
+        quadiron::vec::Vector<T> _v(gf, fft.get_n());
+        quadiron::vec::Vector<T> v2(gf, fft.get_n());
         for (int j = 0; j < 10000; j++) {
             v.zero_fill();
             for (T i = 0; i < n_data; i++)
@@ -311,7 +311,7 @@ class FFTUtest {
         T n_data = 3;
         T n_parities = 3;
         for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
-            quad::gf::BinExtension<T> gf(gf_n);
+            quadiron::gf::BinExtension<T> gf(gf_n);
 
             std::cout << "Test fft::CooleyTukey on GF(2n)=" << gf_n << "\n";
 
@@ -322,9 +322,9 @@ class FFTUtest {
 
             // std::cerr << "n=" << n << "\n";
 
-            quad::fft::CooleyTukey<T> fft(gf, n);
+            quadiron::fft::CooleyTukey<T> fft(gf, n);
 
-            quad::vec::Vector<T> v(gf, fft.get_n()), _v(gf, fft.get_n()),
+            quadiron::vec::Vector<T> v(gf, fft.get_n()), _v(gf, fft.get_n()),
                 v2(gf, fft.get_n());
             for (int j = 0; j < 10000; j++) {
                 v.zero_fill();
@@ -341,20 +341,20 @@ class FFTUtest {
     }
 
     void
-    run_taylor_expand(const quad::gf::Field<T>& gf, quad::fft::Additive<T>* fft)
+    run_taylor_expand(const quadiron::gf::Field<T>& gf, quadiron::fft::Additive<T>* fft)
     {
         int t = 2 + gf.weak_rand() % (fft->get_n() - 2);
         int n = t + 1 + gf.weak_rand() % (fft->get_n() - t);
-        quad::vec::Vector<T> v1(gf, n);
+        quadiron::vec::Vector<T> v1(gf, n);
         int m = n / t;
         while (m * t < n)
             m++;
-        quad::vec::Vector<T> v2(gf, t * m);
+        quadiron::vec::Vector<T> v2(gf, t * m);
         for (int i = 0; i < n; i++)
             v1.set(i, gf.weak_rand());
         // v1.dump();
         fft->taylor_expand(&v2, &v1, n, t);
-        quad::vec::Vector<T> _v1(gf, n);
+        quadiron::vec::Vector<T> _v1(gf, n);
         fft->inv_taylor_expand(&_v1, &v2, t);
         // _v1.dump();
         assert(_v1.eq(&v1));
@@ -362,8 +362,8 @@ class FFTUtest {
 
     // taylor expansion on (x^t - x)
     void test_taylor_expand(
-        const quad::gf::Field<T>& gf,
-        quad::fft::Additive<T>* fft)
+        const quadiron::gf::Field<T>& gf,
+        quadiron::fft::Additive<T>* fft)
     {
         std::cout << "test_taylor_expand\n";
         for (int i = 0; i < 1000; i++)
@@ -371,17 +371,17 @@ class FFTUtest {
     }
 
     void run_taylor_expand_t2(
-        const quad::gf::Field<T>& gf,
-        quad::fft::Additive<T>* fft)
+        const quadiron::gf::Field<T>& gf,
+        quadiron::fft::Additive<T>* fft)
     {
         int n = fft->get_n();
-        quad::vec::Vector<T> v1(gf, n);
+        quadiron::vec::Vector<T> v1(gf, n);
         for (int i = 0; i < n; i++)
             v1.set(i, gf.weak_rand());
         // v1.dump();
         fft->taylor_expand_t2(&v1, n, true);
         // v1.dump();
-        quad::vec::Vector<T> _v1(gf, n);
+        quadiron::vec::Vector<T> _v1(gf, n);
         fft->inv_taylor_expand_t2(&_v1);
         // _v1.dump();
         assert(_v1.eq(&v1));
@@ -389,8 +389,8 @@ class FFTUtest {
 
     // taylor expansion on (x^2 - x)
     void test_taylor_expand_t2(
-        const quad::gf::Field<T>& gf,
-        quad::fft::Additive<T>* fft)
+        const quadiron::gf::Field<T>& gf,
+        quadiron::fft::Additive<T>* fft)
     {
         std::cout << "test_taylor_expand_t2\n";
         for (int i = 0; i < 1000; i++)
@@ -398,14 +398,14 @@ class FFTUtest {
     }
 
     void test_fftadd_codec(
-        const quad::gf::Field<T>& gf,
-        quad::fft::Additive<T>* fft,
+        const quadiron::gf::Field<T>& gf,
+        quadiron::fft::Additive<T>* fft,
         int n_data)
     {
         std::cout << "test_fftadd_codec\n";
-        quad::vec::Vector<T> v(gf, fft->get_n());
-        quad::vec::Vector<T> _v(gf, fft->get_n());
-        quad::vec::Vector<T> v2(gf, fft->get_n());
+        quadiron::vec::Vector<T> v(gf, fft->get_n());
+        quadiron::vec::Vector<T> _v(gf, fft->get_n());
+        quadiron::vec::Vector<T> v2(gf, fft->get_n());
         for (int j = 0; j < 10000; j++) {
             v.zero_fill();
             for (int i = 0; i < n_data; i++)
@@ -425,14 +425,14 @@ class FFTUtest {
         int n_data = 3;
         int n_parities = 3;
         for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(T); gf_n *= 2) {
-            quad::gf::BinExtension<T> gf(gf_n);
+            quadiron::gf::BinExtension<T> gf(gf_n);
             std::cout << "test_fftadd_with_n=" << gf_n << "\n";
             // n is power of 2 and at least n_data + n_parities
-            n = quad::arith::get_smallest_power_of_2<T>(n_data + n_parities);
-            m = quad::arith::log2<T>(n);
+            n = quadiron::arith::get_smallest_power_of_2<T>(n_data + n_parities);
+            m = quadiron::arith::log2<T>(n);
 
             // std::cerr << "n=" << n << "\n";
-            quad::fft::Additive<T> fft(gf, m);
+            quadiron::fft::Additive<T> fft(gf, m);
 
             test_taylor_expand(gf, &fft);
             test_taylor_expand_t2(gf, &fft);
@@ -442,7 +442,7 @@ class FFTUtest {
 
     void test_fft_2_gfp()
     {
-        quad::gf::Prime<T> gf(3);
+        quadiron::gf::Prime<T> gf(3);
         T n_data = 1;
 
         std::cout << "Test fft::Size2 GF(p)\n";
@@ -453,11 +453,11 @@ class FFTUtest {
 
         // std::cerr << "n=" << n << "\n";
 
-        quad::fft::Size2<T> fft(gf);
+        quadiron::fft::Size2<T> fft(gf);
 
-        quad::vec::Vector<T> v(gf, fft.get_n());
-        quad::vec::Vector<T> _v(gf, fft.get_n());
-        quad::vec::Vector<T> v2(gf, fft.get_n());
+        quadiron::vec::Vector<T> v(gf, fft.get_n());
+        quadiron::vec::Vector<T> _v(gf, fft.get_n());
+        quadiron::vec::Vector<T> v2(gf, fft.get_n());
         for (int j = 0; j < 100000; j++) {
             v.zero_fill();
             for (T i = 0; i < n_data; i++)
@@ -473,16 +473,16 @@ class FFTUtest {
 
     void test_fft_single_gfp()
     {
-        quad::gf::Prime<T> gf(39);
+        quadiron::gf::Prime<T> gf(39);
 
         std::cout << "Test fft::Single on GF(p)\n";
 
         int n = 16;
-        quad::fft::Single<T> fft(gf, n);
+        quadiron::fft::Single<T> fft(gf, n);
 
-        quad::vec::Vector<T> v(gf, fft.get_n());
-        quad::vec::Vector<T> _v(gf, fft.get_n());
-        quad::vec::Vector<T> v2(gf, fft.get_n());
+        quadiron::vec::Vector<T> v(gf, fft.get_n());
+        quadiron::vec::Vector<T> _v(gf, fft.get_n());
+        quadiron::vec::Vector<T> v2(gf, fft.get_n());
         for (int j = 0; j < 100000; j++) {
             v.zero_fill();
             v.set(0, gf.weak_rand());
@@ -500,14 +500,14 @@ class FFTUtest {
         unsigned n;
         unsigned r;
         unsigned q = 65537;
-        quad::gf::Prime<T> gf(q);
+        quadiron::gf::Prime<T> gf(q);
         unsigned R = gf.get_primitive_root();
         unsigned n_data = 3;
         unsigned n_parities = 3;
 
         std::cout << "Test fft::Size2\n";
 
-        assert(quad::arith::jacobi<T>(R, q) == -1);
+        assert(quadiron::arith::jacobi<T>(R, q) == -1);
 
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = minimal divisor of (q-1) that is at least (n_parities +
@@ -519,11 +519,11 @@ class FFTUtest {
 
         // std::cerr << "r=" << r << "\n";
 
-        quad::fft::Naive<T> fft(gf, n, r);
+        quadiron::fft::Naive<T> fft(gf, n, r);
 
-        quad::vec::Vector<T> v(gf, fft.get_n());
-        quad::vec::Vector<T> _v(gf, fft.get_n());
-        quad::vec::Vector<T> v2(gf, fft.get_n());
+        quadiron::vec::Vector<T> v(gf, fft.get_n());
+        quadiron::vec::Vector<T> _v(gf, fft.get_n());
+        quadiron::vec::Vector<T> v2(gf, fft.get_n());
         v.zero_fill();
         for (T i = 0; i < n_data; i++)
             v.set(i, gf.weak_rand());
@@ -555,7 +555,7 @@ class FFTUtest {
     void test_fft_gf2n_with_n(int n)
     {
         T r;
-        quad::gf::BinExtension<T> gf(n);
+        quadiron::gf::BinExtension<T> gf(n);
         T R = gf.get_primitive_root();
         T n_data = 3;
         T n_parities = 3;
@@ -574,11 +574,11 @@ class FFTUtest {
         // std::cerr << "n=" << n << "\n";
         // std::cerr << "r=" << r << "\n";
 
-        quad::fft::Naive<T> fft(gf, n, r);
+        quadiron::fft::Naive<T> fft(gf, n, r);
 
-        quad::vec::Vector<T> v(gf, fft.get_n());
-        quad::vec::Vector<T> _v(gf, fft.get_n());
-        quad::vec::Vector<T> v2(gf, fft.get_n());
+        quadiron::vec::Vector<T> v(gf, fft.get_n());
+        quadiron::vec::Vector<T> _v(gf, fft.get_n());
+        quadiron::vec::Vector<T> v2(gf, fft.get_n());
         for (T i = 0; i < 100000; i++) {
             v.zero_fill();
             for (T i = 0; i < n_data; i++)
