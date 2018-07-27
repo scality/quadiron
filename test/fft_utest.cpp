@@ -41,7 +41,8 @@ class FFTUtest {
         int i;
         for (i = 0; i < 100; i++) {
             T x = gf.weak_rand();
-            assert(1 == quadiron::arith::extended_gcd<T>(97, x, bezout, nullptr));
+            assert(
+                1 == quadiron::arith::extended_gcd<T>(97, x, bezout, nullptr));
             // std::cerr << bezout[0] << "*" << 97 << " " << bezout[1] << "*";
             // stdd:cerr << x << "=1\n";
             T y = gf.inv(x);
@@ -340,8 +341,9 @@ class FFTUtest {
         }
     }
 
-    void
-    run_taylor_expand(const quadiron::gf::Field<T>& gf, quadiron::fft::Additive<T>* fft)
+    void run_taylor_expand(
+        const quadiron::gf::Field<T>& gf,
+        quadiron::fft::Additive<T>* fft)
     {
         int t = 2 + gf.weak_rand() % (fft->get_n() - 2);
         int n = t + 1 + gf.weak_rand() % (fft->get_n() - t);
@@ -428,7 +430,8 @@ class FFTUtest {
             quadiron::gf::BinExtension<T> gf(gf_n);
             std::cout << "test_fftadd_with_n=" << gf_n << "\n";
             // n is power of 2 and at least n_data + n_parities
-            n = quadiron::arith::get_smallest_power_of_2<T>(n_data + n_parities);
+            n = quadiron::arith::get_smallest_power_of_2<T>(
+                n_data + n_parities);
             m = quadiron::arith::log2<T>(n);
 
             // std::cerr << "n=" << n << "\n";
