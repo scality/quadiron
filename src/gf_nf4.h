@@ -40,7 +40,7 @@
 #define MASK16 0xFFFF
 #define MASK32 0xFFFFFFFF
 
-namespace quad {
+namespace quadiron {
 namespace gf {
 
 /** A group of `n` elements of GF(F<sub>4</sub>=65537).
@@ -548,6 +548,6 @@ void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y) const;
 #endif // #ifdef QUADIRON_USE_SIMD
 
 } // namespace gf
-} // namespace quad
+} // namespace quadiron
 
 #endif

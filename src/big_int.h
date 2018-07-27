@@ -40,7 +40,7 @@ std::ostream& operator<<(std::ostream& dest, __int128_t value);
 
 } // namespace std
 
-namespace quad {
+namespace quadiron {
 
 struct UInt256 {
     __uint128_t lo;
@@ -123,6 +123,6 @@ struct Int256 {
     }
 };
 
-} // namespace quad
+} // namespace quadiron
 
 #endif

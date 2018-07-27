@@ -39,7 +39,7 @@
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 
-namespace quad {
+namespace quadiron {
 namespace fec {
 
 /** Reed-Solomon (RS) Erasure code over GF(2<sup>n</sup>) using additive FFT. */
@@ -248,6 +248,6 @@ class RsGf2nFftAdd : public FecCode<T> {
 };
 
 } // namespace fec
-} // namespace quad
+} // namespace quadiron
 
 #endif

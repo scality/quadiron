@@ -34,7 +34,7 @@
 
 #include "simd.h"
 
-namespace quad {
+namespace quadiron {
 namespace gf {
 
 template <>
@@ -107,6 +107,6 @@ __uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag) const
 }
 
 } // namespace gf
-} // namespace quad
+} // namespace quadiron
 
 #endif // #ifdef QUADIRON_USE_SIMD

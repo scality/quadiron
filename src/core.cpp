@@ -30,11 +30,11 @@
 #include "build_info.h"
 #include "core.h"
 
-namespace quad {
+namespace quadiron {
 
 const char* get_version()
 {
     return VERSION;
 }
 
-} // namespace quad
+} // namespace quadiron

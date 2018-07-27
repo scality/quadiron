@@ -41,7 +41,7 @@
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 
-namespace quad {
+namespace quadiron {
 namespace fec {
 
 /** Reed-Solomon (RS) Erasure code over `n` GF(F<sub>4</sub>). */
@@ -254,6 +254,6 @@ class RsNf4 : public FecCode<T> {
 };
 
 } // namespace fec
-} // namespace quad
+} // namespace quadiron
 
 #endif

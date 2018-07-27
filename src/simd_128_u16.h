@@ -33,7 +33,7 @@
 
 #include <x86intrin.h>
 
-namespace quad {
+namespace quadiron {
 namespace simd {
 
 /* ==================== Essential Operations =================== */
@@ -269,6 +269,6 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
 }
 
 } // namespace simd
-} // namespace quad
+} // namespace quadiron
 
 #endif

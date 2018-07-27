@@ -37,7 +37,7 @@
 #include "vec_matrix.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace fft {
 
 /** FFT implementation specialized for large FFT size.
@@ -258,6 +258,6 @@ void Large<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 } // namespace fft
-} // namespace quad
+} // namespace quadiron
 
 #endif

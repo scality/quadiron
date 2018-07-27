@@ -33,7 +33,7 @@
 
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace vec {
 
 /** A vector of size `n` virtually extented to `2n`.
@@ -90,6 +90,6 @@ T Doubled<T>::get(int i) const
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

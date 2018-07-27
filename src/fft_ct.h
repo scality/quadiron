@@ -39,7 +39,7 @@
 #include "vec_vector.h"
 #include "vec_view.h"
 
-namespace quad {
+namespace quadiron {
 namespace fft {
 
 /** FFT implementation using the Cooley–Tukey algorithm
@@ -281,6 +281,6 @@ void CooleyTukey<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 } // namespace fft
-} // namespace quad
+} // namespace quadiron
 
 #endif

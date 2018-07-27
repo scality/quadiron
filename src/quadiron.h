@@ -31,7 +31,7 @@
 #ifndef __QUAD_QUADIRON_H__
 #define __QUAD_QUADIRON_H__
 
-/** @namespace quad
+/** @namespace quadiron
  *
  * The root namespace of the QuadIron library.
  */

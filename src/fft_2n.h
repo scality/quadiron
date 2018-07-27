@@ -39,7 +39,7 @@
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 
-namespace quad {
+namespace quadiron {
 namespace fft {
 
 /** Implementation of the radix-2 decimation-in-time (DIT) FFT
@@ -354,6 +354,6 @@ void Radix2<T>::ifft(vec::Buffers<T>* output, vec::Buffers<T>* input)
 }
 
 } // namespace fft
-} // namespace quad
+} // namespace quadiron
 
 #endif

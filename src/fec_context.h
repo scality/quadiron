@@ -44,7 +44,7 @@
 #include "vec_poly.h"
 #include "vec_zero_ext.h"
 
-namespace quad {
+namespace quadiron {
 
 namespace fec {
 
@@ -290,6 +290,6 @@ class DecodeContext {
 };
 
 } // namespace fec
-} // namespace quad
+} // namespace quadiron
 
 #endif

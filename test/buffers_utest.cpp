@@ -35,13 +35,13 @@ template <typename T>
 class BuffersUtest {
   private:
     std::mt19937 prng;
-    quad::gf::Prime<T>* gfp;
+    quadiron::gf::Prime<T>* gfp;
     T max_val;
 
   public:
     BuffersUtest()
     {
-        this->gfp = new quad::gf::Prime<T>(65537);
+        this->gfp = new quadiron::gf::Prime<T>(65537);
         this->max_val = 65537;
     }
     ~BuffersUtest()
@@ -49,14 +49,14 @@ class BuffersUtest {
         delete this->gfp;
     }
 
-    quad::vec::Buffers<T>* gen_buffers_rand_data(int n, int size, int _max = 0)
+    quadiron::vec::Buffers<T>* gen_buffers_rand_data(int n, int size, int _max = 0)
     {
         const int max = (_max == 0) ? max_val : _max;
         std::uniform_int_distribution<uint32_t> dis(0, max - 1);
-        quad::vec::Buffers<T>* vec = new quad::vec::Buffers<T>(n, size);
+        quadiron::vec::Buffers<T>* vec = new quadiron::vec::Buffers<T>(n, size);
 
         for (int i = 0; i < n; i++) {
-            T* buf = quad::aligned_allocate<T>(size);
+            T* buf = quadiron::aligned_allocate<T>(size);
             for (int j = 0; j < size; j++) {
                 buf[j] = dis(prng);
             }
@@ -77,11 +77,11 @@ class BuffersUtest {
         int size = 32;
         int i, j;
 
-        quad::vec::Buffers<T>* vec1 = gen_buffers_rand_data(n, size);
+        quadiron::vec::Buffers<T>* vec1 = gen_buffers_rand_data(n, size);
         std::vector<T*>* mem1 = vec1->get_mem();
         // vec1->dump();
 
-        quad::vec::Buffers<T> vec2(vec1, begin, end);
+        quadiron::vec::Buffers<T> vec2(vec1, begin, end);
         std::vector<T*>* mem2 = vec2.get_mem();
         assert(vec2.get_n() == end - begin);
         assert(vec2.get_size() == vec1->get_size());
@@ -96,7 +96,7 @@ class BuffersUtest {
         for (int i = 0; i < end - begin; i++) {
             mem3[i] = mem1->at(i + begin);
         }
-        quad::vec::Buffers<T> vec3(end - begin, size, &mem3);
+        quadiron::vec::Buffers<T> vec3(end - begin, size, &mem3);
         // vec3.dump();
 
         assert(vec2.eq(&vec3));
@@ -113,28 +113,28 @@ class BuffersUtest {
         int i, j;
         int half = n / 2;
 
-        std::unique_ptr<quad::vec::Buffers<T>> vec1 =
-            std::unique_ptr<quad::vec::Buffers<T>>(
+        std::unique_ptr<quadiron::vec::Buffers<T>> vec1 =
+            std::unique_ptr<quadiron::vec::Buffers<T>>(
                 gen_buffers_rand_data(n, size));
-        quad::vec::Buffers<T> vec2(n, size);
+        quadiron::vec::Buffers<T> vec2(n, size);
         vec2.copy(vec1.get());
 
         std::vector<T*>* even_mem = new std::vector<T*>(half, nullptr);
         std::vector<T*>* odd_mem = new std::vector<T*>(half, nullptr);
-        std::unique_ptr<quad::vec::Buffers<T>> i_even =
-            std::unique_ptr<quad::vec::Buffers<T>>(
-                new quad::vec::Buffers<T>(half, size, even_mem));
-        std::unique_ptr<quad::vec::Buffers<T>> i_odd =
-            std::unique_ptr<quad::vec::Buffers<T>>(
-                new quad::vec::Buffers<T>(half, size, odd_mem));
+        std::unique_ptr<quadiron::vec::Buffers<T>> i_even =
+            std::unique_ptr<quadiron::vec::Buffers<T>>(
+                new quadiron::vec::Buffers<T>(half, size, even_mem));
+        std::unique_ptr<quadiron::vec::Buffers<T>> i_odd =
+            std::unique_ptr<quadiron::vec::Buffers<T>>(
+                new quadiron::vec::Buffers<T>(half, size, odd_mem));
         vec1->separate_even_odd(i_even.get(), i_odd.get());
 
         // vec1->dump();
         vec1->separate_even_odd();
         // vec1->dump();
 
-        quad::vec::Buffers<T> _i_even(vec1.get(), 0, half);
-        quad::vec::Buffers<T> _i_odd(vec1.get(), half, n);
+        quadiron::vec::Buffers<T> _i_even(vec1.get(), 0, half);
+        quadiron::vec::Buffers<T> _i_odd(vec1.get(), half, n);
         assert(i_even->eq(&_i_even));
         assert(i_odd->eq(&_i_odd));
 
@@ -169,20 +169,20 @@ class BuffersUtest {
         int n1 = 4;
         int n2 = 10;
 
-        quad::vec::Buffers<T>* vec = gen_buffers_rand_data(n, size);
-        quad::vec::Buffers<T> vec1(vec, n1);
-        quad::vec::Buffers<T> vec2(vec, n2);
+        quadiron::vec::Buffers<T>* vec = gen_buffers_rand_data(n, size);
+        quadiron::vec::Buffers<T> vec1(vec, n1);
+        quadiron::vec::Buffers<T> vec2(vec, n2);
 
-        quad::vec::Buffers<T> _vec1(vec, 0, n1);
-        quad::vec::Buffers<T>* _vec2 =
-            new quad::vec::BuffersZeroExtended<T>(vec, n2);
+        quadiron::vec::Buffers<T> _vec1(vec, 0, n1);
+        quadiron::vec::Buffers<T>* _vec2 =
+            new quadiron::vec::BuffersZeroExtended<T>(vec, n2);
 
         assert(vec1.eq(&_vec1));
         assert(vec2.eq(_vec2));
 
         delete vec;
 
-        quad::vec::Buffers<T> vec3(&vec2, n1);
+        quadiron::vec::Buffers<T> vec3(&vec2, n1);
         assert(vec3.eq(&vec1));
 
         delete _vec2;
@@ -194,8 +194,8 @@ class BuffersUtest {
         int i;
         int word_size;
 
-        for (i = 0; i <= quad::arith::log2<T>(sizeof(T)); i++) {
-            word_size = quad::arith::exp2<T>(i);
+        for (i = 0; i <= quadiron::arith::log2<T>(sizeof(T)); i++) {
+            word_size = quadiron::arith::exp2<T>(i);
             pack_unpack(word_size);
         }
     }
@@ -211,12 +211,12 @@ class BuffersUtest {
         T symb;
         T max = ((T)1 << word_size) + 1;
 
-        quad::vec::Buffers<T>* words = gen_buffers_rand_data(n, size, max);
+        quadiron::vec::Buffers<T>* words = gen_buffers_rand_data(n, size, max);
         std::vector<T*>* mem_T = words->get_mem();
         // std::cout << "words:"; words->dump();
 
         // pack manually from T to uint8_t
-        quad::vec::Buffers<uint8_t> vec_char(n, bytes_size);
+        quadiron::vec::Buffers<uint8_t> vec_char(n, bytes_size);
         std::vector<uint8_t*>* mem_char = vec_char.get_mem();
         for (i = 0; i < n; i++) {
             t = 0;
@@ -238,9 +238,9 @@ class BuffersUtest {
          * pack bufs of type uint8_t to bufs of type T
          */
         // tmp vectors to store results
-        quad::vec::Buffers<T> vec_T_tmp(n, size);
+        quadiron::vec::Buffers<T> vec_T_tmp(n, size);
         std::vector<T*>* mem_T_tmp = vec_T_tmp.get_mem();
-        quad::vec::pack<uint8_t, T>(mem_char, mem_T_tmp, n, size, word_size);
+        quadiron::vec::pack<uint8_t, T>(mem_char, mem_T_tmp, n, size, word_size);
         // std::cout << "vec_char:"; vec_char.dump();
         // std::cout << "vec_T_tmp:"; vec_T_tmp.dump();
         // check
@@ -250,9 +250,9 @@ class BuffersUtest {
          * unpack bufs of type T to bufs of type uint8_t
          */
         // tmp vectors to store results
-        quad::vec::Buffers<uint8_t> vec_char_tmp(n, bytes_size);
+        quadiron::vec::Buffers<uint8_t> vec_char_tmp(n, bytes_size);
         std::vector<uint8_t*>* mem_char_tmp = vec_char_tmp.get_mem();
-        quad::vec::unpack<T, uint8_t>(
+        quadiron::vec::unpack<T, uint8_t>(
             mem_T_tmp, mem_char_tmp, n, size, word_size);
         // std::cout << "vec_T_tmp:"; vec_T_tmp.dump();
         // std::cout << "vec_char_tmp:"; vec_char_tmp.dump();

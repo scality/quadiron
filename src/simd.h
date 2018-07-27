@@ -42,7 +42,7 @@ typedef uint32_t aint32 __attribute__((aligned(ALIGN_SIZE)));
 typedef uint64_t aint64 __attribute__((aligned(ALIGN_SIZE)));
 typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
 
-namespace quad {
+namespace quadiron {
 /** The namespace simd contains functions for GF-NF4 that are accelerated by
  *  using SIMD operations over 128bits
  *
@@ -53,7 +53,7 @@ namespace simd {
 // Vectorized operations are implemented in appropriated headers simd*.h
 
 } // namespace simd
-} // namespace quad
+} // namespace quadiron
 
 #ifdef QUADIRON_USE_SSE4
 #include "simd_128.h"

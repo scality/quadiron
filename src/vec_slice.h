@@ -33,7 +33,7 @@
 
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 namespace vec {
 
 /** A slice of an existing vector.
@@ -122,6 +122,6 @@ int Slice<T>::get_offset()
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

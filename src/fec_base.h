@@ -49,7 +49,7 @@
 #include "vec_slice.h"
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 
 /** Forward Error Correction code implementations. */
 namespace fec {
@@ -1142,6 +1142,6 @@ void FecCode<T>::decode_apply(
 }
 
 } // namespace fec
-} // namespace quad
+} // namespace quadiron
 
 #endif

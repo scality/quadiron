@@ -40,7 +40,7 @@
 
 #include "vec_vector.h"
 
-namespace quad {
+namespace quadiron {
 
 namespace vec {
 
@@ -167,6 +167,6 @@ std::vector<Td*>* cast_mem_of_vecp(vec::Buffers<Ts>* s)
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

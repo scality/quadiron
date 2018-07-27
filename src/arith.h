@@ -39,7 +39,7 @@
 #include "core.h"
 #include "exceptions.h"
 
-namespace quad {
+namespace quadiron {
 
 template <typename T>
 using DoubleSizeVal = typename DoubleSize<T>::T;
@@ -812,6 +812,6 @@ void get_prime_factors_final(
 }
 
 } // namespace arith
-} // namespace quad
+} // namespace quadiron
 
 #endif

@@ -36,7 +36,7 @@
 
 #include "vec_buffers.h"
 
-namespace quad {
+namespace quadiron {
 namespace vec {
 
 /** A vector of `n` buffers virtually extented with a `zero_chunk`.
@@ -105,6 +105,6 @@ BuffersZeroExtended<T>::~BuffersZeroExtended()
 }
 
 } // namespace vec
-} // namespace quad
+} // namespace quadiron
 
 #endif

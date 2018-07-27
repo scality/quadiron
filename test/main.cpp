@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 {
     struct test* p;
 
-    quad::prng().seed(0);
+    quadiron::prng().seed(0);
 
     if (2 == argc) {
         std::stringstream ss(argv[1]);

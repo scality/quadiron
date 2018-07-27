@@ -33,7 +33,7 @@
 
 #include <x86intrin.h>
 
-namespace quad {
+namespace quadiron {
 namespace simd {
 
 /* ==================== Essential Operations =================== */
@@ -394,6 +394,6 @@ inline void hadamard_mul_doubled(int n, aint128* _x, aint128* _y)
 }
 
 } // namespace simd
-} // namespace quad
+} // namespace quadiron
 
 #endif

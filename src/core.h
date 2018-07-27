@@ -35,7 +35,7 @@
 
 #include "big_int.h"
 
-namespace quad {
+namespace quadiron {
 
 template <typename Type>
 struct DoubleSize {
@@ -160,6 +160,6 @@ inline void aligned_deallocate(T* data)
 #endif
 }
 
-} // namespace quad
+} // namespace quadiron
 
 #endif

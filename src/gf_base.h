@@ -35,7 +35,7 @@
 #include "core.h"
 #include "gf_ring.h"
 
-namespace quad {
+namespace quadiron {
 
 /** Galois Fields handling. */
 namespace gf {
@@ -105,6 +105,6 @@ T Field<T>::get_inv_n_mod_p(int n) const
 }
 
 } // namespace gf
-} // namespace quad
+} // namespace quadiron
 
 #endif

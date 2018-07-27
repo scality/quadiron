@@ -36,7 +36,7 @@
 #include "exceptions.h"
 #include "gf_base.h"
 
-namespace quad {
+namespace quadiron {
 namespace gf {
 
 /** An extension Galois Field extended from GF(2)
@@ -638,6 +638,6 @@ void BinExtension<T>::add_doubled(int n, T* x, T* y) const
     }
 }
 } // namespace gf
-} // namespace quad
+} // namespace quadiron
 
 #endif

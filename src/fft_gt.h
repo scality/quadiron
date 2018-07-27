@@ -41,7 +41,7 @@
 #include "vec_vector.h"
 #include "vec_view.h"
 
-namespace quad {
+namespace quadiron {
 namespace fft {
 
 /** FFT implementation using the Good-Thomas algorithm.
@@ -288,6 +288,6 @@ void GoodThomas<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 } // namespace fft
-} // namespace quad
+} // namespace quadiron
 
 #endif
