@@ -113,24 +113,28 @@ class BuffersUtest {
         int i, j;
         int half = n / 2;
 
-        quad::vec::Buffers<T>* vec1 = gen_buffers_rand_data(n, size);
+        std::unique_ptr<quad::vec::Buffers<T>> vec1 =
+            std::unique_ptr<quad::vec::Buffers<T>>(
+                gen_buffers_rand_data(n, size));
         quad::vec::Buffers<T> vec2(n, size);
-        vec2.copy(vec1);
+        vec2.copy(vec1.get());
 
         std::vector<T*>* even_mem = new std::vector<T*>(half, nullptr);
         std::vector<T*>* odd_mem = new std::vector<T*>(half, nullptr);
-        quad::vec::Buffers<T>* i_even =
-            new quad::vec::Buffers<T>(half, size, even_mem);
-        quad::vec::Buffers<T>* i_odd =
-            new quad::vec::Buffers<T>(half, size, odd_mem);
-        vec1->separate_even_odd(i_even, i_odd);
+        std::unique_ptr<quad::vec::Buffers<T>> i_even =
+            std::unique_ptr<quad::vec::Buffers<T>>(
+                new quad::vec::Buffers<T>(half, size, even_mem));
+        std::unique_ptr<quad::vec::Buffers<T>> i_odd =
+            std::unique_ptr<quad::vec::Buffers<T>>(
+                new quad::vec::Buffers<T>(half, size, odd_mem));
+        vec1->separate_even_odd(i_even.get(), i_odd.get());
 
         // vec1->dump();
         vec1->separate_even_odd();
         // vec1->dump();
 
-        quad::vec::Buffers<T> _i_even(vec1, 0, half);
-        quad::vec::Buffers<T> _i_odd(vec1, half, n);
+        quad::vec::Buffers<T> _i_even(vec1.get(), 0, half);
+        quad::vec::Buffers<T> _i_odd(vec1.get(), half, n);
         assert(i_even->eq(&_i_even));
         assert(i_odd->eq(&_i_odd));
 
@@ -154,10 +158,6 @@ class BuffersUtest {
             }
         }
         assert(ok);
-
-        delete vec1;
-        delete i_even;
-        delete i_odd;
     }
 
     void buffers_utest3()
