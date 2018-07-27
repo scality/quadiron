@@ -28,12 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_GF_PRIME_H__
-#define __NTTEC_GF_PRIME_H__
+#ifndef __QUAD_GF_PRIME_H__
+#define __QUAD_GF_PRIME_H__
 
 #include "gf_base.h"
 
-namespace nttec {
+namespace quad {
 namespace gf {
 
 /** A Galois Field whose order is a prime number. */
@@ -65,6 +65,6 @@ T Prime<T>::inv_exp(T a)
 }
 
 } // namespace gf
-} // namespace nttec
+} // namespace quad
 
 #endif

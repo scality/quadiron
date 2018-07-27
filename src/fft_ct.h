@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FFT_CT_H__
-#define __NTTEC_FFT_CT_H__
+#ifndef __QUAD_FFT_CT_H__
+#define __QUAD_FFT_CT_H__
 
 #include "arith.h"
 #include "fft_2.h"
@@ -39,7 +39,7 @@
 #include "vec_vector.h"
 #include "vec_view.h"
 
-namespace nttec {
+namespace quad {
 namespace fft {
 
 /** FFT implementation using the Cooley–Tukey algorithm
@@ -281,6 +281,6 @@ void CooleyTukey<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
 }
 
 } // namespace fft
-} // namespace nttec
+} // namespace quad
 
 #endif

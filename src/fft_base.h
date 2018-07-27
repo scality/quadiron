@@ -28,14 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FFT_BASE_H__
-#define __NTTEC_FFT_BASE_H__
+#ifndef __QUAD_FFT_BASE_H__
+#define __QUAD_FFT_BASE_H__
 
 #include "gf_base.h"
 #include "vec_buffers.h"
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 
 /** Various Fast Fourier Transform (FFT) implementations. */
 namespace fft {
@@ -102,6 +102,6 @@ const gf::Field<T>& FourierTransform<T>::get_gf()
 }
 
 } // namespace fft
-} // namespace nttec
+} // namespace quad
 
 #endif

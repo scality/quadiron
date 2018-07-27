@@ -28,14 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_VEC_POLY_H__
-#define __NTTEC_VEC_POLY_H__
+#ifndef __QUAD_VEC_POLY_H__
+#define __QUAD_VEC_POLY_H__
 
 #include "gf_base.h"
 #include "gf_nf4.h"
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 namespace vec {
 
 /** A vector of size \f$n\f$ represents a polynomial \f$P(X)\f$ of degree
@@ -253,6 +253,6 @@ void Poly<T>::dump()
 }
 
 } // namespace vec
-} // namespace nttec
+} // namespace quad
 
 #endif

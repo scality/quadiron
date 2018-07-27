@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_VEC_VECTOR_H__
-#define __NTTEC_VEC_VECTOR_H__
+#ifndef __QUAD_VEC_VECTOR_H__
+#define __QUAD_VEC_VECTOR_H__
 
 #include <algorithm>
 #include <cassert>
@@ -43,7 +43,7 @@
 #include "vec_cast.h"
 #include "vec_doubled.h"
 
-namespace nttec {
+namespace quad {
 
 template <typename T>
 class Polynomial;
@@ -402,7 +402,7 @@ void Vector<T>::dump(void)
     std::cout << ")\n";
 }
 
-#ifndef NTTEC_USE_SIMD
+#ifndef QUADIRON_USE_SIMD
 // try to improve performance without parallization
 template <>
 void Vector<uint32_t>::add(Doubled<uint32_t>* v);
@@ -417,6 +417,6 @@ void Vector<uint64_t>::hadamard_mul(Doubled<uint64_t>* v);
 #endif
 
 } // namespace vec
-} // namespace nttec
+} // namespace quad
 
 #endif

@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_ARITH_H__
-#define __NTTEC_ARITH_H__
+#ifndef __QUAD_ARITH_H__
+#define __QUAD_ARITH_H__
 
 #include <cassert>
 #include <cstdlib>
@@ -39,7 +39,7 @@
 #include "core.h"
 #include "exceptions.h"
 
-namespace nttec {
+namespace quad {
 
 template <typename T>
 using DoubleSizeVal = typename DoubleSize<T>::T;
@@ -47,7 +47,7 @@ using DoubleSizeVal = typename DoubleSize<T>::T;
 template <typename T>
 using SignedDoubleSizeVal = typename SignedDoubleSize<T>::T;
 
-/** Base/core arithmetical functions of NTTEC. */
+/** Base/core arithmetical functions of QuadIron. */
 namespace arith {
 
 template <class T>
@@ -812,6 +812,6 @@ void get_prime_factors_final(
 }
 
 } // namespace arith
-} // namespace nttec
+} // namespace quad
 
 #endif

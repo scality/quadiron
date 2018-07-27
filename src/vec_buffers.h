@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_VEC_BUFFERS_H__
-#define __NTTEC_VEC_BUFFERS_H__
+#ifndef __QUAD_VEC_BUFFERS_H__
+#define __QUAD_VEC_BUFFERS_H__
 
 #include <algorithm>
 #include <cassert>
@@ -39,7 +39,7 @@
 
 #include "core.h"
 
-namespace nttec {
+namespace quad {
 namespace vec {
 
 /** A vector of `n` buffers (array of T).
@@ -335,6 +335,6 @@ void Buffers<T>::dump(void)
 }
 
 } // namespace vec
-} // namespace nttec
+} // namespace quad
 
 #endif

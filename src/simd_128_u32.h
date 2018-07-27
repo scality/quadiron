@@ -28,12 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_128_U32_H__
-#define __NTTEC_SIMD_128_U32_H__
+#ifndef __QUAD_SIMD_128_U32_H__
+#define __QUAD_SIMD_128_U32_H__
 
 #include <x86intrin.h>
 
-namespace nttec {
+namespace quad {
 namespace simd {
 
 /* ==================== Essential Operations =================== */
@@ -359,6 +359,6 @@ inline void hadamard_mul_doubled(int n, aint128* _x, aint128* _y)
 }
 
 } // namespace simd
-} // namespace nttec
+} // namespace quad
 
 #endif

@@ -28,13 +28,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_GF_EXT_H__
-#define __NTTEC_GF_EXT_H__
+#ifndef __QUAD_GF_EXT_H__
+#define __QUAD_GF_EXT_H__
 
 #include "arith.h"
 #include "gf_base.h"
 
-namespace nttec {
+namespace quad {
 
 template <typename T>
 class Polynomial;
@@ -316,6 +316,6 @@ retry:
 }
 
 } // namespace gf
-} // namespace nttec
+} // namespace quad
 
 #endif

@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_BIG_INT_H__
-#define __NTTEC_BIG_INT_H__
+#ifndef __QUAD_BIG_INT_H__
+#define __QUAD_BIG_INT_H__
 
 #include <iostream>
 
@@ -40,7 +40,7 @@ std::ostream& operator<<(std::ostream& dest, __int128_t value);
 
 } // namespace std
 
-namespace nttec {
+namespace quad {
 
 struct UInt256 {
     __uint128_t lo;
@@ -123,6 +123,6 @@ struct Int256 {
     }
 };
 
-} // namespace nttec
+} // namespace quad
 
 #endif

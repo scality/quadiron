@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FEC_RS_NF4_H__
-#define __NTTEC_FEC_RS_NF4_H__
+#ifndef __QUAD_FEC_RS_NF4_H__
+#define __QUAD_FEC_RS_NF4_H__
 
 #include <string>
 
@@ -41,7 +41,7 @@
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 
-namespace nttec {
+namespace quad {
 namespace fec {
 
 /** Reed-Solomon (RS) Erasure code over `n` GF(F<sub>4</sub>). */
@@ -252,6 +252,6 @@ class RsNf4 : public FecCode<T> {
 };
 
 } // namespace fec
-} // namespace nttec
+} // namespace quad
 
 #endif

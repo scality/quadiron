@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_VEC_CAST_H__
-#define __NTTEC_VEC_CAST_H__
+#ifndef __QUAD_VEC_CAST_H__
+#define __QUAD_VEC_CAST_H__
 
 #include <algorithm>
 #include <cassert>
@@ -40,7 +40,7 @@
 
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 
 namespace vec {
 
@@ -167,6 +167,6 @@ std::vector<Td*>* cast_mem_of_vecp(vec::Buffers<Ts>* s)
 }
 
 } // namespace vec
-} // namespace nttec
+} // namespace quad
 
 #endif

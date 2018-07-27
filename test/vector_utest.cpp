@@ -27,7 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "nttec.h"
+#include "quadiron.h"
 
 template <typename T>
 class VectorUtest {
@@ -36,10 +36,10 @@ class VectorUtest {
     {
         std::cout << "vector_utest1\n";
 
-        nttec::gf::Prime<T> gfp(65537);
-        nttec::vec::Vector<T> vec1(gfp, 16);
-        nttec::vec::Vector<T> vec2(gfp, 8);
-        nttec::vec::Doubled<T> v2vec2(&vec2);
+        quad::gf::Prime<T> gfp(65537);
+        quad::vec::Vector<T> vec1(gfp, 16);
+        quad::vec::Vector<T> vec2(gfp, 8);
+        quad::vec::Doubled<T> v2vec2(&vec2);
 
         vec1.set(0, 1);
         vec1.set(1, 64);
@@ -91,10 +91,10 @@ class VectorUtest {
     {
         std::cout << "vector_utest2\n";
 
-        nttec::gf::Prime<T> gfp(65537);
-        nttec::vec::Vector<T> vec1(gfp, 8);
-        nttec::vec::Vector<T> vec2(gfp, 4);
-        nttec::vec::Doubled<T> v2vec2(&vec2);
+        quad::gf::Prime<T> gfp(65537);
+        quad::vec::Vector<T> vec1(gfp, 8);
+        quad::vec::Vector<T> vec2(gfp, 4);
+        quad::vec::Doubled<T> v2vec2(&vec2);
 
         vec1.set(0, 5459);
         vec1.set(1, 11947);
@@ -126,9 +126,9 @@ class VectorUtest {
     {
         std::cout << "vector_utest3\n";
 
-        nttec::gf::Prime<T> gfp(65537);
+        quad::gf::Prime<T> gfp(65537);
         int len = 20;
-        nttec::vec::Vector<T> base_vec(gfp, len);
+        quad::vec::Vector<T> base_vec(gfp, len);
         for (int i = 0; i < len; i++)
             base_vec.set(i, gfp.weak_rand());
         int len1 = 7;
@@ -139,11 +139,11 @@ class VectorUtest {
         if (offset2 + len2 > len1)
             len3 = len1 - offset2;
         // vmvec1 = base_vec[offset1, .., offset1 + len1 - 1]
-        nttec::vec::Slice<T> vmvec1(&base_vec, len1, offset1);
+        quad::vec::Slice<T> vmvec1(&base_vec, len1, offset1);
         // vmvec2 = vmvec1[offset2, .., min(offset2 + len2 - 1, len1 - 1)]
-        nttec::vec::Slice<T> vmvec2(&vmvec1, len2, offset2);
+        quad::vec::Slice<T> vmvec2(&vmvec1, len2, offset2);
         // vmvec3 = base_vec[offset1 + offset2, .., offset1 + len1 - 1]
-        nttec::vec::Slice<T> vmvec3(&base_vec, len3, offset1 + offset2);
+        quad::vec::Slice<T> vmvec3(&base_vec, len3, offset1 + offset2);
         assert(vmvec3.eq(&vmvec2));
     }
 

@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FFT_ADD_H__
-#define __NTTEC_FFT_ADD_H__
+#ifndef __QUAD_FFT_ADD_H__
+#define __QUAD_FFT_ADD_H__
 
 #include "arith.h"
 #include "fft_base.h"
@@ -37,7 +37,7 @@
 #include "vec_slice.h"
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 namespace fft {
 
 /** Implementation of an additive FFT algorithm.
@@ -672,6 +672,6 @@ void Additive<T>::inv_taylor_expand(
 }
 
 } // namespace fft
-} // namespace nttec
+} // namespace quad
 
 #endif

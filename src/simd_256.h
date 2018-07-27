@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NTTEC_SIMD_256_H__
-#define __NTTEC_SIMD_256_H__
+#ifndef __QUAD_SIMD_256_H__
+#define __QUAD_SIMD_256_H__
 
 #include <x86intrin.h>
 

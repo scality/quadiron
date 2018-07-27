@@ -28,10 +28,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_MISC_H__
-#define __NTTEC_MISC_H__
+#ifndef __QUAD_MISC_H__
+#define __QUAD_MISC_H__
 
-namespace nttec {
+namespace quad {
 
 #if defined(__i386__)
 static __inline__ unsigned long long rdtsc(void)
@@ -49,6 +49,6 @@ static __inline__ unsigned long long rdtsc(void)
 }
 #endif
 
-} // namespace nttec
+} // namespace quad
 
 #endif

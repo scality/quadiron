@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_BENCH_STATS_H__
-#define __NTTEC_BENCH_STATS_H__
+#ifndef __QUAD_BENCH_STATS_H__
+#define __QUAD_BENCH_STATS_H__
 
 #include <iostream>
 #include <string>

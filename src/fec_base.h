@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FEC_BASE_H__
-#define __NTTEC_FEC_BASE_H__
+#ifndef __QUAD_FEC_BASE_H__
+#define __QUAD_FEC_BASE_H__
 
 #include <algorithm>
 #include <cassert>
@@ -49,7 +49,7 @@
 #include "vec_slice.h"
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 
 /** Forward Error Correction code implementations. */
 namespace fec {
@@ -819,6 +819,6 @@ void FecCode<T>::decode_apply(
 }
 
 } // namespace fec
-} // namespace nttec
+} // namespace quad
 
 #endif

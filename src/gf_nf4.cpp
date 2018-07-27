@@ -30,11 +30,11 @@
 
 #include "gf_nf4.h"
 
-#ifdef NTTEC_USE_SIMD
+#ifdef QUADIRON_USE_SIMD
 
 #include "simd.h"
 
-namespace nttec {
+namespace quad {
 namespace gf {
 
 template <>
@@ -107,6 +107,6 @@ __uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag) const
 }
 
 } // namespace gf
-} // namespace nttec
+} // namespace quad
 
-#endif // #ifdef NTTEC_USE_SIMD
+#endif // #ifdef QUADIRON_USE_SIMD

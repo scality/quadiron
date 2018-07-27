@@ -28,15 +28,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __NTTEC_FFT_SINGLE_H__
-#define __NTTEC_FFT_SINGLE_H__
+#ifndef __QUAD_FFT_SINGLE_H__
+#define __QUAD_FFT_SINGLE_H__
 
 #include "fft_base.h"
 #include "gf_base.h"
 #include "vec_buffers.h"
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quad {
 namespace fft {
 
 /** FFT specialization for when all but the first element are zeros.
@@ -113,6 +113,6 @@ void Single<T>::ifft(vec::Buffers<T>* output, vec::Buffers<T>* input)
 }
 
 } // namespace fft
-} // namespace nttec
+} // namespace quad
 
 #endif
