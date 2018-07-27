@@ -860,9 +860,9 @@ void FecCode<T>::decode_apply(
  * @param output_data_bufs must be exactly n_data (use nullptr when not
  * missing/wanted)
  *
- * @note All streams must be of equal size
+ * @pre All streams must be of equal size
  *
- * @return true if decode succeded, else false
+ * @return true if decode succeeded, else false
  */
 template <typename T>
 bool FecCode<T>::decode_packet(
