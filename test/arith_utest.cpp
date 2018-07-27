@@ -168,13 +168,23 @@ class ArithUtest {
         // check overflow
         assert(m / p1 == p2);
         // std::cerr << " m=" << m << "\n";
-        assert(quadiron::arith::exp<T>((b - 1), 2) * quadiron::arith::exp<T>(p, 2) < m);
+        assert(
+            quadiron::arith::exp<T>((b - 1), 2) * quadiron::arith::exp<T>(p, 2)
+            < m);
 
         // find x so it is not a quadratic residue in GF_p1 and GF_p2
-        assert(quadiron::arith::jacobi<T>(3, p1) == quadiron::arith::jacobi<T>(p1, 3));
-        assert(quadiron::arith::jacobi<T>(p1, 3) == quadiron::arith::jacobi<T>(2, 3));
-        assert(quadiron::arith::jacobi<T>(3, p2) == quadiron::arith::jacobi<T>(p2, 3));
-        assert(quadiron::arith::jacobi<T>(p2, 3) == quadiron::arith::jacobi<T>(2, 3));
+        assert(
+            quadiron::arith::jacobi<T>(3, p1)
+            == quadiron::arith::jacobi<T>(p1, 3));
+        assert(
+            quadiron::arith::jacobi<T>(p1, 3)
+            == quadiron::arith::jacobi<T>(2, 3));
+        assert(
+            quadiron::arith::jacobi<T>(3, p2)
+            == quadiron::arith::jacobi<T>(p2, 3));
+        assert(
+            quadiron::arith::jacobi<T>(p2, 3)
+            == quadiron::arith::jacobi<T>(2, 3));
         assert(quadiron::arith::jacobi<T>(2, 3) == -1);
         // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
 
@@ -203,9 +213,11 @@ class ArithUtest {
         quadiron::SignedDoubleSizeVal<T> bezout[2];
 
         // not explicitely related to GF(97)
-        assert(2 == quadiron::arith::extended_gcd<T>(240, 46, nullptr, nullptr));
+        assert(
+            2 == quadiron::arith::extended_gcd<T>(240, 46, nullptr, nullptr));
         assert(6 == quadiron::arith::extended_gcd<T>(54, 24, nullptr, nullptr));
-        assert(15 == quadiron::arith::extended_gcd<T>(210, 45, nullptr, nullptr));
+        assert(
+            15 == quadiron::arith::extended_gcd<T>(210, 45, nullptr, nullptr));
         //
         assert(1 == quadiron::arith::extended_gcd<T>(97, 20, bezout, nullptr));
         assert(bezout[0] == -7 && bezout[1] == 34);
@@ -384,7 +396,8 @@ class ArithUtest {
 
             std::vector<T> factors;
             quadiron::arith::get_prime_factors<T>(order, &factors);
-            const T len = quadiron::arith::get_code_len_high_compo<T>(&factors, n);
+            const T len =
+                quadiron::arith::get_code_len_high_compo<T>(&factors, n);
             // std::cout << "len=" << len << "\n";
             assert(order % len == 0);
             assert(len >= n);

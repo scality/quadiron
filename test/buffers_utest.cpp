@@ -49,7 +49,8 @@ class BuffersUtest {
         delete this->gfp;
     }
 
-    quadiron::vec::Buffers<T>* gen_buffers_rand_data(int n, int size, int _max = 0)
+    quadiron::vec::Buffers<T>*
+    gen_buffers_rand_data(int n, int size, int _max = 0)
     {
         const int max = (_max == 0) ? max_val : _max;
         std::uniform_int_distribution<uint32_t> dis(0, max - 1);
@@ -240,7 +241,8 @@ class BuffersUtest {
         // tmp vectors to store results
         quadiron::vec::Buffers<T> vec_T_tmp(n, size);
         std::vector<T*>* mem_T_tmp = vec_T_tmp.get_mem();
-        quadiron::vec::pack<uint8_t, T>(mem_char, mem_T_tmp, n, size, word_size);
+        quadiron::vec::pack<uint8_t, T>(
+            mem_char, mem_T_tmp, n, size, word_size);
         // std::cout << "vec_char:"; vec_char.dump();
         // std::cout << "vec_T_tmp:"; vec_T_tmp.dump();
         // check
