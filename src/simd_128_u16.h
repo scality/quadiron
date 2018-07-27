@@ -80,7 +80,7 @@ inline m128i sub(m128i a, m128i b, aint16 card)
     return _mm_sub_epi16(_a1, _b);
 }
 
-/** Negate a
+/** Negate `a`
  * @return 0 if (a == 0), else card - a
  */
 inline m128i neg(m128i a, aint16 card = F3)

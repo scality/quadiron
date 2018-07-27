@@ -80,7 +80,7 @@ inline m256i sub(m256i a, m256i b, aint32 card)
     return _mm256_sub_epi32(_a1, _b);
 }
 
-/** Negate a
+/** Negate `a`
  * @return 0 if (a == 0), else card - a
  */
 inline m256i neg(m256i a, aint32 card = F4)
