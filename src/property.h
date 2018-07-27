@@ -118,7 +118,7 @@ class Properties {
         props.clear();
     }
 
-    std::unordered_map<ValueLocation, std::string> const get_map() const
+    const std::unordered_map<ValueLocation, std::string>& get_map() const
     {
         return props;
     }
