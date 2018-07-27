@@ -42,21 +42,23 @@
 namespace quad {
 namespace vec {
 
-/** Available cases of allocating memory
- * NONE:        do not allocate any memory
- * SLICE:       allocate only a vector of pointers each points to an allocated
- *              memory
- * ZERO_EXTEND: allocate a zero buffers and push back to the vector memory
- * COMBINED:    allocate only a vector of pointers that are
- * COMBINED     from two vectors of two input buffers vector
- * FULL:        fully allocate memory including a vector of pointers each for a
- *              memory of `size` elements
- */
+/// Available cases of allocating memory
 enum class BufMemAlloc {
+    /// Do not allocate any memory
     NONE = 0,
+
+    /// Allocate only a vector of pointers each points to an allocated memory
     SLICE,
+
+    /// Allocate a zero buffers and push back to the vector memory
     ZERO_EXTEND,
+
+    /// Allocate only a vector of pointers that are from two vectors of two
+    /// input buffers vector
     COMBINED,
+
+    /// Fully allocate memory including a vector of pointers each for a
+    /// memory of `size` elements
     FULL,
 };
 
