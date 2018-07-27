@@ -78,9 +78,8 @@ inline m256i sub(m256i a, m256i b, aint16 card)
     return _mm256_sub_epi16(_a1, _b);
 }
 
-/** Perform negatize of a
- * neg(a) = 0 if a = 0
- *          card - a otherwise
+/** Negate a
+ * @return 0 if (a == 0), else card - a
  */
 inline m256i neg(m256i a, aint16 card = F3)
 {
@@ -138,7 +137,7 @@ inline m256i mul(m256i a, m256i b, aint16 card)
     return mul(a, b);
 }
 
-/** Negatize elements of buffers
+/** Apply an element-wise negation to a buffer
  */
 inline void neg(size_t len, aint16* buf, aint16 card = F3)
 {
@@ -149,12 +148,10 @@ inline void neg(size_t len, aint16* buf, aint16 card = F3)
 
     size_t i;
     for (i = 0; i < _len; i++) {
-        // perform negatization
         _buf[i] = neg(_buf[i], card);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
-            // perform negatization
             if (buf[i])
                 buf[i] = card - buf[i];
         }
@@ -263,7 +260,6 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
             // perform multiplicaton
-            // dest[i] = uint32_t(src[i]) * uint32_t(dest[i]) % card;
             dest[i] = (uint32_t(src[i]) * dest[i]) % card;
         }
     }

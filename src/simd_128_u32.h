@@ -80,9 +80,8 @@ inline m128i sub(m128i a, m128i b, aint32 card)
     return _mm_sub_epi32(_a1, _b);
 }
 
-/** Perform negatize of a
- * neg(a) = 0 if a = 0
- *          card - a otherwise
+/** Negate a
+ * @return 0 if (a == 0), else card - a
  */
 inline m128i neg(m128i a, aint32 card = F4)
 {
@@ -185,7 +184,7 @@ inline m128i mul(m128i a, m128i b, aint32 card)
     return mul_f3(a, b);
 }
 
-/** Negatize elements of buffers
+/** Apply an element-wise negation to a buffer
  */
 inline void neg(size_t len, aint32* buf, aint32 card = F4)
 {
@@ -196,12 +195,10 @@ inline void neg(size_t len, aint32* buf, aint32 card = F4)
 
     size_t i;
     for (i = 0; i < _len; i++) {
-        // perform negatization
         _buf[i] = neg(_buf[i], card);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
-            // perform negatization
             if (buf[i] > 0)
                 buf[i] = card - buf[i];
         }
