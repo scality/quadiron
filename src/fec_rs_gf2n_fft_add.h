@@ -144,7 +144,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         vec::Vector<T> vx(*(this->gf), k);
 
         int vx_zero = -1;
-        for (int i = 0; i < this->n_data; ++i) {
+        for (unsigned i = 0; i < this->n_data; ++i) {
             T val = betas->get(fragments_ids.get(i));
             vx.set(i, val);
             if (val == 0) {
@@ -191,7 +191,7 @@ class RsGf2nFftAdd : public FecCode<T> {
 
         // FIXME: split this step in decode_init as multiplicative FFT
         vec::Vector<T> vx(*(this->gf), k);
-        for (int i = 0; i < this->n_data; ++i) {
+        for (unsigned i = 0; i < this->n_data; ++i) {
             vx.set(i, this->betas->get(fragments_ids.get(i)));
         }
 

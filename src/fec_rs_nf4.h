@@ -107,8 +107,9 @@ class RsNf4 : public FecCode<T> {
         // vector stores r^{i} for i = 0, ... , k
         this->r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(*ngff4, this->n));
-        for (int i = 0; i < this->n; i++)
+        for (unsigned i = 0; i < this->n; i++) {
             this->r_powers->set(i, ngff4->exp(this->r, i));
+        }
     }
 
     int get_n_outputs() override

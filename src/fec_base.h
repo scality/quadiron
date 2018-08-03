@@ -772,7 +772,7 @@ void FecCode<T>::decode_prepare(
     vec::Vector<T>* words)
 {
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
-    for (int i = 0; i < this->n_data; ++i) {
+    for (unsigned i = 0; i < this->n_data; ++i) {
         const int j = fragments_ids.get(i);
         auto data = props[j].get(ValueLocation(offset, j));
 
@@ -814,7 +814,7 @@ void FecCode<T>::decode_apply(
 
     // compute N(x) and stored in vec1_n
     vec1_n.zero_fill();
-    for (int i = 0; i <= k - 1; ++i) {
+    for (unsigned i = 0; i <= k - 1; ++i) {
         vec1_n.set(
             fragments_ids.get(i),
             this->gf->mul(words->get(i), inv_A_i.get(fragments_ids.get(i))));
@@ -926,11 +926,6 @@ bool FecCode<T>::decode_packet(
     }
 
     decode_build();
-
-    int n_words = code_len;
-    if (type == FecType::SYSTEMATIC) {
-        n_words = n_data;
-    }
 
     // vector of buffers storing data read from chunk
     vec::Buffers<uint8_t> words_char(n_data, buf_size);
@@ -1109,10 +1104,12 @@ void FecCode<T>::decode_apply(
 
     unsigned k = this->n_data; // number of fragments received
 
+    assert(k != 0);
+
     // compute N'(x) = sum_i{n_i * x^z_i}
     // where n_i=v_i/A'_i(x_i)
     buf1_n.zero_fill();
-    for (int i = 0; i <= k - 1; ++i) {
+    for (unsigned i = 0; i <= k - 1; ++i) {
         this->gf->mul_coef_to_buf(
             inv_A_i.get(fragments_ids.get(i)),
             words->get(i),

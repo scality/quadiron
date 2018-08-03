@@ -120,8 +120,9 @@ class RsFnt : public FecCode<T> {
         // vector stores r^{i} for i = 0, ... , n-1
         this->r_powers = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(*(this->gf), this->n));
-        for (int i = 0; i < this->n; i++)
+        for (unsigned i = 0; i < this->n; i++) {
             this->r_powers->set(i, this->gf->exp(this->r, i));
+        }
     }
 
     int get_n_outputs() override

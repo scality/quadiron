@@ -320,7 +320,7 @@ inline aint128 m256i_to_uint128(m256i v)
 {
     aint128 hi, lo;
     _mm256_storeu2_m128i((m128i*)&hi, (m128i*)&lo, v);
-    return lo;
+    return lo; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
 }
 
 inline __uint128_t add(__uint128_t a, __uint128_t b)
