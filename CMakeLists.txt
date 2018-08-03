@@ -153,7 +153,6 @@ endforeach(flag)
 # Debug flags
 set(DEBUG_CXX_FLAGS
   -O0 -g3 -ggdb3 -fno-limit-debug-info
-  -ftrapv
 )
 foreach(flag ${DEBUG_CXX_FLAGS})
   check_cxx_compiler_flag(${flag} has_flag_${flag})
@@ -161,6 +160,11 @@ foreach(flag ${DEBUG_CXX_FLAGS})
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${flag}")
   endif(has_flag_${flag})
 endforeach(flag)
+
+# Seems buggy on Clang: see https://bugs.llvm.org/show_bug.cgi?id=16404
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ftrapv")
+endif()
 
 # Release flags
 set(RELEASE_CXX_FLAGS
