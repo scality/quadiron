@@ -48,7 +48,6 @@ enum ec_type {
     EC_TYPE_ALL = 0,
     EC_TYPE_RS_FNT,
     EC_TYPE_RS_NF4,
-    EC_TYPE_RS_GFP_FFT,
     EC_TYPE_RS_GF2N_FFT_ADD,
     EC_TYPE_RS_GF2N_V,
     EC_TYPE_RS_GF2N_C,
@@ -65,7 +64,6 @@ const std::map<ec_type, std::string> ec_desc = {
     {EC_TYPE_RS_GF2N_FFT, "Reed-solomon codes over GF(2^n) using FFT"},
     {EC_TYPE_RS_GF2N_FFT_ADD,
      "Reed-solomon codes over GF(2^n) using additive FFT"},
-    {EC_TYPE_RS_GFP_FFT, "Reed-solomon codes over GF(p) using FFT"},
     {EC_TYPE_RS_FNT, "Reed-solomon codes over GF(p = Fermat number) using FFT"},
     {EC_TYPE_RS_NF4,
      "Reed-solomon codes over GF(65537) using FFT on pack of codewords"},
@@ -78,7 +76,6 @@ const std::map<ec_type, std::string> ec_desc_short = {
     {EC_TYPE_RS_GF2N_C, "rs-gf2n-c"},
     {EC_TYPE_RS_GF2N_FFT, "rs-gf2n-fft"},
     {EC_TYPE_RS_GF2N_FFT_ADD, "rs-gf2n-fft-add"},
-    {EC_TYPE_RS_GFP_FFT, "rs-gfp-fft"},
     {EC_TYPE_RS_FNT, "rs-fnt"},
     {EC_TYPE_RS_NF4, "rs-nf4"},
 };
@@ -118,7 +115,6 @@ const std::map<std::string, ec_type> fec_type_map = {
     {"rs-gf2n-c", EC_TYPE_RS_GF2N_C},
     {"rs-gf2n-fft", EC_TYPE_RS_GF2N_FFT},
     {"rs-gf2n-fft-add", EC_TYPE_RS_GF2N_FFT_ADD},
-    {"rs-gfp-fft", EC_TYPE_RS_GFP_FFT},
     {"rs-fnt", EC_TYPE_RS_FNT},
     {"rs-nf4", EC_TYPE_RS_NF4},
 };
@@ -259,8 +255,6 @@ struct Params_t {
         if (sizeof_T == -1) {
             if (fec_type == EC_TYPE_RS_NF4) {
                 sizeof_T = (((word_size - 1) / 2) + 1) * 4;
-            } else if (fec_type == EC_TYPE_RS_GFP_FFT && word_size == 4) {
-                sizeof_T = 8;
             } else {
                 sizeof_T = (((word_size - 1) / 4) + 1) * 4;
             }

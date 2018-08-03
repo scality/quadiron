@@ -167,9 +167,6 @@ int Benchmark<T>::init()
     case EC_TYPE_RS_GF2N_FFT_ADD:
         fec = new quadiron::fec::RsGf2nFftAdd<T>(word_size, k, m);
         break;
-    case EC_TYPE_RS_GFP_FFT:
-        fec = new quadiron::fec::RsGfpFft<T>(word_size, k, m);
-        break;
     case EC_TYPE_RS_NF4:
         fec = new quadiron::fec::RsNf4<T>(word_size, k, m);
         break;
@@ -282,7 +279,7 @@ int Benchmark<T>::check_params()
     if (sizeof(T) < word_size) {
         return ERR_COMPT_WORD_SIZE_T;
     }
-    if (fec_type == EC_TYPE_RS_FNT || fec_type == EC_TYPE_RS_GFP_FFT) {
+    if (fec_type == EC_TYPE_RS_FNT) {
         if (sizeof(T) <= word_size) {
             return ERR_COMPT_WORD_SIZE_T;
         }
@@ -637,7 +634,6 @@ void xusage()
               << '\n'
               << "\t\t\trs-gf2n-fft-add: "
               << ec_desc.at(EC_TYPE_RS_GF2N_FFT_ADD) << '\n'
-              << "\t\t\trs-gfp-fft: " << ec_desc.at(EC_TYPE_RS_GFP_FFT) << '\n'
               << "\t\t\trs-fnt: " << ec_desc.at(EC_TYPE_RS_FNT) << '\n'
               << "\t\t\trs-nf4: " << ec_desc.at(EC_TYPE_RS_NF4) << '\n'
               << "\t\t\tall: All available Reed-solomon codes\n"
