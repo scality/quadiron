@@ -27,7 +27,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "quadiron.h"
+
+#include "gf_bin_ext.h"
+#include "gf_nf4.h"
 
 template <typename T>
 class GFUtest {

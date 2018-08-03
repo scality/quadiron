@@ -96,15 +96,6 @@ struct GroupedValues {
     uint32_t flag;
 };
 
-/** Return the version string of QuadIron.
- *
- * The version string has the form MAJOR.MINOR.PATCH-REVISION, where '-REVISION'
- * is optional (only present for development version).
- *
- * @return the version string.
- */
-const char* get_version();
-
 /** Return a reference to the global PRNG. */
 static inline std::mt19937& prng()
 {
