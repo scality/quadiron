@@ -888,7 +888,7 @@ template <typename T>
 void RingModN<T>::neg(size_t n, T* x) const
 {
     // add y to the first half of `x`
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         x[i] = sub(0, x[i]);
     }
 }

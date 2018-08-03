@@ -160,6 +160,9 @@ class DecodeContext {
             return *vec1_2k;
         case CtxVec::V2K2:
             return *vec2_2k;
+        // To quell an overzealous `Wreturn-type` from GCC.
+        default:
+            throw InvalidArgument("invalid Vec type");
         }
     }
 
@@ -170,6 +173,9 @@ class DecodeContext {
             return *A;
         case CtxPoly::S:
             return *S;
+        // To quell an overzealous `Wreturn-type` from GCC.
+        default:
+            throw InvalidArgument("invalid Poly type");
         }
     }
 
@@ -186,6 +192,9 @@ class DecodeContext {
             return *buf2_2k;
         case CtxBuf::B2KMK:
             return *buf1_len2k_minus_k;
+        // To quell an overzealous `Wreturn-type` from GCC.
+        default:
+            throw InvalidArgument("invalid Buf type");
         }
     }
 
@@ -222,7 +231,7 @@ class DecodeContext {
             A->set(0, 1);
         }
 
-        for (int i = 0; i < k; ++i) {
+        for (unsigned i = 0; i < k; ++i) {
             A->mul_to_x_plus_coef(this->gf->sub(0, vx.get(i)));
         }
 
@@ -239,7 +248,7 @@ class DecodeContext {
 
         // compute 1/(x_i * A_i(x_i))
         // we care only about elements corresponding to fragments_ids
-        for (unsigned i = 0; i < k; ++i) {
+        for (int i = 0; i < static_cast<int>(k); ++i) {
             unsigned j = fragments_ids->get(i);
             if (i != vx_zero) {
                 inv_A_i->set(
