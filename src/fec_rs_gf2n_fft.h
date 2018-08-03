@@ -34,7 +34,6 @@
 #include "fec_base.h"
 #include "fft_ct.h"
 #include "gf_bin_ext.h"
-#include "polynomial.h"
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 

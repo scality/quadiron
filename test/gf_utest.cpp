@@ -32,41 +32,6 @@
 template <typename T>
 class GFUtest {
   public:
-    void simple_tests()
-    {
-        std::cout << "simple tests\n";
-
-        quadiron::gf::Extension<T> gf256(
-            2, 8); // dumb way to declare a binary field but for sake of testing
-        quadiron::Polynomial<T> _x(gf256.get_sub_field());
-        _x.set(6, 1);
-        _x.set(4, 1);
-        _x.set(1, 1);
-        _x.set(0, 1);
-        T x = gf256.inv(_x.to_num());
-        _x.from_num(x, 31);
-        assert(_x.degree() == 7);
-        assert(_x.get(7) == 1);
-        assert(_x.get(6) == 1);
-        assert(_x.get(5) == 0);
-        assert(_x.get(4) == 0);
-        assert(_x.get(3) == 1);
-        assert(_x.get(2) == 0);
-        assert(_x.get(1) == 1);
-        assert(_x.get(0) == 0);
-
-        quadiron::gf::Extension<T> gf27(3, 3);
-        quadiron::Polynomial<T> _y(gf27.get_sub_field());
-        _y.set(2, 1);
-        _y.set(0, 1);
-        T y = gf27.inv(_y.to_num());
-        _y.from_num(y, 31);
-        assert(_y.degree() == 2);
-        assert(_y.get(2) == 1);
-        assert(_y.get(1) == 1);
-        assert(_y.get(0) == 0);
-    }
-
     void test_negation(quadiron::gf::Field<T>* gf)
     {
         int i;
@@ -262,40 +227,6 @@ class GFUtest {
         test_get_nth_root(&gf5);
     }
 
-    void test_negation_gf9()
-    {
-        std::cout << "test_negation_gf9\n";
-
-        quadiron::gf::Extension<T> gf9(3, 2);
-        test_negation(&gf9);
-    }
-
-    void test_reciprocal_gf9()
-    {
-        std::cout << "test_reciprocal_gf9\n";
-
-        quadiron::gf::Extension<T> gf9(3, 2);
-        test_reciprocal(&gf9);
-    }
-
-    void test_log_gf9()
-    {
-        std::cout << "test_log_gf9\n";
-
-        quadiron::gf::Extension<T> gf9(3, 2);
-        test_log(&gf9);
-    }
-
-    void test_prime_root_gf9()
-    {
-        std::cout << "test_prime_root_gf9\n";
-
-        quadiron::gf::Extension<T> gf9(3, 2);
-        test_find_primitive_root(&gf9);
-        test_get_order(&gf9);
-        test_get_nth_root(&gf9);
-    }
-
     void test_negation_gf256()
     {
         std::cout << "test_negation_gf256\n";
@@ -393,19 +324,13 @@ class GFUtest {
 
         quadiron::prng().seed(time(0));
 
-        simple_tests();
         test_negation_gf5();
         test_reciprocal_gf5();
         test_log_gf5();
         test_prime_root_gf5();
-        test_negation_gf9();
-        test_reciprocal_gf9();
-        test_log_gf9();
-        test_prime_root_gf9();
         test_negation_gf256();
         test_reciprocal_gf256();
         test_log_gf256();
-        test_negation_gf256();
         test_prime_root_gf256();
         gf_utest_gf_nf4();
     }

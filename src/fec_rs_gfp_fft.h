@@ -37,7 +37,6 @@
 #include "fft_base.h"
 #include "fft_ct.h"
 #include "gf_prime.h"
-#include "polynomial.h"
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 

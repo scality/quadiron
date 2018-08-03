@@ -32,6 +32,7 @@
 #define __QUAD_BENCH_BENCHMARK_H__
 
 #include <iomanip>
+#include <map>
 #include <thread>
 #include <sys/stat.h>
 #include <sys/types.h>

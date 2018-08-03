@@ -35,7 +35,6 @@
 #include "fec_base.h"
 #include "fft_2n.h"
 #include "gf_prime.h"
-#include "polynomial.h"
 #include "vec_buf_zero_ext.h"
 #include "vec_buffers.h"
 #include "vec_vector.h"

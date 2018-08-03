@@ -37,7 +37,6 @@
 #include "fft_2n.h"
 #include "gf_base.h"
 #include "gf_nf4.h"
-#include "polynomial.h"
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 
