@@ -36,7 +36,6 @@ extern void vector_utest();
 extern void buffers_utest();
 extern void mat_utest();
 extern void fft_utest();
-extern void poly_utest();
 extern void fec_utest();
 
 struct test {
@@ -48,7 +47,6 @@ struct test {
              {"vecp", buffers_utest},
              {"mat", mat_utest},
              {"rs", rs_utest},
-             {"poly", poly_utest},
              {"fft", fft_utest},
              {"fec", fec_utest},
              {nullptr, nullptr}};
