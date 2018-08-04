@@ -8,9 +8,6 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
     clang-format \
     cmake \
     doxygen \
+    g++-8 \
     git \
     make
-
-# Fix binary names.
-RUN ln -s /usr/bin/clang-format-6.0 /usr/bin/clang-format &&\
-    ln -s /usr/bin/clang-tidy-6.0   /usr/bin/clang-tidy
