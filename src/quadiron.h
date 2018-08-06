@@ -43,6 +43,7 @@
 #include "fec_rs_gf2n.h"
 #include "fec_rs_gf2n_fft.h"
 #include "fec_rs_gf2n_fft_add.h"
+#include "fec_rs_gfp_fft.h"
 #include "fec_rs_nf4.h"
 #include "fft_2.h"
 #include "fft_2n.h"

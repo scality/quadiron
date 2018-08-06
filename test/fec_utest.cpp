@@ -94,6 +94,25 @@ class FECUtest {
         run_test(&fec, fec.n, n_data, n_data + n_parities);
     }
 
+    void test_fec_rs_gfp_fft()
+    {
+        std::cout << "Test fec::RsGfpFft with sizeof(T)=" << sizeof(T) << '\n';
+        for (size_t word_size = 1; word_size <= 4 && word_size < sizeof(T);
+             word_size *= 2) {
+            test_fec_rs_gfp_fft_with_word_size(word_size);
+        }
+    }
+    void test_fec_rs_gfp_fft_with_word_size(int word_size)
+    {
+        std::cout << "Test fec::RsGfpFft with word size=" << word_size << '\n';
+
+        unsigned n_data = 3;
+        unsigned n_parities = 3;
+
+        quadiron::fec::RsGfpFft<T> fec(word_size, n_data, n_parities);
+        run_test(&fec, fec.n, n_data, n_data + n_parities, true);
+    }
+
     void run_test(
         quadiron::fec::FecCode<T>* fec,
         int n,
@@ -146,6 +165,7 @@ class FECUtest {
         test_fec_rs_nf4();
         test_fec_rs_gf2n_fft();
         test_fec_rs_gf2n_fft_add();
+        test_fec_rs_gfp_fft();
     }
 };
 
