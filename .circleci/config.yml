@@ -29,6 +29,17 @@ jobs:
             rm -rf build && mkdir build && cd build &&
             CXX=/usr/bin/g++-8 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DQUADIRON_USE_SIMD=ON .. &&
             make
+  android:
+    docker:
+      - image: slaperche0scality/quadiron-ndk:latest
+    steps:
+      - checkout
+      - run:
+          name: Compile on ARM64 with the NDK
+          command: >
+            rm -rf build && mkdir build && cd build &&
+            cmake -G 'Unix Makefiles' -DCMAKE_AR=/arm64/bin/aarch64-linux-android-ar -DCMAKE_BUILD_TYPE=Debug .. &&
+            make
   test:
     docker:
       - image: slaperche0scality/quadiron:latest
@@ -58,4 +69,5 @@ workflows:
   build_and_test:
     jobs:
       - build
+      - android
       - test
