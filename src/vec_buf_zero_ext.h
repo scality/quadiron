@@ -85,8 +85,7 @@ BuffersZeroExtended<T>::BuffersZeroExtended(const Buffers<T>& vec, int n)
     vec_n = vec.get_n();
     assert(n >= vec_n);
     // overwrite by a new vector
-    this->mem =
-        new std::vector<T*>(vec.get_mem()->begin(), vec.get_mem()->end());
+    this->mem = new std::vector<T*>(vec.get_mem().begin(), vec.get_mem().end());
     if (n > vec_n) {
         zero_chunk = aligned_allocate<T>(this->size);
         std::memset(zero_chunk, 0, this->size * sizeof(T));
