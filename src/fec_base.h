@@ -454,36 +454,29 @@ void FecCode<T>::encode_packet(
 
     bool cont = true;
     off_t offset = 0;
-    bool full_word_size = (word_size == sizeof(T));
 
     // vector of buffers storing data read from chunk
     vec::Buffers<uint8_t> words_char(n_data, buf_size);
-    std::vector<uint8_t*>* words_mem_char = words_char.get_mem();
-    std::vector<T*>* words_mem_T = nullptr;
-    if (full_word_size)
-        words_mem_T = vec::cast_mem_of_vecp<uint8_t, T>(&words_char);
+    const std::vector<uint8_t*> words_mem_char = words_char.get_mem();
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> words(n_data, pkt_size, words_mem_T);
-    words_mem_T = words.get_mem();
+    vec::Buffers<T> words(n_data, pkt_size);
+    const std::vector<T*> words_mem_T = words.get_mem();
 
     int output_len = get_n_outputs();
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> output(output_len, pkt_size);
-    std::vector<T*>* output_mem_T = output.get_mem();
-    std::vector<uint8_t*>* output_mem_char = nullptr;
-    if (full_word_size)
-        output_mem_char = vec::cast_mem_of_vecp<T, uint8_t>(&output);
+    const std::vector<T*> output_mem_T = output.get_mem();
     // vector of buffers storing data in output chunk
-    vec::Buffers<uint8_t> output_char(output_len, buf_size, output_mem_char);
-    output_mem_char = output_char.get_mem();
+    vec::Buffers<uint8_t> output_char(output_len, buf_size);
+    const std::vector<uint8_t*> output_mem_char = output_char.get_mem();
 
     reset_stats_enc();
 
     while (true) {
         // TODO: get number of read bytes -> true buf size
         for (unsigned i = 0; i < n_data; i++) {
-            if (!read_pkt((char*)(words_mem_char->at(i)), input_data_bufs[i])) {
+            if (!read_pkt((char*)(words_mem_char.at(i)), input_data_bufs[i])) {
                 cont = false;
                 break;
             }
@@ -491,9 +484,8 @@ void FecCode<T>::encode_packet(
         if (!cont)
             break;
 
-        if (!full_word_size)
-            vec::pack<uint8_t, T>(
-                words_mem_char, words_mem_T, n_data, pkt_size, word_size);
+        vec::pack<uint8_t, T>(
+            words_mem_char, words_mem_T, n_data, pkt_size, word_size);
 
         timeval t1 = tick();
         uint64_t start = hw_timer();
@@ -505,12 +497,15 @@ void FecCode<T>::encode_packet(
         total_encode_cycles += (end - start) / buf_size;
         n_encode_ops++;
 
-        if (!full_word_size)
-            vec::unpack<T, uint8_t>(
-                output_mem_T, output_mem_char, output_len, pkt_size, word_size);
+        vec::unpack<T, uint8_t>(
+            output_mem_T,
+            output_mem_char,
+            output_len,
+            pkt_size,
+            word_size);
 
         for (unsigned i = 0; i < n_outputs; i++) {
-            write_pkt((char*)(output_mem_char->at(i)), output_parities_bufs[i]);
+            write_pkt((char*)(output_mem_char.at(i)), output_parities_bufs[i]);
         }
         offset += buf_size;
     }
@@ -873,7 +868,6 @@ bool FecCode<T>::decode_packet(
 {
     bool cont = true;
     off_t offset = 0;
-    bool full_word_size = (word_size == sizeof(T));
 
     unsigned fragment_index = 0;
     unsigned parity_index = 0;
@@ -929,25 +923,19 @@ bool FecCode<T>::decode_packet(
 
     // vector of buffers storing data read from chunk
     vec::Buffers<uint8_t> words_char(n_data, buf_size);
-    std::vector<uint8_t*>* words_mem_char = words_char.get_mem();
-    std::vector<T*>* words_mem_T = nullptr;
-    if (full_word_size)
-        words_mem_T = vec::cast_mem_of_vecp<uint8_t, T>(&words_char);
+    const std::vector<uint8_t*> words_mem_char = words_char.get_mem();
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> words(n_data, pkt_size, words_mem_T);
-    words_mem_T = words.get_mem();
+    vec::Buffers<T> words(n_data, pkt_size);
+    const std::vector<T*> words_mem_T = words.get_mem();
 
     int output_len = n_data;
 
     // vector of buffers storing data that are performed in decoding, i.e. FFT
     vec::Buffers<T> output(output_len, pkt_size);
-    std::vector<T*>* output_mem_T = output.get_mem();
-    std::vector<uint8_t*>* output_mem_char = nullptr;
-    if (full_word_size)
-        output_mem_char = vec::cast_mem_of_vecp<T, uint8_t>(&output);
+    const std::vector<T*> output_mem_T = output.get_mem();
     // vector of buffers storing data in output chunk
-    vec::Buffers<uint8_t> output_char(output_len, buf_size, output_mem_char);
-    output_mem_char = output_char.get_mem();
+    vec::Buffers<uint8_t> output_char(output_len, buf_size);
+    const std::vector<uint8_t*> output_mem_char = output_char.get_mem();
 
     std::unique_ptr<DecodeContext<T>> context =
         init_context_dec(fragments_ids, pkt_size);
@@ -960,7 +948,7 @@ bool FecCode<T>::decode_packet(
             for (unsigned i = 0; i < avail_data_nb; i++) {
                 unsigned data_idx = fragments_ids.get(i);
                 if (!read_pkt(
-                        (char*)(words_mem_char->at(i)),
+                        (char*)(words_mem_char.at(i)),
                         input_data_bufs[data_idx])) {
                     cont = false;
                     break;
@@ -970,7 +958,7 @@ bool FecCode<T>::decode_packet(
         for (unsigned i = 0; i < n_data - avail_data_nb; ++i) {
             unsigned parity_idx = avail_parity_ids.get(i);
             if (!read_pkt(
-                    (char*)(words_mem_char->at(avail_data_nb + i)),
+                    (char*)(words_mem_char.at(avail_data_nb + i)),
                     input_parities_bufs[parity_idx])) {
                 cont = false;
                 break;
@@ -980,9 +968,8 @@ bool FecCode<T>::decode_packet(
         if (!cont)
             break;
 
-        if (!full_word_size)
-            vec::pack<uint8_t, T>(
-                words_mem_char, words_mem_T, n_data, pkt_size, word_size);
+        vec::pack<uint8_t, T>(
+            words_mem_char, words_mem_T, n_data, pkt_size, word_size);
 
         timeval t1 = tick();
         uint64_t start = hw_timer();
@@ -994,13 +981,16 @@ bool FecCode<T>::decode_packet(
         total_decode_cycles += (end - start) / word_size;
         n_decode_ops++;
 
-        if (!full_word_size)
-            vec::unpack<T, uint8_t>(
-                output_mem_T, output_mem_char, output_len, pkt_size, word_size);
+        vec::unpack<T, uint8_t>(
+            output_mem_T,
+            output_mem_char,
+            output_len,
+            pkt_size,
+            word_size);
 
         for (unsigned i = 0; i < n_data; i++) {
             if (output_data_bufs[i] != nullptr) {
-                write_pkt((char*)(output_mem_char->at(i)), output_data_bufs[i]);
+                write_pkt((char*)(output_mem_char.at(i)), output_data_bufs[i]);
             }
         }
         offset += buf_size;
