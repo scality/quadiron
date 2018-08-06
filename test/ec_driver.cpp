@@ -41,7 +41,7 @@ char* prefix = nullptr;
 void xusage()
 {
     std::cerr << std::string("Usage: ") +
-    "ec [-e rs-gf2n-v|rs-gf2n-c|rs-gf2n-fft|rs-gf2n-fft-add|rs-fnt|rs-nf4]" +
+    "ec [-e rs-gf2n-v|rs-gf2n-c|rs-gf2n-fft|rs-gf2n-fft-add|rs-gfp-fft|rs-fnt|rs-nf4]" +
     "[-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
     exit(1);
@@ -310,6 +310,32 @@ void run_fec_rs_gf2n_fft_add(
 }
 
 template <typename T>
+void run_fec_rs_gfp_fft(
+    unsigned word_size,
+    int n_data,
+    int n_parities,
+    int rflag)
+{
+    assert(sizeof(T) > word_size);
+
+    quadiron::fec::RsGfpFft<T>* fec;
+    fec = new quadiron::fec::RsGfpFft<T>(word_size, n_data, n_parities);
+
+    if (tflag) {
+        print_fec_type<T>(fec);
+        exit(1);
+    }
+    if (rflag) {
+        if (0 != repair_data_files<T>(fec)) {
+            exit(1);
+        }
+    }
+    create_coding_files<T>(fec);
+    print_stats<T>(fec);
+    delete fec;
+}
+
+template <typename T>
 void run_fec_rs_fnt(int word_size, int n_data, int n_parities, int rflag)
 {
     quadiron::fec::RsFnt<T>* fec;
@@ -355,6 +381,7 @@ enum ec_type {
     EC_TYPE_RS_GF2N,
     EC_TYPE_RS_GF2N_FFT,
     EC_TYPE_RS_GF2N_FFT_ADD,
+    EC_TYPE_RS_GFP_FFT,
     EC_TYPE_RS_FNT,
     EC_TYPE_RS_NF4,
 };
@@ -395,6 +422,8 @@ int main(int argc, char** argv)
                 eflag = EC_TYPE_RS_GF2N_FFT;
             } else if (!strcmp(optarg, "rs-gf2n-fft-add")) {
                 eflag = EC_TYPE_RS_GF2N_FFT_ADD;
+            } else if (!strcmp(optarg, "rs-gfp-fft")) {
+                eflag = EC_TYPE_RS_GFP_FFT;
             } else if (!strcmp(optarg, "rs-nf4")) {
                 eflag = EC_TYPE_RS_NF4;
             } else if (!strcmp(optarg, "rs-fnt")) {
@@ -476,6 +505,13 @@ int main(int argc, char** argv)
         } else if (word_size <= 16) {
             run_fec_rs_gf2n<__uint128_t>(
                 word_size, n_data, n_parities, mflag, rflag);
+        }
+    } else if (eflag == EC_TYPE_RS_GFP_FFT) {
+        if (word_size <= 7) {
+            run_fec_rs_gfp_fft<uint64_t>(word_size, n_data, n_parities, rflag);
+        } else if (word_size <= 15) {
+            run_fec_rs_gfp_fft<__uint128_t>(
+                word_size, n_data, n_parities, rflag);
         }
     } else if (eflag == EC_TYPE_RS_GF2N_FFT) {
         if (word_size <= 4) {
