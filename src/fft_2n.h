@@ -253,8 +253,8 @@ void Radix2<T>::_fftp(vec::Buffers<T>& output, vec::Buffers<T>& input, bool inv)
     size_t size = input.get_size();
     std::vector<T*> even_mem(half, nullptr);
     std::vector<T*> odd_mem(half, nullptr);
-    vec::Buffers<T> i_even(half, size, &even_mem);
-    vec::Buffers<T> i_odd(half, size, &odd_mem);
+    vec::Buffers<T> i_even(half, size, even_mem);
+    vec::Buffers<T> i_odd(half, size, odd_mem);
 
     // separate even and odd elements of input
     input.separate_even_odd(i_even, i_odd);
