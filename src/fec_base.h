@@ -423,9 +423,9 @@ void FecCode<T>::encode_bufs(
         // std::cout << "words at " << offset << ": "; words.dump();
 
         timeval t1 = tick();
-        uint64_t start = rdtsc();
+        uint64_t start = hw_timer();
         encode(&output, output_parities_props, offset, &words);
-        uint64_t end = rdtsc();
+        uint64_t end = hw_timer();
         uint64_t t2 = hrtime_usec(t1);
 
         // std::cout << "output: "; output.dump();
@@ -496,9 +496,9 @@ void FecCode<T>::encode_packet(
                 words_mem_char, words_mem_T, n_data, pkt_size, word_size);
 
         timeval t1 = tick();
-        uint64_t start = rdtsc();
+        uint64_t start = hw_timer();
         encode(&output, output_parities_props, offset, &words);
-        uint64_t end = rdtsc();
+        uint64_t end = hw_timer();
         uint64_t t2 = hrtime_usec(t1);
 
         total_enc_usec += t2;
@@ -633,9 +633,9 @@ bool FecCode<T>::decode_bufs(
             break;
 
         timeval t1 = tick();
-        uint64_t start = rdtsc();
+        uint64_t start = hw_timer();
         decode(*context, &output, input_parities_props, offset, &words);
-        uint64_t end = rdtsc();
+        uint64_t end = hw_timer();
         uint64_t t2 = hrtime_usec(t1);
 
         total_dec_usec += t2;
@@ -985,9 +985,9 @@ bool FecCode<T>::decode_packet(
                 words_mem_char, words_mem_T, n_data, pkt_size, word_size);
 
         timeval t1 = tick();
-        uint64_t start = rdtsc();
+        uint64_t start = hw_timer();
         decode(*context, &output, input_parities_props, offset, &words);
-        uint64_t end = rdtsc();
+        uint64_t end = hw_timer();
         uint64_t t2 = hrtime_usec(t1);
 
         total_dec_usec += t2;
