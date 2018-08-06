@@ -73,23 +73,23 @@ TYPED_TEST(BuffersTest, TestConstructors) // NOLINT
     auto vec1 = this->gen_buffers_rand_data(n, size);
     vec::Buffers<TypeParam> vec2(*vec1, begin, end);
 
-    std::vector<TypeParam*>* mem1 = vec1->get_mem();
-    std::vector<TypeParam*>* mem2 = vec2.get_mem();
+    const std::vector<TypeParam*> mem1 = vec1->get_mem();
+    const std::vector<TypeParam*> mem2 = vec2.get_mem();
 
     ASSERT_EQ(vec2.get_n(), end - begin);
     ASSERT_EQ(vec2.get_size(), vec1->get_size());
 
     for (int i = 0; i < end - begin; i++) {
         for (int j = 0; j < size; j++) {
-            mem2->at(i)[j] = mem1->at(i + begin)[j];
+            mem2.at(i)[j] = mem1.at(i + begin)[j];
         }
     }
 
     std::vector<TypeParam*> mem3(end - begin, nullptr);
     for (int i = 0; i < end - begin; i++) {
-        mem3[i] = mem1->at(i + begin);
+        mem3[i] = mem1.at(i + begin);
     }
-    vec::Buffers<TypeParam> vec3(end - begin, size, &mem3);
+    vec::Buffers<TypeParam> vec3(end - begin, size, mem3);
 
     ASSERT_EQ(vec2, vec3);
 }
@@ -108,8 +108,8 @@ TYPED_TEST(BuffersTest, TestEvenOddSeparation) // NOLINT
         new std::vector<TypeParam*>(half, nullptr);
     std::vector<TypeParam*>* odd_mem =
         new std::vector<TypeParam*>(half, nullptr);
-    vec::Buffers<TypeParam> i_even(half, size, even_mem);
-    vec::Buffers<TypeParam> i_odd(half, size, odd_mem);
+    vec::Buffers<TypeParam> i_even(half, size, *even_mem);
+    vec::Buffers<TypeParam> i_odd(half, size, *odd_mem);
     vec1->separate_even_odd(i_even, i_odd);
 
     vec1->separate_even_odd();
@@ -119,15 +119,15 @@ TYPED_TEST(BuffersTest, TestEvenOddSeparation) // NOLINT
     ASSERT_EQ(i_even, _i_even);
     ASSERT_EQ(i_odd, _i_odd);
 
-    const std::vector<TypeParam*>* mem1 = vec1->get_mem();
-    const std::vector<TypeParam*>* mem2 = vec2.get_mem();
+    const std::vector<TypeParam*> mem1 = vec1->get_mem();
+    const std::vector<TypeParam*> mem2 = vec2.get_mem();
 
     bool ok = true;
     for (int i = 0; i < n / 2; i += 2) {
-        TypeParam* even1 = mem1->at(i);
-        TypeParam* even2 = mem2->at(i * 2);
-        TypeParam* odd1 = mem1->at(i + n / 2);
-        TypeParam* odd2 = mem2->at(i * 2 + 1);
+        TypeParam* even1 = mem1.at(i);
+        TypeParam* even2 = mem2.at(i * 2);
+        TypeParam* odd1 = mem1.at(i + n / 2);
+        TypeParam* odd2 = mem2.at(i * 2 + 1);
         for (int j = 0; j < size; j++) {
             if (even1[j] != even2[j] || odd1[j] != odd2[j]) {
                 ok = false;
@@ -171,15 +171,15 @@ TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
         const int bytes_size = size * word_size;
         const TypeParam max = (static_cast<TypeParam>(1) << word_size) + 1;
         auto words = this->gen_buffers_rand_data(n, size, max);
-        const std::vector<TypeParam*>* mem_T = words->get_mem();
+        const std::vector<TypeParam*> mem_T = words->get_mem();
 
         // Pack manually from TypeParam to uint8_t.
         vec::Buffers<uint8_t> vec_char(n, bytes_size);
-        std::vector<uint8_t*>* mem_char = vec_char.get_mem();
+        const std::vector<uint8_t*> mem_char = vec_char.get_mem();
         for (int j = 0; j < n; j++) {
             int t = 0;
-            TypeParam* buf_T = mem_T->at(j);
-            uint8_t* buf_char = mem_char->at(j);
+            TypeParam* buf_T = mem_T.at(j);
+            uint8_t* buf_char = mem_char.at(j);
 
             for (int k = 0; k < size; k++) {
                 TypeParam symb = buf_T[k];
@@ -196,13 +196,13 @@ TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
 
         // Pack bufs of type uint8_t to bufs of type TypeParam.
         vec::Buffers<TypeParam> vec_T_tmp(n, size);
-        std::vector<TypeParam*>* mem_T_tmp = vec_T_tmp.get_mem();
+        const std::vector<TypeParam*> mem_T_tmp = vec_T_tmp.get_mem();
         vec::pack<uint8_t, TypeParam>(mem_char, mem_T_tmp, n, size, word_size);
         ASSERT_EQ(vec_T_tmp, *words);
 
         // Unpack bufs of type TypeParam to bufs of type uint8_t.
         vec::Buffers<uint8_t> vec_char_tmp(n, bytes_size);
-        std::vector<uint8_t*>* mem_char_tmp = vec_char_tmp.get_mem();
+        const std::vector<uint8_t*> mem_char_tmp = vec_char_tmp.get_mem();
         vec::unpack<TypeParam, uint8_t>(
             mem_T_tmp, mem_char_tmp, n, size, word_size);
         ASSERT_EQ(vec_char_tmp, vec_char);
