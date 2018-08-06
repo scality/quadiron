@@ -45,14 +45,17 @@ namespace quadiron {
 namespace vec {
 
 template <typename Ts, typename Td, typename Tw>
-inline void
-pack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
+inline void pack_next(
+    const std::vector<Ts*>& src,
+    const std::vector<Td*>& dest,
+    int n,
+    size_t size)
 {
     int i;
     std::vector<Tw*> tmp(n, nullptr);
     for (i = 0; i < n; i++) {
-        tmp[i] = reinterpret_cast<Tw*>(src->at(i));
-        std::copy_n(tmp[i], size, dest->at(i));
+        tmp[i] = reinterpret_cast<Tw*>(src.at(i));
+        std::copy_n(tmp[i], size, dest.at(i));
     }
     tmp.shrink_to_fit();
 }
@@ -73,8 +76,8 @@ pack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
  */
 template <typename Ts, typename Td>
 inline void pack(
-    std::vector<Ts*>* src,
-    std::vector<Td*>* dest,
+    const std::vector<Ts*>& src,
+    const std::vector<Td*>& dest,
     int n,
     size_t size,
     size_t word_size)
@@ -96,14 +99,17 @@ inline void pack(
 }
 
 template <typename Ts, typename Td, typename Tw>
-inline void
-unpack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
+inline void unpack_next(
+    const std::vector<Ts*>& src,
+    const std::vector<Td*>& dest,
+    int n,
+    size_t size)
 {
     int i;
     std::vector<Tw*> tmp(n, nullptr);
     for (i = 0; i < n; i++) {
-        tmp[i] = reinterpret_cast<Tw*>(dest->at(i));
-        std::copy_n(src->at(i), size, tmp[i]);
+        tmp[i] = reinterpret_cast<Tw*>(dest.at(i));
+        std::copy_n(src.at(i), size, tmp[i]);
     }
     tmp.shrink_to_fit();
 }
@@ -124,8 +130,8 @@ unpack_next(std::vector<Ts*>* src, std::vector<Td*>* dest, int n, size_t size)
  */
 template <typename Ts, typename Td>
 inline void unpack(
-    std::vector<Ts*>* src,
-    std::vector<Td*>* dest,
+    const std::vector<Ts*>& src,
+    const std::vector<Td*>& dest,
     int n,
     size_t size,
     size_t word_size)
@@ -157,10 +163,10 @@ std::vector<Td*>* cast_mem_of_vecp(vec::Buffers<Ts>* s)
 
     // std::cout << "\ninput: "; s->dump();
 
-    std::vector<Ts*>* mem_s = s->get_mem();
+    const std::vector<Ts*> mem_s = s->get_mem();
     std::vector<Td*>* mem_d = new std::vector<Td*>(n, nullptr);
     for (i = 0; i < n; i++) {
-        mem_d->at(i) = reinterpret_cast<Td*>(mem_s->at(i));
+        mem_d->at(i) = reinterpret_cast<Td*>(mem_s.at(i));
     }
 
     return mem_d;
