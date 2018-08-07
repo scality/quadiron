@@ -498,11 +498,7 @@ void FecCode<T>::encode_packet(
         n_encode_ops++;
 
         vec::unpack<T, uint8_t>(
-            output_mem_T,
-            output_mem_char,
-            output_len,
-            pkt_size,
-            word_size);
+            output_mem_T, output_mem_char, output_len, pkt_size, word_size);
 
         for (unsigned i = 0; i < n_outputs; i++) {
             write_pkt((char*)(output_mem_char.at(i)), output_parities_bufs[i]);
@@ -982,11 +978,7 @@ bool FecCode<T>::decode_packet(
         n_decode_ops++;
 
         vec::unpack<T, uint8_t>(
-            output_mem_T,
-            output_mem_char,
-            output_len,
-            pkt_size,
-            word_size);
+            output_mem_T, output_mem_char, output_len, pkt_size, word_size);
 
         for (unsigned i = 0; i < n_data; i++) {
             if (output_data_bufs[i] != nullptr) {
