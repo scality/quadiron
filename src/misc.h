@@ -31,23 +31,46 @@
 #ifndef __QUAD_MISC_H__
 #define __QUAD_MISC_H__
 
+#include <cassert>
+#include <cstdint>
+
 namespace quadiron {
 
-#if defined(__i386__)
-static __inline__ unsigned long long rdtsc(void)
+static inline uint64_t hw_timer()
 {
-    unsigned long long int x;
-    __asm__ volatile(".byte 0x0f, 0x31" : "=A"(x));
+    uint64_t x;
+#if defined(__i386__)
+    __asm__ volatile("rdtsc" : "=A"(x));
+#elif defined(__x86_64__)
+    uint64_t lo, hi;
+    __asm__ volatile("rdtsc" : "=a"(lo), "=d"(hi));
+    x = (hi << 32) | lo;
+#elif defined(__aarch64__)
+    asm volatile("mrs %0, cntvct_el0" : "=r"(x));
+#elif defined(__ARM_ARCH) && (__ARM_ARCH >= 6)
+    uint32_t pmccntr;
+    uint32_t pmuseren;
+    uint32_t pmcntenset;
+
+    // Check that unprivileged PMCCNTR reads are alowed.
+    // Source:
+    // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0460c/Bgbhfegi.html
+    asm volatile("mrc p15, 0, %0, c9, c14, 0" : "=r"(pmuseren));
+    assert(pmuseren & 1);
+
+    // Check that PMCCNTR is actually counting cycles.
+    // Source:
+    // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0460c/Bgbhfegi.html
+    asm volatile("mrc p15, 0, %0, c9, c12, 1" : "=r"(pmcntenset));
+    assert(pmcntenset & 0x80000000ul);
+
+    asm volatile("mrc p15, 0, %0, c9, c13, 0" : "=r"(pmccntr));
+    x = static_cast<uint64_t>(pmccntr) << 6;
+#else
+#error hw_timer is not defined for your CPU
+#endif
     return x;
 }
-#elif defined(__x86_64__)
-static __inline__ unsigned long long rdtsc(void)
-{
-    unsigned hi, lo;
-    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
-}
-#endif
 
 } // namespace quadiron
 
