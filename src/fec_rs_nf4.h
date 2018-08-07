@@ -308,7 +308,7 @@ class RsNf4 : public FecCode<T> {
             std::vector<size_t> packed_symbs;
             // pack marked symbols
             for (auto const& data : props[frag_id].get_map()) {
-                off_t loc_offset = data.first.get_offset();
+                const off_t loc_offset = data.first.get_offset();
                 if (loc_offset >= offset && loc_offset < offset_max) {
                     // As loc.offset := offset + j * this->word_size
                     const size_t j = (loc_offset - offset) / this->word_size;

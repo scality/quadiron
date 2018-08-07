@@ -74,7 +74,6 @@ inline aint128 expand32(uint32_t* arr, int n)
 
 inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
 {
-    uint32_t flag;
     uint16_t ai[8];
     aint128 values;
 
@@ -88,10 +87,8 @@ inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
     ai[6] = _mm_extract_epi16(_a, 6);
     ai[7] = _mm_extract_epi16(_a, 7);
 
-    flag = ai[1];
-    flag += (ai[3] > 0) ? 2 : 0;
-    flag += (ai[5] > 0) ? 4 : 0;
-    flag += (ai[7] > 0) ? 8 : 0;
+    const uint32_t flag =
+        ai[1] | (!!ai[3] << 1u) | (!!ai[5] << 2u) | (!!ai[7] << 3u);
 
     m128i val = _mm_set_epi64(
         _mm_setzero_si64(), _mm_set_pi16(ai[6], ai[4], ai[2], ai[0]));
@@ -104,7 +101,6 @@ inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
 
 inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
 {
-    uint32_t flag;
     uint16_t ai[8];
     aint128 values;
 
@@ -118,10 +114,8 @@ inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
     ai[6] = _mm_extract_epi16(_a, 6);
     ai[7] = _mm_extract_epi16(_a, 7);
 
-    flag = ai[1];
-    flag += (ai[3] > 0) ? 2 : 0;
-    flag += (ai[5] > 0) ? 4 : 0;
-    flag += (ai[7] > 0) ? 8 : 0;
+    const uint32_t flag =
+        ai[1] | (!!ai[3] << 1u) | (!!ai[5] << 2u) | (!!ai[7] << 3u);
 
     m128i val = _mm_set_epi64(
         _mm_setzero_si64(), _mm_set_pi16(ai[6], ai[4], ai[2], ai[0]));
