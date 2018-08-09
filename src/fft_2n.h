@@ -169,33 +169,36 @@ void Radix2<T>::_init_bitrev()
 template <typename T>
 void Radix2<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
-    unsigned len = this->n;
+    const unsigned len = this->n;
+    const unsigned input_len = input.get_n();
+    // to support FFT on input vectors of length greater than from `data_len`
+    const unsigned group_len =
+        (input_len > data_len) ? len / input_len : len / data_len;
 
-    unsigned group_len = len / data_len;
-    unsigned idx = 0;
-    for (unsigned group = 0; group < data_len; ++group) {
+    for (unsigned idx = 0; idx < input_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
-        T a = input.get(rev[idx]);
-        output.set(idx, a);
-        unsigned end = idx + group_len;
-        for (unsigned i = idx + 1; i < end; ++i) {
+        const T a = input.get(idx);
+        const unsigned end = rev[idx] + group_len;
+        for (unsigned i = rev[idx]; i < end; ++i) {
             output.set(i, a);
         }
-        idx += group_len;
     }
-    // set output  = scramble(input), i.e. bit reversal ordering
-    for (; idx < len; idx++) {
-        output.set(idx, input.get(rev[idx]));
+    for (unsigned idx = input_len; idx < data_len; ++idx) {
+        // set output  = scramble(input), i.e. bit reversal ordering
+        const unsigned end = rev[idx] + group_len;
+        for (unsigned i = rev[idx]; i < end; ++i) {
+            output.set(i, 0);
+        }
     }
     // perform butterfly operations
     for (unsigned m = group_len; m < len; m *= 2) {
-        unsigned doubled_m = 2 * m;
-        unsigned ratio = len / doubled_m;
+        const unsigned doubled_m = 2 * m;
+        const unsigned ratio = len / doubled_m;
         for (unsigned j = 0; j < m; ++j) {
-            T r = W->get(j * ratio);
+            const T r = W->get(j * ratio);
             for (unsigned i = j; i < len; i += doubled_m) {
-                T a = output.get(i);
-                T b = this->gf->mul(r, output.get(i + m));
+                const T a = output.get(i);
+                const T b = this->gf->mul(r, output.get(i + m));
                 output.set(i, this->gf->add(a, b));
                 output.set(i + m, this->gf->sub(a, b));
             }
@@ -255,30 +258,33 @@ void Radix2<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 template <typename T>
 void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
-    unsigned len = this->n;
-    unsigned size = this->pkt_size;
+    const unsigned len = this->n;
+    const unsigned size = this->pkt_size;
+    const unsigned input_len = input.get_n();
+    // to support FFT on input vectors of length greater than from `data_len`
+    const unsigned group_len =
+        (input_len > data_len) ? len / input_len : len / data_len;
 
-    unsigned group_len = len / data_len;
-    unsigned idx = 0;
-    for (unsigned group = 0; group < data_len; ++group) {
+    for (unsigned idx = 0; idx < input_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
-        T* a = input.get(rev[idx]);
-        output.copy(idx, a);
-        unsigned end = idx + group_len;
-        for (unsigned i = idx + 1; i < end; ++i) {
+        T* a = input.get(idx);
+        const unsigned end = rev[idx] + group_len;
+        for (unsigned i = rev[idx]; i < end; ++i) {
             output.copy(i, a);
         }
-        idx += group_len;
     }
-    // set output  = scramble(input), i.e. bit reversal ordering
-    for (; idx < len; ++idx) {
-        output.copy(idx, input.get(rev[idx]));
+    for (unsigned idx = input_len; idx < data_len; ++idx) {
+        // set output  = scramble(input), i.e. bit reversal ordering
+        const unsigned end = rev[idx] + group_len;
+        for (unsigned i = rev[idx]; i < end; ++i) {
+            output.fill(i, 0);
+        }
     }
     // perform butterfly operations
     for (unsigned m = group_len; m < len; m *= 2) {
-        unsigned doubled_m = 2 * m;
+        const unsigned doubled_m = 2 * m;
         for (unsigned j = 0; j < m; ++j) {
-            T r = W->get(j * len / doubled_m);
+            const T r = W->get(j * len / doubled_m);
             for (unsigned i = j; i < len; i += doubled_m) {
                 T* a = output.get(i);
                 T* b = output.get(i + m);
