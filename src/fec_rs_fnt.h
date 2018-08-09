@@ -140,8 +140,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Vector<T>& words) override
     {
-        vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, vwords);
+        this->fft->fft(output, words);
         // max_value = 2^x
         T thres = this->gf->card() - 1;
         // check for out of range value in output
@@ -159,8 +158,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
-        vec::BuffersZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, vwords);
+        this->fft->fft(output, words);
         // check for out of range value in output
         int size = output.get_size();
         T thres = (this->gf->card() - 1);
