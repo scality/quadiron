@@ -43,6 +43,7 @@ ExternalProject_Add(gtest
   PREFIX          ${CMAKE_CURRENT_BINARY_DIR}/gtest
   GIT_REPOSITORY  https://github.com/google/googletest.git
   GIT_TAG         release-1.8.0
+  CMAKE_ARGS      "-DCMAKE_CXX_FLAGS=-fPIC" "-DCMAKE_AR=${CMAKE_AR}"
   INSTALL_COMMAND ""
 )
 
