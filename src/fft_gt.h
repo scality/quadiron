@@ -126,7 +126,7 @@ class GoodThomas : public FourierTransform<T> {
     vec::View<T>* X = nullptr;
     FourierTransform<T>* dft_outer = nullptr;
     FourierTransform<T>* dft_inner = nullptr;
-    std::vector<T>* prime_factors = nullptr;
+    std::vector<T> prime_factors;
 };
 
 /**
@@ -148,17 +148,16 @@ GoodThomas<T>::GoodThomas(
     : FourierTransform<T>(gf, n)
 {
     if (factors == nullptr) {
-        this->prime_factors = new std::vector<T>();
         first_layer_fft = true;
-        arith::get_coprime_factors<T>(n, this->prime_factors);
+        this->prime_factors = arith::get_coprime_factors<T>(n);
         // w is of order-n
         w = gf.get_nth_root(n);
     } else {
-        this->prime_factors = factors;
+        this->prime_factors = *factors;
         first_layer_fft = false;
         w = _w;
     }
-    n1 = prime_factors->at(id);
+    n1 = prime_factors[id];
     n2 = n / n1;
 
     a = n2;
@@ -181,7 +180,7 @@ GoodThomas<T>::GoodThomas(
             this->dft_inner = new fft::Radix2<T>(gf, _n2);
         } else {
             this->dft_inner = new fft::CooleyTukey<T>(
-                gf, _n2, id + 1, this->prime_factors, w2);
+                gf, _n2, id + 1, &this->prime_factors, w2);
         }
         this->G = new vec::Vector<T>(gf, this->n);
         this->Y = new vec::View<T>(this->G);
@@ -193,8 +192,6 @@ GoodThomas<T>::GoodThomas(
 template <typename T>
 GoodThomas<T>::~GoodThomas()
 {
-    if (prime_factors && first_layer_fft)
-        delete prime_factors;
     if (dft_outer)
         delete dft_outer;
     if (dft_inner)

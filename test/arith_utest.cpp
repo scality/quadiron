@@ -146,9 +146,9 @@ TYPED_TEST(ArithTestCommon, TestFactorDistinctPrime) // NOLINT
 {
     for (int i = 0; i < 1000; i++) {
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
-        std::vector<TypeParam> primes;
+        const std::vector<TypeParam> primes =
+            quadiron::arith::factor_distinct_prime<TypeParam>(x);
 
-        quadiron::arith::factor_distinct_prime<TypeParam>(x, &primes);
         this->check_all_primes(primes, true);
     }
 }
@@ -177,10 +177,10 @@ TYPED_TEST(ArithTestCommon, TestFactorPrime) // NOLINT
 TYPED_TEST(ArithTestCommon, TestGetProperDivisor) // NOLINT
 {
     for (int i = 0; i < 1000; i++) {
-        std::vector<TypeParam> divisors;
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
+        const std::vector<TypeParam> divisors =
+            quadiron::arith::get_proper_divisors<TypeParam>(x);
 
-        quadiron::arith::get_proper_divisors<TypeParam>(x, &divisors);
         this->check_divisors(x, divisors, true);
     }
 }
@@ -188,12 +188,12 @@ TYPED_TEST(ArithTestCommon, TestGetProperDivisor) // NOLINT
 TYPED_TEST(ArithTestCommon, TestGetProperDivisor2) // NOLINT
 {
     for (int i = 0; i < 1000; i++) {
-        std::vector<TypeParam> divisors;
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
+        const std::vector<TypeParam> factors =
+            quadiron::arith::factor_distinct_prime<TypeParam>(x);
+        const std::vector<TypeParam> divisors =
+            quadiron::arith::get_proper_divisors<TypeParam>(x, factors);
 
-        std::vector<TypeParam> factors;
-        quadiron::arith::factor_distinct_prime<TypeParam>(x, &factors);
-        quadiron::arith::get_proper_divisors<TypeParam>(x, &factors, &divisors);
         this->check_divisors(x, divisors, true);
     }
 }
@@ -202,9 +202,9 @@ TYPED_TEST(ArithTestCommon, TestGetAllDivisor) // NOLINT
 {
     for (int i = 0; i < 1000; i++) {
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
-        std::vector<TypeParam> divisors;
+        const std::vector<TypeParam> divisors =
+            quadiron::arith::get_all_divisors<TypeParam>(x);
 
-        quadiron::arith::get_all_divisors<TypeParam>(x, &divisors);
         this->check_divisors(x, divisors, false);
     }
 }
@@ -243,11 +243,10 @@ TYPED_TEST(ArithTestCommon, TestGetCodeLengthHighCompo2) // NOLINT
         const TypeParam order = this->uniform_dist_max(quadiron::prng());
         std::uniform_int_distribution<uint32_t> dis(1, order - 1);
         const TypeParam n = dis(quadiron::prng());
-        std::vector<TypeParam> factors;
-
-        quadiron::arith::get_prime_factors<TypeParam>(order, &factors);
+        const std::vector<TypeParam> factors =
+            quadiron::arith::get_prime_factors<TypeParam>(order);
         const TypeParam len =
-            quadiron::arith::get_code_len_high_compo<TypeParam>(&factors, n);
+            quadiron::arith::get_code_len_high_compo<TypeParam>(factors, n);
 
         ASSERT_EQ(order % len, 0);
         ASSERT_GE(len, n);
@@ -258,9 +257,9 @@ TYPED_TEST(ArithTestCommon, TestGetCoprimeFactors) // NOLINT
 {
     for (int i = 0; i < 1000; i++) {
         const TypeParam n = this->uniform_dist_max(quadiron::prng());
-        std::vector<TypeParam> divisors;
+        const std::vector<TypeParam> divisors =
+            quadiron::arith::get_coprime_factors<TypeParam>(n);
 
-        quadiron::arith::get_coprime_factors<TypeParam>(n, &divisors);
         this->check_prime_divisors(n, divisors, true);
     }
 }
@@ -269,9 +268,9 @@ TYPED_TEST(ArithTestCommon, TestGetPrimeFactors) // NOLINT
 {
     for (int i = 0; i < 1000; i++) {
         const TypeParam n = this->uniform_dist_max(quadiron::prng());
-        std::vector<TypeParam> divisors;
+        const std::vector<TypeParam> divisors =
+            quadiron::arith::get_prime_factors<TypeParam>(n);
 
-        quadiron::arith::get_prime_factors<TypeParam>(n, &divisors);
         this->check_prime_divisors(n, divisors, false);
     }
 }

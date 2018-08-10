@@ -221,13 +221,9 @@ void BinExtension<T>::find_primitive_root()
 
     while (nb <= h) {
         ok = true;
-        // check nb^divisor == 1
-        // std::cout << "checking.." << nb << std::endl;
-        for (i = 0; i != this->proper_divisors->size(); ++i) {
-            // std::cout << nb << "^" << this->proper_divisors->at(i) << "\n";
-            // std::cout << this->exp(nb, this->proper_divisors->at(i)) <<
-            // std::endl;
-            if (BinExtension<T>::exp(nb, this->proper_divisors->at(i)) == 1) {
+        // check nb^divisor == 1.
+        for (i = 0; i != this->proper_divisors.size(); ++i) {
+            if (BinExtension<T>::exp(nb, this->proper_divisors[i]) == 1) {
                 ok = false;
                 break;
             }

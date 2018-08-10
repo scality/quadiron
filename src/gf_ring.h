@@ -107,7 +107,7 @@ class RingModN {
         T x,
         T h,
         std::vector<T>* primes,
-        std::vector<int>* exponent) const;
+        std::vector<int>* exponents) const;
     T get_order(T x) const;
     virtual T get_nth_root(T n) const;
     T get_code_len(T n) const;
@@ -121,10 +121,10 @@ class RingModN {
   protected:
     T _card;
     T root;
-    std::unique_ptr<std::vector<T>> primes = nullptr;
-    std::unique_ptr<std::vector<int>> exponent = nullptr;
-    std::unique_ptr<std::vector<T>> all_primes_factors = nullptr;
-    std::unique_ptr<std::vector<T>> proper_divisors = nullptr;
+    std::vector<T> primes;
+    std::vector<int> exponents;
+    std::vector<T> all_primes_factors;
+    std::vector<T> proper_divisors;
 };
 /**
  * The calculation of primitive roots is performed in the constructor.
@@ -141,13 +141,6 @@ RingModN<T>::RingModN(T card, bool calculate_root)
 {
     this->_card = card;
     this->root = 0;
-
-    this->primes = std::unique_ptr<std::vector<T>>(new std::vector<T>());
-    this->exponent = std::unique_ptr<std::vector<int>>(new std::vector<int>());
-    this->all_primes_factors =
-        std::unique_ptr<std::vector<T>>(new std::vector<T>());
-    this->proper_divisors =
-        std::unique_ptr<std::vector<T>>(new std::vector<T>());
 
     // Init: computing primitive root
     // NOTE: for a derived classe, it should perform this operation in its
@@ -458,15 +451,14 @@ void RingModN<T>::compute_factors_of_order()
 {
     T h = RingModN<T>::card_minus_one();
     // prime factorisation of order, i.e. order = p_i^e_i where
-    //  p_i, e_i are ith element of this->primes and this->exponent
-    arith::factor_prime<T>(h, primes.get(), exponent.get());
-    // store all primes in a vector. A prime is replicated according to its
-    //  exponent
-    arith::get_prime_factors_final<T>(
-        primes.get(), exponent.get(), all_primes_factors.get());
+    //  p_i, e_i are ith element of this->primes and this->exponents.
+    arith::factor_prime<T>(h, &primes, &exponents);
+    // Store all primes in a vector.
+    // A prime is replicated according to its exponent.
+    all_primes_factors = arith::get_prime_factors<T>(primes, exponents);
     // calculate all proper divisor of order. A proper divisor = order/p_i for
     //  each prime divisor of order.
-    arith::get_proper_divisors<T>(h, primes.get(), proper_divisors.get());
+    proper_divisors = arith::get_proper_divisors<T>(h, primes);
 }
 
 /**
@@ -604,12 +596,9 @@ bool RingModN<T>::is_primitive_root(T nb) const
     bool ok = true;
     typename std::vector<T>::size_type i;
     T h = this->card_minus_one();
-    // check nb^divisor == 1
-    // std::cout << "checking.." << nb << std::endl;
-    for (i = 0; i != this->proper_divisors->size(); ++i) {
-        // std::cout << nb << "^" << this->proper_divisors->at(i) << "=";
-        // std::cout << exp(nb, this->proper_divisors->at(i)) << std::endl;
-        if (this->exp(nb, this->proper_divisors->at(i)) == 1) {
+    // Check nb^divisor == 1.
+    for (i = 0; i != this->proper_divisors.size(); ++i) {
+        if (this->exp(nb, this->proper_divisors[i]) == 1) {
             ok = false;
             break;
         }
@@ -643,13 +632,9 @@ void RingModN<T>::find_primitive_root()
 
     while (nb <= h) {
         ok = true;
-        // check nb^divisor == 1
-        // std::cout << "checking.." << nb << std::endl;
-        for (i = 0; i != this->proper_divisors->size(); ++i) {
-            // std::cout << nb << "^" << this->proper_divisors->at(i) << "\n";
-            // std::cout << this->exp(nb, this->proper_divisors->at(i)) <<
-            // std::endl;
-            if (RingModN<T>::exp(nb, this->proper_divisors->at(i)) == 1) {
+        // Check nb^divisor == 1.
+        for (i = 0; i != this->proper_divisors.size(); ++i) {
+            if (RingModN<T>::exp(nb, this->proper_divisors[i]) == 1) {
                 ok = false;
                 break;
             }
@@ -677,15 +662,15 @@ T RingModN<T>::do_step_get_order(
     T x,
     T h,
     std::vector<T>* primes,
-    std::vector<int>* exponent) const
+    std::vector<int>* exponents) const
 {
     T y, p;
     int r;
     while (!primes->empty()) {
         p = primes->back();
-        r = exponent->back();
+        r = exponents->back();
         primes->pop_back();
-        exponent->pop_back();
+        exponents->pop_back();
         y = h / p;
         if (this->exp(x, y) != 1) {
             // remove (p, r)
@@ -698,10 +683,10 @@ T RingModN<T>::do_step_get_order(
         // exp(x, y) == 1
         if (r > 1) {
             primes->push_back(p);
-            exponent->push_back(r - 1);
+            exponents->push_back(r - 1);
         }
         // do next
-        return do_step_get_order(x, y, primes, exponent);
+        return do_step_get_order(x, y, primes, exponents);
     }
     return h;
 }
@@ -735,8 +720,8 @@ T RingModN<T>::get_order(T x) const
     if (x == 0 || x == 1)
         return 1;
     T h = this->card_minus_one();
-    std::vector<T> _primes(*primes);
-    std::vector<int> _exponent(*exponent);
+    std::vector<T> _primes(primes);
+    std::vector<int> _exponent(exponents);
     T order = do_step_get_order(x, h, &_primes, &_exponent);
 
     if (order == 1)
@@ -839,7 +824,7 @@ T RingModN<T>::get_code_len_high_compo(T n) const
     if (nb < n)
         assert(false);
 
-    return arith::get_code_len_high_compo<T>(all_primes_factors.get(), n);
+    return arith::get_code_len_high_compo<T>(all_primes_factors, n);
 }
 
 template <typename T>
