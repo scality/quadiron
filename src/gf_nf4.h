@@ -66,7 +66,7 @@ class NF4 : public gf::Field<T> {
     T log(T a, T b) const override;
     T weak_rand_tuple(void) const;
     T weak_rand(void) const override;
-    T get_unit(void) const;
+    T get_unit(void) const override;
     T replicate(T a) const override;
     T pack(T a) const;
     T pack(T a, uint32_t flag) const;

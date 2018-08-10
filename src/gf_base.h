@@ -53,6 +53,7 @@ class Field : public RingModN<T> {
     T get_p() const;
     int get_n() const;
     virtual T get_inv_n_mod_p(int n) const;
+    virtual T get_unit() const;
 
   protected:
     T p;
@@ -102,6 +103,12 @@ template <typename T>
 T Field<T>::get_inv_n_mod_p(int n) const
 {
     return this->inv(n) % p;
+}
+
+template <typename T>
+T Field<T>::get_unit() const
+{
+    return 1;
 }
 
 } // namespace gf
