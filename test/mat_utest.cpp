@@ -36,7 +36,7 @@ namespace vec = quadiron::vec;
 
 TEST(MatrixTest, TestInvertGf11) // NOLINT
 {
-    const gf::Prime<uint32_t> gf11(11);
+    const auto gf11(gf::create<gf::Prime<uint32_t>>(11));
     vec::Matrix<uint32_t> mat(gf11, 3, 3);
 
     mat.set(0, 0, 2);
@@ -64,7 +64,7 @@ TEST(MatrixTest, TestInvertGf11) // NOLINT
 
 TEST(MatrixTest, TestInvertGf29) // NOLINT
 {
-    const gf::Prime<uint32_t> gf29(29);
+    const auto gf29(gf::create<gf::Prime<uint32_t>>(29));
     vec::Matrix<uint32_t> mat(gf29, 3, 3);
 
     mat.set(0, 0, 22);

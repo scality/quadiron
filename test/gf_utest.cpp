@@ -121,7 +121,7 @@ TYPED_TEST(GfTestCommon, TestGfNf4) // NOLINT
     for (unsigned n = 1; n <= sizeof(TypeParam) / 4; n++) {
         quadiron::prng().seed(time(0));
 
-        gf::NF4<TypeParam> gf(n);
+        auto gf(gf::create<gf::NF4<TypeParam>>(n));
         this->test_negation(gf);
         this->test_negation(gf);
 
@@ -140,7 +140,7 @@ TYPED_TEST(GfTestCommon, TestGf2n) // NOLINT
     for (TypeParam n = 8; n <= 8 * sizeof(TypeParam); n *= 2) {
         quadiron::prng().seed(time(0));
 
-        gf::BinExtension<TypeParam> gf(n);
+        auto gf(gf::create<gf::BinExtension<TypeParam>>(n));
         this->test_negation(gf);
         this->test_reciprocal(gf);
         // this->test_log(gf);
@@ -163,7 +163,7 @@ TYPED_TEST(GfTestNo128, TestGf5) // NOLINT
 {
     quadiron::prng().seed(time(0));
 
-    gf::Prime<TypeParam> gf(5);
+    auto gf(gf::create<gf::Prime<TypeParam>>(5));
     this->test_negation(gf);
     this->test_reciprocal(gf);
     this->test_log(gf);
@@ -176,7 +176,7 @@ TYPED_TEST(GfTestNo128, TestGf256) // NOLINT
 {
     quadiron::prng().seed(time(0));
 
-    gf::BinExtension<TypeParam> gf(8);
+    auto gf(gf::create<gf::BinExtension<TypeParam>>(8));
     this->test_negation(gf);
     this->test_reciprocal(gf);
     this->test_log(gf);

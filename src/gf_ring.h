@@ -54,15 +54,29 @@ class Vector;
 
 namespace gf {
 
+template <typename Class, typename... Args>
+Class create(Args... args)
+{
+    Class obj(args...);
+    obj.init();
+    return obj;
+}
+
+template <typename Base, typename Class, typename... Args>
+std::unique_ptr<Base> alloc(Args... args)
+{
+    std::unique_ptr<Base> obj = std::unique_ptr<Class>(new Class(args...));
+    obj->init();
+    return obj;
+}
+
 /** A ring of integers modulo N.
  */
 template <typename T>
 class RingModN {
   public:
-    RingModN(T card, bool calculate_root = true);
     virtual ~RingModN() = default;
     bool isNF4 = false;
-    void init();
     void compute_factors_of_order();
     void find_primitive_root();
     virtual T card(void) const;
@@ -118,7 +132,18 @@ class RingModN {
     virtual void neg(size_t n, T* x) const;
     virtual void neg(vec::Buffers<T>* buf) const;
 
+    RingModN(RingModN&&) = default;
+
   protected:
+    explicit RingModN(T card);
+    virtual void init();
+
+    template <typename Class, typename... Args>
+    friend Class create(Args... args);
+
+    template <typename Base, typename Class, typename... Args>
+    friend std::unique_ptr<Base> alloc(Args... args);
+
     T _card;
     T root;
     std::vector<T> primes;
@@ -126,28 +151,11 @@ class RingModN {
     std::vector<T> all_primes_factors;
     std::vector<T> proper_divisors;
 };
-/**
- * The calculation of primitive roots is performed in the constructor.
- * @note: this operation uses operations such as mul, exp etc. that depends on
- * the target finite field. Therefore, this operation should be executed only
- * in the constructor of the target class. For example with gf::Extension
- * extending from gf::Field that extends from gf::RingModN, this calculation
- * should be executed in the constructor of gf::Extension. Hence, we need a
- * variable to control it. That is the 3rd argument indicate whether the
- * computing of primitive root is performed in the constructor of RingModN.
- */
 template <typename T>
-RingModN<T>::RingModN(T card, bool calculate_root)
+RingModN<T>::RingModN(T card)
 {
     this->_card = card;
     this->root = 0;
-
-    // Init: computing primitive root
-    // NOTE: for a derived classe, it should perform this operation in its
-    // constructor since it need using its operations such as multiplication
-    if (calculate_root) {
-        this->init();
-    }
 }
 
 template <typename T>
@@ -262,10 +270,10 @@ T RingModN<T>::inv(T a) const
 template <typename T>
 T RingModN<T>::exp(T a, T b) const
 {
-    assert(RingModN<T>::check(a));
-    assert(RingModN<T>::check(b));
+    assert(check(a));
+    assert(check(b));
 
-    return RingModN<T>::exp_quick(a, b);
+    return exp_quick(a, b);
 }
 
 template <typename T>
@@ -273,7 +281,7 @@ T RingModN<T>::log(T a, T b) const
 {
     assert(check(a));
 
-    return RingModN<T>::log_naive(a, b);
+    return log_naive(a, b);
 }
 
 /**
@@ -449,7 +457,7 @@ void RingModN<T>::sub_vecp_to_vecp(
 template <typename T>
 void RingModN<T>::compute_factors_of_order()
 {
-    T h = RingModN<T>::card_minus_one();
+    T h = card_minus_one();
     // prime factorisation of order, i.e. order = p_i^e_i where
     //  p_i, e_i are ith element of this->primes and this->exponents.
     arith::factor_prime<T>(h, &primes, &exponents);
@@ -620,7 +628,7 @@ void RingModN<T>::find_primitive_root()
         return;
     }
 
-    T h = RingModN<T>::card_minus_one();
+    T h = card_minus_one();
     if (h == 1) {
         this->root = 1;
         return;

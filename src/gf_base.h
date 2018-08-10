@@ -47,8 +47,13 @@ class Prime;
 template <typename T>
 class Field : public RingModN<T> {
   public:
-    Field(T p, int n, bool calculate_root = true);
+    Field(Field&& other) noexcept
+        : RingModN<T>(std::move(other)), p(other.p), n(other.n),
+          sub_field(std::move(other.sub_field))
+    {
+    }
     virtual ~Field() = default;
+
     const Field<T>& get_sub_field() const;
     T get_p() const;
     int get_n() const;
@@ -59,19 +64,27 @@ class Field : public RingModN<T> {
     T p;
     int n;
     std::unique_ptr<Prime<T>> sub_field;
+
+    Field(T p, int n);
+
+    template <typename Class, typename... Args>
+    friend Class create(Args... args);
+
+    template <typename Base, typename Class, typename... Args>
+    friend std::unique_ptr<Base> alloc(Args... args);
 };
 
 template <typename T>
-Field<T>::Field(T p, int n, bool calculate_root)
-    : RingModN<T>(arith::exp<T>(p, n), calculate_root)
+Field<T>::Field(T p, int n) : RingModN<T>(arith::exp<T>(p, n))
 {
-    // XXX shall check that p is prime
+    // XXX: Shall check that `p` is prime.
     this->p = p;
     this->n = n;
-    if (n == 1)
+    if (n == 1) {
         this->sub_field = std::unique_ptr<Prime<T>>(nullptr);
-    else
-        this->sub_field = std::unique_ptr<Prime<T>>(new Prime<T>(p));
+    } else {
+        this->sub_field = gf::alloc<gf::Prime<T>, gf::Prime<T>>(p);
+    }
 }
 
 /**

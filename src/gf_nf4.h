@@ -50,7 +50,13 @@ namespace gf {
 template <typename T>
 class NF4 : public gf::Field<T> {
   public:
-    explicit NF4(unsigned n);
+    NF4(NF4&& other)
+    noexcept
+        : Field<T>(std::move(other)), unit(other.unit), q(other.q), h(other.h),
+          sub_field(std::move(other.sub_field))
+    {
+    }
+
     ~NF4() = default;
     T card(void) const override;
     T card_minus_one(void) const override;
@@ -83,8 +89,15 @@ class NF4 : public gf::Field<T> {
     T q;
     T h;
     std::unique_ptr<gf::Field<uint32_t>> sub_field;
+
     bool check_n(unsigned n);
-    void init(void);
+    explicit NF4(unsigned n);
+
+    template <typename Class, typename... Args>
+    friend Class create(Args... args);
+
+    template <typename Base, typename Class, typename... Args>
+    friend std::unique_ptr<Base> alloc(Args... args);
 
     T expand16(uint16_t* arr) const;
     T expand32(uint32_t* arr) const;
@@ -96,18 +109,16 @@ template <typename T>
 NF4<T>::NF4(unsigned n) : gf::Field<T>(T(65537), n)
 {
     this->isNF4 = true;
-    sub_field =
-        std::unique_ptr<gf::Field<uint32_t>>(new gf::Prime<uint32_t>(T(65537)));
+    sub_field = gf::alloc<gf::Field<uint32_t>, gf::Prime<uint32_t>>(T(65537));
 
     if (!check_n(n)) {
         // not supported yet
         assert(false && "Input n is not supported for NF4");
     }
 
-    unit = 0;
-    q = 0;
-    h = 0;
-    init();
+    unit = NF4<T>::replicate(1);
+    q = NF4<T>::replicate(T(65537));
+    h = NF4<T>::replicate(T(65536));
 }
 
 template <typename T>
@@ -164,14 +175,6 @@ T NF4<T>::replicate(T a) const
         b = ((b << 16) << 16) | a;
     }
     return b;
-}
-
-template <typename T>
-void NF4<T>::init(void)
-{
-    unit = NF4<T>::replicate(1);
-    q = NF4<T>::replicate(T(65537));
-    h = NF4<T>::replicate(T(65536));
 }
 
 template <typename T>

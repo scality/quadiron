@@ -120,7 +120,7 @@ TYPED_TEST_CASE(FftTest, TestedTypes);
 
 TYPED_TEST(FftTest, TestGcd) // NOLINT
 {
-    gf::Prime<TypeParam> gf(97);
+    auto gf(gf::create<gf::Prime<TypeParam>>(97));
     quadiron::SignedDoubleSizeVal<TypeParam> bezout[2];
 
     ASSERT_EQ(gf.inv(20), 34);
@@ -140,23 +140,23 @@ TYPED_TEST(FftTest, TestGcd) // NOLINT
 
 TYPED_TEST(FftTest, TestQuadraticResidues) // NOLINT
 {
-    gf::Prime<TypeParam> gf32(32);
+    auto gf32(gf::create<gf::Prime<TypeParam>>(32));
     for (int i = 0; i < 32; i++) {
         ASSERT_TRUE(gf32.is_quadratic_residue(gf32.exp(i, 2)));
     }
 
-    gf::Prime<TypeParam> gf7(7);
+    auto gf7(gf::create<gf::Prime<TypeParam>>(7));
     ASSERT_TRUE(gf7.is_quadratic_residue(2));
     ASSERT_FALSE(gf7.is_quadratic_residue(5));
 
-    gf::Prime<TypeParam> gf8(8);
+    auto gf8(gf::create<gf::Prime<TypeParam>>(8));
     ASSERT_TRUE(gf8.is_quadratic_residue(1));
     ASSERT_FALSE(gf8.is_quadratic_residue(3));
 }
 
 TYPED_TEST(FftTest, TestFftNaive) // NOLINT
 {
-    gf::Prime<TypeParam> gf(this->q);
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
 
     ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
@@ -175,7 +175,7 @@ TYPED_TEST(FftTest, TestFftNaive) // NOLINT
 
 TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
 {
-    gf::Prime<TypeParam> gf(this->q);
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
 
     ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
@@ -191,7 +191,7 @@ TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
 
 TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
 {
-    gf::Prime<TypeParam> gf(this->q);
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
     const size_t size = 4;
 
@@ -225,7 +225,7 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
 
 TYPED_TEST(FftTest, TestFftGt) // NOLINT
 {
-    gf::BinExtension<TypeParam> gf(4);
+    auto gf(gf::create<gf::BinExtension<TypeParam>>(4));
 
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
@@ -238,7 +238,7 @@ TYPED_TEST(FftTest, TestFftGt) // NOLINT
 
 TYPED_TEST(FftTest, TestFftCtGfp) // NOLINT
 {
-    gf::Prime<TypeParam> gf(this->q);
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
 
     // With this encoder we cannot exactly satisfy users request,
     // We need to pad n = minimal divisor of (q-1)
@@ -253,7 +253,7 @@ TYPED_TEST(FftTest, TestFftCtGf2n) // NOLINT
 {
     const size_t max_n = 8 * sizeof(TypeParam);
     for (size_t gf_n = 4; gf_n <= 128 && gf_n <= max_n; gf_n *= 2) {
-        gf::BinExtension<TypeParam> gf(gf_n);
+        auto gf(gf::create<gf::BinExtension<TypeParam>>(gf_n));
 
         // With this encoder we cannot exactly satisfy users request,
         // we need to pad n = minimal divisor of (q-1)
@@ -269,7 +269,7 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
 {
     for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(TypeParam);
          gf_n *= 2) {
-        gf::BinExtension<TypeParam> gf(gf_n);
+        auto gf(gf::create<gf::BinExtension<TypeParam>>(gf_n));
 
         // n is power of 2 and at least n_data + n_parities.
         const int n = quadiron::arith::get_smallest_power_of_2<TypeParam>(
@@ -285,7 +285,7 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
 
 TYPED_TEST(FftTest, TestFft2) // NOLINT
 {
-    gf::Prime<TypeParam> gf(this->q);
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
 
     ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
@@ -324,7 +324,7 @@ TYPED_TEST(FftTest, TestFft2) // NOLINT
 
 TYPED_TEST(FftTest, TestFft2Gfp) // NOLINT
 {
-    gf::Prime<TypeParam> gf(3);
+    auto gf(gf::create<gf::Prime<TypeParam>>(3));
     TypeParam size = 1;
 
     fft::Size2<TypeParam> fft(gf);
@@ -333,7 +333,7 @@ TYPED_TEST(FftTest, TestFft2Gfp) // NOLINT
 
 TYPED_TEST(FftTest, TestFftSingleGfp) // NOLINT
 {
-    gf::Prime<TypeParam> gf(39);
+    auto gf(gf::create<gf::Prime<TypeParam>>(39));
     fft::Single<TypeParam> fft(gf, 16);
 
     this->test_fft_codec(gf, &fft, 1);
@@ -342,8 +342,8 @@ TYPED_TEST(FftTest, TestFftSingleGfp) // NOLINT
 TYPED_TEST(FftTest, TestFftGf2n) // NOLINT
 {
     const size_t max_n = 8 * sizeof(TypeParam);
-    for (size_t gf_n = 4; gf_n <= 128 && gf_n <= max_n; gf_n *= 2) {
-        gf::BinExtension<TypeParam> gf(gf_n);
+    for (TypeParam gf_n = 4; gf_n <= 128 && gf_n <= max_n; gf_n *= 2) {
+        auto gf(gf::create<gf::BinExtension<TypeParam>>(gf_n));
         const TypeParam R = gf.get_primitive_root();
 
         ASSERT_EQ(gf.exp(R, gf.card_minus_one()), 1);

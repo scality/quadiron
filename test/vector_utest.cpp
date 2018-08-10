@@ -45,7 +45,7 @@ TYPED_TEST_CASE(VectorTest, TestedTypes);
 
 TYPED_TEST(VectorTest, TestHadamardMultiplication) // NOLINT
 {
-    const gf::Prime<TypeParam> gfp(65537);
+    const auto gfp(gf::create<gf::Prime<TypeParam>>(65537));
     const vec::Vector<TypeParam> expected(
         gfp,
         {
@@ -94,7 +94,7 @@ TYPED_TEST(VectorTest, TestHadamardMultiplication) // NOLINT
 
 TYPED_TEST(VectorTest, TestAddition) // NOLINT
 {
-    const gf::Prime<TypeParam> gfp(65537);
+    const auto gfp(gf::create<gf::Prime<TypeParam>>(65537));
     const vec::Vector<TypeParam> expected(
         gfp,
         {
@@ -119,7 +119,7 @@ TYPED_TEST(VectorTest, TestAddition) // NOLINT
 
 TYPED_TEST(VectorTest, TestSlices) // NOLINT
 {
-    const gf::Prime<TypeParam> gfp(65537);
+    const auto gfp(gf::create<gf::Prime<TypeParam>>(65537));
     const int len = 20;
     const int len1 = 7;
     const int len2 = 5;
