@@ -31,10 +31,13 @@
 
 #include "quadiron.h"
 
+namespace gf = quadiron::gf;
+namespace vec = quadiron::vec;
+
 TEST(MatrixTest, TestInvertGf11) // NOLINT
 {
-    const quadiron::gf::Prime<uint32_t> gf11(11);
-    quadiron::vec::Matrix<uint32_t> mat(gf11, 3, 3);
+    const gf::Prime<uint32_t> gf11(11);
+    vec::Matrix<uint32_t> mat(gf11, 3, 3);
 
     mat.set(0, 0, 2);
     mat.set(0, 1, 1);
@@ -61,8 +64,8 @@ TEST(MatrixTest, TestInvertGf11) // NOLINT
 
 TEST(MatrixTest, TestInvertGf29) // NOLINT
 {
-    const quadiron::gf::Prime<uint32_t> gf29(29);
-    quadiron::vec::Matrix<uint32_t> mat(gf29, 3, 3);
+    const gf::Prime<uint32_t> gf29(29);
+    vec::Matrix<uint32_t> mat(gf29, 3, 3);
 
     mat.set(0, 0, 22);
     mat.set(0, 1, 27);

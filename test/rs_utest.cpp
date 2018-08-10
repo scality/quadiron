@@ -31,11 +31,14 @@
 
 #include "quadiron.h"
 
+namespace gf = quadiron::gf;
+namespace vec = quadiron::vec;
+
 // See http://web.eecs.utk.edu/~plank/plank/papers/CS-03-504.html.
 TEST(RsTest, TestVandermonde) // NOLINT
 {
-    const quadiron::gf::BinExtension<uint32_t> gf16(4);
-    quadiron::vec::Matrix<uint32_t> mat(gf16, 3, 3);
+    const gf::BinExtension<uint32_t> gf16(4);
+    vec::Matrix<uint32_t> mat(gf16, 3, 3);
 
     mat.vandermonde_suitable_for_ec();
 
@@ -59,10 +62,10 @@ TEST(RsTest, TestVandermonde) // NOLINT
  */
 TEST(RsTest, TestMultiplication) // NOLINT
 {
-    const quadiron::gf::BinExtension<uint32_t> gf8(3);
-    quadiron::vec::Matrix<uint32_t> mat(gf8, 5, 3);
-    quadiron::vec::Vector<uint32_t> vec(gf8, 3);
-    quadiron::vec::Vector<uint32_t> output(gf8, 5);
+    const gf::BinExtension<uint32_t> gf8(3);
+    vec::Matrix<uint32_t> mat(gf8, 5, 3);
+    vec::Vector<uint32_t> vec(gf8, 3);
+    vec::Vector<uint32_t> output(gf8, 5);
 
     mat.set(0, 0, 1);
     mat.set(0, 1, 1);
@@ -95,7 +98,7 @@ TEST(RsTest, TestMultiplication) // NOLINT
 
 TEST(RsTest, TestGf256) // NOLINT
 {
-    quadiron::gf::BinExtension<uint32_t> gf256(8);
+    gf::BinExtension<uint32_t> gf256(8);
 
     ASSERT_EQ(gf256.mul(3, 7), 9);
     ASSERT_EQ(gf256.mul(13, 10), 114);

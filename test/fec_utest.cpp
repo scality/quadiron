@@ -31,6 +31,8 @@
 
 #include "quadiron.h"
 
+namespace fec = quadiron::fec;
+
 template <typename T>
 class FecTestCommon : public ::testing::Test {
   public:
@@ -38,7 +40,7 @@ class FecTestCommon : public ::testing::Test {
     const unsigned n_parities = 3;
 
     void run_test(
-        quadiron::fec::FecCode<T>& fec,
+        fec::FecCode<T>& fec,
         int n_data,
         int code_len,
         bool props_flag = false)
@@ -75,7 +77,7 @@ class FecTestCommon : public ::testing::Test {
                 f.set(i, ids.at(i));
                 _v2.set(i, _v.get(ids.at(i)));
             }
-            std::unique_ptr<quadiron::fec::DecodeContext<T>> context =
+            std::unique_ptr<fec::DecodeContext<T>> context =
                 fec.init_context_dec(f);
             fec.decode(*context, &v2, props, 0, &_v2);
             ASSERT_EQ(v_p, v2);
@@ -92,8 +94,7 @@ TYPED_TEST(FecTestCommon, TestNf4) // NOLINT
 
     for (int i = 1; i < iter_count; i++) {
         const unsigned word_size = 1 << i;
-        quadiron::fec::RsNf4<TypeParam> fec(
-            word_size, this->n_data, this->n_parities);
+        fec::RsNf4<TypeParam> fec(word_size, this->n_data, this->n_parities);
 
         this->run_test(
             fec, this->n_data, this->n_data + this->n_parities, true);
@@ -103,8 +104,7 @@ TYPED_TEST(FecTestCommon, TestNf4) // NOLINT
 TYPED_TEST(FecTestCommon, TestGf2nFft) // NOLINT
 {
     for (size_t wordsize = 1; wordsize <= sizeof(TypeParam); wordsize *= 2) {
-        quadiron::fec::RsGf2nFft<TypeParam> fec(
-            wordsize, this->n_data, this->n_parities);
+        fec::RsGf2nFft<TypeParam> fec(wordsize, this->n_data, this->n_parities);
 
         this->run_test(fec, this->n_data, this->n_data + this->n_parities);
     }
@@ -113,7 +113,7 @@ TYPED_TEST(FecTestCommon, TestGf2nFft) // NOLINT
 TYPED_TEST(FecTestCommon, TestGf2nFftAdd) // NOLINT
 {
     for (size_t wordsize = 1; wordsize <= sizeof(TypeParam); wordsize *= 2) {
-        quadiron::fec::RsGf2nFftAdd<TypeParam> fec(
+        fec::RsGf2nFftAdd<TypeParam> fec(
             wordsize, this->n_data, this->n_parities);
 
         this->run_test(fec, this->n_data, this->n_data + this->n_parities);
@@ -129,7 +129,7 @@ TYPED_TEST_CASE(FecTestNo128, No128);
 
 TYPED_TEST(FecTestNo128, TestFnt) // NOLINT
 {
-    quadiron::fec::RsFnt<TypeParam> fec(2, this->n_data, this->n_parities);
+    fec::RsFnt<TypeParam> fec(2, this->n_data, this->n_parities);
     this->run_test(fec, this->n_data, this->n_data + this->n_parities, true);
 }
 
@@ -137,8 +137,7 @@ TYPED_TEST(FecTestNo128, TestGfpFft) // NOLINT
 {
     for (size_t word_size = 1; word_size <= 4 && word_size < sizeof(TypeParam);
          word_size *= 2) {
-        quadiron::fec::RsGfpFft<TypeParam> fec(
-            word_size, this->n_data, this->n_parities);
+        fec::RsGfpFft<TypeParam> fec(word_size, this->n_data, this->n_parities);
 
         this->run_test(
             fec, this->n_data, this->n_data + this->n_parities, true);

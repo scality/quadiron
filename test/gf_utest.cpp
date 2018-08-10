@@ -32,10 +32,12 @@
 #include "gf_bin_ext.h"
 #include "gf_nf4.h"
 
+namespace gf = quadiron::gf;
+
 template <typename T>
 class GfTestCommon : public ::testing::Test {
   public:
-    void test_negation(const quadiron::gf::Field<T>& gf)
+    void test_negation(const gf::Field<T>& gf)
     {
         for (int i = 0; i < 100; i++) {
             const T x = gf.weak_rand();
@@ -44,7 +46,7 @@ class GfTestCommon : public ::testing::Test {
         }
     }
 
-    void test_reciprocal(const quadiron::gf::Field<T>& gf)
+    void test_reciprocal(const gf::Field<T>& gf)
     {
         int n_found = 0;
 
@@ -61,7 +63,7 @@ class GfTestCommon : public ::testing::Test {
         ASSERT_GT(n_found, 0);
     }
 
-    void test_log(const quadiron::gf::Field<T>& gf)
+    void test_log(const gf::Field<T>& gf)
     {
         int n_found = 0;
 
@@ -81,13 +83,13 @@ class GfTestCommon : public ::testing::Test {
         ASSERT_GT(n_found, 0);
     }
 
-    void test_find_primitive_root(quadiron::gf::Field<T>* gf)
+    void test_find_primitive_root(gf::Field<T>* gf)
     {
         gf->find_primitive_root();
         ASSERT_TRUE(gf->check_primitive_root(gf->get_root()));
     }
 
-    void test_get_order(const quadiron::gf::Field<T>& gf)
+    void test_get_order(const gf::Field<T>& gf)
     {
         const T h = gf.card_minus_one();
 
@@ -100,7 +102,7 @@ class GfTestCommon : public ::testing::Test {
         }
     }
 
-    void test_get_nth_root(const quadiron::gf::Field<T>& gf)
+    void test_get_nth_root(const gf::Field<T>& gf)
     {
         for (int i = 0; i < 1000; i++) {
             const T x = gf.weak_rand();
@@ -119,7 +121,7 @@ TYPED_TEST(GfTestCommon, TestGfNf4) // NOLINT
     for (unsigned n = 1; n <= sizeof(TypeParam) / 4; n++) {
         quadiron::prng().seed(time(0));
 
-        quadiron::gf::NF4<TypeParam> gf(n);
+        gf::NF4<TypeParam> gf(n);
         this->test_negation(gf);
         this->test_negation(gf);
 
@@ -138,7 +140,7 @@ TYPED_TEST(GfTestCommon, TestGf2n) // NOLINT
     for (TypeParam n = 8; n <= 8 * sizeof(TypeParam); n *= 2) {
         quadiron::prng().seed(time(0));
 
-        quadiron::gf::BinExtension<TypeParam> gf(n);
+        gf::BinExtension<TypeParam> gf(n);
         this->test_negation(gf);
         this->test_reciprocal(gf);
         // this->test_log(gf);
@@ -161,7 +163,7 @@ TYPED_TEST(GfTestNo128, TestGf5) // NOLINT
 {
     quadiron::prng().seed(time(0));
 
-    quadiron::gf::Prime<TypeParam> gf(5);
+    gf::Prime<TypeParam> gf(5);
     this->test_negation(gf);
     this->test_reciprocal(gf);
     this->test_log(gf);
@@ -174,7 +176,7 @@ TYPED_TEST(GfTestNo128, TestGf256) // NOLINT
 {
     quadiron::prng().seed(time(0));
 
-    quadiron::gf::BinExtension<TypeParam> gf(8);
+    gf::BinExtension<TypeParam> gf(8);
     this->test_negation(gf);
     this->test_reciprocal(gf);
     this->test_log(gf);

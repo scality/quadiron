@@ -33,18 +33,20 @@
 
 #include "quadiron.h"
 
+namespace vec = quadiron::vec;
+
 template <typename T>
 class BuffersTest : public ::testing::Test {
   public:
-    std::unique_ptr<quadiron::vec::Buffers<T>>
+    std::unique_ptr<vec::Buffers<T>>
     gen_buffers_rand_data(int n, int size, int _max = 0)
     {
         std::mt19937 prng;
         T max_val = 65537;
         const int max = (_max == 0) ? max_val : _max;
         std::uniform_int_distribution<uint32_t> dis(0, max - 1);
-        auto vec = std::unique_ptr<quadiron::vec::Buffers<T>>(
-            new quadiron::vec::Buffers<T>(n, size));
+        auto vec =
+            std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(n, size));
 
         for (int i = 0; i < n; i++) {
             T* buf = quadiron::aligned_allocate<T>(size);
@@ -69,7 +71,7 @@ TYPED_TEST(BuffersTest, TestConstructors) // NOLINT
     const int size = 32;
 
     auto vec1 = this->gen_buffers_rand_data(n, size);
-    quadiron::vec::Buffers<TypeParam> vec2(vec1.get(), begin, end);
+    vec::Buffers<TypeParam> vec2(vec1.get(), begin, end);
 
     std::vector<TypeParam*>* mem1 = vec1->get_mem();
     std::vector<TypeParam*>* mem2 = vec2.get_mem();
@@ -87,7 +89,7 @@ TYPED_TEST(BuffersTest, TestConstructors) // NOLINT
     for (int i = 0; i < end - begin; i++) {
         mem3[i] = mem1->at(i + begin);
     }
-    quadiron::vec::Buffers<TypeParam> vec3(end - begin, size, &mem3);
+    vec::Buffers<TypeParam> vec3(end - begin, size, &mem3);
 
     ASSERT_EQ(vec2, vec3);
 }
@@ -98,7 +100,7 @@ TYPED_TEST(BuffersTest, TestEvenOddSeparation) // NOLINT
     const int size = 32;
     const int half = n / 2;
     auto vec1 = this->gen_buffers_rand_data(n, size);
-    quadiron::vec::Buffers<TypeParam> vec2(n, size);
+    vec::Buffers<TypeParam> vec2(n, size);
 
     vec2.copy(vec1.get());
 
@@ -106,14 +108,14 @@ TYPED_TEST(BuffersTest, TestEvenOddSeparation) // NOLINT
         new std::vector<TypeParam*>(half, nullptr);
     std::vector<TypeParam*>* odd_mem =
         new std::vector<TypeParam*>(half, nullptr);
-    quadiron::vec::Buffers<TypeParam> i_even(half, size, even_mem);
-    quadiron::vec::Buffers<TypeParam> i_odd(half, size, odd_mem);
+    vec::Buffers<TypeParam> i_even(half, size, even_mem);
+    vec::Buffers<TypeParam> i_odd(half, size, odd_mem);
     vec1->separate_even_odd(&i_even, &i_odd);
 
     vec1->separate_even_odd();
 
-    quadiron::vec::Buffers<TypeParam> _i_even(vec1.get(), 0, half);
-    quadiron::vec::Buffers<TypeParam> _i_odd(vec1.get(), half, n);
+    vec::Buffers<TypeParam> _i_even(vec1.get(), 0, half);
+    vec::Buffers<TypeParam> _i_odd(vec1.get(), half, n);
     ASSERT_EQ(i_even, _i_even);
     ASSERT_EQ(i_odd, _i_odd);
 
@@ -145,16 +147,16 @@ TYPED_TEST(BuffersTest, TestZeroExtented) // NOLINT
     const int n2 = 10;
 
     auto vec = this->gen_buffers_rand_data(n, size);
-    quadiron::vec::Buffers<TypeParam> vec1(vec.get(), n1);
-    quadiron::vec::Buffers<TypeParam> vec2(vec.get(), n2);
+    vec::Buffers<TypeParam> vec1(vec.get(), n1);
+    vec::Buffers<TypeParam> vec2(vec.get(), n2);
 
-    quadiron::vec::Buffers<TypeParam> _vec1(vec.get(), 0, n1);
-    quadiron::vec::BuffersZeroExtended<TypeParam> _vec2(vec.get(), n2);
+    vec::Buffers<TypeParam> _vec1(vec.get(), 0, n1);
+    vec::BuffersZeroExtended<TypeParam> _vec2(vec.get(), n2);
 
     ASSERT_EQ(vec1, _vec1);
     ASSERT_EQ(vec2, _vec2);
 
-    quadiron::vec::Buffers<TypeParam> vec3(&vec2, n1);
+    vec::Buffers<TypeParam> vec3(&vec2, n1);
     ASSERT_EQ(vec3, vec1);
 }
 
@@ -172,7 +174,7 @@ TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
         const std::vector<TypeParam*>* mem_T = words->get_mem();
 
         // Pack manually from TypeParam to uint8_t.
-        quadiron::vec::Buffers<uint8_t> vec_char(n, bytes_size);
+        vec::Buffers<uint8_t> vec_char(n, bytes_size);
         std::vector<uint8_t*>* mem_char = vec_char.get_mem();
         for (int j = 0; j < n; j++) {
             int t = 0;
@@ -193,16 +195,15 @@ TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
         }
 
         // Pack bufs of type uint8_t to bufs of type TypeParam.
-        quadiron::vec::Buffers<TypeParam> vec_T_tmp(n, size);
+        vec::Buffers<TypeParam> vec_T_tmp(n, size);
         std::vector<TypeParam*>* mem_T_tmp = vec_T_tmp.get_mem();
-        quadiron::vec::pack<uint8_t, TypeParam>(
-            mem_char, mem_T_tmp, n, size, word_size);
+        vec::pack<uint8_t, TypeParam>(mem_char, mem_T_tmp, n, size, word_size);
         ASSERT_EQ(vec_T_tmp, *words.get());
 
         // Unpack bufs of type TypeParam to bufs of type uint8_t.
-        quadiron::vec::Buffers<uint8_t> vec_char_tmp(n, bytes_size);
+        vec::Buffers<uint8_t> vec_char_tmp(n, bytes_size);
         std::vector<uint8_t*>* mem_char_tmp = vec_char_tmp.get_mem();
-        quadiron::vec::unpack<TypeParam, uint8_t>(
+        vec::unpack<TypeParam, uint8_t>(
             mem_T_tmp, mem_char_tmp, n, size, word_size);
         ASSERT_EQ(vec_char_tmp, vec_char);
     }

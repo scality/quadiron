@@ -39,6 +39,9 @@
 #include "gf_prime.h"
 #include "vec_buf_zero_ext.h"
 
+namespace fft = quadiron::fft;
+namespace gf = quadiron::gf;
+
 template <typename T>
 class FftTest : public ::testing::Test {
   public:
@@ -47,7 +50,7 @@ class FftTest : public ::testing::Test {
     const unsigned n_parities = 3;
 
     quadiron::vec::Vector<T>
-    random_vec(const quadiron::gf::Field<T>& gf, int size, unsigned to_init)
+    random_vec(const gf::Field<T>& gf, int size, unsigned to_init)
     {
         quadiron::vec::Vector<T> vec(gf, size);
         vec.zero_fill();
@@ -60,9 +63,7 @@ class FftTest : public ::testing::Test {
     }
 
     // Taylor expansion on (x^t - x).
-    void test_taylor_expand(
-        const quadiron::gf::Field<T>& gf,
-        quadiron::fft::Additive<T>* fft)
+    void test_taylor_expand(const gf::Field<T>& gf, fft::Additive<T>* fft)
     {
         for (int i = 0; i < 1000; i++) {
             const int t = 2 + gf.weak_rand() % (fft->get_n() - 2);
@@ -83,9 +84,7 @@ class FftTest : public ::testing::Test {
     }
 
     // Taylor expansion on (x^2 - x).
-    void test_taylor_expand_t2(
-        const quadiron::gf::Field<T>& gf,
-        quadiron::fft::Additive<T>* fft)
+    void test_taylor_expand_t2(const gf::Field<T>& gf, fft::Additive<T>* fft)
     {
         for (int i = 0; i < 1000; i++) {
             const int n = fft->get_n();
@@ -99,8 +98,8 @@ class FftTest : public ::testing::Test {
     }
 
     void test_fft_codec(
-        const quadiron::gf::Field<T>& gf,
-        quadiron::fft::FourierTransform<T>* fft,
+        const gf::Field<T>& gf,
+        fft::FourierTransform<T>* fft,
         int n_data)
     {
         quadiron::vec::Vector<T> _v(gf, fft->get_n());
@@ -121,7 +120,7 @@ TYPED_TEST_CASE(FftTest, TestedTypes);
 
 TYPED_TEST(FftTest, TestGcd) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf(97);
+    gf::Prime<TypeParam> gf(97);
     quadiron::SignedDoubleSizeVal<TypeParam> bezout[2];
 
     ASSERT_EQ(gf.inv(20), 34);
@@ -141,23 +140,23 @@ TYPED_TEST(FftTest, TestGcd) // NOLINT
 
 TYPED_TEST(FftTest, TestQuadraticResidues) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf32(32);
+    gf::Prime<TypeParam> gf32(32);
     for (int i = 0; i < 32; i++) {
         ASSERT_TRUE(gf32.is_quadratic_residue(gf32.exp(i, 2)));
     }
 
-    quadiron::gf::Prime<TypeParam> gf7(7);
+    gf::Prime<TypeParam> gf7(7);
     ASSERT_TRUE(gf7.is_quadratic_residue(2));
     ASSERT_FALSE(gf7.is_quadratic_residue(5));
 
-    quadiron::gf::Prime<TypeParam> gf8(8);
+    gf::Prime<TypeParam> gf8(8);
     ASSERT_TRUE(gf8.is_quadratic_residue(1));
     ASSERT_FALSE(gf8.is_quadratic_residue(3));
 }
 
 TYPED_TEST(FftTest, TestFftNaive) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf(this->q);
+    gf::Prime<TypeParam> gf(this->q);
     const unsigned R = gf.get_primitive_root();
 
     ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
@@ -170,13 +169,13 @@ TYPED_TEST(FftTest, TestFftNaive) // NOLINT
     // Compute root of order n-1 such as r^(n-1) mod q == 1.
     const unsigned r = gf.get_nth_root(n);
 
-    quadiron::fft::Naive<TypeParam> fft(gf, n, r);
+    fft::Naive<TypeParam> fft(gf, n, r);
     this->test_fft_codec(gf, &fft, this->n_data);
 }
 
 TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf(this->q);
+    gf::Prime<TypeParam> gf(this->q);
     const unsigned R = gf.get_primitive_root();
 
     ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
@@ -186,13 +185,13 @@ TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
     // that is at least (n_parities + n_data).
     const unsigned n = gf.get_code_len(this->n_parities + this->n_data);
 
-    quadiron::fft::Radix2<TypeParam> fft(gf, n);
+    fft::Radix2<TypeParam> fft(gf, n);
     this->test_fft_codec(gf, &fft, this->n_data);
 }
 
 TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf(this->q);
+    gf::Prime<TypeParam> gf(this->q);
     const unsigned R = gf.get_primitive_root();
     const size_t size = 4;
 
@@ -203,7 +202,7 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
     // that is at least (n_parities + n_data).
     const unsigned n = gf.get_code_len(this->n_parities + this->n_data);
 
-    quadiron::fft::Radix2<TypeParam> fft(gf, n);
+    fft::Radix2<TypeParam> fft(gf, n);
 
     const int vec_n = fft.get_n();
     quadiron::vec::Buffers<TypeParam> v(this->n_data, size);
@@ -226,27 +225,27 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
 
 TYPED_TEST(FftTest, TestFftGt) // NOLINT
 {
-    quadiron::gf::BinExtension<TypeParam> gf(4);
+    gf::BinExtension<TypeParam> gf(4);
 
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
     // that is at least (this->n_parities + n_data).
     const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
 
-    quadiron::fft::GoodThomas<TypeParam> fft(gf, n);
+    fft::GoodThomas<TypeParam> fft(gf, n);
     this->test_fft_codec(gf, &fft, this->n_data);
 }
 
 TYPED_TEST(FftTest, TestFftCtGfp) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf(this->q);
+    gf::Prime<TypeParam> gf(this->q);
 
     // With this encoder we cannot exactly satisfy users request,
     // We need to pad n = minimal divisor of (q-1)
     // that is at least (n_parities + n_data).
     const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
 
-    quadiron::fft::CooleyTukey<TypeParam> fft(gf, n);
+    fft::CooleyTukey<TypeParam> fft(gf, n);
     this->test_fft_codec(gf, &fft, this->n_data);
 }
 
@@ -254,14 +253,14 @@ TYPED_TEST(FftTest, TestFftCtGf2n) // NOLINT
 {
     const size_t max_n = 8 * sizeof(TypeParam);
     for (size_t gf_n = 4; gf_n <= 128 && gf_n <= max_n; gf_n *= 2) {
-        quadiron::gf::BinExtension<TypeParam> gf(gf_n);
+        gf::BinExtension<TypeParam> gf(gf_n);
 
         // With this encoder we cannot exactly satisfy users request,
         // we need to pad n = minimal divisor of (q-1)
         // that is at least (n_parities + n_data).
         const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
 
-        quadiron::fft::CooleyTukey<TypeParam> fft(gf, n);
+        fft::CooleyTukey<TypeParam> fft(gf, n);
         this->test_fft_codec(gf, &fft, this->n_data);
     }
 }
@@ -270,13 +269,13 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
 {
     for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(TypeParam);
          gf_n *= 2) {
-        quadiron::gf::BinExtension<TypeParam> gf(gf_n);
+        gf::BinExtension<TypeParam> gf(gf_n);
 
         // n is power of 2 and at least n_data + n_parities.
         const int n = quadiron::arith::get_smallest_power_of_2<TypeParam>(
             this->n_data + this->n_parities);
         const int m = quadiron::arith::log2<TypeParam>(n);
-        quadiron::fft::Additive<TypeParam> fft(gf, m);
+        fft::Additive<TypeParam> fft(gf, m);
 
         this->test_taylor_expand(gf, &fft);
         this->test_taylor_expand_t2(gf, &fft);
@@ -286,7 +285,7 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
 
 TYPED_TEST(FftTest, TestFft2) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf(this->q);
+    gf::Prime<TypeParam> gf(this->q);
     const unsigned R = gf.get_primitive_root();
 
     ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
@@ -299,7 +298,7 @@ TYPED_TEST(FftTest, TestFft2) // NOLINT
     // compute root of order n-1 such as r^(n-1) mod q == 1
     const unsigned r = gf.get_nth_root(n);
 
-    quadiron::fft::Naive<TypeParam> fft(gf, n, r);
+    fft::Naive<TypeParam> fft(gf, n, r);
 
     quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
     quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
@@ -325,17 +324,17 @@ TYPED_TEST(FftTest, TestFft2) // NOLINT
 
 TYPED_TEST(FftTest, TestFft2Gfp) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf(3);
+    gf::Prime<TypeParam> gf(3);
     TypeParam size = 1;
 
-    quadiron::fft::Size2<TypeParam> fft(gf);
+    fft::Size2<TypeParam> fft(gf);
     this->test_fft_codec(gf, &fft, size);
 }
 
 TYPED_TEST(FftTest, TestFftSingleGfp) // NOLINT
 {
-    quadiron::gf::Prime<TypeParam> gf(39);
-    quadiron::fft::Single<TypeParam> fft(gf, 16);
+    gf::Prime<TypeParam> gf(39);
+    fft::Single<TypeParam> fft(gf, 16);
 
     this->test_fft_codec(gf, &fft, 1);
 }
@@ -344,7 +343,7 @@ TYPED_TEST(FftTest, TestFftGf2n) // NOLINT
 {
     const size_t max_n = 8 * sizeof(TypeParam);
     for (size_t gf_n = 4; gf_n <= 128 && gf_n <= max_n; gf_n *= 2) {
-        quadiron::gf::BinExtension<TypeParam> gf(gf_n);
+        gf::BinExtension<TypeParam> gf(gf_n);
         const TypeParam R = gf.get_primitive_root();
 
         ASSERT_EQ(gf.exp(R, gf.card_minus_one()), 1);
@@ -356,7 +355,7 @@ TYPED_TEST(FftTest, TestFftGf2n) // NOLINT
         const TypeParam r = gf.get_nth_root(n);
         ASSERT_EQ(gf.exp(r, n), 1);
 
-        quadiron::fft::Naive<TypeParam> fft(gf, n, r);
+        fft::Naive<TypeParam> fft(gf, n, r);
         this->test_fft_codec(gf, &fft, this->n_data);
     }
 }

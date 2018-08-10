@@ -33,6 +33,8 @@
 
 #include "quadiron.h"
 
+namespace arith = quadiron::arith;
+
 template <typename T>
 class ArithTestCommon : public ::testing::Test {
   public:
@@ -59,10 +61,10 @@ class ArithTestCommon : public ::testing::Test {
     void check_all_primes(const std::vector<T>& primes, bool distinct)
     {
         ASSERT_GT(primes.size(), 0);
-        ASSERT_TRUE(quadiron::arith::is_prime<T>(primes.at(0)));
+        ASSERT_TRUE(arith::is_prime<T>(primes.at(0)));
 
         for (size_t j = 1; j != primes.size(); ++j) {
-            ASSERT_TRUE(quadiron::arith::is_prime<T>(primes.at(j)));
+            ASSERT_TRUE(arith::is_prime<T>(primes.at(j)));
             if (distinct) {
                 ASSERT_NE(primes.at(j - 1), primes.at(j));
             }
@@ -71,7 +73,7 @@ class ArithTestCommon : public ::testing::Test {
 
     void check_divisors(T nb, const std::vector<T>& divisors, bool proper)
     {
-        if (proper && quadiron::arith::is_prime<T>(nb)) {
+        if (proper && arith::is_prime<T>(nb)) {
             ASSERT_EQ(divisors.size(), 0);
         } else {
             ASSERT_GT(divisors.size(), 0);
@@ -80,7 +82,7 @@ class ArithTestCommon : public ::testing::Test {
         for (auto v : divisors) {
             ASSERT_EQ(nb % v, 0);
             if (proper) {
-                ASSERT_TRUE(quadiron::arith::is_prime<T>(nb / v));
+                ASSERT_TRUE(arith::is_prime<T>(nb / v));
             }
         }
     }
@@ -94,7 +96,7 @@ class ArithTestCommon : public ::testing::Test {
             ASSERT_EQ(nb % divisors.at(i), 0);
 
             if (!coprime) {
-                ASSERT_TRUE(quadiron::arith::is_prime<T>(divisors.at(i)));
+                ASSERT_TRUE(arith::is_prime<T>(divisors.at(i)));
             } else {
                 for (size_t j = i + 1; j != divisors.size(); ++j) {
                     ASSERT_NE(divisors.at(i), divisors.at(j));
@@ -109,24 +111,24 @@ TYPED_TEST_CASE(ArithTestCommon, AllTypes);
 
 TYPED_TEST(ArithTestCommon, TestBasicOperations) // NOLINT
 {
-    ASSERT_EQ(quadiron::arith::sqrt<TypeParam>(2025), 45);
+    ASSERT_EQ(arith::sqrt<TypeParam>(2025), 45);
 
-    ASSERT_TRUE(quadiron::arith::is_prime<TypeParam>(2));
-    ASSERT_TRUE(quadiron::arith::is_prime<TypeParam>(3));
-    ASSERT_TRUE(quadiron::arith::is_prime<TypeParam>(13));
-    ASSERT_TRUE(!quadiron::arith::is_prime<TypeParam>(4));
-    ASSERT_TRUE(!quadiron::arith::is_prime<TypeParam>(15));
+    ASSERT_TRUE(arith::is_prime<TypeParam>(2));
+    ASSERT_TRUE(arith::is_prime<TypeParam>(3));
+    ASSERT_TRUE(arith::is_prime<TypeParam>(13));
+    ASSERT_TRUE(!arith::is_prime<TypeParam>(4));
+    ASSERT_TRUE(!arith::is_prime<TypeParam>(15));
 }
 
 TYPED_TEST(ArithTestCommon, TestReciprocal) // NOLINT
 {
-    const TypeParam sub_max = quadiron::arith::sqrt<TypeParam>(this->max);
+    const TypeParam sub_max = arith::sqrt<TypeParam>(this->max);
     std::uniform_int_distribution<uint32_t> dis(1, sub_max - 1);
 
     for (int i = 0; i < 1000; i++) {
         const TypeParam x = dis(quadiron::prng());
-        const TypeParam y = quadiron::arith::exp<TypeParam>(x, 2);
-        const TypeParam z = quadiron::arith::sqrt<TypeParam>(y);
+        const TypeParam y = arith::exp<TypeParam>(x, 2);
+        const TypeParam z = arith::sqrt<TypeParam>(y);
 
         ASSERT_EQ(z, x);
     }
@@ -134,12 +136,12 @@ TYPED_TEST(ArithTestCommon, TestReciprocal) // NOLINT
 
 TYPED_TEST(ArithTestCommon, TestJacobi) // NOLINT
 {
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(1001, 9907), -1);
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(19, 45), 1);
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(8, 21), -1);
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(5, 21), 1);
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(47, 221), -1);
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(2, 221), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(1001, 9907), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(19, 45), 1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(8, 21), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(5, 21), 1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(47, 221), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(2, 221), -1);
 }
 
 TYPED_TEST(ArithTestCommon, TestFactorDistinctPrime) // NOLINT
@@ -147,7 +149,7 @@ TYPED_TEST(ArithTestCommon, TestFactorDistinctPrime) // NOLINT
     for (int i = 0; i < 1000; i++) {
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
         const std::vector<TypeParam> primes =
-            quadiron::arith::factor_distinct_prime<TypeParam>(x);
+            arith::factor_distinct_prime<TypeParam>(x);
 
         this->check_all_primes(primes, true);
     }
@@ -160,7 +162,7 @@ TYPED_TEST(ArithTestCommon, TestFactorPrime) // NOLINT
         std::vector<int> exponent;
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
 
-        quadiron::arith::factor_prime<TypeParam>(x, &primes, &exponent);
+        arith::factor_prime<TypeParam>(x, &primes, &exponent);
         this->check_all_primes(primes, true);
         // Check primes exponent.
         ASSERT_GT(primes.size(), 0);
@@ -168,7 +170,7 @@ TYPED_TEST(ArithTestCommon, TestFactorPrime) // NOLINT
 
         TypeParam y = 1;
         for (size_t j = 0; j != primes.size(); ++j) {
-            y *= quadiron::arith::exp<TypeParam>(primes.at(j), exponent.at(j));
+            y *= arith::exp<TypeParam>(primes.at(j), exponent.at(j));
         }
         ASSERT_EQ(y, x);
     }
@@ -179,7 +181,7 @@ TYPED_TEST(ArithTestCommon, TestGetProperDivisor) // NOLINT
     for (int i = 0; i < 1000; i++) {
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
         const std::vector<TypeParam> divisors =
-            quadiron::arith::get_proper_divisors<TypeParam>(x);
+            arith::get_proper_divisors<TypeParam>(x);
 
         this->check_divisors(x, divisors, true);
     }
@@ -190,9 +192,9 @@ TYPED_TEST(ArithTestCommon, TestGetProperDivisor2) // NOLINT
     for (int i = 0; i < 1000; i++) {
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
         const std::vector<TypeParam> factors =
-            quadiron::arith::factor_distinct_prime<TypeParam>(x);
+            arith::factor_distinct_prime<TypeParam>(x);
         const std::vector<TypeParam> divisors =
-            quadiron::arith::get_proper_divisors<TypeParam>(x, factors);
+            arith::get_proper_divisors<TypeParam>(x, factors);
 
         this->check_divisors(x, divisors, true);
     }
@@ -203,7 +205,7 @@ TYPED_TEST(ArithTestCommon, TestGetAllDivisor) // NOLINT
     for (int i = 0; i < 1000; i++) {
         const TypeParam x = this->uniform_dist_max(quadiron::prng());
         const std::vector<TypeParam> divisors =
-            quadiron::arith::get_all_divisors<TypeParam>(x);
+            arith::get_all_divisors<TypeParam>(x);
 
         this->check_divisors(x, divisors, false);
     }
@@ -215,8 +217,7 @@ TYPED_TEST(ArithTestCommon, TestGetCodeLength) // NOLINT
         const TypeParam order = this->uniform_dist_max(quadiron::prng());
         std::uniform_int_distribution<uint32_t> dis(1, order - 1);
         const TypeParam n = dis(quadiron::prng());
-        const TypeParam len =
-            quadiron::arith::get_code_len<TypeParam>(order, n);
+        const TypeParam len = arith::get_code_len<TypeParam>(order, n);
 
         ASSERT_EQ(order % len, 0);
         ASSERT_GE(len, n);
@@ -230,7 +231,7 @@ TYPED_TEST(ArithTestCommon, TestGetCodeLengthHighCompo) // NOLINT
         std::uniform_int_distribution<uint32_t> dis(1, order - 1);
         const TypeParam n = dis(quadiron::prng());
         const TypeParam len =
-            quadiron::arith::get_code_len_high_compo<TypeParam>(order, n);
+            arith::get_code_len_high_compo<TypeParam>(order, n);
 
         ASSERT_EQ(order % len, 0);
         ASSERT_GE(len, n);
@@ -244,9 +245,9 @@ TYPED_TEST(ArithTestCommon, TestGetCodeLengthHighCompo2) // NOLINT
         std::uniform_int_distribution<uint32_t> dis(1, order - 1);
         const TypeParam n = dis(quadiron::prng());
         const std::vector<TypeParam> factors =
-            quadiron::arith::get_prime_factors<TypeParam>(order);
+            arith::get_prime_factors<TypeParam>(order);
         const TypeParam len =
-            quadiron::arith::get_code_len_high_compo<TypeParam>(factors, n);
+            arith::get_code_len_high_compo<TypeParam>(factors, n);
 
         ASSERT_EQ(order % len, 0);
         ASSERT_GE(len, n);
@@ -258,7 +259,7 @@ TYPED_TEST(ArithTestCommon, TestGetCoprimeFactors) // NOLINT
     for (int i = 0; i < 1000; i++) {
         const TypeParam n = this->uniform_dist_max(quadiron::prng());
         const std::vector<TypeParam> divisors =
-            quadiron::arith::get_coprime_factors<TypeParam>(n);
+            arith::get_coprime_factors<TypeParam>(n);
 
         this->check_prime_divisors(n, divisors, true);
     }
@@ -269,7 +270,7 @@ TYPED_TEST(ArithTestCommon, TestGetPrimeFactors) // NOLINT
     for (int i = 0; i < 1000; i++) {
         const TypeParam n = this->uniform_dist_max(quadiron::prng());
         const std::vector<TypeParam> divisors =
-            quadiron::arith::get_prime_factors<TypeParam>(n);
+            arith::get_prime_factors<TypeParam>(n);
 
         this->check_prime_divisors(n, divisors, false);
     }
@@ -296,21 +297,21 @@ TYPED_TEST(ArithTestNo128, TestChineseRemainder) // NOLINT
     n[0] = 107;
     a[1] = 2;
     n[1] = 74;
-    omega = quadiron::arith::chinese_remainder<TypeParam>(2, a, n);
+    omega = arith::chinese_remainder<TypeParam>(2, a, n);
     ASSERT_EQ(omega, 5996);
 
     a[0] = 6;
     n[0] = 7;
     a[1] = 4;
     n[1] = 8;
-    omega = quadiron::arith::chinese_remainder<TypeParam>(2, a, n);
+    omega = arith::chinese_remainder<TypeParam>(2, a, n);
     ASSERT_EQ(omega, 20);
 
     a[0] = 3;
     n[0] = 4;
     a[1] = 0;
     n[1] = 6;
-    omega = quadiron::arith::chinese_remainder<TypeParam>(2, a, n);
+    omega = arith::chinese_remainder<TypeParam>(2, a, n);
     // no solution XXX detect it
 }
 
@@ -319,15 +320,10 @@ TYPED_TEST(ArithTestNo128, TestExtendedGcd) // NOLINT
     quadiron::SignedDoubleSizeVal<TypeParam> bezout[2];
 
     // Not explicitely related to GF(97).
-    ASSERT_EQ(
-        quadiron::arith::extended_gcd<TypeParam>(240, 46, nullptr, nullptr), 2);
-    ASSERT_EQ(
-        quadiron::arith::extended_gcd<TypeParam>(54, 24, nullptr, nullptr), 6);
-    ASSERT_EQ(
-        quadiron::arith::extended_gcd<TypeParam>(210, 45, nullptr, nullptr),
-        15);
-    ASSERT_EQ(
-        quadiron::arith::extended_gcd<TypeParam>(97, 20, bezout, nullptr), 1);
+    ASSERT_EQ(arith::extended_gcd<TypeParam>(240, 46, nullptr, nullptr), 2);
+    ASSERT_EQ(arith::extended_gcd<TypeParam>(54, 24, nullptr, nullptr), 6);
+    ASSERT_EQ(arith::extended_gcd<TypeParam>(210, 45, nullptr, nullptr), 15);
+    ASSERT_EQ(arith::extended_gcd<TypeParam>(97, 20, bezout, nullptr), 1);
     ASSERT_TRUE(bezout[0] == -7 && bezout[1] == 34);
 }
 
@@ -342,45 +338,34 @@ TEST(ArithTest, TestBignumMultiplication) // NOLINT
     // a 2^n-th principal root of unity in GF_p
     const uint64_t a1 = 2;
     const uint64_t a2 = 5;
-    const uint64_t p1 = a1 * quadiron::arith::exp<uint64_t>(2, 15) + 1;
-    const uint64_t p2 = a2 * quadiron::arith::exp<uint64_t>(2, 15) + 1;
-    ASSERT_TRUE(quadiron::arith::is_prime<uint64_t>(p1));
-    ASSERT_TRUE(quadiron::arith::is_prime<uint64_t>(p2));
+    const uint64_t p1 = a1 * arith::exp<uint64_t>(2, 15) + 1;
+    const uint64_t p2 = a2 * arith::exp<uint64_t>(2, 15) + 1;
+    ASSERT_TRUE(arith::is_prime<uint64_t>(p1));
+    ASSERT_TRUE(arith::is_prime<uint64_t>(p2));
 
     // Ensure their product is bounded (b-1)^2*2^(n-1) < m.
     const uint64_t m = p1 * p2;
     // Check overflow.
     ASSERT_EQ(m / p1, p2);
-    ASSERT_LT(
-        quadiron::arith::exp<uint64_t>((b - 1), 2)
-            * quadiron::arith::exp<uint64_t>(p, 2),
-        m);
+    ASSERT_LT(arith::exp<uint64_t>((b - 1), 2) * arith::exp<uint64_t>(p, 2), m);
 
     // Find `x` so it is not a quadratic residue in GF_p1 and GF_p2.²
-    ASSERT_EQ(
-        quadiron::arith::jacobi<uint64_t>(3, p1),
-        quadiron::arith::jacobi<uint64_t>(p1, 3));
-    ASSERT_EQ(
-        quadiron::arith::jacobi<uint64_t>(p1, 3),
-        quadiron::arith::jacobi<uint64_t>(2, 3));
-    ASSERT_EQ(
-        quadiron::arith::jacobi<uint64_t>(3, p2),
-        quadiron::arith::jacobi<uint64_t>(p2, 3));
-    ASSERT_EQ(
-        quadiron::arith::jacobi<uint64_t>(p2, 3),
-        quadiron::arith::jacobi<uint64_t>(2, 3));
-    ASSERT_EQ(quadiron::arith::jacobi<uint64_t>(2, 3), -1);
+    ASSERT_EQ(arith::jacobi<uint64_t>(3, p1), arith::jacobi<uint64_t>(p1, 3));
+    ASSERT_EQ(arith::jacobi<uint64_t>(p1, 3), arith::jacobi<uint64_t>(2, 3));
+    ASSERT_EQ(arith::jacobi<uint64_t>(3, p2), arith::jacobi<uint64_t>(p2, 3));
+    ASSERT_EQ(arith::jacobi<uint64_t>(p2, 3), arith::jacobi<uint64_t>(2, 3));
+    ASSERT_EQ(arith::jacobi<uint64_t>(2, 3), -1);
     // Which means x=3 is not a quadratic residue in GF_p1 and GF_p2.
 
     // Therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
-    const uint64_t w1 = quadiron::arith::exp<uint64_t>(3, a1);
-    const uint64_t w2 = quadiron::arith::exp<uint64_t>(3, a2);
+    const uint64_t w1 = arith::exp<uint64_t>(3, a1);
+    const uint64_t w2 = arith::exp<uint64_t>(3, a2);
     ASSERT_EQ(w1, 9);
     ASSERT_EQ(w2, 243);
 
     // find root of unity in GF_p1p2
     uint64_t _a[2] = {w1, w2};
     uint64_t _n[2] = {p1, p2};
-    const uint64_t w = quadiron::arith::chinese_remainder<uint64_t>(2, _a, _n);
+    const uint64_t w = arith::chinese_remainder<uint64_t>(2, _a, _n);
     ASSERT_EQ(w, 25559439);
 }
