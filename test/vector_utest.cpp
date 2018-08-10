@@ -43,7 +43,7 @@ TYPED_TEST_CASE(VectorTest, TestedTypes);
 TYPED_TEST(VectorTest, TestHadamardMultiplication) // NOLINT
 {
     const quadiron::gf::Prime<TypeParam> gfp(65537);
-    quadiron::vec::Vector<TypeParam> expected(
+    const quadiron::vec::Vector<TypeParam> expected(
         gfp,
         {
             6505,
@@ -86,13 +86,13 @@ TYPED_TEST(VectorTest, TestHadamardMultiplication) // NOLINT
     quadiron::vec::Doubled<TypeParam> v2vec2(&vec2);
 
     vec1.hadamard_mul(&v2vec2);
-    ASSERT_TRUE(vec1.eq(&expected));
+    ASSERT_EQ(vec1, expected);
 }
 
 TYPED_TEST(VectorTest, TestAddition) // NOLINT
 {
     const quadiron::gf::Prime<TypeParam> gfp(65537);
-    quadiron::vec::Vector<TypeParam> expected(
+    const quadiron::vec::Vector<TypeParam> expected(
         gfp,
         {
             44925,
@@ -111,7 +111,7 @@ TYPED_TEST(VectorTest, TestAddition) // NOLINT
 
     vec1.add(&v2vec2);
 
-    ASSERT_TRUE(vec1.eq(&expected));
+    ASSERT_EQ(vec1, expected);
 }
 
 TYPED_TEST(VectorTest, TestSlices) // NOLINT
@@ -135,5 +135,5 @@ TYPED_TEST(VectorTest, TestSlices) // NOLINT
     // vmvec3 = base_vec[offset1 + offset2, .., offset1 + len1 - 1]
     quadiron::vec::Slice<TypeParam> vmvec3(&base_vec, len3, offset1 + offset2);
 
-    ASSERT_TRUE(vmvec3.eq(&vmvec2));
+    ASSERT_EQ(vmvec3, vmvec2);
 }

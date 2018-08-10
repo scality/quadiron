@@ -78,7 +78,7 @@ class FecTestCommon : public ::testing::Test {
             std::unique_ptr<quadiron::fec::DecodeContext<T>> context =
                 fec.init_context_dec(f);
             fec.decode(*context, &v2, props, 0, &_v2);
-            ASSERT_TRUE(v_p.eq(&v2));
+            ASSERT_EQ(v_p, v2);
         }
     }
 };

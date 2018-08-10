@@ -89,7 +89,7 @@ TYPED_TEST(BuffersTest, TestConstructors) // NOLINT
     }
     quadiron::vec::Buffers<TypeParam> vec3(end - begin, size, &mem3);
 
-    ASSERT_TRUE(vec2.eq(&vec3));
+    ASSERT_EQ(vec2, vec3);
 }
 
 TYPED_TEST(BuffersTest, TestEvenOddSeparation) // NOLINT
@@ -106,18 +106,16 @@ TYPED_TEST(BuffersTest, TestEvenOddSeparation) // NOLINT
         new std::vector<TypeParam*>(half, nullptr);
     std::vector<TypeParam*>* odd_mem =
         new std::vector<TypeParam*>(half, nullptr);
-    auto i_even = std::unique_ptr<quadiron::vec::Buffers<TypeParam>>(
-        new quadiron::vec::Buffers<TypeParam>(half, size, even_mem));
-    auto i_odd = std::unique_ptr<quadiron::vec::Buffers<TypeParam>>(
-        new quadiron::vec::Buffers<TypeParam>(half, size, odd_mem));
-    vec1->separate_even_odd(i_even.get(), i_odd.get());
+    quadiron::vec::Buffers<TypeParam> i_even(half, size, even_mem);
+    quadiron::vec::Buffers<TypeParam> i_odd(half, size, odd_mem);
+    vec1->separate_even_odd(&i_even, &i_odd);
 
     vec1->separate_even_odd();
 
     quadiron::vec::Buffers<TypeParam> _i_even(vec1.get(), 0, half);
     quadiron::vec::Buffers<TypeParam> _i_odd(vec1.get(), half, n);
-    ASSERT_TRUE(i_even->eq(&_i_even));
-    ASSERT_TRUE(i_odd->eq(&_i_odd));
+    ASSERT_EQ(i_even, _i_even);
+    ASSERT_EQ(i_odd, _i_odd);
 
     const std::vector<TypeParam*>* mem1 = vec1->get_mem();
     const std::vector<TypeParam*>* mem2 = vec2.get_mem();
@@ -151,14 +149,13 @@ TYPED_TEST(BuffersTest, TestZeroExtented) // NOLINT
     quadiron::vec::Buffers<TypeParam> vec2(vec.get(), n2);
 
     quadiron::vec::Buffers<TypeParam> _vec1(vec.get(), 0, n1);
-    auto _vec2 = std::unique_ptr<quadiron::vec::Buffers<TypeParam>>(
-        new quadiron::vec::BuffersZeroExtended<TypeParam>(vec.get(), n2));
+    quadiron::vec::BuffersZeroExtended<TypeParam> _vec2(vec.get(), n2);
 
-    ASSERT_TRUE(vec1.eq(&_vec1));
-    ASSERT_TRUE(vec2.eq(_vec2.get()));
+    ASSERT_EQ(vec1, _vec1);
+    ASSERT_EQ(vec2, _vec2);
 
     quadiron::vec::Buffers<TypeParam> vec3(&vec2, n1);
-    ASSERT_TRUE(vec3.eq(&vec1));
+    ASSERT_EQ(vec3, vec1);
 }
 
 TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
@@ -200,13 +197,13 @@ TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
         std::vector<TypeParam*>* mem_T_tmp = vec_T_tmp.get_mem();
         quadiron::vec::pack<uint8_t, TypeParam>(
             mem_char, mem_T_tmp, n, size, word_size);
-        ASSERT_TRUE(vec_T_tmp.eq(words.get()));
+        ASSERT_EQ(vec_T_tmp, *words.get());
 
         // Unpack bufs of type TypeParam to bufs of type uint8_t.
         quadiron::vec::Buffers<uint8_t> vec_char_tmp(n, bytes_size);
         std::vector<uint8_t*>* mem_char_tmp = vec_char_tmp.get_mem();
         quadiron::vec::unpack<TypeParam, uint8_t>(
             mem_T_tmp, mem_char_tmp, n, size, word_size);
-        ASSERT_TRUE(vec_char_tmp.eq(&vec_char));
+        ASSERT_EQ(vec_char_tmp, vec_char);
     }
 }

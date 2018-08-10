@@ -51,6 +51,12 @@ class Polynomial;
 /** Low-level wrappers/helpers around memory buffer. */
 namespace vec {
 
+// Forward declarations.
+template <typename>
+class Vector;
+template <typename T>
+bool operator==(const Vector<T>& lhs, const Vector<T>& rhs);
+
 /** A 1D vector.
  *
  * Its size can be defined at runtime (unlike std::array) but cannot changes
@@ -88,7 +94,7 @@ class Vector {
     void copy(Vector<T>* v, int n);
     void copy(Vector<T>* v, int n, int offset);
     void copy(Vector<T>* v, int n, int dest_offset, int src_offset);
-    bool eq(Vector<T>* v);
+    friend bool operator==<T>(const Vector<T>& lhs, const Vector<T>& rhs);
     virtual void neg();
     void to_poly(Polynomial<T>* poly);
     virtual void dump(void);
@@ -375,16 +381,16 @@ void Vector<T>::copy(Vector<T>* v, int n, int dest_offset, int src_offset)
 }
 
 template <typename T>
-bool Vector<T>::eq(Vector<T>* v)
+bool operator==(const Vector<T>& lhs, const Vector<T>& rhs)
 {
-    if (v->get_n() != this->n)
+    if (lhs.n != rhs.n) {
         return false;
-
-    for (int i = 0; i < v->get_n(); i++) {
-        if (get(i) != v->get(i))
-            return false;
     }
-
+    for (int i = 0; i < lhs.n; i++) {
+        if (lhs.get(i) != rhs.get(i)) {
+            return false;
+        }
+    }
     return true;
 }
 

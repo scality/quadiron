@@ -78,7 +78,7 @@ class FftTest : public ::testing::Test {
             fft->taylor_expand(&v2, &v1, n, t);
             quadiron::vec::Vector<T> _v1(gf, n);
             fft->inv_taylor_expand(&_v1, &v2, t);
-            ASSERT_TRUE(_v1.eq(&v1));
+            ASSERT_EQ(_v1, v1);
         }
     }
 
@@ -94,7 +94,7 @@ class FftTest : public ::testing::Test {
             fft->taylor_expand_t2(&v1, n, true);
             quadiron::vec::Vector<T> _v1(gf, n);
             fft->inv_taylor_expand_t2(&_v1);
-            ASSERT_TRUE(_v1.eq(&v1));
+            ASSERT_EQ(_v1, v1);
         }
     }
 
@@ -111,7 +111,7 @@ class FftTest : public ::testing::Test {
 
             fft->fft(&_v, &v);
             fft->ifft(&v2, &_v);
-            ASSERT_TRUE(v.eq(&v2));
+            ASSERT_EQ(v, v2);
         }
     }
 };
@@ -220,7 +220,7 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
         fft.fft(&v2, &_v);
         fft.ifft(&_v2, &v2);
 
-        ASSERT_TRUE(_v.eq(&_v2));
+        ASSERT_EQ(_v, _v2);
     }
 }
 
@@ -320,7 +320,7 @@ TYPED_TEST(FftTest, TestFft2) // NOLINT
     ASSERT_EQ(_v.get(7), 42289);
 
     fft.ifft(&v2, &_v);
-    ASSERT_TRUE(v.eq(&v2));
+    ASSERT_EQ(v, v2);
 }
 
 TYPED_TEST(FftTest, TestFft2Gfp) // NOLINT

@@ -42,6 +42,12 @@
 namespace quadiron {
 namespace vec {
 
+// Forward declarations.
+template <typename>
+class Buffers;
+template <typename T>
+bool operator==(const Buffers<T>& lhs, const Buffers<T>& rhs);
+
 /// Available cases of allocating memory
 enum class BufMemAlloc {
     /// Do not allocate any memory
@@ -102,13 +108,14 @@ class Buffers {
     void fill(int i, T value);
     virtual void set(int i, T* buf);
     virtual T* get(int i);
+    virtual const T* get(int i) const;
     std::vector<T*>* get_mem();
     void set_mem(std::vector<T*>* mem);
     void copy(Buffers<T>* v);
     void copy(int i, T* buf);
     void separate_even_odd();
     void separate_even_odd(Buffers<T>* even, Buffers<T>* odd);
-    bool eq(Buffers<T>* v);
+    friend bool operator==<T>(const Buffers<T>& lhs, const Buffers<T>& rhs);
     virtual void dump(void);
 
   protected:
@@ -310,6 +317,13 @@ inline T* Buffers<T>::get(int i)
 }
 
 template <typename T>
+inline const T* Buffers<T>::get(int i) const
+{
+    assert(i >= 0 && i < n);
+    return this->mem->at(i);
+}
+
+template <typename T>
 inline std::vector<T*>* Buffers<T>::get_mem()
 {
     return mem;
@@ -370,20 +384,21 @@ void Buffers<T>::separate_even_odd(Buffers<T>* even, Buffers<T>* odd)
 }
 
 template <typename T>
-bool Buffers<T>::eq(Buffers<T>* v)
+bool operator==(const Buffers<T>& lhs, const Buffers<T>& rhs)
 {
-    if ((v->get_n() != n) || (v->get_size() != size))
+    if (lhs.n != rhs.n || lhs.size != rhs.size) {
         return false;
+    }
+    for (int i = 0; i < lhs.n; i++) {
+        const T* lhs_vec = lhs.get(i);
+        const T* rhs_vec = rhs.get(i);
 
-    for (int i = 0; i < n; i++) {
-        T* a = get(i);
-        T* b = v->get(i);
-        for (size_t j = 0; j < size; j++) {
-            if (a[j] != b[j])
+        for (size_t j = 0; j < lhs.size; j++) {
+            if (lhs_vec[j] != rhs_vec[j]) {
                 return false;
+            }
         }
     }
-
     return true;
 }
 
