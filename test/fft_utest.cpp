@@ -46,6 +46,19 @@ class FftTest : public ::testing::Test {
     const unsigned n_data = 3;
     const unsigned n_parities = 3;
 
+    quadiron::vec::Vector<T>
+    random_vec(const quadiron::gf::Field<T>& gf, int size, unsigned to_init)
+    {
+        quadiron::vec::Vector<T> vec(gf, size);
+        vec.zero_fill();
+
+        for (unsigned i = 0; i < to_init; i++) {
+            vec.set(i, gf.weak_rand());
+        }
+
+        return vec;
+    }
+
     // Taylor expansion on (x^t - x).
     void test_taylor_expand(
         const quadiron::gf::Field<T>& gf,
@@ -54,17 +67,13 @@ class FftTest : public ::testing::Test {
         for (int i = 0; i < 1000; i++) {
             const int t = 2 + gf.weak_rand() % (fft->get_n() - 2);
             const int n = t + 1 + gf.weak_rand() % (fft->get_n() - t);
-            quadiron::vec::Vector<T> v1(gf, n);
+            quadiron::vec::Vector<T> v1 = this->random_vec(gf, n, n);
 
             int m = n / t;
             while (m * t < n) {
                 m++;
             }
-
             quadiron::vec::Vector<T> v2(gf, t * m);
-            for (int j = 0; j < n; j++) {
-                v1.set(j, gf.weak_rand());
-            }
 
             fft->taylor_expand(&v2, &v1, n, t);
             quadiron::vec::Vector<T> _v1(gf, n);
@@ -80,11 +89,7 @@ class FftTest : public ::testing::Test {
     {
         for (int i = 0; i < 1000; i++) {
             const int n = fft->get_n();
-            quadiron::vec::Vector<T> v1(gf, n);
-
-            for (int j = 0; j < n; j++) {
-                v1.set(j, gf.weak_rand());
-            }
+            quadiron::vec::Vector<T> v1 = this->random_vec(gf, n, n);
 
             fft->taylor_expand_t2(&v1, n, true);
             quadiron::vec::Vector<T> _v1(gf, n);
@@ -93,19 +98,16 @@ class FftTest : public ::testing::Test {
         }
     }
 
-    void test_fftadd_codec(
+    void test_fft_codec(
         const quadiron::gf::Field<T>& gf,
-        quadiron::fft::Additive<T>* fft,
+        quadiron::fft::FourierTransform<T>* fft,
         int n_data)
     {
-        quadiron::vec::Vector<T> v(gf, fft->get_n());
         quadiron::vec::Vector<T> _v(gf, fft->get_n());
         quadiron::vec::Vector<T> v2(gf, fft->get_n());
         for (int j = 0; j < 10000; j++) {
-            v.zero_fill();
-            for (int i = 0; i < n_data; i++) {
-                v.set(i, gf.weak_rand());
-            }
+            quadiron::vec::Vector<T> v =
+                this->random_vec(gf, fft->get_n(), n_data);
 
             fft->fft(&_v, &v);
             fft->ifft(&v2, &_v);
@@ -169,20 +171,7 @@ TYPED_TEST(FftTest, TestFftNaive) // NOLINT
     const unsigned r = gf.get_nth_root(n);
 
     quadiron::fft::Naive<TypeParam> fft(gf, n, r);
-
-    quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
-    for (int j = 0; j < 100000; j++) {
-        v.zero_fill();
-        for (unsigned i = 0; i < this->n_data; i++) {
-            v.set(i, gf.weak_rand());
-        }
-        fft.fft(&_v, &v);
-        fft.ifft(&v2, &_v);
-
-        ASSERT_TRUE(v.eq(&v2));
-    }
+    this->test_fft_codec(gf, &fft, this->n_data);
 }
 
 TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
@@ -198,21 +187,7 @@ TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
     const unsigned n = gf.get_code_len(this->n_parities + this->n_data);
 
     quadiron::fft::Radix2<TypeParam> fft(gf, n);
-
-    quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
-    for (int j = 0; j < 100000; j++) {
-        v.zero_fill();
-        for (unsigned i = 0; i < this->n_data; i++) {
-            v.set(i, gf.weak_rand());
-        }
-
-        fft.fft(&_v, &v);
-        fft.ifft(&v2, &_v);
-
-        ASSERT_TRUE(v.eq(&v2));
-    }
+    this->test_fft_codec(gf, &fft, this->n_data);
 }
 
 TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
@@ -259,20 +234,7 @@ TYPED_TEST(FftTest, TestFftGt) // NOLINT
     const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
 
     quadiron::fft::GoodThomas<TypeParam> fft(gf, n);
-
-    quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
-    for (int j = 0; j < 10000; j++) {
-        v.zero_fill();
-        for (TypeParam i = 0; i < this->n_data; i++) {
-            v.set(i, gf.weak_rand());
-        }
-
-        fft.fft(&_v, &v);
-        fft.ifft(&v2, &_v);
-        ASSERT_TRUE(v.eq(&v2));
-    }
+    this->test_fft_codec(gf, &fft, this->n_data);
 }
 
 TYPED_TEST(FftTest, TestFftCtGfp) // NOLINT
@@ -285,26 +247,13 @@ TYPED_TEST(FftTest, TestFftCtGfp) // NOLINT
     const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
 
     quadiron::fft::CooleyTukey<TypeParam> fft(gf, n);
-
-    quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
-    for (int j = 0; j < 10000; j++) {
-        v.zero_fill();
-        for (TypeParam i = 0; i < this->n_data; i++) {
-            v.set(i, gf.weak_rand());
-        }
-
-        fft.fft(&_v, &v);
-        fft.ifft(&v2, &_v);
-        ASSERT_TRUE(v.eq(&v2));
-    }
+    this->test_fft_codec(gf, &fft, this->n_data);
 }
 
 TYPED_TEST(FftTest, TestFftCtGf2n) // NOLINT
 {
-    for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(TypeParam);
-         gf_n *= 2) {
+    const size_t max_n = 8 * sizeof(TypeParam);
+    for (size_t gf_n = 4; gf_n <= 128 && gf_n <= max_n; gf_n *= 2) {
         quadiron::gf::BinExtension<TypeParam> gf(gf_n);
 
         // With this encoder we cannot exactly satisfy users request,
@@ -313,20 +262,7 @@ TYPED_TEST(FftTest, TestFftCtGf2n) // NOLINT
         const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
 
         quadiron::fft::CooleyTukey<TypeParam> fft(gf, n);
-
-        quadiron::vec::Vector<TypeParam> v(gf, fft.get_n()),
-            _v(gf, fft.get_n()), v2(gf, fft.get_n());
-
-        for (int j = 0; j < 10000; j++) {
-            v.zero_fill();
-            for (TypeParam i = 0; i < this->n_data; i++) {
-                v.set(i, gf.weak_rand());
-            }
-
-            fft.fft(&_v, &v);
-            fft.ifft(&v2, &_v);
-            ASSERT_TRUE(v.eq(&v2));
-        }
+        this->test_fft_codec(gf, &fft, this->n_data);
     }
 }
 
@@ -344,7 +280,7 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
 
         this->test_taylor_expand(gf, &fft);
         this->test_taylor_expand_t2(gf, &fft);
-        this->test_fftadd_codec(gf, &fft, this->n_data);
+        this->test_fft_codec(gf, &fft, this->n_data);
     }
 }
 
@@ -369,9 +305,6 @@ TYPED_TEST(FftTest, TestFft2) // NOLINT
     quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
     quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
     v.zero_fill();
-    for (TypeParam i = 0; i < this->n_data; i++) {
-        v.set(i, gf.weak_rand());
-    }
     v.set(0, 27746);
     v.set(1, 871);
     v.set(2, 49520);
@@ -396,20 +329,7 @@ TYPED_TEST(FftTest, TestFft2Gfp) // NOLINT
     TypeParam size = 1;
 
     quadiron::fft::Size2<TypeParam> fft(gf);
-
-    quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
-    for (int j = 0; j < 100000; j++) {
-        v.zero_fill();
-        for (TypeParam i = 0; i < size; i++) {
-            v.set(i, gf.weak_rand());
-        }
-
-        fft.fft(&_v, &v);
-        fft.ifft(&v2, &_v);
-        ASSERT_TRUE(v.eq(&v2));
-    }
+    this->test_fft_codec(gf, &fft, size);
 }
 
 TYPED_TEST(FftTest, TestFftSingleGfp) // NOLINT
@@ -417,22 +337,13 @@ TYPED_TEST(FftTest, TestFftSingleGfp) // NOLINT
     quadiron::gf::Prime<TypeParam> gf(39);
     quadiron::fft::Single<TypeParam> fft(gf, 16);
 
-    quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
-    for (int j = 0; j < 100000; j++) {
-        v.zero_fill();
-        v.set(0, gf.weak_rand());
-        fft.fft(&_v, &v);
-        fft.ifft(&v2, &_v);
-        ASSERT_TRUE(v.eq(&v2));
-    }
+    this->test_fft_codec(gf, &fft, 1);
 }
 
 TYPED_TEST(FftTest, TestFftGf2n) // NOLINT
 {
-    for (size_t gf_n = 4; gf_n <= 128 && gf_n <= 8 * sizeof(TypeParam);
-         gf_n *= 2) {
+    const size_t max_n = 8 * sizeof(TypeParam);
+    for (size_t gf_n = 4; gf_n <= 128 && gf_n <= max_n; gf_n *= 2) {
         quadiron::gf::BinExtension<TypeParam> gf(gf_n);
         const TypeParam R = gf.get_primitive_root();
 
@@ -446,19 +357,6 @@ TYPED_TEST(FftTest, TestFftGf2n) // NOLINT
         ASSERT_EQ(gf.exp(r, n), 1);
 
         quadiron::fft::Naive<TypeParam> fft(gf, n, r);
-
-        quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
-        quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-        quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
-        for (TypeParam i = 0; i < 100000; i++) {
-            v.zero_fill();
-            for (TypeParam i = 0; i < this->n_data; i++) {
-                v.set(i, gf.weak_rand());
-            }
-
-            fft.fft(&_v, &v);
-            fft.ifft(&v2, &_v);
-            ASSERT_TRUE(v.eq(&v2));
-        }
+        this->test_fft_codec(gf, &fft, this->n_data);
     }
 }
