@@ -63,6 +63,7 @@ class Vector {
   public:
     const gf::RingModN<T>* rn;
     Vector(const gf::RingModN<T>& rn, int n, T* mem = nullptr, int mem_len = 0);
+    Vector(const gf::RingModN<T>& rn, std::initializer_list<T> values);
     virtual ~Vector();
     const gf::RingModN<T>& get_gf(void) const;
     virtual const int get_n(void) const;
@@ -114,6 +115,16 @@ Vector<T>::Vector(const gf::RingModN<T>& rn, int n, T* mem, int mem_len)
         this->mem = mem;
         this->mem_len = mem_len;
         this->new_mem = false;
+    }
+}
+
+template <typename T>
+Vector<T>::Vector(const gf::RingModN<T>& rn, std::initializer_list<T> values)
+    : Vector(rn, values.size())
+{
+    int i = 0;
+    for (auto value : values) {
+        mem[i++] = value;
     }
 }
 
