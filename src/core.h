@@ -104,12 +104,10 @@ static inline std::mt19937& prng()
     return PRNG;
 }
 
-#ifdef QUADIRON_USE_SSE4
-#define ALIGN_SIZE 16
-#endif
-
-#ifdef QUADIRON_USE_AVX2
+#if defined(__AVX2__)
 #define ALIGN_SIZE 32
+#elif defined(__SSE4_1__)
+#define ALIGN_SIZE 16
 #endif
 
 template <typename T>

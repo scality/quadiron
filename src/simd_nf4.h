@@ -36,7 +36,7 @@
 namespace quadiron {
 namespace simd {
 
-#ifdef QUADIRON_USE_AVX2
+#ifdef __AVX2__
 typedef __m128i m128i;
 
 /** Return aint128 integer from a _m128i register */
@@ -47,7 +47,7 @@ static inline aint128 m128i_to_uint128(m128i v)
 
     return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
 }
-#endif // #ifdef QUADIRON_USE_AVX2
+#endif // #ifdef __AVX2__
 
 inline aint128 expand16(uint16_t* arr, int n)
 {
