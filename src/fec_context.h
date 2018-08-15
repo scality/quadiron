@@ -85,11 +85,10 @@ class DecodeContext {
 
         this->fragments_ids = &fragments_ids;
 
-        A = std::unique_ptr<vec::Poly<T>>(new vec::Poly<T>(gf, n));
-        A_fft_2k =
-            std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
-        inv_A_i = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
-        S = std::unique_ptr<vec::Poly<T>>(new vec::Poly<T>(gf, k));
+        A = std::make_unique<vec::Poly<T>>(gf, n);
+        A_fft_2k = std::make_unique<vec::Vector<T>>(gf, len_2k);
+        inv_A_i = std::make_unique<vec::Vector<T>>(gf, n);
+        S = std::make_unique<vec::Poly<T>>(gf, k);
 
         // zero-out all polynomials as they are used in full-length for FFT
         A->zero_fill();
@@ -97,38 +96,31 @@ class DecodeContext {
         S->zero_fill();
 
         if (this->size == 0) {
-            vec1_n = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
-            vec2_n = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
+            vec1_n = std::make_unique<vec::Vector<T>>(gf, n);
+            vec2_n = std::make_unique<vec::Vector<T>>(gf, n);
 
-            vec1_2k =
-                std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
-            vec2_2k =
-                std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, len_2k));
+            vec1_2k = std::make_unique<vec::Vector<T>>(gf, len_2k);
+            vec2_2k = std::make_unique<vec::Vector<T>>(gf, len_2k);
 
             vec1_n->zero_fill();
             vec2_n->zero_fill();
         } else {
-            buf1_n =
-                std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(n, size));
+            buf1_n = std::make_unique<vec::Buffers<T>>(n, size);
             buf1_n->zero_fill();
 
-            buf2_n =
-                std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(n, size));
+            buf2_n = std::make_unique<vec::Buffers<T>>(n, size);
 
             /* `buf1_2k` is composed of two parts each of `k` buffers
              * - first `k` buffers are slice from 1st `k` buffers of `buf2_n`
              * - last `(len_2k-k)` buffers point actually to a zero buffer
              */
-            buf1_k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(*buf2_n, 0, k));
-            buf1_2k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(*buf1_k, 0, len_2k));
+            buf1_k = std::make_unique<vec::Buffers<T>>(*buf2_n, 0, k);
+            buf1_2k = std::make_unique<vec::Buffers<T>>(*buf1_k, 0, len_2k);
 
-            buf2_2k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(this->len_2k, size));
+            buf2_2k = std::make_unique<vec::Buffers<T>>(this->len_2k, size);
 
-            buf1_len2k_minus_k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(this->len_2k - k, size));
+            buf1_len2k_minus_k =
+                std::make_unique<vec::Buffers<T>>(this->len_2k - k, size);
         }
         init(vx);
     }

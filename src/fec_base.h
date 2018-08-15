@@ -769,11 +769,8 @@ FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids, size_t size)
         vx.set(i, r_powers->get(fragments_ids.get(i)));
     }
 
-    std::unique_ptr<DecodeContext<T>> context =
-        std::unique_ptr<DecodeContext<T>>(new DecodeContext<T>(
-            *gf, *fft, *fft_2k, fragments_ids, vx, n_data, n, -1, size));
-
-    return context;
+    return std::make_unique<DecodeContext<T>>(
+        *gf, *fft, *fft_2k, fragments_ids, vx, n_data, n, -1, size);
 }
 
 /* Prepare for decoding
