@@ -27,7 +27,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "quadiron.h"
+#include "fft_2n.h"
+#include "fft_add.h"
+#include "fft_ct.h"
+#include "fft_gt.h"
+#include "fft_naive.h"
+#include "fft_single.h"
+#include "gf_bin_ext.h"
+#include "gf_prime.h"
+#include "vec_buf_zero_ext.h"
 
 template <typename T>
 class FFTUtest {

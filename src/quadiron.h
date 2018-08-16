@@ -36,8 +36,6 @@
  * The root namespace of the QuadIron library.
  */
 
-#include "arith.h"
-#include "core.h"
 #include "fec_base.h"
 #include "fec_rs_fnt.h"
 #include "fec_rs_gf2n.h"
@@ -45,31 +43,14 @@
 #include "fec_rs_gf2n_fft_add.h"
 #include "fec_rs_gfp_fft.h"
 #include "fec_rs_nf4.h"
-#include "fft_2.h"
-#include "fft_2n.h"
-#include "fft_add.h"
-#include "fft_base.h"
-#include "fft_ct.h"
-#include "fft_gt.h"
-#include "fft_large.h"
-#include "fft_naive.h"
-#include "fft_single.h"
-#include "gf_base.h"
-#include "gf_bin_ext.h"
-#include "gf_nf4.h"
-#include "gf_prime.h"
-#include "gf_ring.h"
-#include "misc.h"
-#include "property.h"
-#include "vec_buf_doubled.h"
-#include "vec_buf_zero_ext.h"
-#include "vec_buffers.h"
-#include "vec_doubled.h"
-#include "vec_matrix.h"
-#include "vec_poly.h"
-#include "vec_slice.h"
-#include "vec_vector.h"
-#include "vec_view.h"
-#include "vec_zero_ext.h"
+
+/** Return the version string of QuadIron.
+ *
+ * The version string has the form MAJOR.MINOR.PATCH-REVISION, where '-REVISION'
+ * is optional (only present for development version).
+ *
+ * @return the version string.
+ */
+const char* get_version();
 
 #endif
