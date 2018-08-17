@@ -100,7 +100,7 @@ class RsGfpFft : public FecCode<T> {
         // we choose gf_p for a simple implementation
         assert(gf_p / 2 < this->limit_value);
 
-        this->gf = std::unique_ptr<gf::Field<T>>(new gf::Prime<T>(gf_p));
+        this->gf = gf::alloc<gf::Field<T>, gf::Prime<T>>(gf_p);
         assert(
             arith::jacobi<T>(this->gf->get_primitive_root(), this->gf->card())
             == -1);

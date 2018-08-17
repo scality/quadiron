@@ -77,7 +77,7 @@ class RsFnt : public FecCode<T> {
     {
         // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
         T gf_p = (1ULL << (8 * this->word_size)) + 1;
-        this->gf = std::unique_ptr<gf::Field<T>>(new gf::Prime<T>(gf_p));
+        this->gf = gf::alloc<gf::Field<T>, gf::Prime<T>>(gf_p);
 
         assert(
             arith::jacobi<T>(this->gf->get_primitive_root(), this->gf->card())

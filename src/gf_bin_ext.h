@@ -39,16 +39,11 @@
 namespace quadiron {
 namespace gf {
 
-/** An extension Galois Field extended from GF(2)
- * @note set the 3rd argument as false to deactivate the computing of primitive
- * root on creating the base class
- */
+/// An extension Galois Field extended from GF(2).
 template <typename T>
 class BinExtension : public gf::Field<T> {
   public:
-    explicit BinExtension(T n);
     ~BinExtension();
-    void init();
     void find_primitive_root();
     T card(void) const override;
     T card_minus_one(void) const override;
@@ -64,6 +59,8 @@ class BinExtension : public gf::Field<T> {
     void hadamard_mul(int n, T* x, T* y) const override;
     void hadamard_mul_doubled(int n, T* x, T* y) const override;
     void add_doubled(int n, T* x, T* y) const override;
+
+    BinExtension(BinExtension&&) = default;
 
   private:
     T n;
@@ -89,9 +86,18 @@ class BinExtension : public gf::Field<T> {
     int mul_type;
     int div_type;
     int inv_type;
-    void init_mask(void);
-    void setup_tables(void);
-    void setup_split_tables(void);
+
+    explicit BinExtension(T n);
+    void init() override;
+    void init_mask();
+    void setup_tables();
+    void setup_split_tables();
+
+    template <typename Class, typename... Args>
+    friend Class create(Args... args);
+
+    template <typename Base, typename Class, typename... Args>
+    friend std::unique_ptr<Base> alloc(Args... args);
 };
 
 enum MulType { MUL_LOG_TAB, SPLIT_8_8 };
@@ -99,7 +105,7 @@ enum DivType { DIV_LOG_TAB, DIV_BY_INV };
 enum InvType { INV_BY_DIV, INV_EXT_GCD };
 
 template <typename T>
-BinExtension<T>::BinExtension(T n) : gf::Field<T>(2, n, false)
+BinExtension<T>::BinExtension(T n) : gf::Field<T>(2, n)
 {
     this->n = n;
     if (n / 8 > sizeof(T)) {
@@ -167,9 +173,6 @@ BinExtension<T>::BinExtension(T n) : gf::Field<T>(2, n, false)
         this->sgroup_nb = n / 8;
         setup_split_tables();
     }
-
-    // computing primitive root
-    this->init();
 }
 
 template <typename T>
@@ -195,10 +198,7 @@ BinExtension<T>::~BinExtension()
 template <typename T>
 void BinExtension<T>::init()
 {
-    // compute factors of order
-    RingModN<T>::compute_factors_of_order();
-
-    // compute root of unity
+    this->compute_factors_of_order();
     this->find_primitive_root();
 }
 
@@ -221,13 +221,9 @@ void BinExtension<T>::find_primitive_root()
 
     while (nb <= h) {
         ok = true;
-        // check nb^divisor == 1
-        // std::cout << "checking.." << nb << std::endl;
-        for (i = 0; i != this->proper_divisors->size(); ++i) {
-            // std::cout << nb << "^" << this->proper_divisors->at(i) << "\n";
-            // std::cout << this->exp(nb, this->proper_divisors->at(i)) <<
-            // std::endl;
-            if (BinExtension<T>::exp(nb, this->proper_divisors->at(i)) == 1) {
+        // check nb^divisor == 1.
+        for (i = 0; i != this->proper_divisors.size(); ++i) {
+            if (BinExtension<T>::exp(nb, this->proper_divisors[i]) == 1) {
                 ok = false;
                 break;
             }

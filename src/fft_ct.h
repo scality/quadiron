@@ -109,7 +109,7 @@ class CooleyTukey : public FourierTransform<T> {
     vec::View<T>* X = nullptr;
     FourierTransform<T>* dft_outer = nullptr;
     FourierTransform<T>* dft_inner = nullptr;
-    std::vector<T>* prime_factors = nullptr;
+    std::vector<T> prime_factors;
     void mul_twiddle_factors(bool inv);
 };
 
@@ -132,18 +132,17 @@ CooleyTukey<T>::CooleyTukey(
     : FourierTransform<T>(gf, n)
 {
     if (factors == nullptr) {
-        this->prime_factors = new std::vector<T>();
         first_layer_fft = true;
-        arith::get_prime_factors<T>(n, this->prime_factors);
+        this->prime_factors = arith::get_prime_factors<T>(n);
         // w is of order-n
         w = gf.get_nth_root(n);
     } else {
-        this->prime_factors = factors;
+        this->prime_factors = *factors;
         first_layer_fft = false;
         w = _w;
     }
     inv_w = gf.inv(w);
-    n1 = prime_factors->at(id);
+    n1 = prime_factors[id];
     n2 = n / n1;
 
     w1 = gf.exp(w, n2); // order of w1 = n1
@@ -162,7 +161,7 @@ CooleyTukey<T>::CooleyTukey(
         //   this->dft_inner = new fft::Radix2<T>(gf, _n2);
         // else
         this->dft_inner =
-            new CooleyTukey<T>(gf, _n2, id + 1, this->prime_factors, w2);
+            new CooleyTukey<T>(gf, _n2, id + 1, &this->prime_factors, w2);
         this->G = new vec::Vector<T>(gf, this->n);
         this->Y = new vec::View<T>(this->G);
         this->X = new vec::View<T>(this->G);
@@ -173,8 +172,6 @@ CooleyTukey<T>::CooleyTukey(
 template <typename T>
 CooleyTukey<T>::~CooleyTukey()
 {
-    if (prime_factors && first_layer_fft)
-        delete prime_factors;
     if (dft_outer)
         delete dft_outer;
     if (dft_inner)

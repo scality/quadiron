@@ -432,6 +432,7 @@ void Additive<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
 template <typename T>
 void Additive<T>::taylor_expand_t2(vec::Vector<T>* input, int n, bool do_copy)
 {
+    assert(g0 != nullptr);
     assert(n >= 1);
     assert(input->get_n() <= n);
 
@@ -522,6 +523,7 @@ void Additive<T>::_taylor_expand_t2(
 template <typename T>
 void Additive<T>::inv_taylor_expand_t2(vec::Vector<T>* output)
 {
+    assert(g0 != nullptr);
     assert(g0->get_n() == g1->get_n());
     output->zero_fill();
 

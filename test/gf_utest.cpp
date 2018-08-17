@@ -27,361 +27,160 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <gtest/gtest.h>
 
 #include "gf_bin_ext.h"
 #include "gf_nf4.h"
 
+namespace gf = quadiron::gf;
+
 template <typename T>
-class GFUtest {
+class GfTestCommon : public ::testing::Test {
   public:
-    void test_negation(quadiron::gf::Field<T>* gf)
+    void test_negation(const gf::Field<T>& gf)
     {
-        int i;
-
-        for (i = 0; i < 100; i++) {
-            T x, y;
-
-            // std::cout << "i=" << i << "\n";
-
-            x = gf->weak_rand();
-            // std::cout << "x=" << x << "\n";
-            y = gf->neg(x);
-            // std::cout << "inv(x)=" << y << "\n";
-            assert(gf->add(x, y) == 0);
+        for (int i = 0; i < 100; i++) {
+            const T x = gf.weak_rand();
+            const T y = gf.neg(x);
+            ASSERT_EQ(gf.add(x, y), 0);
         }
     }
 
-    void test_negation_gf_nf4(quadiron::gf::NF4<T>* gf)
+    void test_reciprocal(const gf::Field<T>& gf)
     {
-        int i;
-
-        for (i = 0; i < 100; i++) {
-            T x, y;
-
-            // std::cout << "i=" << i << "\n";
-
-            x = gf->weak_rand_tuple();
-            // std::cout << "x=" << x << "\n";
-            y = gf->neg(x);
-            // std::cout << "inv(x)=" << y << "\n";
-            assert(gf->add(x, y) == 0);
-        }
-    }
-
-    void test_reciprocal(quadiron::gf::Field<T>* gf)
-    {
-        int i;
         int n_found = 0;
 
-        for (i = 0; i < 100; i++) {
-            T x, y;
-
-            x = gf->weak_rand();
+        for (int i = 0; i < 100; i++) {
+            const T x = gf.weak_rand();
             try {
-                y = gf->inv(x);
+                const T y = gf.inv(x);
+                ASSERT_EQ(gf.mul(x, y), gf.get_unit());
+                n_found++;
             } catch (const quadiron::Exception& e) {
                 continue;
             }
-            assert(gf->mul(x, y) == 1);
-            n_found++;
         }
-        assert(n_found > 0);
+        ASSERT_GT(n_found, 0);
     }
 
-    void test_reciprocal_gf_nf4(quadiron::gf::NF4<T>* gf)
+    void test_log(const gf::Field<T>& gf)
     {
-        int i;
         int n_found = 0;
 
-        for (i = 0; i < 100; i++) {
-            T x, y;
-
-            x = gf->weak_rand_tuple();
+        for (int i = 0; i < 1000; i++) {
+            const T x = gf.weak_rand();
+            const T y = gf.weak_rand();
             try {
-                y = gf->inv(x);
-            } catch (const quadiron::Exception& e) {
-                continue;
-            }
-            assert(gf->mul(x, y) == gf->get_unit());
-            n_found++;
-        }
-        assert(n_found > 0);
-    }
+                const T z = gf.log(x, y);
+                const T t = gf.exp(x, z);
 
-    void test_log(quadiron::gf::Field<T>* gf)
-    {
-        int i;
-        int n_found = 0;
-
-        for (i = 0; i < 1000; i++) {
-            T x, y, z, t;
-
-            // std::cout << "i=" << i << "\n";
-            // std::cout << gf->card() << "\n";
-            x = gf->weak_rand();
-            y = gf->weak_rand();
-            // std::cout << "x=" << x << "\n";
-            // std::cout << "y=" << y << "\n";
-            try {
-                z = gf->log(x, y);
-                // std::cout << "z=" << z << "\n";
+                ASSERT_EQ(t, y);
+                n_found++;
             } catch (...) {
-                // std::cout << "not found\n";
                 continue;
             }
-            t = gf->exp(x, z);
-            // std::cout << "t=" << t << "\n";
-            assert(t == y);
-            n_found++;
         }
-        assert(n_found > 0);
+        ASSERT_GT(n_found, 0);
     }
 
-    void test_pack_unpack(quadiron::gf::NF4<T>* gf)
-    {
-        int i;
-
-        for (i = 0; i < 100; i++) {
-            T x, y;
-            quadiron::GroupedValues<T> z;
-
-            // std::cout << "i=" << i << "\n";
-
-            x = gf->weak_rand_tuple();
-            // std::cout << "x=" << x << "\n";
-            z = gf->unpack(x);
-            // std::cout << "unpack(x)=" << z.values << "\n";
-            y = gf->pack(z.values, z.flag);
-            // std::cout << "pack(z)=" << y << "\n";
-            assert(x == y);
-        }
-    }
-
-    void test_find_primitive_root(quadiron::gf::Field<T>* gf)
+    void test_find_primitive_root(gf::Field<T>* gf)
     {
         gf->find_primitive_root();
-        // std::cout << "root " << gf->root << std::endl;
-        assert(gf->check_primitive_root(gf->get_root()));
+        ASSERT_TRUE(gf->check_primitive_root(gf->get_root()));
     }
 
-    void test_get_order(quadiron::gf::Field<T>* gf)
+    void test_get_order(const gf::Field<T>& gf)
     {
-        int i;
-        T x;
-        T order;
-        T h = gf->card_minus_one();
-        for (i = 0; i < 1000; i++) {
-            // std::cout << "i=" << i << "\n";
-            // std::cout << gf->card() << "\n";
-            x = gf->weak_rand();
-            order = gf->get_order(x);
-            assert(gf->exp(x, order) == 1);
-            assert(h % order == 0);
+        const T h = gf.card_minus_one();
+
+        for (int i = 0; i < 1000; i++) {
+            const T x = gf.weak_rand();
+            const T order = gf.get_order(x);
+
+            ASSERT_EQ(gf.exp(x, order), 1);
+            ASSERT_EQ(h % order, 0);
         }
     }
 
-    void test_get_nth_root(quadiron::gf::Field<T>* gf)
+    void test_get_nth_root(const gf::Field<T>& gf)
     {
-        int i;
-        T x;
-        T nth_root;
-        for (i = 0; i < 1000; i++) {
-            // std::cout << "i=" << i << "\n";
-            // std::cout << gf->card() << "\n";
-            x = gf->weak_rand();
-            nth_root = gf->get_nth_root(x);
-            // std::cout << "x=" << x << " " << nth_root << std::endl;
-            assert(gf->exp(nth_root, x) == 1);
-        }
-    }
+        for (int i = 0; i < 1000; i++) {
+            const T x = gf.weak_rand();
+            const T nth_root = gf.get_nth_root(x);
 
-    void test_negation_gf5()
-    {
-        std::cout << "test_negation_gf5\n";
-
-        quadiron::gf::Prime<T> gf5(5);
-        test_negation(&gf5);
-    }
-
-    void test_reciprocal_gf5()
-    {
-        std::cout << "test_reciprocal_gf5\n";
-
-        quadiron::gf::Prime<T> gf5(5);
-        test_reciprocal(&gf5);
-    }
-
-    void test_log_gf5()
-    {
-        std::cout << "test_log_gf5\n";
-
-        quadiron::gf::Prime<T> gf5(5);
-        test_log(&gf5);
-    }
-
-    void test_prime_root_gf5()
-    {
-        std::cout << "test_prime_root_gf5\n";
-
-        quadiron::gf::Prime<T> gf5(5);
-        test_find_primitive_root(&gf5);
-        test_get_order(&gf5);
-        test_get_nth_root(&gf5);
-    }
-
-    void test_negation_gf256()
-    {
-        std::cout << "test_negation_gf256\n";
-
-        quadiron::gf::BinExtension<T> gf256(8);
-        test_negation(&gf256);
-    }
-
-    void test_reciprocal_gf256()
-    {
-        std::cout << "test_reciprocal_gf256\n";
-
-        quadiron::gf::BinExtension<T> gf256(8);
-        test_reciprocal(&gf256);
-    }
-
-    void test_log_gf256()
-    {
-        std::cout << "test_log_gf256\n";
-
-        quadiron::gf::BinExtension<T> gf256(8);
-        test_log(&gf256);
-    }
-
-    void test_prime_root_gf256()
-    {
-        std::cout << "test_prime_root_gf256\n";
-
-        quadiron::gf::BinExtension<T> gf256(8);
-        test_find_primitive_root(&gf256);
-        test_get_order(&gf256);
-        test_get_nth_root(&gf256);
-    }
-
-    void test_negation_gf2_bign(T n)
-    {
-        std::cout << "test_negation_gf(2^" << n << ")\n";
-
-        quadiron::gf::BinExtension<T> gf2n(n);
-        test_negation(&gf2n);
-    }
-
-    void test_reciprocal_gf2_bign(T n)
-    {
-        std::cout << "test_reciprocal_gf(2^" << n << ")\n";
-
-        quadiron::gf::BinExtension<T> gf2n(n);
-        test_reciprocal(&gf2n);
-    }
-
-    void test_log_gf2_bign(T n)
-    {
-        std::cout << "test_log_gf(2^" << n << ")\n";
-
-        quadiron::gf::BinExtension<T> gf2n(n);
-        test_log(&gf2n);
-    }
-
-    void test_prime_root_gf2(T n)
-    {
-        std::cout << "test_prime_root_gf(2^" << n << ")\n";
-
-        quadiron::gf::BinExtension<T> gf2n(n);
-        test_find_primitive_root(&gf2n);
-        test_get_order(&gf2n);
-        test_get_nth_root(&gf2n);
-    }
-
-    void gf_utest_gf_nf4_with_n(T n)
-    {
-        std::cout << "gf_utest_gf_nf4_with_n=" << n << "\n";
-
-        quadiron::prng().seed(time(0));
-
-        quadiron::gf::NF4<T> gf(n);
-
-        test_negation_gf_nf4(&gf);
-        test_reciprocal_gf_nf4(&gf);
-        test_pack_unpack(&gf);
-    }
-
-    void gf_utest_gf_nf4()
-    {
-        int max_n = sizeof(T) / 4;
-        std::cout << "sizeofT=" << sizeof(T)
-                  << "gf_utest_gf_nf4 for max_n=" << max_n << "\n";
-        for (int n = 1; n <= max_n; n++) {
-            gf_utest_gf_nf4_with_n(n);
-        }
-    }
-
-    void gf_utest()
-    {
-        std::cout << "gf_utest\n";
-
-        quadiron::prng().seed(time(0));
-
-        test_negation_gf5();
-        test_reciprocal_gf5();
-        test_log_gf5();
-        test_prime_root_gf5();
-        test_negation_gf256();
-        test_reciprocal_gf256();
-        test_log_gf256();
-        test_prime_root_gf256();
-        gf_utest_gf_nf4();
-    }
-
-    void gf_utest_gf_2_bign(T n)
-    {
-        std::cout << "gf_utest 2^" << n << "\n";
-
-        quadiron::prng().seed(time(0));
-
-        test_negation_gf2_bign(n);
-        test_reciprocal_gf2_bign(n);
-        if (n < 128) // it works slowly in GF2N(128)
-            test_prime_root_gf2(n);
-        // test_log_gf2_bign(n);
-    }
-
-    void gf_utest_nogf2n()
-    {
-        std::cout << "gf_utest_nogf2n\n";
-
-        quadiron::prng().seed(time(0));
-
-        test_negation_gf5();
-        test_reciprocal_gf5();
-        test_log_gf5();
-        test_prime_root_gf5();
-    }
-
-    void gf_utest_gf_2_n()
-    {
-        T max_n = 8 * sizeof(T);
-        std::cout << "gf_utest_gf_2_n for max_n=" << max_n << "\n";
-        for (T i = 8; i <= max_n; i *= 2) {
-            gf_utest_gf_2_bign(i);
+            ASSERT_EQ(gf.exp(nth_root, x), 1);
         }
     }
 };
 
-void gf_utest()
+using AllTypes = ::testing::Types<uint32_t, uint64_t, __uint128_t>;
+TYPED_TEST_CASE(GfTestCommon, AllTypes);
+
+TYPED_TEST(GfTestCommon, TestGfNf4) // NOLINT
 {
-    GFUtest<uint32_t> gfutest_uint32;
-    gfutest_uint32.gf_utest();
-    gfutest_uint32.gf_utest_gf_2_n();
-    GFUtest<uint64_t> gfutest_uint64;
-    gfutest_uint64.gf_utest();
-    gfutest_uint64.gf_utest_gf_2_n();
-    GFUtest<__uint128_t> gfutest_uint128;
-    // gfutest_uint128.gf_utest(); // gfp(n) does not work for uint128
-    gfutest_uint128.gf_utest_gf_nf4();
-    gfutest_uint128.gf_utest_gf_2_n();
+    for (unsigned n = 1; n <= sizeof(TypeParam) / 4; n++) {
+        quadiron::prng().seed(time(0));
+
+        auto gf(gf::create<gf::NF4<TypeParam>>(n));
+        this->test_negation(gf);
+        this->test_negation(gf);
+
+        // Test pack/unpack.
+        for (int i = 0; i < 100; i++) {
+            const TypeParam x = gf.weak_rand_tuple();
+            const quadiron::GroupedValues<TypeParam> z = gf.unpack(x);
+            const TypeParam y = gf.pack(z.values, z.flag);
+            ASSERT_EQ(x, y);
+        }
+    }
+}
+
+TYPED_TEST(GfTestCommon, TestGf2n) // NOLINT
+{
+    for (TypeParam n = 8; n <= 8 * sizeof(TypeParam); n *= 2) {
+        quadiron::prng().seed(time(0));
+
+        auto gf(gf::create<gf::BinExtension<TypeParam>>(n));
+        this->test_negation(gf);
+        this->test_reciprocal(gf);
+        // this->test_log(gf);
+        if (n < 128) { // It works slowly in GF2N(128).
+            this->test_get_order(gf);
+            this->test_get_nth_root(gf);
+            this->test_find_primitive_root(&gf);
+        }
+    }
+}
+
+template <typename T>
+class GfTestNo128 : public GfTestCommon<T> {
+};
+
+using No128 = ::testing::Types<uint32_t, uint64_t>;
+TYPED_TEST_CASE(GfTestNo128, No128);
+
+TYPED_TEST(GfTestNo128, TestGf5) // NOLINT
+{
+    quadiron::prng().seed(time(0));
+
+    auto gf(gf::create<gf::Prime<TypeParam>>(5));
+    this->test_negation(gf);
+    this->test_reciprocal(gf);
+    this->test_log(gf);
+    this->test_get_order(gf);
+    this->test_get_nth_root(gf);
+    this->test_find_primitive_root(&gf);
+}
+
+TYPED_TEST(GfTestNo128, TestGf256) // NOLINT
+{
+    quadiron::prng().seed(time(0));
+
+    auto gf(gf::create<gf::BinExtension<TypeParam>>(8));
+    this->test_negation(gf);
+    this->test_reciprocal(gf);
+    this->test_log(gf);
+    this->test_get_order(gf);
+    this->test_get_nth_root(gf);
+    this->test_find_primitive_root(&gf);
 }

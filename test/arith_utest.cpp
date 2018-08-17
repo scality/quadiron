@@ -29,477 +29,343 @@
  */
 #include <random>
 
+#include <gtest/gtest.h>
+
 #include "quadiron.h"
 
+namespace arith = quadiron::arith;
+
 template <typename T>
-class ArithUtest {
+class ArithTestCommon : public ::testing::Test {
   public:
     T max;
     std::uniform_int_distribution<uint32_t> uniform_dist_max;
 
-    ArithUtest()
+    ArithTestCommon()
     {
-        if (sizeof(T) < 16)
+        if (sizeof(T) <= sizeof(uint64_t))
             max = std::numeric_limits<T>::max();
         else {
             max = 0;
-            for (size_t i = 0; i < sizeof(T) * 8; i++)
+            for (size_t i = 0; i < sizeof(T) * 8; i++) {
                 max += (T)1 << i;
+            }
         }
         uniform_dist_max = std::uniform_int_distribution<uint32_t>(
             1, static_cast<uint32_t>(max - 1));
+
+        quadiron::prng().seed(time(0));
     }
+    ~ArithTestCommon() = default;
 
-    ~ArithUtest() {}
-
-    void test_basic_ops()
+    void check_all_primes(const std::vector<T>& primes, bool distinct)
     {
-        std::cout << "test_basic_ops\n";
-        assert(quadiron::arith::sqrt<T>(2025) == 45);
-        assert(quadiron::arith::is_prime<T>(2));
-        assert(quadiron::arith::is_prime<T>(3));
-        assert(quadiron::arith::is_prime<T>(13));
-        assert(!quadiron::arith::is_prime<T>(4));
-        assert(!quadiron::arith::is_prime<T>(15));
-    }
+        ASSERT_GT(primes.size(), 0);
+        ASSERT_TRUE(arith::is_prime<T>(primes.at(0)));
 
-    void test_reciprocal()
-    {
-        std::cout << "test_reciprocal\n";
-
-        int i;
-        T sub_max = quadiron::arith::sqrt<T>(max);
-        std::uniform_int_distribution<uint32_t> dis(1, sub_max - 1);
-
-        for (i = 0; i < 1000; i++) {
-            T x, y, z;
-
-            x = dis(quadiron::prng());
-            // std::cout << "x=" << x << "\n";
-            y = quadiron::arith::exp<T>(x, 2);
-            // std::cout << "exp(x)=" << y << "\n";
-            z = quadiron::arith::sqrt<T>(y);
-            // std::cout << "z=" << z << "\n";
-            assert(z == x);
-        }
-    }
-
-    /**
-     * http://www.math.unm.edu/~loring/links/discrete_f05/remainder.pdf
-     * http://gauss.math.luc.edu/greicius/Math201/Fall2012/Lectures/ChineseRemainderThm.article.pdf
-     *
-     * @param gf
-     */
-    void test_chinese_remainder()
-    {
-        std::cout << "test_chinese_remainder\n";
-
-        T a[4];
-        T n[4];
-        T omega;
-
-        a[0] = 4;
-        n[0] = 107;
-        a[1] = 2;
-        n[1] = 74;
-        omega = quadiron::arith::chinese_remainder<T>(2, a, n);
-        assert(omega == 5996);
-
-        a[0] = 6;
-        n[0] = 7;
-        a[1] = 4;
-        n[1] = 8;
-        omega = quadiron::arith::chinese_remainder<T>(2, a, n);
-        assert(omega == 20);
-
-        a[0] = 3;
-        n[0] = 4;
-        a[1] = 0;
-        n[1] = 6;
-        omega = quadiron::arith::chinese_remainder<T>(2, a, n);
-        // no solution XXX detect it
-    }
-
-    void test_jacobi()
-    {
-        std::cout << "test_jacobi\n";
-        assert(quadiron::arith::jacobi<T>(1001, 9907) == -1);
-        assert(quadiron::arith::jacobi<T>(19, 45) == 1);
-        assert(quadiron::arith::jacobi<T>(8, 21) == -1);
-        assert(quadiron::arith::jacobi<T>(5, 21) == 1);
-        assert(quadiron::arith::jacobi<T>(47, 221) == -1);
-        assert(quadiron::arith::jacobi<T>(2, 221) == -1);
-    }
-
-    /**
-     * Schönhage-Strassen algorithm
-     * Example taken from Pierre Meunier's book
-     *
-     * @param gf
-     */
-    void test_mul_bignum()
-    {
-        // current test is only for uint64_t
-        if (sizeof(T) != 8)
-            return;
-        std::cout << "test_mul_bignum\n";
-
-        int b = 10; // base
-        int p = 14; // we could multiply integers of 2^p digits
-        // T max_digits = quadiron::arith::exp<T>(2, p);
-        // std::cerr << "p=" << p << " max_digits=" << max_digits << "\n";
-
-        // T l = p + 1;
-        // std::cerr << "l=" << l << "\n";
-
-        // choose 2 prime numbers of the form p=a.2^n+1
-        // because if x is not a quadratic residue then w=x^a is
-        // a 2^n-th principal root of unity in GF_p
-        T a1 = 2;
-        T a2 = 5;
-        T p1 = a1 * quadiron::arith::exp<T>(2, 15) + 1;
-        T p2 = a2 * quadiron::arith::exp<T>(2, 15) + 1;
-        // std::cerr << "p1=" << p1 << " p2=" << p2 << "\n";
-        assert(quadiron::arith::is_prime<T>(p1));
-        assert(quadiron::arith::is_prime<T>(p2));
-
-        // ensure their product is bounded (b-1)^2*2^(n-1) < m
-        T m = p1 * p2;
-        // check overflow
-        assert(m / p1 == p2);
-        // std::cerr << " m=" << m << "\n";
-        assert(
-            quadiron::arith::exp<T>((b - 1), 2) * quadiron::arith::exp<T>(p, 2)
-            < m);
-
-        // find x so it is not a quadratic residue in GF_p1 and GF_p2
-        assert(
-            quadiron::arith::jacobi<T>(3, p1)
-            == quadiron::arith::jacobi<T>(p1, 3));
-        assert(
-            quadiron::arith::jacobi<T>(p1, 3)
-            == quadiron::arith::jacobi<T>(2, 3));
-        assert(
-            quadiron::arith::jacobi<T>(3, p2)
-            == quadiron::arith::jacobi<T>(p2, 3));
-        assert(
-            quadiron::arith::jacobi<T>(p2, 3)
-            == quadiron::arith::jacobi<T>(2, 3));
-        assert(quadiron::arith::jacobi<T>(2, 3) == -1);
-        // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
-
-        // therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
-        T w1 = quadiron::arith::exp<T>(3, a1);
-        T w2 = quadiron::arith::exp<T>(3, a2);
-        // std::cerr << "w1=" << w1 << " w2=" << w2 << "\n";
-        assert(w1 == 9);
-        assert(w2 == 243);
-
-        // find root of unity in GF_p1p2
-        T _a[2];
-        T _n[2];
-        _a[0] = w1;
-        _n[0] = p1;
-        _a[1] = w2;
-        _n[1] = p2;
-        T w = quadiron::arith::chinese_remainder<T>(2, _a, _n);
-        // std::cerr << " w=" << w << "\n";
-        assert(w == 25559439);
-    }
-
-    void test_ext_gcd()
-    {
-        std::cout << "test_ext_gcd\n";
-        quadiron::SignedDoubleSizeVal<T> bezout[2];
-
-        // not explicitely related to GF(97)
-        assert(
-            2 == quadiron::arith::extended_gcd<T>(240, 46, nullptr, nullptr));
-        assert(6 == quadiron::arith::extended_gcd<T>(54, 24, nullptr, nullptr));
-        assert(
-            15 == quadiron::arith::extended_gcd<T>(210, 45, nullptr, nullptr));
-        //
-        assert(1 == quadiron::arith::extended_gcd<T>(97, 20, bezout, nullptr));
-        assert(bezout[0] == -7 && bezout[1] == 34);
-    }
-
-    void check_all_primes(std::vector<T>* primes, bool distinct)
-    {
-        assert(primes->size() > 0);
-
-        typename std::vector<T>::size_type j;
-
-        assert(quadiron::arith::is_prime<T>(primes->at(0)));
-
-        for (j = 1; j != primes->size(); ++j) {
-            // std::cout << j << ": " << primes->at(j) << "\n";
-            assert(quadiron::arith::is_prime<T>(primes->at(j)));
-            if (distinct)
-                assert(primes->at(j - 1) != primes->at(j));
-        }
-    }
-
-    void check_primes_exponent(
-        T nb,
-        std::vector<T>* primes,
-        std::vector<int>* exponent)
-    {
-        assert(primes->size() > 0);
-        assert(exponent->size() > 0);
-
-        typename std::vector<int>::size_type j;
-        T y = 1;
-        for (j = 0; j != primes->size(); ++j) {
-            y *= quadiron::arith::exp<T>(primes->at(j), exponent->at(j));
-        }
-        assert(y == nb);
-    }
-
-    void test_factor_distinct_prime()
-    {
-        std::cout << "test_factor_distinct_prime\n";
-
-        int i;
-
-        for (i = 0; i < 1000; i++) {
-            const T x = uniform_dist_max(quadiron::prng());
-            std::vector<T> primes;
-
-            quadiron::arith::factor_distinct_prime<T>(x, &primes);
-            check_all_primes(&primes, true);
-        }
-    }
-
-    void test_factor_prime()
-    {
-        std::cout << "test_factor_prime\n";
-
-        int i;
-        std::vector<T> primes;
-        std::vector<int> exponent;
-
-        for (i = 0; i < 1000; i++) {
-            const T x = uniform_dist_max(quadiron::prng());
-
-            quadiron::arith::factor_prime<T>(x, &primes, &exponent);
-            check_all_primes(&primes, true);
-            check_primes_exponent(x, &primes, &exponent);
-            primes.clear();
-            exponent.clear();
-        }
-    }
-
-    void check_divisors(T nb, std::vector<T>* divisors, bool proper)
-    {
-        if (proper && quadiron::arith::is_prime<T>(nb))
-            assert(divisors->size() == 0);
-        else
-            assert(divisors->size() > 0);
-
-        typename std::vector<T>::size_type i;
-        for (i = 0; i != divisors->size(); ++i) {
-            // std::cout << i << ": " << divisors->at(i) << "\n";
-            assert(nb % divisors->at(i) == 0);
-            if (proper)
-                assert(quadiron::arith::is_prime<T>(nb / divisors->at(i)));
-        }
-    }
-
-    void test_get_proper_divisors()
-    {
-        std::cout << "test_get_proper_divisors\n";
-
-        int i;
-        std::vector<T> divisors;
-        for (i = 0; i < 1000; i++) {
-            const T x = uniform_dist_max(quadiron::prng());
-
-            quadiron::arith::get_proper_divisors<T>(x, &divisors);
-            check_divisors(x, &divisors, true);
-            divisors.clear();
-        }
-    }
-
-    void test_get_proper_divisors_2()
-    {
-        std::cout << "test_get_proper_divisors_2\n";
-
-        int i;
-        std::vector<T> divisors;
-        for (i = 0; i < 1000; i++) {
-            const T x = uniform_dist_max(quadiron::prng());
-
-            std::vector<T> factors;
-            quadiron::arith::factor_distinct_prime<T>(x, &factors);
-            quadiron::arith::get_proper_divisors<T>(x, &factors, &divisors);
-            check_divisors(x, &divisors, true);
-            divisors.clear();
-        }
-    }
-
-    void test_get_all_divisors()
-    {
-        std::cout << "test_get_all_divisors\n";
-
-        int i;
-        std::vector<T> divisors;
-        for (i = 0; i < 1000; i++) {
-            const T x = uniform_dist_max(quadiron::prng());
-
-            quadiron::arith::get_all_divisors<T>(x, &divisors);
-            check_divisors(x, &divisors, false);
-            divisors.clear();
-        }
-    }
-
-    void test_get_code_len()
-    {
-        std::cout << "test_get_code_len\n";
-
-        int i;
-        for (i = 0; i < 1000; i++) {
-            const T order = uniform_dist_max(quadiron::prng());
-            std::uniform_int_distribution<uint32_t> dis(1, order - 1);
-            const T n = dis(quadiron::prng());
-            const T len = quadiron::arith::get_code_len<T>(order, n);
-
-            assert(order % len == 0);
-            assert(len >= n);
-        }
-    }
-
-    void test_get_code_len_high_compo()
-    {
-        std::cout << "test_get_code_len_high_compo\n";
-
-        int i;
-        for (i = 0; i < 1000; i++) {
-            const T order = uniform_dist_max(quadiron::prng());
-            std::uniform_int_distribution<uint32_t> dis(1, order - 1);
-            const T n = dis(quadiron::prng());
-            const T len = quadiron::arith::get_code_len_high_compo<T>(order, n);
-
-            assert(order % len == 0);
-            assert(len >= n);
-        }
-    }
-
-    void test_get_code_len_high_compo_2()
-    {
-        std::cout << "test_get_code_len_high_compo_2\n";
-
-        int i;
-        for (i = 0; i < 1000; i++) {
-            const T order = uniform_dist_max(quadiron::prng());
-            std::uniform_int_distribution<uint32_t> dis(1, order - 1);
-            const T n = dis(quadiron::prng());
-
-            std::vector<T> factors;
-            quadiron::arith::get_prime_factors<T>(order, &factors);
-            const T len =
-                quadiron::arith::get_code_len_high_compo<T>(&factors, n);
-            // std::cout << "len=" << len << "\n";
-            assert(order % len == 0);
-            assert(len >= n);
-        }
-    }
-
-    void check_prime_divisors(T nb, std::vector<T>* divisors, bool coprime)
-    {
-        assert(divisors->size() > 0);
-
-        typename std::vector<T>::size_type i, j;
-        for (i = 0; i != divisors->size(); ++i) {
-            // std::cout << i << ": " << divisors->at(i) << "\n";
-            assert(nb % divisors->at(i) == 0);
-            if (!coprime)
-                assert(quadiron::arith::is_prime<T>(divisors->at(i)));
-            else {
-                for (j = i + 1; j != divisors->size(); ++j) {
-                    assert(divisors->at(i) != divisors->at(j));
-                }
+        for (size_t j = 1; j != primes.size(); ++j) {
+            ASSERT_TRUE(arith::is_prime<T>(primes.at(j)));
+            if (distinct) {
+                ASSERT_NE(primes.at(j - 1), primes.at(j));
             }
         }
     }
 
-    void test_get_coprime_factors()
+    void check_divisors(T nb, const std::vector<T>& divisors, bool proper)
     {
-        std::cout << "test_get_coprime_factors\n";
+        if (proper && arith::is_prime<T>(nb)) {
+            ASSERT_EQ(divisors.size(), 0);
+        } else {
+            ASSERT_GT(divisors.size(), 0);
+        }
 
-        std::vector<T> divisors;
-        int i;
-        for (i = 0; i < 1000; i++) {
-            const T n = uniform_dist_max(quadiron::prng());
-
-            quadiron::arith::get_coprime_factors<T>(n, &divisors);
-            check_prime_divisors(n, &divisors, true);
-            divisors.clear();
+        for (auto v : divisors) {
+            ASSERT_EQ(nb % v, 0);
+            if (proper) {
+                ASSERT_TRUE(arith::is_prime<T>(nb / v));
+            }
         }
     }
 
-    void test_get_prime_factors()
+    void
+    check_prime_divisors(T nb, const std::vector<T>& divisors, bool coprime)
     {
-        std::cout << "test_get_prime_factors\n";
+        ASSERT_GT(divisors.size(), 0);
 
-        std::vector<T> divisors;
-        int i;
-        for (i = 0; i < 1000; i++) {
-            const T n = uniform_dist_max(quadiron::prng());
+        for (size_t i = 0; i != divisors.size(); ++i) {
+            ASSERT_EQ(nb % divisors.at(i), 0);
 
-            quadiron::arith::get_prime_factors<T>(n, &divisors);
-            check_prime_divisors(n, &divisors, false);
-            divisors.clear();
+            if (!coprime) {
+                ASSERT_TRUE(arith::is_prime<T>(divisors.at(i)));
+            } else {
+                for (size_t j = i + 1; j != divisors.size(); ++j) {
+                    ASSERT_NE(divisors.at(i), divisors.at(j));
+                }
+            }
         }
-    }
-
-    void arith_utest()
-    {
-        std::cout << "arith_utest with sizeof(T)=" << sizeof(T) << "\n";
-
-        quadiron::prng().seed(time(0));
-
-        test_basic_ops();
-        test_reciprocal();
-        test_chinese_remainder();
-        test_jacobi();
-        test_mul_bignum();
-        test_ext_gcd();
-        test_factor_distinct_prime();
-        test_factor_prime();
-        test_get_proper_divisors();
-        test_get_all_divisors();
-        test_get_code_len();
-        test_get_code_len_high_compo();
-        test_get_coprime_factors();
-        test_get_prime_factors();
-    }
-
-    void arith_utest_no256()
-    {
-        std::cout << "arith_utest_no256\n";
-
-        quadiron::prng().seed(time(0));
-
-        test_basic_ops();
-        test_reciprocal();
-        test_jacobi();
-        test_factor_distinct_prime();
-        test_factor_prime();
-        test_get_proper_divisors();
-        test_get_all_divisors();
-        test_get_code_len();
-        test_get_code_len_high_compo();
-        test_get_coprime_factors();
-        test_get_prime_factors();
     }
 };
 
-void arith_utest()
+using AllTypes = ::testing::Types<uint32_t, uint64_t, __uint128_t>;
+TYPED_TEST_CASE(ArithTestCommon, AllTypes);
+
+TYPED_TEST(ArithTestCommon, TestBasicOperations) // NOLINT
 {
-    ArithUtest<uint32_t> ArithUtest_uint32;
-    ArithUtest_uint32.arith_utest();
-    ArithUtest<uint64_t> ArithUtest_uint64;
-    ArithUtest_uint64.arith_utest();
-    ArithUtest<__uint128_t> ArithUtest_uint128;
-    ArithUtest_uint128.arith_utest_no256();
+    ASSERT_EQ(arith::sqrt<TypeParam>(2025), 45);
+
+    ASSERT_TRUE(arith::is_prime<TypeParam>(2));
+    ASSERT_TRUE(arith::is_prime<TypeParam>(3));
+    ASSERT_TRUE(arith::is_prime<TypeParam>(13));
+    ASSERT_TRUE(!arith::is_prime<TypeParam>(4));
+    ASSERT_TRUE(!arith::is_prime<TypeParam>(15));
+}
+
+TYPED_TEST(ArithTestCommon, TestReciprocal) // NOLINT
+{
+    const TypeParam sub_max = arith::sqrt<TypeParam>(this->max);
+    std::uniform_int_distribution<uint32_t> dis(1, sub_max - 1);
+
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam x = dis(quadiron::prng());
+        const TypeParam y = arith::exp<TypeParam>(x, 2);
+        const TypeParam z = arith::sqrt<TypeParam>(y);
+
+        ASSERT_EQ(z, x);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestJacobi) // NOLINT
+{
+    ASSERT_EQ(arith::jacobi<TypeParam>(1001, 9907), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(19, 45), 1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(8, 21), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(5, 21), 1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(47, 221), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(2, 221), -1);
+}
+
+TYPED_TEST(ArithTestCommon, TestFactorDistinctPrime) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam x = this->uniform_dist_max(quadiron::prng());
+        const std::vector<TypeParam> primes =
+            arith::factor_distinct_prime<TypeParam>(x);
+
+        this->check_all_primes(primes, true);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestFactorPrime) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        std::vector<TypeParam> primes;
+        std::vector<int> exponent;
+        const TypeParam x = this->uniform_dist_max(quadiron::prng());
+
+        arith::factor_prime<TypeParam>(x, &primes, &exponent);
+        this->check_all_primes(primes, true);
+        // Check primes exponent.
+        ASSERT_GT(primes.size(), 0);
+        ASSERT_GT(exponent.size(), 0);
+
+        TypeParam y = 1;
+        for (size_t j = 0; j != primes.size(); ++j) {
+            y *= arith::exp<TypeParam>(primes.at(j), exponent.at(j));
+        }
+        ASSERT_EQ(y, x);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestGetProperDivisor) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam x = this->uniform_dist_max(quadiron::prng());
+        const std::vector<TypeParam> divisors =
+            arith::get_proper_divisors<TypeParam>(x);
+
+        this->check_divisors(x, divisors, true);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestGetProperDivisor2) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam x = this->uniform_dist_max(quadiron::prng());
+        const std::vector<TypeParam> factors =
+            arith::factor_distinct_prime<TypeParam>(x);
+        const std::vector<TypeParam> divisors =
+            arith::get_proper_divisors<TypeParam>(x, factors);
+
+        this->check_divisors(x, divisors, true);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestGetAllDivisor) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam x = this->uniform_dist_max(quadiron::prng());
+        const std::vector<TypeParam> divisors =
+            arith::get_all_divisors<TypeParam>(x);
+
+        this->check_divisors(x, divisors, false);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestGetCodeLength) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam order = this->uniform_dist_max(quadiron::prng());
+        std::uniform_int_distribution<uint32_t> dis(1, order - 1);
+        const TypeParam n = dis(quadiron::prng());
+        const TypeParam len = arith::get_code_len<TypeParam>(order, n);
+
+        ASSERT_EQ(order % len, 0);
+        ASSERT_GE(len, n);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestGetCodeLengthHighCompo) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam order = this->uniform_dist_max(quadiron::prng());
+        std::uniform_int_distribution<uint32_t> dis(1, order - 1);
+        const TypeParam n = dis(quadiron::prng());
+        const TypeParam len =
+            arith::get_code_len_high_compo<TypeParam>(order, n);
+
+        ASSERT_EQ(order % len, 0);
+        ASSERT_GE(len, n);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestGetCodeLengthHighCompo2) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam order = this->uniform_dist_max(quadiron::prng());
+        std::uniform_int_distribution<uint32_t> dis(1, order - 1);
+        const TypeParam n = dis(quadiron::prng());
+        const std::vector<TypeParam> factors =
+            arith::get_prime_factors<TypeParam>(order);
+        const TypeParam len =
+            arith::get_code_len_high_compo<TypeParam>(factors, n);
+
+        ASSERT_EQ(order % len, 0);
+        ASSERT_GE(len, n);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestGetCoprimeFactors) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam n = this->uniform_dist_max(quadiron::prng());
+        const std::vector<TypeParam> divisors =
+            arith::get_coprime_factors<TypeParam>(n);
+
+        this->check_prime_divisors(n, divisors, true);
+    }
+}
+
+TYPED_TEST(ArithTestCommon, TestGetPrimeFactors) // NOLINT
+{
+    for (int i = 0; i < 1000; i++) {
+        const TypeParam n = this->uniform_dist_max(quadiron::prng());
+        const std::vector<TypeParam> divisors =
+            arith::get_prime_factors<TypeParam>(n);
+
+        this->check_prime_divisors(n, divisors, false);
+    }
+}
+
+template <typename T>
+class ArithTestNo128 : public ::testing::Test {
+};
+
+using No128 = ::testing::Types<uint32_t, uint64_t>;
+TYPED_TEST_CASE(ArithTestNo128, No128);
+
+/* References:
+ * http://www.math.unm.edu/~loring/links/discrete_f05/remainder.pdf
+ * http://gauss.math.luc.edu/greicius/Math201/Fall2012/Lectures/ChineseRemainderThm.article.pdf
+ */
+TYPED_TEST(ArithTestNo128, TestChineseRemainder) // NOLINT
+{
+    TypeParam a[4];
+    TypeParam n[4];
+    TypeParam omega;
+
+    a[0] = 4;
+    n[0] = 107;
+    a[1] = 2;
+    n[1] = 74;
+    omega = arith::chinese_remainder<TypeParam>(2, a, n);
+    ASSERT_EQ(omega, 5996);
+
+    a[0] = 6;
+    n[0] = 7;
+    a[1] = 4;
+    n[1] = 8;
+    omega = arith::chinese_remainder<TypeParam>(2, a, n);
+    ASSERT_EQ(omega, 20);
+
+    a[0] = 3;
+    n[0] = 4;
+    a[1] = 0;
+    n[1] = 6;
+    omega = arith::chinese_remainder<TypeParam>(2, a, n);
+    // no solution XXX detect it
+}
+
+TYPED_TEST(ArithTestNo128, TestExtendedGcd) // NOLINT
+{
+    quadiron::SignedDoubleSizeVal<TypeParam> bezout[2];
+
+    // Not explicitely related to GF(97).
+    ASSERT_EQ(arith::extended_gcd<TypeParam>(240, 46, nullptr, nullptr), 2);
+    ASSERT_EQ(arith::extended_gcd<TypeParam>(54, 24, nullptr, nullptr), 6);
+    ASSERT_EQ(arith::extended_gcd<TypeParam>(210, 45, nullptr, nullptr), 15);
+    ASSERT_EQ(arith::extended_gcd<TypeParam>(97, 20, bezout, nullptr), 1);
+    ASSERT_TRUE(bezout[0] == -7 && bezout[1] == 34);
+}
+
+// Schönhage-Strassen algorithm (example taken from Pierre Meunier's book).
+TEST(ArithTest, TestBignumMultiplication) // NOLINT
+{
+    const int b = 10; // Base.
+    const int p = 14; // We could multiply integers of 2^p digits.
+
+    // Choose two prime numbers of the form p=a.2^n+1
+    // Because if `x` is not a quadratic residue then w=x^a is
+    // a 2^n-th principal root of unity in GF_p
+    const uint64_t a1 = 2;
+    const uint64_t a2 = 5;
+    const uint64_t p1 = a1 * arith::exp<uint64_t>(2, 15) + 1;
+    const uint64_t p2 = a2 * arith::exp<uint64_t>(2, 15) + 1;
+    ASSERT_TRUE(arith::is_prime<uint64_t>(p1));
+    ASSERT_TRUE(arith::is_prime<uint64_t>(p2));
+
+    // Ensure their product is bounded (b-1)^2*2^(n-1) < m.
+    const uint64_t m = p1 * p2;
+    // Check overflow.
+    ASSERT_EQ(m / p1, p2);
+    ASSERT_LT(arith::exp<uint64_t>((b - 1), 2) * arith::exp<uint64_t>(p, 2), m);
+
+    // Find `x` so it is not a quadratic residue in GF_p1 and GF_p2.²
+    ASSERT_EQ(arith::jacobi<uint64_t>(3, p1), arith::jacobi<uint64_t>(p1, 3));
+    ASSERT_EQ(arith::jacobi<uint64_t>(p1, 3), arith::jacobi<uint64_t>(2, 3));
+    ASSERT_EQ(arith::jacobi<uint64_t>(3, p2), arith::jacobi<uint64_t>(p2, 3));
+    ASSERT_EQ(arith::jacobi<uint64_t>(p2, 3), arith::jacobi<uint64_t>(2, 3));
+    ASSERT_EQ(arith::jacobi<uint64_t>(2, 3), -1);
+    // Which means x=3 is not a quadratic residue in GF_p1 and GF_p2.
+
+    // Therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
+    const uint64_t w1 = arith::exp<uint64_t>(3, a1);
+    const uint64_t w2 = arith::exp<uint64_t>(3, a2);
+    ASSERT_EQ(w1, 9);
+    ASSERT_EQ(w2, 243);
+
+    // find root of unity in GF_p1p2
+    uint64_t _a[2] = {w1, w2};
+    uint64_t _n[2] = {p1, p2};
+    const uint64_t w = arith::chinese_remainder<uint64_t>(2, _a, _n);
+    ASSERT_EQ(w, 25559439);
 }

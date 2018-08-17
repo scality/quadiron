@@ -61,7 +61,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     inline void init_gf() override
     {
         unsigned gf_n = 8 * this->word_size;
-        this->gf = std::unique_ptr<gf::Field<T>>(new gf::BinExtension<T>(gf_n));
+        this->gf = gf::alloc<gf::Field<T>, gf::BinExtension<T>>(gf_n);
     }
 
     inline void init_fft() override

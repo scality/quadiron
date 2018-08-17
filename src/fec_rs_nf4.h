@@ -62,12 +62,8 @@ class RsNf4 : public FecCode<T> {
     inline void init_gf() override
     {
         gf_n = this->word_size / 2;
-
-        // NOTE: ngff4 is wrapped in this->gf that will release it
-        // Hence don't release ngff4 manually
-        ngff4 = new gf::NF4<T>(gf_n);
-        this->gf = std::unique_ptr<gf::Field<T>>(ngff4);
-
+        this->gf = gf::alloc<gf::Field<T>, gf::NF4<T>>(gf_n);
+        ngff4 = static_cast<gf::NF4<T>*>(this->gf.get());
         sub_field = &(ngff4->get_sub_field());
     }
 
