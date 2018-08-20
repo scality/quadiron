@@ -831,7 +831,7 @@ void FecCode<T>::decode_apply(
     for (unsigned i = 0; i <= k - 1; ++i) {
         vec1_n.set(
             fragments_ids.get(i),
-            this->gf->mul(words.get(i), inv_A_i.get(fragments_ids.get(i))));
+            this->gf->mul(words.get(i), inv_A_i.get(i)));
     }
 
     // compute vec2_n = FFT(vec1_n)
@@ -1111,18 +1111,10 @@ void FecCode<T>::decode_apply(
 
     unsigned k = this->n_data; // number of fragments received
 
-    assert(k != 0);
-
     // compute N'(x) = sum_i{n_i * x^z_i}
     // where n_i=v_i/A'_i(x_i)
-    buf1_n.zero_fill();
-    for (unsigned i = 0; i <= k - 1; ++i) {
-        this->gf->mul_coef_to_buf(
-            inv_A_i.get(fragments_ids.get(i)),
-            words.get(i),
-            buf1_n.get(fragments_ids.get(i)),
-            pkt_size);
-    }
+    this->gf->mul_vec_to_vecp(inv_A_i, words, buf1_n);
+
 
     // compute buf2_n
     this->fft->fft_inv(buf2_n, buf1_n);
