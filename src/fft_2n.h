@@ -207,6 +207,7 @@ void Radix2<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 }
 
 /** Perform decimation-in-frequency FFT or inverse FFT
+ * Note: input vector is in reversed-bit order
  *
  * Process:
  * - Genteleman-Sande butterfly is performed on input
@@ -219,23 +220,29 @@ void Radix2<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 template <typename T>
 void Radix2<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 {
-    unsigned len = this->n;
+    const unsigned len = this->n;
+
+    // copy input to output
+    output.copy(&input);
+
     for (unsigned m = len / 2; m >= 1; m /= 2) {
         unsigned doubled_m = 2 * m;
         for (unsigned j = 0; j < m; ++j) {
             T r = inv_W->get(j * len / doubled_m);
             for (unsigned i = j; i < len; i += doubled_m) {
-                T a = input.get(i);
-                T b = input.get(i + m);
-                input.set(i, this->gf->add(a, b));
-                input.set(i + m, this->gf->mul(r, this->gf->sub(a, b)));
+                T a = output.get(i);
+                T b = output.get(i + m);
+                output.set(i, this->gf->add(a, b));
+                output.set(i + m, this->gf->mul(r, this->gf->sub(a, b)));
             }
         }
     }
 
-    // set output  = scramble(input), i.e. bit reversal ordering
+    // reversion of elements of output to return values on the natural order
     for (unsigned i = 0; i < len; i++) {
-        output.set(i, input.get(rev[i]));
+        if (rev[i] < i) {
+            output.swap(i, rev[i]);
+        }
     }
 }
 
@@ -297,6 +304,12 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 }
 
 /** Perform decimation-in-frequency FFT or inverse FFT
+ * Input buffer is in reversed-bit order. Hence butterfly operations can
+ * be performed directly on this order. But the output must be re-order in the
+ * natural order by using swap operations. A swap operation is to swap only two
+ * buffers' pointer, hence it's not costly. However, it will modify the output
+ * buffers. To avoid that, we shuffle the output twice, before and after the
+ * butterfly operation.
  *
  * @param output - output buffers
  * @param input - input buffers
@@ -304,16 +317,26 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 template <typename T>
 void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
-    unsigned size = this->pkt_size;
+    const unsigned size = this->pkt_size;
+    const unsigned len = this->n;
 
-    unsigned len = this->n;
+    // 1st reversion of elements of output
+    for (unsigned i = 0; i < len; i++) {
+        if (rev[i] < i) {
+            output.swap(i, rev[i]);
+        }
+    }
+
+    // copy input to output
+    output.copy(input);
+
     for (unsigned m = len / 2; m >= 1; m /= 2) {
         unsigned doubled_m = 2 * m;
         for (unsigned j = 0; j < m; ++j) {
             T r = inv_W->get(j * len / doubled_m);
             for (unsigned i = j; i < len; i += doubled_m) {
-                T* a = input.get(i);
-                T* b = input.get(i + m);
+                T* a = output.get(i);
+                T* b = output.get(i + m);
 
                 // perform butterfly operation for Gentleman-Sande FFT algorithm
                 this->gf->butterfly_gs(r, a, b, size);
@@ -321,9 +344,11 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
         }
     }
 
-    // set output  = scramble(input), i.e. bit reversal ordering
+    // 2nd reversion of elements of output to return its natural order
     for (unsigned i = 0; i < len; i++) {
-        output.copy(i, input.get(rev[i]));
+        if (rev[i] < i) {
+            output.swap(i, rev[i]);
+        }
     }
 }
 
