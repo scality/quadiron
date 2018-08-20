@@ -42,6 +42,9 @@
 namespace quadiron {
 namespace vec {
 
+template <typename T>
+class Vector;
+
 // Forward declarations.
 template <typename>
 class Buffers;
@@ -101,6 +104,7 @@ class Buffers {
     Buffers(const Buffers<T>& vec, int n = 0);
     Buffers(const Buffers<T>& vec, int begin, int end);
     Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2);
+    Buffers(const Buffers<T>& vec, const Vector<T>& map, unsigned n);
     ~Buffers();
     int get_n(void) const;
     size_t get_size(void) const;
@@ -242,6 +246,12 @@ Buffers<T>::Buffers(const Buffers<T>& vec, int begin, int end)
     }
 }
 
+/**
+ * Constructor of Buffers by concatinating two buffers.
+ *
+ * @param vec1 - a given Buffers instance
+ * @param vec2 - a given Buffers instance
+ */
 template <typename T>
 Buffers<T>::Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2)
 {
@@ -259,6 +269,58 @@ Buffers<T>::Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2)
     mem.reserve(this->n);
     mem.insert(mem.end(), vec1.get_mem().begin(), vec1.get_mem().end());
     mem.insert(mem.end(), vec2.get_mem().begin(), vec2.get_mem().end());
+}
+
+/**
+ * Constructor of Buffers whose elements are shuffled from a given Buffers.
+ * An extending is necessary if the output length is greater than that given
+ * Buffers' length.
+ *
+ * Ex: input [p1, p2, p3, p4, p5] and map [3, 6, 1, 5, 4, 0, 2]
+ * Output: [p3, 0, p1, 0, p4, p0, p2] where `0` is an all-zero buffer.
+ *
+ * @param vec - a given Buffers instance of `m` elements
+ * @param map - a vector of `k` elements
+ */
+template <typename T>
+Buffers<T>::Buffers(
+    const Buffers<T>& vec,
+    const vec::Vector<T>& map,
+    unsigned n)
+{
+    const unsigned map_len = map.get_n();
+    const unsigned vec_n = vec.get_n();
+    assert(map_len <= vec_n);
+    assert(vec_n <= n);
+
+    this->n = n;
+    this->size = vec.get_size();
+    this->mem_len = this->n * this->size;
+
+    const std::vector<T*> vec_mem = vec.get_mem();
+    // output is sliced & shuffled from `vec`
+    mem.reserve(this->n);
+    if (vec_n >= n) {
+        this->mem_alloc_case = BufMemAlloc::SLICE;
+
+        mem.insert(mem.end(), vec_mem.begin(), vec_mem.begin() + n);
+    } else { // output is zero-extended & shuffled from `vec`
+        this->mem_alloc_case = BufMemAlloc::ZERO_EXTEND;
+
+        this->zeros = aligned_allocate<T>(this->size);
+        std::memset(this->zeros, 0, this->size * sizeof(T));
+
+        mem.insert(mem.end(), vec_mem.begin(), vec_mem.end());
+        mem.insert(mem.end(), n - vec_n, this->zeros);
+    }
+
+    // shuffle first `map_len` of `mem` according to `map`
+    // Note: map is sorted
+    int i = map_len - 1;
+    while (i >= 0) {
+        std::swap(mem[i], mem[map.get(i)]);
+        i--;
+    }
 }
 
 template <typename T>
