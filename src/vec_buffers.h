@@ -118,6 +118,7 @@ class Buffers {
     void separate_even_odd(Buffers<T>& even, Buffers<T>& odd);
     friend bool operator==<T>(const Buffers<T>& lhs, const Buffers<T>& rhs);
     void dump(void);
+    void swap(unsigned i, unsigned j);
 
   protected:
     std::vector<T*> mem;
@@ -403,6 +404,12 @@ bool operator==(const Buffers<T>& lhs, const Buffers<T>& rhs)
         }
     }
     return true;
+}
+
+template <typename T>
+void Buffers<T>::swap(unsigned i, unsigned j)
+{
+    std::swap(mem[i], mem[j]);
 }
 
 template <typename T>
