@@ -200,7 +200,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         for (int i = 0; i <= k - 1; ++i) {
             vec1_n.set(
                 i,
-                this->gf->mul(words.get(i), inv_A_i.get(fragments_ids.get(i))));
+                this->gf->mul(words.get(i), inv_A_i.get(i)));
         }
 
         // We have to find the numerator of the following expression:
