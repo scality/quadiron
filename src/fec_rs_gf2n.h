@@ -141,8 +141,10 @@ class RsGf2n : public FecCode<T> {
         decode_mat->mul(&output, &words);
     }
 
-    std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
+    std::unique_ptr<DecodeContext<T>> init_context_dec(
+        vec::Vector<T>& fragments_ids,
+        size_t size,
+        vec::Buffers<T>* output) override
     {
         std::unique_ptr<DecodeContext<T>> context;
         return context;
