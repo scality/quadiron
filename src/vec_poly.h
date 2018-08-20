@@ -60,7 +60,7 @@ class Poly : public Vector<T> {
     void mul_to_x_plus_coef(T coef);
     void neg() override;
     void zero_fill() override;
-    void dump() override;
+    void dump() const override;
 
   private:
     const gf::Field<T>* field;
@@ -241,7 +241,7 @@ void Poly<T>::zero_fill()
 }
 
 template <typename T>
-void Poly<T>::dump()
+void Poly<T>::dump() const
 {
     for (int i = 0; i <= degree; i++) {
         if (i) {
