@@ -55,7 +55,7 @@ enum class CtxVec { A_FFT_2K = 0, INV_A_I, N1, N2, V2K1, V2K2 };
 enum class CtxPoly { A = 0, S };
 
 /* List of buffers handled by context */
-enum class CtxBuf { N1 = 0, N2, B2K1, B2K2, B2KMK };
+enum class CtxBuf { N1 = 0, N2, K1, B2K1, B2K2 };
 
 /** A class for context of decoding
  */
@@ -71,7 +71,8 @@ class DecodeContext {
         const int k,
         const int n,
         int vx_zero = -1,
-        const size_t size = 0)
+        const size_t size = 0,
+        vec::Buffers<T>* output = nullptr)
     {
         this->k = k;
         this->n = n;
@@ -82,6 +83,7 @@ class DecodeContext {
         this->vx_zero = vx_zero;
 
         this->len_2k = this->gf->get_code_len_high_compo(2 * this->k);
+        this->max_n_2k = (this->n > this->len_2k) ? this->n : this->len_2k;
 
         this->fragments_ids = &fragments_ids;
 
@@ -107,27 +109,33 @@ class DecodeContext {
             vec1_n->zero_fill();
             vec2_n->zero_fill();
         } else {
-            buf1_n =
-                std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(n, size));
-            buf1_n->zero_fill();
+            assert(output != nullptr);
 
-            buf2_n =
-                std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(n, size));
-
-            /* `buf1_2k` is composed of two parts each of `k` buffers
-             * - first `k` buffers are slice from 1st `k` buffers of `buf2_n`
-             * - last `(len_2k-k)` buffers point actually to a zero buffer
-             */
-            buf1_k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(*buf2_n, 0, k));
+            // Buffers each of which is fully allocated
+            // Buffer of length `len_2k`
             buf1_2k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(*buf1_k, 0, len_2k));
+                new vec::Buffers<T>(len_2k, size));
+            // Buffer of length `max_n_2k - k`
+            bNmK = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(max_n_2k - k, size));
 
+            // Buffers that are derived from the two above ones
+            // Buffer sliced from `k` first elements of `buf1_2k`
+            buf1_k = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(*buf1_2k, 0, k));
+            // An `n`-length buffer that is zero-extended and shuffled from
+            // `buf1_k`
+            buf1_n = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(*buf1_k, fragments_ids, n));
+            // A `max_n_2k`-length buffer combined from `output` and `bNmK`
+            buf_max_n_2k = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(*output, *bNmK));
+            // An `n`-length buffer sliced from `buf_max_n_2k`
+            buf2_n = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(*buf_max_n_2k, 0, n));
+            // An `len_2k`-length buffer sliced from `buf_max_n_2k`
             buf2_2k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(this->len_2k, size));
-
-            buf1_len2k_minus_k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(this->len_2k - k, size));
+                new vec::Buffers<T>(*buf_max_n_2k, 0, len_2k));
         }
         init(vx);
     }
@@ -177,7 +185,6 @@ class DecodeContext {
             throw InvalidArgument("invalid Poly type");
         }
     }
-
     vec::Buffers<T>& get_buffer(CtxBuf type) const
     {
         switch (type) {
@@ -185,12 +192,12 @@ class DecodeContext {
             return *buf1_n;
         case CtxBuf::N2:
             return *buf2_n;
+        case CtxBuf::K1:
+            return *buf1_k;
         case CtxBuf::B2K1:
             return *buf1_2k;
         case CtxBuf::B2K2:
             return *buf2_2k;
-        case CtxBuf::B2KMK:
-            return *buf1_len2k_minus_k;
         // To quell an overzealous `Wreturn-type` from GCC.
         default:
             throw InvalidArgument("invalid Buf type");
@@ -252,8 +259,7 @@ class DecodeContext {
             unsigned j = fragments_ids->get(i);
             if (i != vx_zero) {
                 inv_A_i->set(
-                    i,
-                    this->gf->inv(this->gf->mul(_A_fft.get(j), vx.get(i))));
+                    i, this->gf->inv(this->gf->mul(_A_fft.get(j), vx.get(i))));
             } else {
                 inv_A_i->set(i, this->gf->inv(_A_fft.get(j)));
             }
@@ -273,6 +279,7 @@ class DecodeContext {
     unsigned k;
     unsigned n;
     unsigned len_2k;
+    unsigned max_n_2k;
     size_t size;
     const gf::Field<T>* gf;
     fft::FourierTransform<T>* fft;
@@ -290,12 +297,23 @@ class DecodeContext {
     std::unique_ptr<vec::Vector<T>> vec1_2k = nullptr;
     std::unique_ptr<vec::Vector<T>> vec2_2k = nullptr;
 
-    std::unique_ptr<vec::Buffers<T>> buf1_k = nullptr;
-    std::unique_ptr<vec::Buffers<T>> buf1_n = nullptr;
-    std::unique_ptr<vec::Buffers<T>> buf2_n = nullptr;
+    // Buffers each of which is fully allocated
+    // Buffer of length `len_2k`
     std::unique_ptr<vec::Buffers<T>> buf1_2k = nullptr;
+    // Buffer of length `max_n_2k - k`
+    std::unique_ptr<vec::Buffers<T>> bNmK = nullptr;
+
+    // Buffers that are derived from the two above ones
+    // Buffer sliced from `k` first elements of `buf1_2k`
+    std::unique_ptr<vec::Buffers<T>> buf1_k = nullptr;
+    // An `n`-length buffer shuffled from a zero-extended of `k`-length buffer
+    std::unique_ptr<vec::Buffers<T>> buf1_n = nullptr;
+    // A `max_n_2k`-length buffer combined from `output` and `bNmK`
+    std::unique_ptr<vec::Buffers<T>> buf_max_n_2k = nullptr;
+    // An `n`-length buffer sliced from `buf_max_n_2k`
+    std::unique_ptr<vec::Buffers<T>> buf2_n = nullptr;
+    // An `len_2k`-length buffer sliced from `buf_max_n_2k`
     std::unique_ptr<vec::Buffers<T>> buf2_2k = nullptr;
-    std::unique_ptr<vec::Buffers<T>> buf1_len2k_minus_k = nullptr;
 };
 
 } // namespace fec
