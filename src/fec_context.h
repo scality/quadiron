@@ -87,12 +87,11 @@ class DecodeContext {
 
         A = std::make_unique<vec::Poly<T>>(gf, n);
         A_fft_2k = std::make_unique<vec::Vector<T>>(gf, len_2k);
-        inv_A_i = std::make_unique<vec::Vector<T>>(gf, n);
+        inv_A_i = std::make_unique<vec::Vector<T>>(gf, k);
         S = std::make_unique<vec::Poly<T>>(gf, k);
 
         // zero-out all polynomials as they are used in full-length for FFT
         A->zero_fill();
-        inv_A_i->zero_fill();
         S->zero_fill();
 
         if (this->size == 0) {
@@ -236,7 +235,8 @@ class DecodeContext {
         }
 
         // compute A_i(x_i)
-        this->fft->fft(*inv_A_i, _A);
+        vec::Vector<T> _A_fft(*gf, n);
+        this->fft->fft(_A_fft, _A);
 
         // compute 1/(x_i * A_i(x_i))
         // we care only about elements corresponding to fragments_ids
@@ -244,10 +244,10 @@ class DecodeContext {
             unsigned j = fragments_ids->get(i);
             if (i != vx_zero) {
                 inv_A_i->set(
-                    j,
-                    this->gf->inv(this->gf->mul(inv_A_i->get(j), vx.get(i))));
+                    i,
+                    this->gf->inv(this->gf->mul(_A_fft.get(j), vx.get(i))));
             } else {
-                inv_A_i->set(j, this->gf->inv(inv_A_i->get(j)));
+                inv_A_i->set(i, this->gf->inv(_A_fft.get(j)));
             }
         }
 
