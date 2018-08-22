@@ -37,7 +37,6 @@
 #include "fft_single.h"
 #include "gf_bin_ext.h"
 #include "gf_prime.h"
-#include "vec_buf_zero_ext.h"
 
 namespace fft = quadiron::fft;
 namespace gf = quadiron::gf;
