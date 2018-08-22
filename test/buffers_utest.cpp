@@ -151,7 +151,7 @@ TYPED_TEST(BuffersTest, TestZeroExtented) // NOLINT
     vec::Buffers<TypeParam> vec2(*vec, n2);
 
     vec::Buffers<TypeParam> _vec1(*vec, 0, n1);
-    vec::BuffersZeroExtended<TypeParam> _vec2(*vec, n2);
+    vec::Buffers<TypeParam> _vec2(*vec, n2);
 
     ASSERT_EQ(vec1, _vec1);
     ASSERT_EQ(vec2, _vec2);
