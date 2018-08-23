@@ -101,15 +101,15 @@ class Buffers {
     Buffers(const Buffers<T>& vec, int n = 0);
     Buffers(const Buffers<T>& vec, int begin, int end);
     Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2);
-    virtual ~Buffers();
-    virtual int get_n(void) const;
-    virtual size_t get_size(void) const;
+    ~Buffers();
+    int get_n(void) const;
+    size_t get_size(void) const;
     int get_mem_len(void);
     void zero_fill(void);
     void fill(int i, T value);
-    virtual void set(int i, T* buf);
-    virtual T* get(int i);
-    virtual const T* get(int i) const;
+    void set(int i, T* buf);
+    T* get(int i);
+    const T* get(int i) const;
     const std::vector<T*>& get_mem() const;
     void set_mem(std::vector<T*>* mem);
     void copy(const Buffers<T>& v);
@@ -117,7 +117,7 @@ class Buffers {
     void separate_even_odd();
     void separate_even_odd(Buffers<T>& even, Buffers<T>& odd);
     friend bool operator==<T>(const Buffers<T>& lhs, const Buffers<T>& rhs);
-    virtual void dump(void);
+    void dump(void);
 
   protected:
     std::vector<T*> mem;
