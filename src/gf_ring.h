@@ -380,7 +380,7 @@ void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) const
     DoubleSizeVal<T> coef = DoubleSizeVal<T>(a);
     for (i = 0; i < len; i++) {
         // perform multiplication
-        dest[i] = T((coef * src[i]) % this->_card);
+        dest[i] = mul(coef, src[i]);
     }
 }
 
@@ -405,7 +405,7 @@ void RingModN<T>::add_two_bufs(T* src, T* dest, size_t len) const
     size_t i;
     for (i = 0; i < len; i++) {
         // perform addition
-        dest[i] = (src[i] + dest[i]) % this->_card;
+        dest[i] = add(src[i], dest[i]);
     }
 }
 
@@ -427,14 +427,8 @@ template <typename T>
 void RingModN<T>::sub_two_bufs(T* bufa, T* bufb, T* res, size_t len) const
 {
     size_t i;
-    T result;
     for (i = 0; i < len; i++) {
-        if (bufa[i] >= bufb[i]) {
-            result = bufa[i] - bufb[i];
-        } else {
-            result = this->_card - (bufb[i] - bufa[i]);
-        }
-        res[i] = result;
+        res[i] = sub(bufa[i], bufb[i]);
     }
 }
 

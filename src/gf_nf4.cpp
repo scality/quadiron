@@ -95,6 +95,13 @@ GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a) const
 }
 
 template <>
+void NF4<__uint128_t>::unpack(__uint128_t a, GroupedValues<__uint128_t>& b)
+    const
+{
+    simd::unpack(a, b, this->n);
+}
+
+template <>
 __uint128_t NF4<__uint128_t>::pack(__uint128_t a) const
 {
     return simd::pack(a);

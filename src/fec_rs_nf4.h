@@ -47,8 +47,17 @@ namespace fec {
 template <typename T>
 class RsNf4 : public FecCode<T> {
   public:
-    RsNf4(unsigned word_size, unsigned n_data, unsigned n_parities)
-        : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
+    RsNf4(
+        unsigned word_size,
+        unsigned n_data,
+        unsigned n_parities,
+        size_t pkt_size = 8)
+        : FecCode<T>(
+              FecType::NON_SYSTEMATIC,
+              word_size,
+              n_data,
+              n_parities,
+              pkt_size)
     {
         this->fec_init();
     }
@@ -80,14 +89,14 @@ class RsNf4 : public FecCode<T> {
 
         int m = arith::get_smallest_power_of_2<int>(this->n_data);
         this->fft = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*ngff4, this->n, m));
+            new fft::Radix2<T>(*ngff4, this->n, m, this->pkt_size));
 
         this->fft_full = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*ngff4, this->n));
+            new fft::Radix2<T>(*ngff4, this->n, this->n, this->pkt_size));
 
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*ngff4, len_2k, len_2k));
+            new fft::Radix2<T>(*ngff4, len_2k, len_2k, this->pkt_size));
     }
 
     inline void init_others() override
@@ -134,9 +143,10 @@ class RsNf4 : public FecCode<T> {
         vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, &vwords);
         // std::cout << "encoded:"; output->dump();
+        GroupedValues<T> true_val;
         for (unsigned i = 0; i < this->code_len; i++) {
             T val = output->get(i);
-            GroupedValues<T> true_val = ngff4->unpack(val);
+            ngff4->unpack(val, true_val);
             if (true_val.flag > 0) {
                 props[i].add(
                     ValueLocation(offset, i), std::to_string(true_val.flag));
@@ -245,6 +255,102 @@ class RsNf4 : public FecCode<T> {
         // unpack decoded symbols
         for (unsigned i = 0; i < this->n_data; ++i) {
             output->set(i, ngff4->unpack(output->get(i)).values);
+        }
+    }
+
+    /********** Encoding & Decoding using Buffers **********/
+
+    void encode(
+        vec::Buffers<T>* output,
+        std::vector<Properties>& props,
+        off_t offset,
+        vec::Buffers<T>* words) override
+    {
+        for (unsigned i = 0; i < this->n_data; ++i) {
+            T* chunk = words->get(i);
+            for (size_t j = 0; j < this->pkt_size; ++j) {
+                chunk[j] = ngff4->pack(chunk[j]);
+            }
+        }
+        vec::BuffersZeroExtended<T> vwords(words, this->n);
+        this->fft->fft(output, &vwords);
+        size_t size = output->get_size();
+        GroupedValues<T> true_val;
+        for (unsigned frag_id = 0; frag_id < this->code_len; ++frag_id) {
+            T* chunk = output->get(frag_id);
+            for (size_t symb_id = 0; symb_id < size; symb_id++) {
+                ngff4->unpack(chunk[symb_id], true_val);
+                if (true_val.flag > 0) {
+                    const ValueLocation loc(
+                        offset + symb_id * this->word_size, frag_id);
+                    props[frag_id].add(loc, std::to_string(true_val.flag));
+                }
+                chunk[symb_id] = true_val.values;
+            }
+        }
+    }
+
+    void decode_prepare(
+        const DecodeContext<T>& context,
+        const std::vector<Properties>& props,
+        off_t offset,
+        vec::Buffers<T>* words) override
+    {
+        const vec::Vector<T>& fragments_ids = context.get_fragments_id();
+        off_t offset_max = offset + this->buf_size;
+        for (unsigned i = 0; i < this->n_data; ++i) {
+            const int frag_id = fragments_ids.get(i);
+            T* chunk = words->get(i);
+
+            // the vector will contain marked symbols that will be packed
+            // firstly. Since locations are stored in unordered map, the vector
+            // will be sorted later to facilitate packing un-marked symbols
+            std::vector<size_t> packed_symbs;
+            // pack marked symbols
+            for (auto const& data : props[frag_id].get_map()) {
+                const off_t loc_offset = data.first.get_offset();
+                if (loc_offset >= offset && loc_offset < offset_max) {
+                    // As loc.offset := offset + j * this->word_size
+                    const size_t j = (loc_offset - offset) / this->word_size;
+                    packed_symbs.push_back(j);
+                    // pack symbol at index `j`
+                    uint32_t flag = std::stoul(data.second);
+                    chunk[j] = ngff4->pack(chunk[j], flag);
+                }
+            }
+            // sort the list of packed symbols
+            std::sort(packed_symbs.begin(), packed_symbs.end());
+
+            // pack un-marked symbols
+            size_t curr_frag_index = 0;
+            for (auto const& done_id : packed_symbs) {
+                // pack symbols from `curr_frag_index` to `j-1`
+                for (; curr_frag_index < done_id; ++curr_frag_index) {
+                    chunk[curr_frag_index] =
+                        ngff4->pack(chunk[curr_frag_index]);
+                }
+                curr_frag_index++;
+            }
+            // pack last symbols from `curr_frag_index` to `this->pkt_size-1`
+            for (; curr_frag_index < this->pkt_size; ++curr_frag_index) {
+                chunk[curr_frag_index] = ngff4->pack(chunk[curr_frag_index]);
+            }
+        }
+    }
+
+    void decode_apply(
+        const DecodeContext<T>& context,
+        vec::Buffers<T>* output,
+        vec::Buffers<T>* words) override
+    {
+        // decode_apply: do the same thing as in fec_base
+        FecCode<T>::decode_apply(context, output, words);
+        // unpack decoded symbols
+        for (unsigned i = 0; i < this->n_data; ++i) {
+            T* chunk = output->get(i);
+            for (unsigned j = 0; j < this->pkt_size; ++j) {
+                chunk[j] = ngff4->unpack(chunk[j]).values;
+            }
         }
     }
 };

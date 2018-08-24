@@ -77,6 +77,7 @@ class NF4 : public gf::Field<T> {
     T pack(T a) const;
     T pack(T a, uint32_t flag) const;
     GroupedValues<T> unpack(T a) const;
+    void unpack(T a, GroupedValues<T>& b) const;
     T get_nth_root(T n) const override;
     void compute_omegas(vec::Vector<T>* W, int n, T w) const override;
     const gf::Field<uint32_t>& get_sub_field() const;
@@ -430,6 +431,33 @@ GroupedValues<T> NF4<T>::unpack(T a) const
     return b;
 }
 
+template <typename T>
+void NF4<T>::unpack(T a, GroupedValues<T>& b) const
+{
+    uint32_t flag = 0;
+    uint32_t ae;
+    uint16_t arr[this->n];
+
+    ae = (uint32_t)(a & MASK32);
+    if (ae == 65536) {
+        flag |= 1;
+        arr[0] = 0;
+    } else
+        arr[0] = (uint16_t)ae;
+    for (int i = 1; i < this->n; i++) {
+        a = (a >> 16) >> 16;
+        ae = (uint32_t)(a & MASK32);
+        if (ae == 65536) {
+            flag |= (1 << i);
+            arr[i] = 0;
+        } else
+            arr[i] = ae;
+    }
+
+    b.flag = flag;
+    b.values = expand16(arr);
+}
+
 // Use for fft
 template <typename T>
 T NF4<T>::get_nth_root(T n) const
@@ -534,6 +562,10 @@ __uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag) const;
 
 template <>
 GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a) const;
+
+template <>
+void NF4<__uint128_t>::unpack(__uint128_t a, GroupedValues<__uint128_t>& b)
+    const;
 
 template <>
 void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y)

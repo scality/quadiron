@@ -171,7 +171,7 @@ int Benchmark<T>::init()
         fec = new quadiron::fec::RsGfpFft<T>(word_size, k, m);
         break;
     case EC_TYPE_RS_NF4:
-        fec = new quadiron::fec::RsNf4<T>(word_size, k, m);
+        fec = new quadiron::fec::RsNf4<T>(word_size, k, m, pkt_size);
         break;
     case EC_TYPE_RS_FNT:
         fec = new quadiron::fec::RsFnt<T>(word_size, k, m, pkt_size);
@@ -787,7 +787,8 @@ int main(int argc, char** argv)
     }
 
     // Currently support operating on packet:RS_FNT
-    if (params->fec_type != EC_TYPE_RS_FNT) {
+    if (params->fec_type != EC_TYPE_RS_FNT
+        && params->fec_type != EC_TYPE_RS_NF4) {
         params->operation_on_packet = false;
     }
 

@@ -49,7 +49,7 @@ static inline aint128 m128i_to_uint128(m128i v)
 }
 #endif // #ifdef QUADIRON_USE_AVX2
 
-inline aint128 expand16(aint16* arr, int n)
+inline aint128 expand16(uint16_t* arr, int n)
 {
     // since n <= 4
     uint16_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
@@ -61,7 +61,7 @@ inline aint128 expand16(aint16* arr, int n)
     return m128i_to_uint128(b);
 }
 
-inline aint128 expand32(aint32* arr, int n)
+inline aint128 expand32(uint32_t* arr, int n)
 {
     // since n <= 4
     uint32_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
@@ -72,27 +72,26 @@ inline aint128 expand32(aint32* arr, int n)
     return m128i_to_uint128(b);
 }
 
-inline GroupedValues<__uint128_t> unpack(aint128 a, int n)
+inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
 {
-    aint32 flag = 0;
-    uint32_t ai[4] __attribute__((aligned(ALIGN_SIZE)));
-    uint32_t bi[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
+    uint16_t ai[8];
     aint128 values;
-    int i;
 
     m128i _a = _mm_loadu_si128((m128i*)&a);
-    ai[0] = _mm_extract_epi32(_a, 0);
-    ai[1] = _mm_extract_epi32(_a, 1);
-    ai[2] = _mm_extract_epi32(_a, 2);
-    ai[3] = _mm_extract_epi32(_a, 3);
-    for (i = 0; i < n; i++) {
-        if (ai[i] == 65536)
-            flag |= (1 << i);
-        else
-            bi[i] = (aint16)ai[i];
-    }
+    ai[0] = _mm_extract_epi16(_a, 0);
+    ai[1] = _mm_extract_epi16(_a, 1);
+    ai[2] = _mm_extract_epi16(_a, 2);
+    ai[3] = _mm_extract_epi16(_a, 3);
+    ai[4] = _mm_extract_epi16(_a, 4);
+    ai[5] = _mm_extract_epi16(_a, 5);
+    ai[6] = _mm_extract_epi16(_a, 6);
+    ai[7] = _mm_extract_epi16(_a, 7);
+
+    const uint32_t flag =
+        ai[1] | (!!ai[3] << 1u) | (!!ai[5] << 2u) | (!!ai[7] << 3u);
+
     m128i val = _mm_set_epi64(
-        _mm_setzero_si64(), _mm_set_pi16(bi[3], bi[2], bi[1], bi[0]));
+        _mm_setzero_si64(), _mm_set_pi16(ai[6], ai[4], ai[2], ai[0]));
     _mm_store_si128((m128i*)&values, val);
 
     GroupedValues<__uint128_t> b = {values, flag};
@@ -100,7 +99,33 @@ inline GroupedValues<__uint128_t> unpack(aint128 a, int n)
     return b;
 }
 
-inline aint128 pack(aint128 a)
+inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
+{
+    uint16_t ai[8];
+    aint128 values;
+
+    m128i _a = _mm_loadu_si128((m128i*)&a);
+    ai[0] = _mm_extract_epi16(_a, 0);
+    ai[1] = _mm_extract_epi16(_a, 1);
+    ai[2] = _mm_extract_epi16(_a, 2);
+    ai[3] = _mm_extract_epi16(_a, 3);
+    ai[4] = _mm_extract_epi16(_a, 4);
+    ai[5] = _mm_extract_epi16(_a, 5);
+    ai[6] = _mm_extract_epi16(_a, 6);
+    ai[7] = _mm_extract_epi16(_a, 7);
+
+    const uint32_t flag =
+        ai[1] | (!!ai[3] << 1u) | (!!ai[5] << 2u) | (!!ai[7] << 3u);
+
+    m128i val = _mm_set_epi64(
+        _mm_setzero_si64(), _mm_set_pi16(ai[6], ai[4], ai[2], ai[0]));
+    _mm_store_si128((m128i*)&values, val);
+
+    b.flag = flag;
+    b.values = values; // NOLINT(clang-analyzer-core.uninitialized.Assign)
+}
+
+inline aint128 pack(__uint128_t a)
 {
     m128i _a = _mm_loadu_si128((m128i*)&a);
     m128i b = _mm_set_epi32(
@@ -112,7 +137,7 @@ inline aint128 pack(aint128 a)
     return m128i_to_uint128(b);
 }
 
-inline aint128 pack(aint128 a, aint32 flag)
+inline aint128 pack(__uint128_t a, uint32_t flag)
 {
     aint32 b0, b1, b2, b3;
     m128i _a = _mm_loadu_si128((m128i*)&a);
