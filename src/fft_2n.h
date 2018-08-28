@@ -86,7 +86,7 @@ class Radix2 : public FourierTransform<T> {
     void fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
 
   private:
-    void _init_bitrev();
+    void init_bitrev();
 
     unsigned data_len; // number of real input elements
     T w;
@@ -125,11 +125,11 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
     gf.compute_omegas(*inv_W, n, inv_w);
 
     rev = std::unique_ptr<T[]>(new T[n]);
-    _init_bitrev();
+    init_bitrev();
 }
 
 template <typename T>
-void Radix2<T>::_init_bitrev()
+void Radix2<T>::init_bitrev()
 {
     unsigned len = this->n;
     unsigned log_n = arith::log2<T>(len);
