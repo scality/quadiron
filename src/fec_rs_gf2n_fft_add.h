@@ -82,7 +82,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         // subspace spanned by <beta_i>
         this->betas = std::unique_ptr<vec::Vector<T>>(
             new vec::Vector<T>(*(this->gf), this->n));
-        this->fft->compute_B(betas.get());
+        this->fft->compute_B(*betas);
     }
 
     int get_n_outputs() override
@@ -99,13 +99,13 @@ class RsGf2nFftAdd : public FecCode<T> {
      * @param words must be n_data
      */
     void encode(
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, &vwords);
+        this->fft->fft(output, vwords);
     }
 
     void decode_add_data(int fragment_index, int row) override
@@ -169,15 +169,15 @@ class RsGf2nFftAdd : public FecCode<T> {
         const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
         // nothing to do
     }
 
     void decode_apply(
         const DecodeContext<T>& context,
-        vec::Vector<T>* output,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& output,
+        vec::Vector<T>& words) override
     {
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
         vec::Poly<T>& A = context.get_poly(CtxPoly::A);
@@ -200,8 +200,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         for (int i = 0; i <= k - 1; ++i) {
             vec1_n.set(
                 i,
-                this->gf->mul(
-                    words->get(i), inv_A_i.get(fragments_ids.get(i))));
+                this->gf->mul(words.get(i), inv_A_i.get(fragments_ids.get(i))));
         }
 
         // We have to find the numerator of the following expression:
@@ -238,7 +237,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         // No need to mod x^n since only last n_data coefs are obtained
         // output is n_data length
         for (unsigned i = 0; i < this->n_data; ++i)
-            output->set(i, S.get(i));
+            output.set(i, S.get(i));
     }
 
   private:

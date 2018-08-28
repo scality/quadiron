@@ -66,16 +66,16 @@ namespace vec {
 template <typename T>
 class BuffersDoubled : public Buffers<T> {
   public:
-    explicit BuffersDoubled(Buffers<T>* vec);
+    explicit BuffersDoubled(const Buffers<T>& vec);
     T* get(int i) override;
 
   private:
-    Buffers<T>* vec;
+    const Buffers<T>* vec;
 };
 
 template <typename T>
-BuffersDoubled<T>::BuffersDoubled(Buffers<T>* vec)
-    : Buffers<T>(2 * vec->get_n(), vec->get_size(), vec->get_mem())
+BuffersDoubled<T>::BuffersDoubled(const Buffers<T>& vec)
+    : Buffers<T>(2 * vec.get_n(), vec.get_size(), vec.get_mem())
 {
     this->vec = vec;
 }

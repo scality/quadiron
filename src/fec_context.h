@@ -120,9 +120,9 @@ class DecodeContext {
              * - last `(len_2k-k)` buffers point actually to a zero buffer
              */
             buf1_k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(buf2_n.get(), 0, k));
+                new vec::Buffers<T>(*buf2_n, 0, k));
             buf1_2k = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(buf1_k.get(), 0, len_2k));
+                new vec::Buffers<T>(*buf1_k, 0, len_2k));
 
             buf2_2k = std::unique_ptr<vec::Buffers<T>>(
                 new vec::Buffers<T>(this->len_2k, size));
@@ -244,7 +244,7 @@ class DecodeContext {
         }
 
         // compute A_i(x_i)
-        this->fft->fft(inv_A_i.get(), &_A);
+        this->fft->fft(*inv_A_i, _A);
 
         // compute 1/(x_i * A_i(x_i))
         // we care only about elements corresponding to fragments_ids
@@ -261,8 +261,8 @@ class DecodeContext {
 
         // compute FFT(A) of length 2k
         if (this->fft_2k) {
-            vec::ZeroExtended<T> A_2k(A.get(), len_2k);
-            this->fft_2k->fft(A_fft_2k.get(), &A_2k);
+            vec::ZeroExtended<T> A_2k(*A, len_2k);
+            this->fft_2k->fft(*A_fft_2k, A_2k);
         }
     }
 

@@ -115,13 +115,13 @@ class RsGf2nFft : public FecCode<T> {
      * @param words must be n_data
      */
     void encode(
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, &vwords);
+        this->fft->fft(output, vwords);
     }
 
     void decode_add_data(int fragment_index, int row) override
@@ -144,7 +144,7 @@ class RsGf2nFft : public FecCode<T> {
         const DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
         // nothing to do
     }

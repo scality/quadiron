@@ -138,37 +138,37 @@ class RsFnt : public FecCode<T> {
      * @param words must be n_data
      */
     void encode(
-        vec::Vector<T>* output,
+        vec::Vector<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Vector<T>* words) override
+        vec::Vector<T>& words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, &vwords);
+        this->fft->fft(output, vwords);
         // max_value = 2^x
         T thres = this->gf->card() - 1;
         // check for out of range value in output
         for (unsigned i = 0; i < this->code_len; i++) {
-            if (output->get(i) & thres) {
+            if (output.get(i) & thres) {
                 props[i].add(ValueLocation(offset, i), "@");
-                output->set(i, 0);
+                output.set(i, 0);
             }
         }
     }
 
     void encode(
-        vec::Buffers<T>* output,
+        vec::Buffers<T>& output,
         std::vector<Properties>& props,
         off_t offset,
-        vec::Buffers<T>* words) override
+        vec::Buffers<T>& words) override
     {
         vec::BuffersZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, &vwords);
+        this->fft->fft(output, vwords);
         // check for out of range value in output
-        int size = output->get_size();
+        int size = output.get_size();
         T thres = (this->gf->card() - 1);
         for (unsigned i = 0; i < this->code_len; i++) {
-            T* chunk = output->get(i);
+            T* chunk = output.get(i);
             for (int j = 0; j < size; j++) {
                 if (chunk[j] & thres) {
                     const ValueLocation loc(offset + j * this->word_size, i);

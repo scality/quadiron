@@ -249,7 +249,8 @@ void run_fec_rs_gf2n(
     } else {
         gf2nrs_type = quadiron::fec::RsMatrixType::CAUCHY;
     }
-    fec = new quadiron::fec::RsGf2n<T>(word_size, n_data, n_parities, gf2nrs_type);
+    fec = new quadiron::fec::RsGf2n<T>(
+        word_size, n_data, n_parities, gf2nrs_type);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -406,7 +407,8 @@ int main(int argc, char** argv)
     int rflag = 0;
     int uflag = 0;
     ec_type eflag = EC_TYPE_UNDEF;
-    quadiron::fec::RsMatrixType mflag = quadiron::fec::RsMatrixType::VANDERMONDE;
+    quadiron::fec::RsMatrixType mflag =
+        quadiron::fec::RsMatrixType::VANDERMONDE;
     unsigned word_size = 0;
 
     n_data = n_parities = -1;

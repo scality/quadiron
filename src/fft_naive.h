@@ -50,9 +50,9 @@ class Naive : public FourierTransform<T> {
   public:
     Naive(const gf::Field<T>& gf, int n, T w);
     ~Naive();
-    void fft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void ifft(vec::Vector<T>* output, vec::Vector<T>* input) override;
-    void fft_inv(vec::Vector<T>* output, vec::Vector<T>* input) override;
+    void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
 
   private:
     T w;
@@ -61,7 +61,7 @@ class Naive : public FourierTransform<T> {
     vec::Matrix<T>* inv_W;
     void compute_W(vec::Matrix<T>* _W, T _w);
     void
-    _fft(vec::Vector<T>* output, vec::Vector<T>* input, vec::Matrix<T>* _W);
+    _fft(vec::Vector<T>& output, vec::Vector<T>& input, vec::Matrix<T>* _W);
 };
 
 template <typename T>
@@ -102,15 +102,15 @@ void Naive<T>::compute_W(vec::Matrix<T>* _W, T _w)
 
 template <typename T>
 void Naive<T>::_fft(
-    vec::Vector<T>* output,
-    vec::Vector<T>* input,
+    vec::Vector<T>& output,
+    vec::Vector<T>& input,
     vec::Matrix<T>* _W)
 {
-    _W->mul(output, input);
+    _W->mul(&output, &input);
 }
 
 template <typename T>
-void Naive<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
+void Naive<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     _fft(output, input, W);
 }
@@ -121,17 +121,17 @@ void Naive<T>::fft(vec::Vector<T>* output, vec::Vector<T>* input)
  *
  */
 template <typename T>
-void Naive<T>::fft_inv(vec::Vector<T>* output, vec::Vector<T>* input)
+void Naive<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     _fft(output, input, inv_W);
 }
 
 template <typename T>
-void Naive<T>::ifft(vec::Vector<T>* output, vec::Vector<T>* input)
+void Naive<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     _fft(output, input, inv_W);
     if (this->inv_n_mod_p > 1)
-        output->mul_scalar(this->inv_n_mod_p);
+        output.mul_scalar(this->inv_n_mod_p);
 }
 
 } // namespace fft

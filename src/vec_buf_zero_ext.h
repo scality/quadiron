@@ -68,25 +68,24 @@ namespace vec {
 template <typename T>
 class BuffersZeroExtended : public Buffers<T> {
   public:
-    BuffersZeroExtended(Buffers<T>* vec, int n);
+    BuffersZeroExtended(const Buffers<T>& vec, int n);
     ~BuffersZeroExtended();
 
   private:
-    Buffers<T>* vec;
+    const Buffers<T>* vec;
     int vec_n;
     T* zero_chunk = nullptr;
 };
 
 template <typename T>
-BuffersZeroExtended<T>::BuffersZeroExtended(Buffers<T>* vec, int n)
-    : Buffers<T>(n, vec->get_size(), vec->get_mem())
+BuffersZeroExtended<T>::BuffersZeroExtended(const Buffers<T>& vec, int n)
+    : Buffers<T>(n, vec.get_size(), vec.get_mem())
 {
-    this->vec = vec;
-    vec_n = vec->get_n();
+    this->vec = &vec;
+    vec_n = vec.get_n();
     assert(n >= vec_n);
     // overwrite by a new vector
-    this->mem =
-        new std::vector<T*>(vec->get_mem()->begin(), vec->get_mem()->end());
+    this->mem = new std::vector<T*>(vec.get_mem().begin(), vec.get_mem().end());
     if (n > vec_n) {
         zero_chunk = aligned_allocate<T>(this->size);
         std::memset(zero_chunk, 0, this->size * sizeof(T));
