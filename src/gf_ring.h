@@ -465,6 +465,7 @@ inline void RingModN<T>::sub_vecp_to_vecp(
 /** Butterfly computation for Cooley-Tukey FFT algorithm
  *
  * Perform in-place oprations on two buffers `P`, `Q` with a coefficient `c`
+ *
  * \f{eqnarray*}{
  *  P_i &= P_i + c \times Q_i \\
  *  Q_i &= P_i - c \times Q_i \\
@@ -474,7 +475,6 @@ inline void RingModN<T>::sub_vecp_to_vecp(
  * @param buf1 - a buffer of `len` elements
  * @param buf2 - a buffer of `len` elements
  * @param len - number of elements per buffer
- * @return
  */
 template <typename T>
 inline void
@@ -492,6 +492,7 @@ RingModN<T>::butterfly_ct(T coef, T* buf1, T* buf2, size_t len) const
 /** Butterfly computation for Gentleman-Sande FFT algorithm
  *
  * Perform in-place oprations on two buffers `P`, `Q` with a coefficient `c`
+ *
  * \f{eqnarray*}{
  *  P_i &= P_i + Q_i \\
  *  Q_i &= c \times (P_i - Q_i)
@@ -501,7 +502,6 @@ RingModN<T>::butterfly_ct(T coef, T* buf1, T* buf2, size_t len) const
  * @param buf1 - a buffer of `len` elements
  * @param buf2 - a buffer of `len` elements
  * @param len - number of elements per buffer
- * @return
  */
 template <typename T>
 inline void
