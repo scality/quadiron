@@ -33,8 +33,6 @@
 
 #ifdef QUADIRON_USE_SIMD
 
-#include "property.h"
-
 const unsigned F4 = 65537;
 const unsigned F3 = 257;
 

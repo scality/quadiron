@@ -81,16 +81,16 @@ void RsFnt<uint32_t>::encode_post_process(
     std::vector<Properties>& props,
     off_t offset)
 {
-    size_t size = this->pkt_size;
-    uint32_t threshold = this->gf->card_minus_one();
-    unsigned code_len = this->code_len;
+    const size_t size = this->pkt_size;
+    const uint32_t threshold = this->gf->card_minus_one();
+    const unsigned code_len = this->code_len;
 
     // number of elements per vector register
-    unsigned vec_size = ALIGN_SIZE / sizeof(uint32_t);
+    const unsigned vec_size = ALIGN_SIZE / sizeof(uint32_t);
     // number of vector registers per fragment packet
-    size_t vecs_nb = size / vec_size;
+    const size_t vecs_nb = size / vec_size;
     // odd number of elements not vectorized
-    size_t last_len = size - vecs_nb * vec_size;
+    const size_t last_len = size - vecs_nb * vec_size;
 
     simd::encode_post_process(
         output, props, offset, code_len, threshold, vecs_nb);

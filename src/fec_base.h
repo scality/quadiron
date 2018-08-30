@@ -419,8 +419,8 @@ void FecCode<T>::encode_bufs(
     vec::Vector<T> output(*(this->gf), get_n_outputs());
 
     // clear property vectors
-    for (unsigned i = 0; i < n_outputs; i++) {
-        output_parities_props[i].clear();
+    for (auto& props : output_parities_props) {
+        props.clear();
     }
 
     reset_stats_enc();
@@ -471,8 +471,8 @@ void FecCode<T>::encode_packet(
     assert(output_parities_props.size() == n_outputs);
 
     // clear property vectors
-    for (unsigned i = 0; i < n_outputs; i++) {
-        output_parities_props[i].clear();
+    for (auto& props : output_parities_props) {
+        props.clear();
     }
 
     bool cont = true;

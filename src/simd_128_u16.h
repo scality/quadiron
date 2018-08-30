@@ -335,9 +335,9 @@ inline void encode_post_process(
         uint16_t* chunk = output.get(frag_id);
         m128i* buf = reinterpret_cast<m128i*>(chunk);
         for (unsigned vec_id = 0; vec_id < vecs_nb; ++vec_id) {
-            m128i a = _mm_load_si128(&(buf[vec_id]));
-            m128i b = _mm_cmpeq_epi16(_threshold, a);
-            m128i c = _mm_and_si128(mask_hi, b);
+            const m128i a = _mm_load_si128(&(buf[vec_id]));
+            const m128i b = _mm_cmpeq_epi16(_threshold, a);
+            const m128i c = _mm_and_si128(mask_hi, b);
             uint16_t d = _mm_movemask_epi8(c);
 
             while (d > 0) {

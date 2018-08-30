@@ -377,9 +377,9 @@ inline void encode_post_process(
         uint32_t* chunk = output.get(frag_id);
         m256i* buf = reinterpret_cast<m256i*>(chunk);
         for (unsigned vec_id = 0; vec_id < vecs_nb; ++vec_id) {
-            m256i a = _mm256_load_si256(&(buf[vec_id]));
-            m256i b = _mm256_cmpeq_epi32(_threshold, a);
-            m256i c = _mm256_and_si256(mask_hi, b);
+            const m256i a = _mm256_load_si256(&(buf[vec_id]));
+            const m256i b = _mm256_cmpeq_epi32(_threshold, a);
+            const m256i c = _mm256_and_si256(mask_hi, b);
             uint32_t d = _mm256_movemask_epi8(c);
 
             while (d > 0) {
