@@ -50,7 +50,7 @@ std::istream& operator>>(std::istream& is, Properties& props)
         }
         // Extract the key.
         auto end = line.find('=', begin);
-        auto key = line.substr(begin, end - begin);
+        std::string key = line.substr(begin, end - begin);
         // No leading or trailing whitespace allowed.
         key.erase(key.find_last_not_of(" \f\t\v") + 1);
         // No blank keys allowed

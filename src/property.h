@@ -57,7 +57,7 @@ class Properties {
         props[loc] = data;
     }
 
-    inline const uint32_t get(const off_t loc) const
+    inline uint32_t get(const off_t loc) const
     {
         auto it = props.find(loc);
         return it != props.end() ? it->second : 0;
