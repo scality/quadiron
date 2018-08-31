@@ -139,6 +139,14 @@ class RsNf4 : public FecCode<T> {
         // std::cout << "pack words:"; words.dump();
         vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
+        encode_post_process(output, props, offset);
+    }
+
+    void encode_post_process(
+        vec::Vector<T>& output,
+        std::vector<Properties>& props,
+        off_t offset) override
+    {
         // std::cout << "encoded:"; output.dump();
         GroupedValues<T> true_val;
         for (unsigned i = 0; i < this->code_len; i++) {
@@ -268,6 +276,14 @@ class RsNf4 : public FecCode<T> {
         }
         vec::BuffersZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
+        encode_post_process(output, props, offset);
+    }
+
+    void encode_post_process(
+        vec::Buffers<T>& output,
+        std::vector<Properties>& props,
+        off_t offset) override
+    {
         size_t size = output.get_size();
         GroupedValues<T> true_val;
         for (unsigned frag_id = 0; frag_id < this->code_len; ++frag_id) {
@@ -275,8 +291,7 @@ class RsNf4 : public FecCode<T> {
             for (size_t symb_id = 0; symb_id < size; symb_id++) {
                 ngff4->unpack(chunk[symb_id], true_val);
                 if (true_val.flag > 0) {
-                    const ValueLocation loc(
-                        offset + symb_id * this->word_size, frag_id);
+                    const ValueLocation loc(offset + symb_id, frag_id);
                     props[frag_id].add(loc, std::to_string(true_val.flag));
                 }
                 chunk[symb_id] = true_val.values;
@@ -291,7 +306,7 @@ class RsNf4 : public FecCode<T> {
         vec::Buffers<T>& words) override
     {
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
-        off_t offset_max = offset + this->buf_size;
+        off_t offset_max = offset + this->pkt_size;
         for (unsigned i = 0; i < this->n_data; ++i) {
             const int frag_id = fragments_ids.get(i);
             T* chunk = words.get(i);
@@ -304,8 +319,8 @@ class RsNf4 : public FecCode<T> {
             for (auto const& data : props[frag_id].get_map()) {
                 const off_t loc_offset = data.first.get_offset();
                 if (loc_offset >= offset && loc_offset < offset_max) {
-                    // As loc.offset := offset + j * this->word_size
-                    const size_t j = (loc_offset - offset) / this->word_size;
+                    // As loc.offset := offset + j
+                    const size_t j = loc_offset - offset;
                     packed_symbs.push_back(j);
                     // pack symbol at index `j`
                     uint32_t flag = std::stoul(data.second);

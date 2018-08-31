@@ -49,6 +49,12 @@
 #include "vec_slice.h"
 #include "vec_vector.h"
 
+#ifdef QUADIRON_USE_SIMD
+
+#include "simd.h"
+
+#endif // #ifdef QUADIRON_USE_SIMD
+
 namespace quadiron {
 
 /** Forward Error Correction code implementations. */
@@ -128,11 +134,19 @@ class FecCode {
         std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>& words) = 0;
+    virtual void encode_post_process(
+        vec::Vector<T>& output,
+        std::vector<Properties>& props,
+        off_t offset){};
     virtual void encode(
         vec::Buffers<T>& output,
         std::vector<Properties>& props,
         off_t offset,
         vec::Buffers<T>& words){};
+    virtual void encode_post_process(
+        vec::Buffers<T>& output,
+        std::vector<Properties>& props,
+        off_t offset){};
     virtual void decode_add_data(int fragment_index, int row) = 0;
     virtual void decode_add_parities(int fragment_index, int row) = 0;
     virtual void decode_build(void) = 0;
@@ -404,6 +418,11 @@ void FecCode<T>::encode_bufs(
     vec::Vector<T> words(*(this->gf), n_data);
     vec::Vector<T> output(*(this->gf), get_n_outputs());
 
+    // clear property vectors
+    for (auto& props : output_parities_props) {
+        props.clear();
+    }
+
     reset_stats_enc();
 
     while (true) {
@@ -437,7 +456,7 @@ void FecCode<T>::encode_bufs(
             T tmp = output.get(i);
             writew(tmp, output_parities_bufs[i]);
         }
-        offset += word_size;
+        offset++;
     }
 }
 
@@ -450,6 +469,11 @@ void FecCode<T>::encode_packet(
     assert(input_data_bufs.size() == n_data);
     assert(output_parities_bufs.size() == n_outputs);
     assert(output_parities_props.size() == n_outputs);
+
+    // clear property vectors
+    for (auto& props : output_parities_props) {
+        props.clear();
+    }
 
     bool cont = true;
     off_t offset = 0;
@@ -504,7 +528,7 @@ void FecCode<T>::encode_packet(
             write_pkt(
                 (char*)(output_mem_char.at(i)), *(output_parities_bufs[i]));
         }
-        offset += buf_size;
+        offset += pkt_size;
     }
 }
 
@@ -641,7 +665,7 @@ bool FecCode<T>::decode_bufs(
             }
         }
 
-        offset += word_size;
+        offset++;
     }
 
     return true;
@@ -984,7 +1008,7 @@ bool FecCode<T>::decode_packet(
                     (char*)(output_mem_char.at(i)), *(output_data_bufs[i]));
             }
         }
-        offset += buf_size;
+        offset += pkt_size;
     }
 
     return true;
@@ -1030,7 +1054,7 @@ void FecCode<T>::decode_prepare(
     // FIXME: could we integrate this preparation into vec::pack?
     // It will reduce a loop on all data
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
-    off_t offset_max = offset + buf_size;
+    off_t offset_max = offset + pkt_size;
 
     T thres = (this->gf->card() - 1);
     for (unsigned i = 0; i < this->n_data; i++) {
@@ -1040,8 +1064,8 @@ void FecCode<T>::decode_prepare(
         for (auto const& data : props[frag_id].get_map()) {
             off_t loc_offset = data.first.get_offset();
             if (loc_offset >= offset && loc_offset < offset_max) {
-                // As loc.offset := offset + j * this->word_size
-                const size_t j = (loc_offset - offset) / this->word_size;
+                // As loc.offset := offset + j
+                const size_t j = (loc_offset - offset);
 
                 // Check if the symbol is a special case whick is marked by "@".
                 // Note: this check is necessary when word_size is not large

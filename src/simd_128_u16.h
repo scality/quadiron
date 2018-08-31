@@ -33,6 +33,8 @@
 
 #include <x86intrin.h>
 
+#include "property.h"
+
 namespace quadiron {
 namespace simd {
 
@@ -311,6 +313,42 @@ inline void butterfly_gs(
         m128i c = sub(a, b, card);
         _buf1[i] = add(a, b, card);
         _buf2[i] = mul(_coef, c, card);
+    }
+}
+
+inline void encode_post_process(
+    vec::Buffers<uint16_t>& output,
+    std::vector<Properties>& props,
+    off_t offset,
+    unsigned code_len,
+    uint16_t threshold,
+    size_t vecs_nb)
+{
+    unsigned vec_size = ALIGN_SIZE / sizeof(uint16_t);
+
+    const m128i _threshold = _mm_set1_epi16(threshold);
+    uint16_t max = 1 << (sizeof(uint16_t) * 8 - 1);
+    const m128i mask_hi = _mm_set1_epi16(max);
+    const unsigned element_size = sizeof(uint16_t);
+
+    for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
+        uint16_t* chunk = output.get(frag_id);
+        m128i* buf = reinterpret_cast<m128i*>(chunk);
+        for (unsigned vec_id = 0; vec_id < vecs_nb; ++vec_id) {
+            const m128i a = _mm_load_si128(&(buf[vec_id]));
+            const m128i b = _mm_cmpeq_epi16(_threshold, a);
+            const m128i c = _mm_and_si128(mask_hi, b);
+            uint16_t d = _mm_movemask_epi8(c);
+
+            while (d > 0) {
+                unsigned byte_idx = __builtin_ctz(d);
+                unsigned element_idx = byte_idx / element_size;
+                off_t _offset = offset + vec_id * vec_size + element_idx;
+                const ValueLocation loc(_offset, frag_id);
+                props[frag_id].add(loc, "@");
+                d ^= 1 << byte_idx;
+            }
+        }
     }
 }
 
