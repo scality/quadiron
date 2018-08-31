@@ -52,16 +52,12 @@ template <typename T>
 class RsFnt : public FecCode<T> {
   public:
     RsFnt(
+        FecType type,
         unsigned word_size,
         unsigned n_data,
         unsigned n_parities,
         size_t pkt_size = 8)
-        : FecCode<T>(
-              FecType::NON_SYSTEMATIC,
-              word_size,
-              n_data,
-              n_parities,
-              pkt_size)
+        : FecCode<T>(type, word_size, n_data, n_parities, pkt_size)
     {
         this->fec_init();
     }

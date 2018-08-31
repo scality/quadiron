@@ -337,11 +337,17 @@ void run_fec_rs_gfp_fft(
 }
 
 template <typename T>
-void run_fec_rs_fnt(int word_size, int n_data, int n_parities, int rflag)
+void run_fec_rs_fnt(
+    int word_size,
+    int n_data,
+    int n_parities,
+    int rflag,
+    quadiron::fec::FecType type)
 {
     quadiron::fec::RsFnt<T>* fec;
     size_t pkt_size = 1024;
-    fec = new quadiron::fec::RsFnt<T>(word_size, n_data, n_parities, pkt_size);
+    fec = new quadiron::fec::RsFnt<T>(
+        type, word_size, n_data, n_parities, pkt_size);
 
     if (tflag) {
         print_fec_type<T>(fec);
@@ -385,6 +391,7 @@ enum ec_type {
     EC_TYPE_RS_GF2N_FFT_ADD,
     EC_TYPE_RS_GFP_FFT,
     EC_TYPE_RS_FNT,
+    EC_TYPE_RS_FNT_SYS,
     EC_TYPE_RS_NF4,
 };
 
@@ -393,7 +400,7 @@ bool check(int n, int word_size, ec_type eflag)
     // we suppose that code length is not too long, i.e. > 2^32
     if (word_size >= 4)
         return true;
-    if (eflag == EC_TYPE_RS_FNT) {
+    if (eflag == EC_TYPE_RS_FNT || eflag == EC_TYPE_RS_FNT_SYS) {
         return (n <= (1LL << (8 * word_size)) + 1);
     } else {
         return (n <= (1LL << (8 * word_size)));
@@ -431,6 +438,8 @@ int main(int argc, char** argv)
                 eflag = EC_TYPE_RS_NF4;
             } else if (!strcmp(optarg, "rs-fnt")) {
                 eflag = EC_TYPE_RS_FNT;
+            } else if (!strcmp(optarg, "rs-fnt-sys")) {
+                eflag = EC_TYPE_RS_FNT_SYS;
             } else {
                 xusage();
             }
@@ -484,12 +493,36 @@ int main(int argc, char** argv)
 
     if (eflag == EC_TYPE_RS_FNT) {
         if (word_size <= 4) {
-            run_fec_rs_fnt<uint32_t>(word_size, n_data, n_parities, rflag);
+            run_fec_rs_fnt<uint32_t>(
+                word_size,
+                n_data,
+                n_parities,
+                rflag,
+                quadiron::fec::FecType::NON_SYSTEMATIC);
         } else if (word_size <= 8) {
-            run_fec_rs_fnt<uint64_t>(word_size, n_data, n_parities, rflag);
+            run_fec_rs_fnt<uint64_t>(
+                word_size,
+                n_data,
+                n_parities,
+                rflag,
+                quadiron::fec::FecType::NON_SYSTEMATIC);
         }
-        // else if (word_size <= 16)
-        // run_fec_rs_fnt<__uint128_t>(word_size, n_data, n_parities, rflag);
+    } else if (eflag == EC_TYPE_RS_FNT_SYS) {
+        if (word_size <= 4) {
+            run_fec_rs_fnt<uint32_t>(
+                word_size,
+                n_data,
+                n_parities,
+                rflag,
+                quadiron::fec::FecType::SYSTEMATIC);
+        } else if (word_size <= 8) {
+            run_fec_rs_fnt<uint64_t>(
+                word_size,
+                n_data,
+                n_parities,
+                rflag,
+                quadiron::fec::FecType::SYSTEMATIC);
+        }
     } else if (eflag == EC_TYPE_RS_NF4) {
         if (word_size <= 2) {
             run_fec_rs_nf4<uint32_t>(word_size, n_data, n_parities, rflag);

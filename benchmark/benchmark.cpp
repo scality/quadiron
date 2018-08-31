@@ -174,7 +174,12 @@ int Benchmark<T>::init()
         fec = new quadiron::fec::RsNf4<T>(word_size, k, m, pkt_size);
         break;
     case EC_TYPE_RS_FNT:
-        fec = new quadiron::fec::RsFnt<T>(word_size, k, m, pkt_size);
+        fec = new quadiron::fec::RsFnt<T>(
+            quadiron::fec::FecType::NON_SYSTEMATIC, word_size, k, m, pkt_size);
+        break;
+    case EC_TYPE_RS_FNT_SYS:
+        fec = new quadiron::fec::RsFnt<T>(
+            quadiron::fec::FecType::SYSTEMATIC, word_size, k, m, pkt_size);
         break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
@@ -282,12 +287,13 @@ int Benchmark<T>::check_params()
     if (sizeof(T) < word_size) {
         return ERR_COMPT_WORD_SIZE_T;
     }
-    if (fec_type == EC_TYPE_RS_FNT || fec_type == EC_TYPE_RS_GFP_FFT) {
+    if (fec_type == EC_TYPE_RS_FNT || fec_type == EC_TYPE_RS_FNT_SYS
+        || fec_type == EC_TYPE_RS_GFP_FFT) {
         if (sizeof(T) <= word_size) {
             return ERR_COMPT_WORD_SIZE_T;
         }
     }
-    if (fec_type == EC_TYPE_RS_FNT) {
+    if (fec_type == EC_TYPE_RS_FNT || fec_type == EC_TYPE_RS_FNT_SYS) {
         if (word_size > 2)
             return ERR_WORD_SIZE;
     }
@@ -639,6 +645,7 @@ void xusage()
               << ec_desc.at(EC_TYPE_RS_GF2N_FFT_ADD) << '\n'
               << "\t\t\trs-gfp-fft: " << ec_desc.at(EC_TYPE_RS_GFP_FFT) << '\n'
               << "\t\t\trs-fnt: " << ec_desc.at(EC_TYPE_RS_FNT) << '\n'
+              << "\t\t\trs-fnt-sys: " << ec_desc.at(EC_TYPE_RS_FNT_SYS) << '\n'
               << "\t\t\trs-nf4: " << ec_desc.at(EC_TYPE_RS_NF4) << '\n'
               << "\t\t\tall: All available Reed-solomon codes\n"
               << "\t-s \tScenario for benchmark, either\n"
@@ -788,6 +795,7 @@ int main(int argc, char** argv)
 
     // Currently support operating on packet:RS_FNT
     if (params->fec_type != EC_TYPE_RS_FNT
+        && params->fec_type != EC_TYPE_RS_FNT_SYS
         && params->fec_type != EC_TYPE_RS_NF4) {
         params->operation_on_packet = false;
     }
