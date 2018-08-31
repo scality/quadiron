@@ -344,8 +344,7 @@ inline void encode_post_process(
                 unsigned byte_idx = __builtin_ctz(d);
                 unsigned element_idx = byte_idx / element_size;
                 off_t _offset = offset + vec_id * vec_size + element_idx;
-                const ValueLocation loc(_offset, frag_id);
-                props[frag_id].add(loc, "@");
+                props[frag_id].add(_offset, 1);
                 d ^= 1 << byte_idx;
             }
         }

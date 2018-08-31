@@ -74,6 +74,8 @@ static inline uint64_t hrtime_usec(timeval begin)
     return 1000000 * (tv.tv_sec - begin.tv_sec) + tv.tv_usec - begin.tv_usec;
 }
 
+#define OOR_MARK 1
+
 enum class FecType {
     /** Systematic code
      *
@@ -787,14 +789,13 @@ void FecCode<T>::decode_prepare(
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
     for (unsigned i = 0; i < this->n_data; ++i) {
         const int j = fragments_ids.get(i);
-        auto data = props[j].get(ValueLocation(offset, j));
+        auto data = props[j].get(offset);
 
-        // Check if the symbol is a special case whick is marked by "@".
-        // Note: this check is necessary when word_size is not large enough to
-        // cover all symbols of the field.
-        // Following check is used for FFT over FNT where the single special
-        // case symbol equals card - 1
-        if (data && *data == "@") {
+        // Check if the symbol is a special case whick is marked by `OOR_MARK`,
+        // i.e. true. Note: this check is necessary when word_size is not large
+        // enough to cover all symbols of the field. Following check is used for
+        // FFT over FNT where the single special case symbol equals card - 1
+        if (data == OOR_MARK) {
             words.set(i, this->gf->card() - 1);
         }
     }
@@ -1062,17 +1063,18 @@ void FecCode<T>::decode_prepare(
         T* chunk = words.get(i);
         // loop over marked symbols
         for (auto const& data : props[frag_id].get_map()) {
-            off_t loc_offset = data.first.get_offset();
+            off_t loc_offset = data.first;
             if (loc_offset >= offset && loc_offset < offset_max) {
                 // As loc.offset := offset + j
                 const size_t j = (loc_offset - offset);
 
-                // Check if the symbol is a special case whick is marked by "@".
+                // Check if the symbol is a special case whick is marked by
+                // `OOR_MARK`.
                 // Note: this check is necessary when word_size is not large
                 // enough to cover all symbols of the field. Following check is
                 // used for FFT over FNT where the single special case symbol
                 // equals card - 1
-                if (data.second == "@") {
+                if (data.second == OOR_MARK) {
                     chunk[j] = thres;
                 }
             }
