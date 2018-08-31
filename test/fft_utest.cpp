@@ -112,6 +112,34 @@ class FftTest : public ::testing::Test {
             ASSERT_EQ(v, v2);
         }
     }
+
+    void test_fft_1vs1(
+        const gf::Field<T>& gf,
+        fft::FourierTransform<T>* fft1,
+        fft::FourierTransform<T>* fft2,
+        int n_data)
+    {
+        ASSERT_EQ(fft1->get_n(), fft2->get_n());
+
+        quadiron::vec::Vector<T> fft_1(gf, fft1->get_n());
+        quadiron::vec::Vector<T> fft_2(gf, fft1->get_n());
+        quadiron::vec::Vector<T> ifft_1(gf, fft1->get_n());
+        quadiron::vec::Vector<T> ifft_2(gf, fft1->get_n());
+        for (int j = 0; j < 100; j++) {
+            quadiron::vec::Vector<T> v =
+                this->random_vec(gf, fft1->get_n(), n_data);
+
+            fft1->fft(fft_1, v);
+            fft2->fft(fft_2, v);
+
+            ASSERT_EQ(fft_1, fft_2);
+            fft1->ifft(ifft_1, fft_1);
+            fft2->ifft(ifft_2, fft_2);
+
+            ASSERT_EQ(ifft_1, ifft_2);
+            ASSERT_EQ(ifft_1, v);
+        }
+    }
 };
 
 using TestedTypes = ::testing::Types<uint32_t, uint64_t>;
@@ -172,6 +200,26 @@ TYPED_TEST(FftTest, TestFftNaive) // NOLINT
     this->test_fft_codec(gf, &fft, this->code_len);
 }
 
+TYPED_TEST(FftTest, TestNaiveVsFft2kVec) // NOLINT
+{
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
+    const unsigned R = gf.get_primitive_root();
+
+    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
+
+    // With this encoder we cannot exactly satisfy users request,
+    // we need to pad n = minimal divisor of (q-1)
+    // that is at least (n_parities + n_data).
+    const unsigned n = gf.get_code_len(this->code_len);
+
+    // Compute root of order n-1 such as r^(n-1) mod q == 1.
+    const unsigned r = gf.get_nth_root(n);
+
+    fft::Naive<TypeParam> fft_naive(gf, n, r);
+    fft::Radix2<TypeParam> fft_2n(gf, n, n);
+
+    this->test_fft_1vs1(gf, &fft_naive, &fft_2n, this->code_len);
+}
 TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
 {
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
@@ -237,6 +285,53 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
                 ASSERT_EQ(v, _v);
             }
         }
+    }
+}
+
+TYPED_TEST(FftTest, TestNaiveVsFft2kVecp) // NOLINT
+{
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
+    const unsigned R = gf.get_primitive_root();
+    const size_t size = 2;
+
+    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
+
+    // With this encoder we cannot exactly satisfy users request,
+    // we need to pad n = minimal divisor of (q-1)
+    // that is at least (n_parities + n_data).
+    const unsigned n = gf.get_code_len(this->code_len);
+
+    // Compute root of order n-1 such as r^(n-1) mod q == 1.
+    const unsigned r = gf.get_nth_root(n);
+
+    fft::Naive<TypeParam> fft_naive(gf, n, r, size);
+    fft::Radix2<TypeParam> fft_2n(gf, n, n, size);
+
+    ASSERT_EQ(fft_naive.get_n(), fft_2n.get_n());
+
+    quadiron::vec::Buffers<TypeParam> v(n, size);
+    quadiron::vec::Buffers<TypeParam> fft1(n, size);
+    quadiron::vec::Buffers<TypeParam> fft2(n, size);
+    quadiron::vec::Buffers<TypeParam> ifft1(n, size);
+    quadiron::vec::Buffers<TypeParam> ifft2(n, size);
+    for (int j = 0; j < 100; j++) {
+        for (unsigned i = 0; i < n; i++) {
+            TypeParam* mem = v.get(i);
+            for (size_t u = 0; u < size; u++) {
+                mem[u] = gf.weak_rand();
+            }
+        }
+
+        fft_naive.fft(fft1, v);
+        fft_2n.fft(fft2, v);
+
+        ASSERT_EQ(fft1, fft2);
+
+        fft_naive.ifft(ifft1, fft1);
+        fft_2n.ifft(ifft2, fft2);
+
+        ASSERT_EQ(ifft1, ifft2);
+        ASSERT_EQ(ifft1, v);
     }
 }
 
