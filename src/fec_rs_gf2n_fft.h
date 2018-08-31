@@ -76,9 +76,6 @@ class RsGf2nFft : public FecCode<T> {
         this->fft = std::unique_ptr<fft::CooleyTukey<T>>(
             new fft::CooleyTukey<T>(*(this->gf), this->n));
 
-        this->fft_full = std::unique_ptr<fft::CooleyTukey<T>>(
-            new fft::CooleyTukey<T>(*(this->gf), this->n));
-
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         this->fft_2k = std::unique_ptr<fft::CooleyTukey<T>>(
             new fft::CooleyTukey<T>(*(this->gf), len_2k));

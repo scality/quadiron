@@ -99,9 +99,6 @@ class RsFnt : public FecCode<T> {
         this->fft = std::unique_ptr<fft::Radix2<T>>(
             new fft::Radix2<T>(*(this->gf), this->n, m, this->pkt_size));
 
-        this->fft_full = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*(this->gf), this->n, this->n, this->pkt_size));
-
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
             new fft::Radix2<T>(*(this->gf), len_2k, len_2k, this->pkt_size));
@@ -143,8 +140,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Vector<T>& words) override
     {
-        vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, vwords);
+        this->fft->fft(output, words);
         // max_value = 2^x
         T thres = this->gf->card() - 1;
         // check for out of range value in output
@@ -162,8 +158,7 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
-        vec::BuffersZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, vwords);
+        this->fft->fft(output, words);
         // check for out of range value in output
         int size = output.get_size();
         T thres = (this->gf->card() - 1);

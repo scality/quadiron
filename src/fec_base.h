@@ -164,8 +164,8 @@ class FecCode {
     bool readw(T* ptr, std::istream* stream);
     bool writew(T val, std::ostream* stream);
 
-    bool read_pkt(char* pkt, std::istream* stream);
-    bool write_pkt(char* pkt, std::ostream* stream);
+    bool read_pkt(char* pkt, std::istream& stream);
+    bool write_pkt(char* pkt, std::ostream& stream);
 
     void encode_bufs(
         std::vector<std::istream*> input_data_bufs,
@@ -216,7 +216,6 @@ class FecCode {
     T r;
     std::unique_ptr<gf::Field<T>> gf = nullptr;
     std::unique_ptr<fft::FourierTransform<T>> fft = nullptr;
-    std::unique_ptr<fft::FourierTransform<T>> fft_full = nullptr;
     std::unique_ptr<fft::FourierTransform<T>> fft_2k = nullptr;
     // This vector MUST be initialized by derived Class using multiplicative FFT
     std::unique_ptr<vec::Vector<T>> inv_r_powers = nullptr;
@@ -362,18 +361,18 @@ inline bool FecCode<T>::writew(T val, std::ostream* stream)
 }
 
 template <typename T>
-inline bool FecCode<T>::read_pkt(char* pkt, std::istream* stream)
+inline bool FecCode<T>::read_pkt(char* pkt, std::istream& stream)
 {
-    if (stream->read(pkt, buf_size)) {
+    if (stream.read(pkt, buf_size)) {
         return true;
     }
     return false;
 }
 
 template <typename T>
-inline bool FecCode<T>::write_pkt(char* pkt, std::ostream* stream)
+inline bool FecCode<T>::write_pkt(char* pkt, std::ostream& stream)
 {
-    if (stream->write(pkt, buf_size))
+    if (stream.write(pkt, buf_size))
         return true;
     return false;
 }
@@ -476,7 +475,8 @@ void FecCode<T>::encode_packet(
     while (true) {
         // TODO: get number of read bytes -> true buf size
         for (unsigned i = 0; i < n_data; i++) {
-            if (!read_pkt((char*)(words_mem_char.at(i)), input_data_bufs[i])) {
+            if (!read_pkt(
+                    (char*)(words_mem_char.at(i)), *(input_data_bufs[i]))) {
                 cont = false;
                 break;
             }
@@ -501,7 +501,8 @@ void FecCode<T>::encode_packet(
             output_mem_T, output_mem_char, output_len, pkt_size, word_size);
 
         for (unsigned i = 0; i < n_outputs; i++) {
-            write_pkt((char*)(output_mem_char.at(i)), output_parities_bufs[i]);
+            write_pkt(
+                (char*)(output_mem_char.at(i)), *(output_parities_bufs[i]));
         }
         offset += buf_size;
     }
@@ -734,9 +735,6 @@ FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids, size_t size)
     if (this->fft == nullptr) {
         throw LogicError("FEC base: FFT must be initialized");
     }
-    if (this->fft_full == nullptr) {
-        throw LogicError("FEC base: FFT full must be initialized");
-    }
 
     int k = this->n_data; // number of fragments received
     // vector x=(x_0, x_1, ..., x_k-1)
@@ -812,7 +810,7 @@ void FecCode<T>::decode_apply(
     }
 
     // compute vec2_n = FFT(vec1_n)
-    this->fft_full->fft_inv(vec2_n, vec1_n);
+    this->fft->fft_inv(vec2_n, vec1_n);
 
     // vec_tmp_2k: first k elements from vec2_n
     //             last (len_2k - k) elements are padded
@@ -945,7 +943,7 @@ bool FecCode<T>::decode_packet(
                 unsigned data_idx = fragments_ids.get(i);
                 if (!read_pkt(
                         (char*)(words_mem_char.at(i)),
-                        input_data_bufs[data_idx])) {
+                        *(input_data_bufs[data_idx]))) {
                     cont = false;
                     break;
                 }
@@ -955,7 +953,7 @@ bool FecCode<T>::decode_packet(
             unsigned parity_idx = avail_parity_ids.get(i);
             if (!read_pkt(
                     (char*)(words_mem_char.at(avail_data_nb + i)),
-                    input_parities_bufs[parity_idx])) {
+                    *(input_parities_bufs[parity_idx]))) {
                 cont = false;
                 break;
             }
@@ -982,7 +980,8 @@ bool FecCode<T>::decode_packet(
 
         for (unsigned i = 0; i < n_data; i++) {
             if (output_data_bufs[i] != nullptr) {
-                write_pkt((char*)(output_mem_char.at(i)), output_data_bufs[i]);
+                write_pkt(
+                    (char*)(output_mem_char.at(i)), *(output_data_bufs[i]));
             }
         }
         offset += buf_size;
@@ -1100,7 +1099,7 @@ void FecCode<T>::decode_apply(
     }
 
     // compute buf2_n
-    this->fft_full->fft_inv(buf2_n, buf1_n);
+    this->fft->fft_inv(buf2_n, buf1_n);
 
     // buf1_2k: first k buffers point to first k buffers of buf2_n
     //          las k buffers point to a padded zero buffer

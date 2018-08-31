@@ -46,8 +46,7 @@ template <typename T>
 class FftTest : public ::testing::Test {
   public:
     const unsigned q = 65537;
-    const unsigned n_data = 3;
-    const unsigned n_parities = 3;
+    const unsigned code_len = 32;
 
     quadiron::vec::Vector<T>
     random_vec(const gf::Field<T>& gf, int size, unsigned to_init)
@@ -104,7 +103,7 @@ class FftTest : public ::testing::Test {
     {
         quadiron::vec::Vector<T> _v(gf, fft->get_n());
         quadiron::vec::Vector<T> v2(gf, fft->get_n());
-        for (int j = 0; j < 10000; j++) {
+        for (int j = 0; j < 1000; j++) {
             quadiron::vec::Vector<T> v =
                 this->random_vec(gf, fft->get_n(), n_data);
 
@@ -164,13 +163,13 @@ TYPED_TEST(FftTest, TestFftNaive) // NOLINT
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
     // that is at least (n_parities + n_data).
-    const unsigned n = gf.get_code_len(this->n_parities + this->n_data);
+    const unsigned n = gf.get_code_len(this->code_len);
 
     // Compute root of order n-1 such as r^(n-1) mod q == 1.
     const unsigned r = gf.get_nth_root(n);
 
     fft::Naive<TypeParam> fft(gf, n, r);
-    this->test_fft_codec(gf, &fft, this->n_data);
+    this->test_fft_codec(gf, &fft, this->code_len);
 }
 
 TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
@@ -183,10 +182,24 @@ TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
     // that is at least (n_parities + n_data).
-    const unsigned n = gf.get_code_len(this->n_parities + this->n_data);
+    const unsigned n = gf.get_code_len(this->code_len);
 
-    fft::Radix2<TypeParam> fft(gf, n);
-    this->test_fft_codec(gf, &fft, this->n_data);
+    for (unsigned data_len = 2; data_len <= n; data_len *= 2) {
+        fft::Radix2<TypeParam> fft(gf, n, data_len);
+        quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
+        quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
+        for (unsigned len = 2; len < n; len *= 2) {
+            for (int j = 0; j < 100; j++) {
+                quadiron::vec::Vector<TypeParam> v =
+                    this->random_vec(gf, len, len);
+
+                fft.fft(_v, v);
+                fft.ifft(v2, _v);
+                quadiron::vec::Slice<TypeParam> _v2(&v2, len);
+                ASSERT_EQ(v, _v2);
+            }
+        }
+    }
 }
 
 TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
@@ -200,40 +213,44 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
     // that is at least (n_parities + n_data).
-    const unsigned n = gf.get_code_len(this->n_parities + this->n_data);
+    const unsigned n = gf.get_code_len(this->code_len);
 
-    fft::Radix2<TypeParam> fft(gf, n, n, size);
+    for (unsigned data_len = 2; data_len <= n; data_len *= 2) {
+        fft::Radix2<TypeParam> fft(gf, n, data_len, size);
 
-    const int vec_n = fft.get_n();
-    quadiron::vec::Buffers<TypeParam> v(this->n_data, size);
-    quadiron::vec::Buffers<TypeParam> v2(vec_n, size);
-    quadiron::vec::Buffers<TypeParam> _v2(vec_n, size);
-    quadiron::vec::BuffersZeroExtended<TypeParam> _v(v, vec_n);
-    for (int j = 0; j < 100000; j++) {
-        for (unsigned i = 0; i < this->n_data; i++) {
-            TypeParam* mem = v.get(i);
-            for (size_t u = 0; u < size; u++) {
-                mem[u] = gf.weak_rand();
+        const int vec_n = fft.get_n();
+        quadiron::vec::Buffers<TypeParam> v2(vec_n, size);
+        quadiron::vec::Buffers<TypeParam> _v2(vec_n, size);
+        for (unsigned len = 2; len <= n; len *= 2) {
+            quadiron::vec::Buffers<TypeParam> v(len, size);
+            quadiron::vec::Buffers<TypeParam> _v(_v2, 0, len);
+            for (int j = 0; j < 100; j++) {
+                for (unsigned i = 0; i < len; i++) {
+                    TypeParam* mem = v.get(i);
+                    for (size_t u = 0; u < size; u++) {
+                        mem[u] = gf.weak_rand();
+                    }
+                }
+                fft.fft(v2, v);
+                fft.ifft(_v2, v2);
+
+                ASSERT_EQ(v, _v);
             }
         }
-        fft.fft(v2, _v);
-        fft.ifft(_v2, v2);
-
-        ASSERT_EQ(_v, _v2);
     }
 }
 
 TYPED_TEST(FftTest, TestFftGt) // NOLINT
 {
-    auto gf(gf::create<gf::BinExtension<TypeParam>>(4));
+    auto gf(gf::create<gf::BinExtension<TypeParam>>(16));
 
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
     // that is at least (this->n_parities + n_data).
-    const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
+    const TypeParam n = gf.get_code_len(this->code_len);
 
     fft::GoodThomas<TypeParam> fft(gf, n);
-    this->test_fft_codec(gf, &fft, this->n_data);
+    this->test_fft_codec(gf, &fft, this->code_len);
 }
 
 TYPED_TEST(FftTest, TestFftCtGfp) // NOLINT
@@ -243,10 +260,10 @@ TYPED_TEST(FftTest, TestFftCtGfp) // NOLINT
     // With this encoder we cannot exactly satisfy users request,
     // We need to pad n = minimal divisor of (q-1)
     // that is at least (n_parities + n_data).
-    const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
+    const TypeParam n = gf.get_code_len(this->code_len);
 
     fft::CooleyTukey<TypeParam> fft(gf, n);
-    this->test_fft_codec(gf, &fft, this->n_data);
+    this->test_fft_codec(gf, &fft, this->code_len);
 }
 
 TYPED_TEST(FftTest, TestFftCtGf2n) // NOLINT
@@ -255,13 +272,18 @@ TYPED_TEST(FftTest, TestFftCtGf2n) // NOLINT
     for (size_t gf_n = 4; gf_n <= 128 && gf_n <= max_n; gf_n *= 2) {
         auto gf(gf::create<gf::BinExtension<TypeParam>>(gf_n));
 
+        unsigned len = this->code_len;
+        if (gf.card_minus_one() <= this->code_len) {
+            len = gf.weak_rand();
+        }
+
         // With this encoder we cannot exactly satisfy users request,
         // we need to pad n = minimal divisor of (q-1)
         // that is at least (n_parities + n_data).
-        const TypeParam n = gf.get_code_len(this->n_parities + this->n_data);
+        const TypeParam n = gf.get_code_len(len);
 
         fft::CooleyTukey<TypeParam> fft(gf, n);
-        this->test_fft_codec(gf, &fft, this->n_data);
+        this->test_fft_codec(gf, &fft, len);
     }
 }
 
@@ -271,29 +293,31 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
          gf_n *= 2) {
         auto gf(gf::create<gf::BinExtension<TypeParam>>(gf_n));
 
+        unsigned len = this->code_len;
+        if (gf.card_minus_one() <= this->code_len) {
+            len = gf.weak_rand();
+        }
+
         // n is power of 2 and at least n_data + n_parities.
-        const int n = quadiron::arith::get_smallest_power_of_2<TypeParam>(
-            this->n_data + this->n_parities);
+        const int n = quadiron::arith::get_smallest_power_of_2<TypeParam>(len);
         const int m = quadiron::arith::log2<TypeParam>(n);
         fft::Additive<TypeParam> fft(gf, m);
 
         this->test_taylor_expand(gf, &fft);
         this->test_taylor_expand_t2(gf, &fft);
-        this->test_fft_codec(gf, &fft, this->n_data);
+        this->test_fft_codec(gf, &fft, len);
     }
 }
 
-TYPED_TEST(FftTest, TestFft2) // NOLINT
+TYPED_TEST(FftTest, TestFftNaive2) // NOLINT
 {
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
 
     ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
 
-    // With this encoder we cannot exactly satisfy users request,
-    // We need to pad n = minimal divisor of (q-1)
-    // that is at least (n_parities + n_data).
-    const unsigned n = gf.get_code_len(this->n_parities + this->n_data);
+    // The test is spefically for length-8 FFT
+    const unsigned n = 8;
 
     // compute root of order n-1 such as r^(n-1) mod q == 1
     const unsigned r = gf.get_nth_root(n);
@@ -324,17 +348,18 @@ TYPED_TEST(FftTest, TestFft2) // NOLINT
 
 TYPED_TEST(FftTest, TestFft2Gfp) // NOLINT
 {
-    auto gf(gf::create<gf::Prime<TypeParam>>(3));
-    TypeParam size = 1;
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
 
     fft::Size2<TypeParam> fft(gf);
-    this->test_fft_codec(gf, &fft, size);
+    this->test_fft_codec(gf, &fft, 2);
 }
 
 TYPED_TEST(FftTest, TestFftSingleGfp) // NOLINT
 {
-    auto gf(gf::create<gf::Prime<TypeParam>>(39));
-    fft::Single<TypeParam> fft(gf, 16);
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
+    const int n =
+        quadiron::arith::get_smallest_power_of_2<TypeParam>(this->code_len);
+    fft::Single<TypeParam> fft(gf, n);
 
     this->test_fft_codec(gf, &fft, 1);
 }
@@ -348,14 +373,19 @@ TYPED_TEST(FftTest, TestFftGf2n) // NOLINT
 
         ASSERT_EQ(gf.exp(R, gf.card_minus_one()), 1);
 
+        unsigned len = this->code_len;
+        if (gf.card_minus_one() <= this->code_len) {
+            len = gf.weak_rand();
+        }
+
         // With this encoder we cannot exactly satisfy users request,
         // we need to pad.
-        const unsigned n = gf.get_code_len(this->n_data + this->n_parities);
+        const unsigned n = gf.get_code_len(len);
 
         const TypeParam r = gf.get_nth_root(n);
         ASSERT_EQ(gf.exp(r, n), 1);
 
         fft::Naive<TypeParam> fft(gf, n, r);
-        this->test_fft_codec(gf, &fft, this->n_data);
+        this->test_fft_codec(gf, &fft, len);
     }
 }

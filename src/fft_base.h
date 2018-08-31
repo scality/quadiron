@@ -66,19 +66,25 @@ class FourierTransform {
     int n;
     T inv_n_mod_p;
     vec::Vector<T>* vec_inv_n = nullptr;
-    FourierTransform(const gf::Field<T>& gf, int n);
+    FourierTransform(const gf::Field<T>& gf, int n, bool additive = false);
 };
 
 template <typename T>
-FourierTransform<T>::FourierTransform(const gf::Field<T>& gf, int n)
+FourierTransform<T>::FourierTransform(
+    const gf::Field<T>& gf,
+    int n,
+    bool additive)
 {
     this->gf = &gf;
     this->n = n;
-    this->inv_n_mod_p = gf.get_inv_n_mod_p(n);
 
-    this->vec_inv_n = new vec::Vector<T>(gf, n);
-    for (int i = 0; i < n; i++) {
-        this->vec_inv_n->set(i, this->inv_n_mod_p);
+    if (!additive) {
+        this->inv_n_mod_p = gf.get_inv_n_mod_p(n);
+
+        this->vec_inv_n = new vec::Vector<T>(gf, n);
+        for (int i = 0; i < n; i++) {
+            this->vec_inv_n->set(i, this->inv_n_mod_p);
+        }
     }
 }
 

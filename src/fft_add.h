@@ -101,7 +101,7 @@ class Additive : public FourierTransform<T> {
  */
 template <typename T>
 Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
-    : FourierTransform<T>(gf, arith::exp2<T>(m))
+    : FourierTransform<T>(gf, arith::exp2<T>(m), true)
 {
     assert(m >= 1);
     this->m = m;
