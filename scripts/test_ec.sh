@@ -34,7 +34,7 @@
 #valgrind="gdb --args"
 
 bin=$1
-bs=50K
+bs=51200
 
 if [ -z $1 ]
 then
