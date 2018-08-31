@@ -48,29 +48,37 @@ namespace fft {
 template <typename T>
 class Naive : public FourierTransform<T> {
   public:
-    Naive(const gf::Field<T>& gf, int n, T w);
+    Naive(const gf::Field<T>& gf, int n, T w, size_t pkt_size = 0);
     ~Naive();
     void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
     void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
     void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
+    void ifft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
+    void fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
 
   private:
     T w;
     T inv_w;
+    size_t pkt_size;
     vec::Matrix<T>* W;
     vec::Matrix<T>* inv_W;
     void compute_W(vec::Matrix<T>* _W, T _w);
     void
     _fft(vec::Vector<T>& output, vec::Vector<T>& input, vec::Matrix<T>* _W);
+    void
+    _fft(vec::Buffers<T>& output, vec::Buffers<T>& input, vec::Matrix<T>* _W);
 };
 
 template <typename T>
-Naive<T>::Naive(const gf::Field<T>& gf, int n, T w) : FourierTransform<T>(gf, n)
+Naive<T>::Naive(const gf::Field<T>& gf, int n, T w, size_t pkt_size)
+    : FourierTransform<T>(gf, n)
 {
     this->w = w;
     this->inv_w = gf.inv(w);
     this->W = new vec::Matrix<T>(gf, this->n, this->n);
     this->inv_W = new vec::Matrix<T>(gf, this->n, this->n);
+    this->pkt_size = pkt_size;
 
     compute_W(W, w);
     compute_W(inv_W, this->inv_w);
@@ -132,6 +140,59 @@ void Naive<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
     _fft(output, input, inv_W);
     if (this->inv_n_mod_p > 1)
         output.mul_scalar(this->inv_n_mod_p);
+}
+
+template <typename T>
+void Naive<T>::_fft(
+    vec::Buffers<T>& output,
+    vec::Buffers<T>& input,
+    vec::Matrix<T>* _W)
+{
+    const unsigned len = this->n;
+    const unsigned size = this->pkt_size;
+    for (unsigned i = 0; i < len; ++i) {
+        output.fill(i, 0);
+        T* buf = output.get(i);
+        for (unsigned j = 0; j < len; ++j) {
+            T* ibuf = input.get(j);
+            T r = _W->get(i, j);
+            for (unsigned u = 0; u < size; ++u) {
+                buf[u] = this->gf->add(buf[u], this->gf->mul(r, ibuf[u]));
+            }
+        }
+    }
+}
+
+/** Perform decimation-in-time FFT
+ *
+ * @param output - output buffers
+ * @param input - input buffers
+ */
+template <typename T>
+void Naive<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
+{
+    _fft(output, input, W);
+}
+
+/** Perform decimation-in-frequency FFT or inverse FFT
+ *
+ * @param output - output buffers
+ * @param input - input buffers
+ */
+template <typename T>
+void Naive<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
+{
+    _fft(output, input, inv_W);
+}
+template <typename T>
+void Naive<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
+{
+    fft_inv(output, input);
+
+    /*
+     * We need to divide output to `N` for the inverse formular
+     */
+    this->gf->mul_vec_to_vecp(*(this->vec_inv_n), output, output);
 }
 
 } // namespace fft
