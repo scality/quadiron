@@ -319,6 +319,7 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     const unsigned size = this->pkt_size;
     const unsigned len = this->n;
+    const unsigned input_len = input.get_n();
 
     // 1st reversion of elements of output
     for (unsigned i = 0; i < len; i++) {
@@ -328,7 +329,13 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
     }
 
     // copy input to output
-    output.copy(input);
+    unsigned i;
+    for (i = 0; i < input_len; ++i) {
+        output.copy(i, input.get(i));
+    }
+    for (; i < len; ++i) {
+        output.fill(i, 0);
+    }
 
     for (unsigned m = len / 2; m >= 1; m /= 2) {
         unsigned doubled_m = 2 * m;
