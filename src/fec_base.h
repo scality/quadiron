@@ -1060,8 +1060,14 @@ void FecCode<T>::decode_prepare(
 
     T thres = (this->gf->card() - 1);
     for (unsigned i = 0; i < this->n_data; i++) {
-        const int frag_id = fragments_ids.get(i);
+        unsigned frag_id = fragments_ids.get(i);
+        if (type == FecType::SYSTEMATIC && frag_id < this->n_data) {
+            continue;
+        }
         T* chunk = words.get(i);
+        if (type == FecType::SYSTEMATIC) {
+            frag_id -= this->n_data;
+        }
         // loop over marked symbols
         for (auto const& data : props[frag_id].get_map()) {
             off_t loc_offset = data.first;
