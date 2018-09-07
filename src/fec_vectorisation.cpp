@@ -50,7 +50,7 @@ void RsFnt<uint16_t>::encode_post_process(
 {
     size_t size = this->pkt_size;
     uint16_t threshold = this->gf->card_minus_one();
-    unsigned code_len = this->code_len;
+    unsigned code_len = this->n_outputs;
 
     // number of elements per vector register
     unsigned vec_size = ALIGN_SIZE / sizeof(uint16_t);
@@ -82,7 +82,7 @@ void RsFnt<uint32_t>::encode_post_process(
 {
     const size_t size = this->pkt_size;
     const uint32_t threshold = this->gf->card_minus_one();
-    const unsigned code_len = this->code_len;
+    const unsigned code_len = this->n_outputs;
 
     // number of elements per vector register
     const unsigned vec_size = ALIGN_SIZE / sizeof(uint32_t);
