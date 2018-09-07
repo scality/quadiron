@@ -83,7 +83,7 @@ do_test()
         md5sum foo.c${i} > foo.c${i}.md5sum.1
     done
 
-    if [ "${type}" = "type_2" ]
+    if [ "${type}" = "NON_SYSTEMATIC" ]
     then
         #remove all data
         shopt -s extglob
@@ -98,7 +98,7 @@ do_test()
     j=0
     for i in $data_loss
     do
-        if [ "${type}" = "type_2" ]
+        if [ "${type}" = "NON_SYSTEMATIC" ]
         then
             mv foo.c${j} foo.c${j}.1
             mv foo.c${j}.props foo.c${j}.props.1
@@ -110,7 +110,7 @@ do_test()
 
     for i in $coding_loss
     do
-        if [ "${type}" = "type_2" ]
+        if [ "${type}" = "NON_SYSTEMATIC" ]
         then
             mv foo.c${j} foo.c${j}.1
             mv foo.c${j}.props foo.c${j}.props.1
@@ -147,7 +147,7 @@ do_test()
     echo
 }
 
-for i in rs-fnt_1 rs-fnt_2 rs-nf4_2 rs-nf4_4 rs-nf4_8 rs-gfp-fft_1 rs-gfp-fft_2 rs-gfp-fft_4 rs-gf2n-fft_1 rs-gf2n-fft_2 rs-gf2n-fft_4 rs-gf2n-fft_8 rs-gf2n-fft-add_1 rs-gf2n-fft-add_2 rs-gf2n-fft-add_4 rs-gf2n-fft-add_8 rs-gf2n-v_1 rs-gf2n-v_2 rs-gf2n-c_1 rs-gf2n-c_2 rs-gf2n-v_4 rs-gf2n-v_8 rs-gf2n-v_16 rs-gf2n-c_4 rs-gf2n-c_8 rs-gf2n-c_16
+for i in rs-fnt_1 rs-fnt_2 rs-fnt-sys_1 rs-fnt-sys_2 rs-nf4_2 rs-nf4_4 rs-nf4_8 rs-gfp-fft_1 rs-gfp-fft_2 rs-gfp-fft_4 rs-gf2n-fft_1 rs-gf2n-fft_2 rs-gf2n-fft_4 rs-gf2n-fft_8 rs-gf2n-fft-add_1 rs-gf2n-fft-add_2 rs-gf2n-fft-add_4 rs-gf2n-fft-add_8 rs-gf2n-v_1 rs-gf2n-v_2 rs-gf2n-c_1 rs-gf2n-c_2 rs-gf2n-v_4 rs-gf2n-v_8 rs-gf2n-v_16 rs-gf2n-c_4 rs-gf2n-c_8 rs-gf2n-c_16
 do
     fec_type=$(echo $i|cut -d_ -f1)
     word_size=$(echo $i|cut -d_ -f2)
