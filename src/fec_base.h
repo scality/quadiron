@@ -918,7 +918,6 @@ bool FecCode<T>::decode_packet(
         if (fragment_index == n_data)
             return true;
     }
-    fragments_ids.sort();
 
     vec::Vector<T> avail_parity_ids(*(this->gf), n_data - avail_data_nb);
 
@@ -941,6 +940,7 @@ bool FecCode<T>::decode_packet(
         if (fragment_index < n_data)
             return false;
     }
+    fragments_ids.sort();
 
     decode_build();
 
