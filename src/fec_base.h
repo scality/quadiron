@@ -239,6 +239,8 @@ class FecCode {
     std::unique_ptr<vec::Vector<T>> inv_r_powers = nullptr;
     // This vector MUST be initialized by derived Class using multiplicative FFT
     std::unique_ptr<vec::Vector<T>> r_powers = nullptr;
+    // buffers for intermediate symbols used for systematic FNT
+    std::unique_ptr<vec::Buffers<T>> dec_inter_codeword;
 
     // pure abstract methods that will be defined in derived class
     virtual void check_params() = 0;
@@ -1044,6 +1046,13 @@ void FecCode<T>::decode(
 
     // Lagrange interpolation
     decode_apply(context, output, words);
+
+    if (type == FecType::SYSTEMATIC) {
+        this->fft->fft(*dec_inter_codeword, output);
+        for (unsigned i = 0; i < this->n_data; i++) {
+            output.copy(i, dec_inter_codeword->get(i));
+        }
+    }
 }
 
 /* Prepare for decoding
