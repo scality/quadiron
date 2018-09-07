@@ -50,6 +50,16 @@ namespace fec {
  */
 template <typename T>
 class RsFnt : public FecCode<T> {
+  private:
+    // buffers for intermediate symbols used for systematic FNT
+    std::unique_ptr<vec::Buffers<T>> inter_words;
+    // buffers for suffix symbols of codewords used for systematic FNT
+    std::unique_ptr<vec::Buffers<T>> suffix_words;
+    // received fragments id for encoding of systematic FNT
+    std::unique_ptr<vec::Vector<T>> enc_frag_ids;
+    // decoding context used in encoding of systematic FNT
+    std::unique_ptr<DecodeContext<T>> enc_context;
+
   public:
     RsFnt(
         FecType type,
@@ -113,11 +123,33 @@ class RsFnt : public FecCode<T> {
         for (unsigned i = 0; i < this->n; i++) {
             this->r_powers->set(i, this->gf->exp(this->r, i));
         }
+
+        if (this->type == FecType::SYSTEMATIC) {
+            // for encoding
+            enc_frag_ids = std::unique_ptr<vec::Vector<T>>(
+                new vec::Vector<T>(*(this->gf), this->n_data));
+            // ids of received fragments, from 0 to codelen-1
+            for (unsigned i = 0; i < this->n_data; i++) {
+                enc_frag_ids->set(i, i);
+            }
+
+            inter_words = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(this->n_data, this->pkt_size));
+            suffix_words = std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(
+                this->n - this->n_data - this->n_outputs, this->pkt_size));
+
+            enc_context = this->init_context_dec(
+                *enc_frag_ids, this->pkt_size, inter_words.get());
+
+            // for decoding
+            this->dec_inter_codeword = std::unique_ptr<vec::Buffers<T>>(
+                new vec::Buffers<T>(this->n, this->pkt_size));
+        }
     }
 
     int get_n_outputs() override
     {
-        return this->n;
+        return (this->type == FecType::SYSTEMATIC) ? this->n_parities : this->n;
     }
 
     /**
@@ -146,7 +178,7 @@ class RsFnt : public FecCode<T> {
         // max_value = 2^x
         T thres = this->gf->card() - 1;
         // check for out of range value in output
-        for (unsigned i = 0; i < this->code_len; i++) {
+        for (unsigned i = 0; i < this->n_outputs; i++) {
             if (output.get(i) & thres) {
                 props[i].add(offset, OOR_MARK);
                 output.set(i, 0);
@@ -160,7 +192,14 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
-        this->fft->fft(output, words);
+        if (this->type == FecType::SYSTEMATIC) {
+            this->decode_apply(*enc_context, *inter_words, words);
+            vec::Buffers<T> _tmp(words, output);
+            vec::Buffers<T> _output(_tmp, *suffix_words);
+            this->fft->fft(_output, *inter_words);
+        } else {
+            this->fft->fft(output, words);
+        }
         encode_post_process(output, props, offset);
     }
 
@@ -172,7 +211,7 @@ class RsFnt : public FecCode<T> {
         // check for out of range value in output
         unsigned size = output.get_size();
         T thres = (this->gf->card() - 1);
-        for (unsigned i = 0; i < this->code_len; ++i) {
+        for (unsigned i = 0; i < this->n_outputs; ++i) {
             T* chunk = output.get(i);
             for (unsigned j = 0; j < size; ++j) {
                 if (chunk[j] & thres) {
@@ -182,11 +221,7 @@ class RsFnt : public FecCode<T> {
         }
     }
 
-    void decode_add_data(int fragment_index, int row) override
-    {
-        // not applicable
-        assert(false);
-    }
+    void decode_add_data(int fragment_index, int row) override {}
 
     void decode_add_parities(int fragment_index, int row) override
     {
