@@ -41,7 +41,7 @@ char* prefix = nullptr;
 void xusage()
 {
     std::cerr << std::string("Usage: ") +
-    "ec [-e rs-gf2n-v|rs-gf2n-c|rs-gf2n-fft|rs-gf2n-fft-add|rs-gfp-fft|rs-fnt|rs-nf4]" +
+    "ec [-e rs-gf2n-v|rs-gf2n-c|rs-gf2n-fft|rs-gf2n-fft-add|rs-gfp-fft|rs-fnt|rs-fnt-sys|rs-nf4]" +
     "[-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
     exit(1);
@@ -97,10 +97,11 @@ void create_coding_files(
         c_props_files[i] = new std::ofstream(filename);
     }
 
-    if (operation_on_packet)
+    if (operation_on_packet) {
         fec->encode_packet(d_files, c_files, c_props);
-    else
+    } else {
         fec->encode_bufs(d_files, c_files, c_props);
+    }
 
     for (unsigned i = 0; i < fec->n_data; i++) {
         (static_cast<std::ifstream*>(d_files[i]))->close();
@@ -123,7 +124,9 @@ void create_coding_files(
  *
  */
 template <typename T>
-bool repair_data_files(quadiron::fec::FecCode<T>* fec)
+bool repair_data_files(
+    quadiron::fec::FecCode<T>* fec,
+    bool operation_on_packet = false)
 {
     char filename[1024];
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
@@ -171,7 +174,11 @@ bool repair_data_files(quadiron::fec::FecCode<T>* fec)
         }
     }
 
-    fec->decode_bufs(d_files, c_files, c_props, r_files);
+    if (operation_on_packet) {
+        fec->decode_packet(d_files, c_files, c_props, r_files);
+    } else {
+        fec->decode_bufs(d_files, c_files, c_props, r_files);
+    }
 
     for (unsigned i = 0; i < fec->n_data; i++) {
         if (nullptr != d_files[i]) {
@@ -354,7 +361,7 @@ void run_fec_rs_fnt(
         exit(1);
     }
     if (rflag) {
-        if (0 != repair_data_files<T>(fec)) {
+        if (0 != repair_data_files<T>(fec, true)) {
             exit(1);
         }
     }
