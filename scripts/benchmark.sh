@@ -44,13 +44,14 @@ fi
 
 chunk_size=51200
 # for rs-fnt with different packet sizes
-ec_type=rs-fnt
 word_size=2
-for k in 16; do
-  for n in 256 1024; do
-    m=$((n-k))
-    for pkt_size in 256 512 1024; do
-      ${bin} -e ${ec_type} -w ${word_size} -k ${k} -m ${m} -c ${chunk_size} -s ${sce_type} -g ${threads_nb} -f ${show_type} -p ${pkt_size}
+for ec_type in rs-fnt rs-fnt-sys; do
+  for k in 16; do
+    for n in 256 1024; do
+      m=$((n-k))
+      for pkt_size in 256 512 1024; do
+        ${bin} -e ${ec_type} -w ${word_size} -k ${k} -m ${m} -c ${chunk_size} -s ${sce_type} -g ${threads_nb} -f ${show_type} -p ${pkt_size} -n ${samples_nb}
+      done
     done
   done
 done
