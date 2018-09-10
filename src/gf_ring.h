@@ -405,6 +405,7 @@ inline void RingModN<T>::mul_vec_to_vecp(
         } else if (coef == 1) {
             dest.copy(i, _src);
         } else if (coef == h) {
+            dest.copy(i, _src);
             this->neg(len, _dest);
         } else if (coef > 1) {
             this->mul_coef_to_buf(coef, _src, _dest, len);
