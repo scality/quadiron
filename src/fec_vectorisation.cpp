@@ -67,7 +67,7 @@ void RsFnt<uint16_t>::encode_post_process(
             uint16_t* chunk = output.get(i);
             for (size_t j = vecs_nb * vec_size; j < size; ++j) {
                 if (chunk[j] == threshold) {
-                    props[i].add(offset + j, 1);
+                    props[i].add(offset + j, OOR_MARK);
                 }
             }
         }
@@ -99,7 +99,7 @@ void RsFnt<uint32_t>::encode_post_process(
             uint32_t* chunk = output.get(i);
             for (size_t j = vecs_nb * vec_size; j < size; ++j) {
                 if (chunk[j] == threshold) {
-                    props[i].add(offset + j, 1);
+                    props[i].add(offset + j, OOR_MARK);
                 }
             }
         }
