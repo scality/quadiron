@@ -87,9 +87,22 @@ class Radix2 : public FourierTransform<T> {
 
   private:
     void init_bitrev();
-    void butterfly_ct_1(vec::Buffers<T>& buf, unsigned start, unsigned m, unsigned step);
-    void butterfly_ct_2(vec::Buffers<T>& buf, unsigned start, unsigned m, unsigned step);
-    void butterfly_ct_3(T coef, vec::Buffers<T>& buf, unsigned start, unsigned m, unsigned step);
+    void butterfly_ct_1(
+        vec::Buffers<T>& buf,
+        unsigned start,
+        unsigned m,
+        unsigned step);
+    void butterfly_ct_2(
+        vec::Buffers<T>& buf,
+        unsigned start,
+        unsigned m,
+        unsigned step);
+    void butterfly_ct_3(
+        T coef,
+        vec::Buffers<T>& buf,
+        unsigned start,
+        unsigned m,
+        unsigned step);
 
     unsigned data_len; // number of real input elements
     T w;
@@ -310,7 +323,11 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 // P = P + Q
 // Q = P - Q
 template <typename T>
-void Radix2<T>::butterfly_ct_1(vec::Buffers<T>& buf, unsigned start, unsigned m, unsigned step)
+void Radix2<T>::butterfly_ct_1(
+    vec::Buffers<T>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step)
 {
     for (unsigned i = start; i < this->n; i += step) {
         T* a = buf.get(i);
@@ -328,7 +345,11 @@ void Radix2<T>::butterfly_ct_1(vec::Buffers<T>& buf, unsigned start, unsigned m,
 // P = P - Q
 // Q = P + Q
 template <typename T>
-void Radix2<T>::butterfly_ct_2(vec::Buffers<T>& buf, unsigned start, unsigned m, unsigned step)
+void Radix2<T>::butterfly_ct_2(
+    vec::Buffers<T>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step)
 {
     for (unsigned i = start; i < this->n; i += step) {
         T* a = buf.get(i);
@@ -346,7 +367,12 @@ void Radix2<T>::butterfly_ct_2(vec::Buffers<T>& buf, unsigned start, unsigned m,
 // P = P + c * Q
 // Q = P - c * Q
 template <typename T>
-void Radix2<T>::butterfly_ct_3(T coef, vec::Buffers<T>& buf, unsigned start, unsigned m, unsigned step)
+void Radix2<T>::butterfly_ct_3(
+    T coef,
+    vec::Buffers<T>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step)
 {
     for (unsigned i = start; i < this->n; i += step) {
         T* a = buf.get(i);
@@ -426,6 +452,31 @@ void Radix2<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
      */
     this->gf->mul_vec_to_vecp(*(this->vec_inv_n), output, output);
 }
+
+#ifdef QUADIRON_USE_SIMD
+
+/* Operations are vectorized by SIMD */
+template <>
+void Radix2<uint32_t>::butterfly_ct_1(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+template <>
+void Radix2<uint32_t>::butterfly_ct_2(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+template <>
+void Radix2<uint32_t>::butterfly_ct_3(
+    uint32_t coef,
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+
+#endif // #ifdef QUADIRON_USE_SIMD
 
 } // namespace fft
 } // namespace quadiron
