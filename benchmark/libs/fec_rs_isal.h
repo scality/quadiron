@@ -134,8 +134,10 @@ class RsIsal : public FecCode<T> {
     {
         const unsigned input_len = words.get_n();
         const unsigned output_len = output.get_n();
-        std::vector<T*> vec_data = const_cast<std::vector<T*>&>(words.get_mem());
-        std::vector<T*> vec_coding = const_cast<std::vector<T*>&>(output.get_mem());
+        std::vector<T*> vec_data =
+            const_cast<std::vector<T*>&>(words.get_mem());
+        std::vector<T*> vec_coding =
+            const_cast<std::vector<T*>&>(output.get_mem());
 
         u8** data = reinterpret_cast<u8**>(vec_data.data());
         u8** coding = reinterpret_cast<u8**>(vec_coding.data());
@@ -187,8 +189,10 @@ class RsIsal : public FecCode<T> {
             this->n_data, this->n_data, decode_mat.get(), dec_g_tbls.get());
     }
 
-    std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
+    std::unique_ptr<DecodeContext<T>> init_context_dec(
+        vec::Vector<T>& fragments_ids,
+        size_t size,
+        vec::Buffers<T>* output) override
     {
         std::unique_ptr<DecodeContext<T>> context;
         return context;
