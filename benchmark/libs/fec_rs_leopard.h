@@ -131,9 +131,11 @@ class RsLeo : public FecCode<T> {
         vec::Buffers<T>& words) override
     {
         vec::Buffers<T> work_data(output, *enc_data);
-        std::vector<T*> vec_work = const_cast<std::vector<T*>&>(work_data.get_mem());
+        std::vector<T*> vec_work =
+            const_cast<std::vector<T*>&>(work_data.get_mem());
 
-        std::vector<T*> vec_data = const_cast<std::vector<T*>&>(words.get_mem());
+        std::vector<T*> vec_data =
+            const_cast<std::vector<T*>&>(words.get_mem());
 
         LeopardResult encodeResult = leo_encode(
             this->buf_size,
@@ -162,8 +164,7 @@ class RsLeo : public FecCode<T> {
         std::fill(encode_work_data->begin(), encode_work_data->end(), nullptr);
     }
 
-    void
-    prepare_for_new_dec(vec::Buffers<T>& words)
+    void prepare_for_new_dec(vec::Buffers<T>& words)
     {
         for (unsigned i = 0; i < this->n_data; ++i) {
             unsigned frag_id = fragments_ids->get(i);
@@ -192,8 +193,10 @@ class RsLeo : public FecCode<T> {
 
     void decode_build() override {}
 
-    std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
+    std::unique_ptr<DecodeContext<T>> init_context_dec(
+        vec::Vector<T>& fragments_ids,
+        size_t size,
+        vec::Buffers<T>* output) override
     {
         this->fragments_ids = &fragments_ids;
         std::unique_ptr<DecodeContext<T>> context;
@@ -220,7 +223,8 @@ class RsLeo : public FecCode<T> {
 
         vec::Buffers<T> work_data(output, *dec_data);
 
-        std::vector<T*> vec_work = const_cast<std::vector<T*>&>(work_data.get_mem());
+        std::vector<T*> vec_work =
+            const_cast<std::vector<T*>&>(work_data.get_mem());
 
         LeopardResult decodeResult = leo_decode(
             this->buf_size,
