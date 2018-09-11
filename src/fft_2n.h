@@ -538,6 +538,19 @@ void Radix2<uint32_t>::butterfly_ct_3(
     unsigned m,
     unsigned step);
 
+template <>
+void Radix2<uint32_t>::butterfly_gs_2(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+template <>
+void Radix2<uint32_t>::butterfly_gs_3(
+    uint32_t coef,
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step);
 #endif // #ifdef QUADIRON_USE_SIMD
 
 } // namespace fft
