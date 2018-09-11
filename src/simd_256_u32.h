@@ -408,7 +408,7 @@ inline void butterfly_ct_1(
     size_t len,
     uint32_t card = F4)
 {
-    for (unsigned i = start; i < buf.get_n(); i += step) {
+    for (int i = start; i < buf.get_n(); i += step) {
         uint32_t* a = buf.get(i);
         uint32_t* b = buf.get(i + m);
         m256i* _a = reinterpret_cast<m256i*>(a);
@@ -431,7 +431,7 @@ inline void butterfly_ct_2(
     size_t len,
     uint32_t card = F4)
 {
-    for (unsigned i = start; i < buf.get_n(); i += step) {
+    for (int i = start; i < buf.get_n(); i += step) {
         uint32_t* a = buf.get(i);
         uint32_t* b = buf.get(i + m);
         m256i* _a = reinterpret_cast<m256i*>(a);
@@ -501,7 +501,7 @@ inline void butterfly_ct_3(
     uint32_t card = F4)
 {
     m256i _coef = _mm256_set1_epi32(coef);
-    for (unsigned i = start; i < buf.get_n(); i += step) {
+    for (int i = start; i < buf.get_n(); i += step) {
         uint32_t* a = buf.get(i);
         uint32_t* b = buf.get(i + m);
         m256i* _a = reinterpret_cast<m256i*>(a);
@@ -509,6 +509,71 @@ inline void butterfly_ct_3(
         // perform butterfly operation for Cooley-Tukey FFT algorithm
         for (size_t j = 0; j < len; ++j) {
             butterfly_ct_3_step(&_coef, &(_a[j]), &(_b[j]), card);
+        }
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = Q + P
+// Q = Q - P
+inline void butterfly_gs_2(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card = F4)
+{
+    for (int i = start; i < buf.get_n(); i += step) {
+        uint32_t* a = buf.get(i);
+        uint32_t* b = buf.get(i + m);
+        m256i* _a = reinterpret_cast<m256i*>(a);
+        m256i* _b = reinterpret_cast<m256i*>(b);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = 0; j < len; ++j) {
+            butterfly_step(&(_b[j]), &(_a[j]), &(_a[j]), &(_b[j]), card);
+        }
+    }
+}
+
+// symbA = symbA + symbB
+// symbB = coef * (symbA - symbB)
+inline void
+butterfly_gs_3_step(m256i* coef, m256i* symbA, m256i* symbB, uint32_t _card)
+{
+    // --------------------------------------
+    // symbA = symbA + symbB
+    // symbB = symbA - symbB
+    // --------------------------------------
+    butterfly_step(symbA, symbB, symbA, symbB, _card);
+
+    // --------------------------------------
+    // symbB = coef * symbB
+    // --------------------------------------
+    butterfly_mul(coef, symbB, symbB, _card);
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + Q
+// Q = c * (P - Q)
+inline void butterfly_gs_3(
+    uint32_t coef,
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card = F4)
+{
+    m256i _coef = _mm256_set1_epi32(coef);
+    for (int i = start; i < buf.get_n(); i += step) {
+        uint32_t* a = buf.get(i);
+        uint32_t* b = buf.get(i + m);
+        m256i* _a = reinterpret_cast<m256i*>(a);
+        m256i* _b = reinterpret_cast<m256i*>(b);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = 0; j < len; ++j) {
+            butterfly_gs_3_step(&_coef, &(_a[j]), &(_b[j]), card);
         }
     }
 }
