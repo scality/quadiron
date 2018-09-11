@@ -60,7 +60,7 @@ void Radix2<uint32_t>::butterfly_ct_1(
 
     // for last elements, perform as non-SIMD method
     if (last_len > 0) {
-        for (unsigned i = start; i < this->n; i += step) {
+        for (int i = start; i < this->n; i += step) {
             uint32_t* a = buf.get(i);
             uint32_t* b = buf.get(i + m);
             // perform butterfly operation for Cooley-Tukey FFT algorithm
@@ -91,7 +91,7 @@ void Radix2<uint32_t>::butterfly_ct_2(
 
     // for last elements, perform as non-SIMD method
     if (last_len > 0) {
-        for (unsigned i = start; i < this->n; i += step) {
+        for (int i = start; i < this->n; i += step) {
             uint32_t* a = buf.get(i);
             uint32_t* b = buf.get(i + m);
             // perform butterfly operation for Cooley-Tukey FFT algorithm
@@ -123,7 +123,7 @@ void Radix2<uint32_t>::butterfly_ct_3(
 
     // for last elements, perform as non-SIMD method
     if (last_len > 0) {
-        for (unsigned i = start; i < this->n; i += step) {
+        for (int i = start; i < this->n; i += step) {
             uint32_t* a = buf.get(i);
             uint32_t* b = buf.get(i + m);
             // perform butterfly operation for Cooley-Tukey FFT algorithm
@@ -131,6 +131,69 @@ void Radix2<uint32_t>::butterfly_ct_3(
                 uint32_t x = this->gf->mul(coef, b[j]);
                 b[j] = this->gf->sub(a[j], x);
                 a[j] = this->gf->add(a[j], x);
+            }
+        }
+    }
+}
+
+template <>
+void Radix2<uint32_t>::butterfly_gs_2(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    const unsigned ratio = ALIGN_SIZE / sizeof(uint32_t);
+    const size_t len = this->pkt_size;
+    const size_t vec_len = len / ratio;
+    const size_t last_len = len - vec_len * ratio;
+    const uint32_t card = this->gf->card();
+
+    // perform vector operations
+    simd::butterfly_gs_2(buf, start, m, step, vec_len, card);
+
+    // for last elements, perform as non-SIMD method
+    if (last_len > 0) {
+        for (int i = start; i < this->n; i += step) {
+            uint32_t* a = buf.get(i);
+            uint32_t* b = buf.get(i + m);
+            // perform butterfly operation for Cooley-Tukey FFT algorithm
+            for (size_t j = vec_len * ratio; j < len; ++j) {
+                uint32_t x = this->gf->add(a[j], b[j]);
+                b[j] = this->gf->sub(b[j], a[j]);
+                a[j] = x;
+            }
+        }
+    }
+}
+
+template <>
+void Radix2<uint32_t>::butterfly_gs_3(
+    uint32_t coef,
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    const unsigned ratio = ALIGN_SIZE / sizeof(uint32_t);
+    const size_t len = this->pkt_size;
+    const size_t vec_len = len / ratio;
+    const size_t last_len = len - vec_len * ratio;
+    const uint32_t card = this->gf->card();
+
+    // perform vector operations
+    simd::butterfly_gs_3(coef, buf, start, m, step, vec_len, card);
+
+    // for last elements, perform as non-SIMD method
+    if (last_len > 0) {
+        for (int i = start; i < this->n; i += step) {
+            uint32_t* a = buf.get(i);
+            uint32_t* b = buf.get(i + m);
+            // perform butterfly operation for Cooley-Tukey FFT algorithm
+            for (size_t j = vec_len * ratio; j < len; ++j) {
+                uint32_t x = this->gf->sub(a[j], b[j]);
+                a[j] = this->gf->add(a[j], b[j]);
+                b[j] = this->gf->mul(coef, x);
             }
         }
     }
