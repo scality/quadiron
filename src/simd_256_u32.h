@@ -154,6 +154,17 @@ inline m256i mul_f4(m256i a, m256i b)
     return mod_after_multiply_f4(c);
 }
 
+inline m256i mul_f4_simple(m256i a, m256i b)
+{
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
+
+    m256i c = _mm256_mullo_epi32(_a, _b);
+
+    // Modulo
+    return mod_after_multiply_f4(c);
+}
+
 inline m256i mul_f3(m256i a, m256i b)
 {
     m256i _a = _mm256_load_si256(&a);
@@ -172,6 +183,17 @@ inline m256i mul_f3(m256i a, m256i b)
     return mod_after_multiply_f3(c);
 }
 
+inline m256i mul_f3_simple(m256i a, m256i b)
+{
+    m256i _a = _mm256_load_si256(&a);
+    m256i _b = _mm256_load_si256(&b);
+
+    m256i c = _mm256_mullo_epi32(_a, _b);
+
+    // Modulo
+    return mod_after_multiply_f3(c);
+}
+
 /** Perform multiplication of two numbers a, b whose elements are of GF(card)
  *  where `card` is a prime Fermat number, i.e. card = Fx with x < 5
  *  Currently, it supports only for F3 and F4
@@ -182,6 +204,14 @@ inline m256i mul(m256i a, m256i b, aint32 card)
     if (card == F4)
         return mul_f4(a, b);
     return mul_f3(a, b);
+}
+
+inline m256i mul_simple(m256i a, m256i b, aint32 card)
+{
+    assert(card == F4 || card == F3);
+    if (card == F4)
+        return mul_f4_simple(a, b);
+    return mul_f3_simple(a, b);
 }
 
 /** Apply an element-wise negation to a buffer
@@ -331,6 +361,155 @@ inline void butterfly_ct(
         m256i a = mul(_coef, _buf2[i], card);
         _buf2[i] = sub(_buf1[i], a, card);
         _buf1[i] = add(_buf1[i], a, card);
+    }
+}
+
+// outputA = inputA + inputB
+// outputB = inputA - inputB
+inline void butterfly_step(
+    m256i* inputA,
+    m256i* inputB,
+    m256i* outputA,
+    m256i* outputB,
+    uint32_t _card)
+{
+    const m256i card = (_card == F3) ? F3_m256i : F4_m256i;
+    const m256i card_1 = (_card == F3) ? F3minus1_m256i : F4minus1_m256i;
+
+    // --------------------------------------
+    // outputB = inputA - inputB
+    // --------------------------------------
+    m256i a = _mm256_load_si256(inputA);
+    m256i b = _mm256_load_si256(inputB);
+    m256i cmp_1 = _mm256_cmpgt_epi32(b, a);
+    m256i res_1 = _mm256_add_epi32(a, _mm256_and_si256(card, cmp_1));
+
+    _mm256_store_si256(outputB, _mm256_sub_epi32(res_1, b));
+
+    // --------------------------------------
+    // outputA = symbA + symbB
+    // --------------------------------------
+    m256i res_2 = _mm256_add_epi32(a, b);
+    // modulo
+    m256i cmp_2 = _mm256_cmpgt_epi32(res_2, card_1);
+    m256i c = _mm256_sub_epi32(res_2, _mm256_and_si256(card, cmp_2));
+
+    _mm256_store_si256(outputA, c);
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + Q
+// Q = P - Q
+inline void butterfly_ct_1(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card = F4)
+{
+    for (unsigned i = start; i < buf.get_n(); i += step) {
+        uint32_t* a = buf.get(i);
+        uint32_t* b = buf.get(i + m);
+        m256i* _a = reinterpret_cast<m256i*>(a);
+        m256i* _b = reinterpret_cast<m256i*>(b);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = 0; j < len; ++j) {
+            butterfly_step(&(_a[j]), &(_b[j]), &(_a[j]), &(_b[j]), card);
+        }
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P - Q
+// Q = P + Q
+inline void butterfly_ct_2(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card = F4)
+{
+    for (unsigned i = start; i < buf.get_n(); i += step) {
+        uint32_t* a = buf.get(i);
+        uint32_t* b = buf.get(i + m);
+        m256i* _a = reinterpret_cast<m256i*>(a);
+        m256i* _b = reinterpret_cast<m256i*>(b);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = 0; j < len; ++j) {
+            butterfly_step(&(_a[j]), &(_b[j]), &(_b[j]), &(_a[j]), card);
+        }
+    }
+}
+
+// output = coef * input
+inline void
+butterfly_mul(m256i* coef, m256i* input, m256i* output, uint32_t _card)
+{
+    const m256i card = (_card == F3) ? F3_m256i : F4_m256i;
+    const m256i card_2 = (_card == F3) ? F3minus2_m256i : F4minus2_m256i;
+
+    // --------------------------------------
+    // compute coef * symbB
+    // --------------------------------------
+    m256i _coef = _mm256_load_si256(coef);
+    m256i b = _mm256_load_si256(input);
+    m256i res = _mm256_mullo_epi32(_coef, b);
+    // modulo
+    m256i lo = _mm256_and_si256(res, card_2);
+    m256i res_shift =
+        (_card == F3) ? _mm256_srli_si256(res, 1) : _mm256_srli_si256(res, 2);
+    m256i hi = _mm256_and_si256(res_shift, card_2);
+
+    m256i cmp_1 = _mm256_cmpgt_epi32(hi, lo);
+    m256i _lo = _mm256_add_epi32(lo, _mm256_and_si256(card, cmp_1));
+
+    m256i res_2 = _mm256_sub_epi32(_lo, hi);
+
+    _mm256_store_si256(output, res_2);
+}
+
+// symbA = symbA + coef * symbB
+// symbB = symbA - coef * symbB
+inline void
+butterfly_ct_3_step(m256i* coef, m256i* symbA, m256i* symbB, uint32_t card)
+{
+    // --------------------------------------
+    // compute coef * symbB
+    // --------------------------------------
+    m256i coef_x_symbB;
+    butterfly_mul(coef, symbB, &coef_x_symbB, card);
+
+    // --------------------------------------
+    // symbA = symbA + coef_x_symbB
+    // symbB = symbA - coef_x_symbB
+    // --------------------------------------
+    butterfly_step(symbA, &coef_x_symbB, symbA, symbB, card);
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + c * Q
+// Q = P - c * Q
+inline void butterfly_ct_3(
+    uint32_t coef,
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card = F4)
+{
+    m256i _coef = _mm256_set1_epi32(coef);
+    for (unsigned i = start; i < buf.get_n(); i += step) {
+        uint32_t* a = buf.get(i);
+        uint32_t* b = buf.get(i + m);
+        m256i* _a = reinterpret_cast<m256i*>(a);
+        m256i* _b = reinterpret_cast<m256i*>(b);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = 0; j < len; ++j) {
+            butterfly_ct_3_step(&_coef, &(_a[j]), &(_b[j]), card);
+        }
     }
 }
 
