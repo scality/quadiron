@@ -43,7 +43,11 @@ namespace quadiron {
 namespace fft {
 
 template <>
-void Radix2<uint32_t>::butterfly_ct_1(vec::Buffers<uint32_t>& buf, unsigned start, unsigned m, unsigned step)
+void Radix2<uint32_t>::butterfly_ct_1(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step)
 {
     const unsigned ratio = ALIGN_SIZE / sizeof(uint32_t);
     const size_t len = this->pkt_size;
@@ -60,7 +64,7 @@ void Radix2<uint32_t>::butterfly_ct_1(vec::Buffers<uint32_t>& buf, unsigned star
             uint32_t* a = buf.get(i);
             uint32_t* b = buf.get(i + m);
             // perform butterfly operation for Cooley-Tukey FFT algorithm
-            for (size_t j = last_len; j < len; ++j) {
+            for (size_t j = vec_len * ratio; j < len; ++j) {
                 uint32_t x = this->gf->add(a[j], b[j]);
                 b[j] = this->gf->sub(a[j], b[j]);
                 a[j] = x;
@@ -70,7 +74,11 @@ void Radix2<uint32_t>::butterfly_ct_1(vec::Buffers<uint32_t>& buf, unsigned star
 }
 
 template <>
-void Radix2<uint32_t>::butterfly_ct_2(vec::Buffers<uint32_t>& buf, unsigned start, unsigned m, unsigned step)
+void Radix2<uint32_t>::butterfly_ct_2(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step)
 {
     const unsigned ratio = ALIGN_SIZE / sizeof(uint32_t);
     const size_t len = this->pkt_size;
@@ -87,7 +95,7 @@ void Radix2<uint32_t>::butterfly_ct_2(vec::Buffers<uint32_t>& buf, unsigned star
             uint32_t* a = buf.get(i);
             uint32_t* b = buf.get(i + m);
             // perform butterfly operation for Cooley-Tukey FFT algorithm
-            for (size_t j = last_len; j < len; ++j) {
+            for (size_t j = vec_len * ratio; j < len; ++j) {
                 uint32_t x = this->gf->sub(a[j], b[j]);
                 b[j] = this->gf->add(a[j], b[j]);
                 a[j] = x;
@@ -97,7 +105,12 @@ void Radix2<uint32_t>::butterfly_ct_2(vec::Buffers<uint32_t>& buf, unsigned star
 }
 
 template <>
-void Radix2<uint32_t>::butterfly_ct_3(uint32_t coef, vec::Buffers<uint32_t>& buf, unsigned start, unsigned m, unsigned step)
+void Radix2<uint32_t>::butterfly_ct_3(
+    uint32_t coef,
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step)
 {
     const unsigned ratio = ALIGN_SIZE / sizeof(uint32_t);
     const size_t len = this->pkt_size;
@@ -114,7 +127,7 @@ void Radix2<uint32_t>::butterfly_ct_3(uint32_t coef, vec::Buffers<uint32_t>& buf
             uint32_t* a = buf.get(i);
             uint32_t* b = buf.get(i + m);
             // perform butterfly operation for Cooley-Tukey FFT algorithm
-            for (size_t j = last_len; j < len; ++j) {
+            for (size_t j = vec_len * ratio; j < len; ++j) {
                 uint32_t x = this->gf->mul(coef, b[j]);
                 b[j] = this->gf->sub(a[j], x);
                 a[j] = this->gf->add(a[j], x);
@@ -123,8 +136,7 @@ void Radix2<uint32_t>::butterfly_ct_3(uint32_t coef, vec::Buffers<uint32_t>& buf
     }
 }
 
-
-} // namespace fec
+} // namespace fft
 } // namespace quadiron
 
 #endif // #ifdef QUADIRON_USE_SIMD
