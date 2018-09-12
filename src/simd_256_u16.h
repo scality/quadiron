@@ -265,52 +265,6 @@ mul_two_bufs(aint16* src, aint16* dest, size_t len, aint16 card = F3)
     }
 }
 
-/*
- * buf1[i] = buf1[i] + coef * buf2[i]
- * buf2[i] = buf1[i] - coef * buf2[i]
- */
-inline void butterfly_ct(
-    uint16_t coef,
-    aint16* buf1,
-    aint16* buf2,
-    size_t len,
-    uint16_t card = F3)
-{
-    const m256i _coef = _mm256_set1_epi16(coef);
-    m256i* _buf1 = reinterpret_cast<m256i*>(buf1);
-    m256i* _buf2 = reinterpret_cast<m256i*>(buf2);
-
-    for (size_t i = 0; i < len; ++i) {
-        m256i a = mul(_coef, _buf2[i], card);
-        _buf2[i] = sub(_buf1[i], a, card);
-        _buf1[i] = add(_buf1[i], a, card);
-    }
-}
-
-/*
- * buf1[i] = buf1[i] + buf2[i]
- * buf2[i] = coef * (buf1[i] - buf2[i])
- */
-inline void butterfly_gs(
-    uint16_t coef,
-    aint16* buf1,
-    aint16* buf2,
-    size_t len,
-    uint16_t card = F3)
-{
-    const m256i _coef = _mm256_set1_epi16(coef);
-    m256i* _buf1 = reinterpret_cast<m256i*>(buf1);
-    m256i* _buf2 = reinterpret_cast<m256i*>(buf2);
-
-    for (size_t i = 0; i < len; ++i) {
-        m256i a = _buf1[i];
-        m256i b = _buf2[i];
-        m256i c = sub(a, b, card);
-        _buf1[i] = add(a, b, card);
-        _buf2[i] = mul(_coef, c, card);
-    }
-}
-
 inline void encode_post_process(
     vec::Buffers<uint16_t>& output,
     std::vector<Properties>& props,

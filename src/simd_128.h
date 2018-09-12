@@ -35,17 +35,15 @@
 
 typedef __m128i m128i;
 
-// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
-// (probably a false positive present in Clang 5 and fixed in Clang 6).
-const m128i F4_m128i = _mm_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
-const m128i F4minus1_m128i = _mm_set1_epi32(65536); // NOLINT(cert-err58-cpp)
-const m128i F4minus2_m128i = _mm_set1_epi32(65535); // NOLINT(cert-err58-cpp)
-const m128i F3_m128i = _mm_set1_epi32(257);         // NOLINT(cert-err58-cpp)
-const m128i F3minus1_m128i = _mm_set1_epi32(256);   // NOLINT(cert-err58-cpp)
-const m128i F3minus2_m128i = _mm_set1_epi32(255);   // NOLINT(cert-err58-cpp)
+#define F4_m128i _mm_set1_epi32(65537)
+#define F4minus1_m128i _mm_set1_epi32(65536)
+#define F4minus2_m128i _mm_set1_epi32(65535)
+#define F3_m128i _mm_set1_epi32(257)
+#define F3minus1_m128i _mm_set1_epi32(256)
+#define F3minus2_m128i _mm_set1_epi32(255)
 
-const m128i F3_m128i_u16 = _mm_set1_epi16(257);       // NOLINT(cert-err58-cpp)
-const m128i F3minus1_m128i_u16 = _mm_set1_epi16(256); // NOLINT(cert-err58-cpp)
+#define F3_m128i_u16 _mm_set1_epi16(257)
+#define F3minus1_m128i_u16 _mm_set1_epi16(256)
 
 #include "simd_128_u16.h"
 #include "simd_128_u32.h"

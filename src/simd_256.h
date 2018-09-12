@@ -35,18 +35,15 @@
 
 typedef __m256i m256i;
 
-// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
-// (probably a false positive present in Clang 5 and fixed in Clang 6).
-const m256i F4_m256i = _mm256_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
-const m256i F4minus1_m256i = _mm256_set1_epi32(65536); // NOLINT(cert-err58-cpp)
-const m256i F4minus2_m256i = _mm256_set1_epi32(65535); // NOLINT(cert-err58-cpp)
-const m256i F3_m256i = _mm256_set1_epi32(257);         // NOLINT(cert-err58-cpp)
-const m256i F3minus1_m256i = _mm256_set1_epi32(256);   // NOLINT(cert-err58-cpp)
-const m256i F3minus2_m256i = _mm256_set1_epi32(255);   // NOLINT(cert-err58-cpp)
+#define F4_m256i _mm256_set1_epi32(65537)
+#define F4minus1_m256i _mm256_set1_epi32(65536)
+#define F4minus2_m256i _mm256_set1_epi32(65535)
+#define F3_m256i _mm256_set1_epi32(257)
+#define F3minus1_m256i _mm256_set1_epi32(256)
+#define F3minus2_m256i _mm256_set1_epi32(255)
 
-const m256i F3_m256i_u16 = _mm256_set1_epi16(257); // NOLINT(cert-err58-cpp)
-// NOLINTNEXTLINE(cert-err58-cpp)
-const m256i F3minus1_m256i_u16 = _mm256_set1_epi16(256);
+#define F3_m256i_u16 _mm256_set1_epi16(257)
+#define F3minus1_m256i_u16 _mm256_set1_epi16(256)
 
 /* GCC doesn't include the split store intrinsics so define them here. */
 #if defined(__GNUC__) && !defined(__clang__)

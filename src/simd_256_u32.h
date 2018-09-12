@@ -214,41 +214,598 @@ inline m256i mul_simple(m256i a, m256i b, aint32 card)
     return mul_f3_simple(a, b);
 }
 
-/** Apply an element-wise negation to a buffer
- */
-inline void neg(size_t len, aint32* buf, aint32 card = F4)
-{
-    m256i* _buf = reinterpret_cast<m256i*>(buf);
-    unsigned ratio = sizeof(*_buf) / sizeof(*buf);
-    size_t _len = len / ratio;
-    size_t _last_len = len - _len * ratio;
+// Following functions are used for AVX2 w/ both of u16 & u32
+#define EITHER(x, a, b) (((x)) ? (a) : (b))
+#define CARD(q) (EITHER(q == F3, F3_m256i, F4_m256i))
+#define CARD_M_1(q) (EITHER(q == F3, F3minus1_m256i, F4minus1_m256i))
+#define CARD_M_2(q) (EITHER(q == F3, F3minus2_m256i, F4minus2_m256i))
+#define ZERO (_mm256_setzero_si256())
+#define ONE (_mm256_set1_epi32(1))
 
-    size_t i;
-    for (i = 0; i < _len; i++) {
-        _buf[i] = neg(_buf[i], card);
+inline m256i LOAD(m256i* address)
+{
+    return _mm256_load_si256(address);
+}
+inline void STORE(m256i* address, m256i reg)
+{
+    _mm256_store_si256(address, reg);
+}
+
+inline m256i AND(m256i x, m256i y)
+{
+    return _mm256_and_si256(x, y);
+}
+inline m256i XOR(m256i x, m256i y)
+{
+    return _mm256_xor_si256(x, y);
+}
+inline m256i SHIFTR_1(m256i x)
+{
+    return _mm256_srli_si256(x, 1);
+}
+inline m256i SHIFTR_2(m256i x)
+{
+    return _mm256_srli_si256(x, 2);
+}
+inline uint32_t MVMSK8(m256i x)
+{
+    return _mm256_movemask_epi8(x);
+}
+inline uint32_t TESTZ(m256i x, m256i y)
+{
+    return _mm256_testz_si256(x, y);
+}
+
+// Following functions are used for AVX2 w/ u32 only
+inline m256i SET1(uint32_t val)
+{
+    return _mm256_set1_epi32(val);
+}
+inline m256i ADD32(m256i x, m256i y)
+{
+    return _mm256_add_epi32(x, y);
+}
+inline m256i SUB32(m256i x, m256i y)
+{
+    return _mm256_sub_epi32(x, y);
+}
+inline m256i MUL32(m256i x, m256i y)
+{
+    return _mm256_mullo_epi32(x, y);
+}
+
+inline m256i CMPEQ32(m256i x, m256i y)
+{
+    return _mm256_cmpeq_epi32(x, y);
+}
+inline m256i CMPGT32(m256i x, m256i y)
+{
+    return _mm256_cmpgt_epi32(x, y);
+}
+
+// z = x + y mod q
+// Input are loaded to registers
+// Output is register
+inline m256i ADD_MOD(m256i x, m256i y, uint32_t q)
+{
+    m256i res = ADD32(x, y);
+    m256i cmp = CMPGT32(res, CARD_M_1(q));
+    m256i mask = AND(CARD(q), cmp);
+    return SUB32(res, mask);
+}
+
+// z = x - y mod q
+// Input are loaded to registers
+// Output is register
+inline m256i SUB_MOD(m256i x, m256i y, uint32_t q)
+{
+    m256i cmp = CMPGT32(y, x);
+    m256i mask = AND(CARD(q), cmp);
+    m256i x_mask = ADD32(x, mask);
+    return SUB32(x_mask, y);
+}
+
+// y = 0 - x mod q
+// Input are loaded to registers
+// Output is register
+inline m256i NEG_MOD(m256i x, uint32_t q)
+{
+    m256i cmp = CMPGT32(x, ZERO);
+    return SUB32(AND(cmp, CARD(q)), x);
+}
+
+// z = x * y mod q
+// Input are loaded to registers
+// Output is register
+// Note: we assume that at least `x` or `y` is less than `q-1` so it's
+// not necessary to verify overflow on multiplying elements
+inline m256i MUL_MOD(m256i x, m256i y, uint32_t q)
+{
+    m256i res = MUL32(x, y);
+    m256i lo = AND(res, CARD_M_2(q));
+    m256i res_shift = (q == F3) ? SHIFTR_1(res) : SHIFTR_2(res);
+    m256i hi = AND(res_shift, CARD_M_2(q));
+    return SUB_MOD(lo, hi, q);
+}
+
+// z = x * y mod q
+// Input are loaded to registers
+// Output is register
+inline m256i MULFULL_MOD(m256i x, m256i y, uint32_t q)
+{
+    m256i res = MUL32(x, y);
+
+    // filter elements of both of a & b = card-1
+    m256i cmp = AND(CMPEQ32(x, CARD_M_1(q)), CMPEQ32(y, CARD_M_1(q)));
+    res = (q == F3) ? XOR(res, AND(F4_m256i, cmp)) : ADD32(res, AND(ONE, cmp));
+
+    m256i lo = AND(res, CARD_M_2(q));
+    m256i res_shift = (q == F3) ? SHIFTR_1(res) : SHIFTR_2(res);
+    m256i hi = AND(res_shift, CARD_M_2(q));
+    return SUB_MOD(lo, hi, q);
+}
+
+// r == 1
+inline void BUTTERFLY_1(m256i* x, m256i* y, uint32_t q)
+{
+    m256i add = ADD_MOD(*x, *y, q);
+    *y = SUB_MOD(*x, *y, q);
+    *x = add;
+}
+
+// r == q - 1
+inline void BUTTERFLY_2(m256i* x, m256i* y, uint32_t q)
+{
+    m256i add = ADD_MOD(*x, *y, q);
+    *x = SUB_MOD(*x, *y, q);
+    *y = add;
+}
+
+// 1 < r < q - 1
+inline void BUTTERFLY_3(m256i c, m256i* x, m256i* y, uint32_t q)
+{
+    m256i z = MUL_MOD(c, *y, q);
+    *y = SUB_MOD(*x, z, q);
+    *x = ADD_MOD(*x, z, q);
+}
+
+// x' = x + y mod q
+// y' = x - y mode q
+// Input and output are memory addresses
+inline void BUTTERFLY_ADD(m256i* x, m256i* y, uint32_t q)
+{
+    m256i _x = LOAD(x);
+    m256i _y = LOAD(y);
+    STORE(x, ADD_MOD(_x, _y, q));
+    STORE(y, SUB_MOD(_x, _y, q));
+}
+
+// x' = x - y mod q
+// y' = x + y mode q
+// Input and output are memory addresses
+inline void BUTTERFLY_SUB(m256i* x, m256i* y, uint32_t q)
+{
+    m256i _x = LOAD(x);
+    m256i _y = LOAD(y);
+    STORE(y, ADD_MOD(_x, _y, q));
+    STORE(x, SUB_MOD(_x, _y, q));
+}
+
+// x = x + z * y mod q
+// y = x - z * y mod q
+// Input and output are memory addresses
+inline void BUTTERFLY_MULADD(m256i* z, m256i* x, m256i* y, uint32_t q)
+{
+    m256i _z = LOAD(z);
+    m256i _y = LOAD(y);
+    _y = MUL_MOD(_z, _y, q);
+    m256i _x = LOAD(x);
+    STORE(x, ADD_MOD(_x, _y, q));
+    STORE(y, SUB_MOD(_x, _y, q));
+}
+
+// x = x + y mod q
+// y = z * (x - y) mod q
+// Input and output are memory addresses
+inline void BUTTERFLY_ADDMUL(m256i* x, m256i* y, m256i* z, uint32_t q)
+{
+    m256i _x = LOAD(x);
+    m256i _y = LOAD(y);
+    m256i _sub = SUB_MOD(_x, _y, q);
+    m256i _z = LOAD(z);
+    STORE(x, ADD_MOD(_x, _y, q));
+    STORE(y, MUL_MOD(_z, _sub, q));
+}
+
+inline void butterfly_step_1(
+    uint32_t* __restrict a,
+    uint32_t* __restrict b,
+    uint32_t card,
+    size_t len)
+{
+    m256i* inputA = reinterpret_cast<m256i*>(a);
+    m256i* inputB = reinterpret_cast<m256i*>(b);
+
+    // #pragma omp parallel for
+    for (size_t j = 0; j < len; ++j) {
+        BUTTERFLY_ADD(inputA + j, inputB + j, card);
     }
-    if (_last_len > 0) {
-        for (i = _len * ratio; i < len; i++) {
-            if (buf[i])
-                buf[i] = card - buf[i];
+}
+
+inline void butterfly_step_2(
+    uint32_t* __restrict a,
+    uint32_t* __restrict b,
+    uint32_t card,
+    size_t len)
+{
+    m256i* inputA = reinterpret_cast<m256i*>(a);
+    m256i* inputB = reinterpret_cast<m256i*>(b);
+
+    // #pragma omp parallel for
+    for (size_t j = 0; j < len; ++j) {
+        BUTTERFLY_SUB(inputA + j, inputB + j, card);
+    }
+}
+
+inline void butterfly_step_3(
+    uint32_t coef,
+    uint32_t* __restrict a,
+    uint32_t* __restrict b,
+    uint32_t card,
+    size_t len)
+{
+    m256i* _a = reinterpret_cast<m256i*>(a);
+    m256i* _b = reinterpret_cast<m256i*>(b);
+    m256i _coef = SET1(coef);
+
+    // #pragma omp parallel for
+    for (size_t j = 0; j < len; ++j) {
+        BUTTERFLY_MULADD(&_coef, _a + j, _b + j, card);
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + Q
+// Q = P - Q
+inline void butterfly_ct_1(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card)
+{
+    for (int i = start; i < buf.get_n(); i += step) {
+        uint32_t* a = buf.get(i);
+        uint32_t* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        butterfly_step_1(a, b, card, len);
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P - Q
+// Q = P + Q
+inline void butterfly_ct_2(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card)
+{
+    for (int i = start; i < buf.get_n(); i += step) {
+        uint32_t* a = buf.get(i);
+        uint32_t* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        butterfly_step_2(a, b, card, len);
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + c * Q
+// Q = P - c * Q
+inline void butterfly_ct_3(
+    uint32_t coef,
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card)
+{
+    for (int i = start; i < buf.get_n(); i += step) {
+        uint32_t* a = buf.get(i);
+        uint32_t* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        butterfly_step_3(coef, a, b, card, len);
+    }
+}
+
+/**
+ * Vectorized butterly CT on two-layers at a time
+ *
+ * For each quadruple
+ * (P, Q, R, S) = (buf[i], buf[i + m], buf[i + 2 * m], buf[i + 3 * m])
+ * First layer: butterfly on (P, Q) and (R, S) for step = 2 * m
+ *      coef r1 = W[start * n / (2 * m)]
+ *      P = P + r1 * Q
+ *      Q = P - r1 * Q
+ *      R = R + r1 * S
+ *      S = R - r1 * S
+ * Second layer: butterfly on (P, R) and (Q, S) for step = 4 * m
+ *      coef r2 = W[start * n / (4 * m)]
+ *      coef r3 = W[(start + m) * n / (4 * m)]
+ *      P = P + r2 * R
+ *      R = P - r2 * R
+ *      Q = Q + r3 * S
+ *      S = Q - r3 * S
+ *
+ * @param buf - working buffers
+ * @param r1 - coefficient for the 1st layer
+ * @param r2 - 1st coefficient for the 2nd layer
+ * @param r3 - 2nd coefficient for the 2nd layer
+ * @param start - index of buffer among `m` ones
+ * @param m - current group size
+ * @param len - number of vectors per buffer
+ * @param card - modulo cardinal
+ */
+inline void butterfly_ct_two_layers_step(
+    vec::Buffers<uint32_t>& buf,
+    unsigned r1,
+    unsigned r2,
+    unsigned r3,
+    unsigned start,
+    unsigned m,
+    size_t len,
+    uint32_t card)
+{
+    const unsigned step = m << 2;
+    m256i c1 = SET1(r1);
+    m256i c2 = SET1(r2);
+    m256i c3 = SET1(r3);
+
+#define BUTTERFLY_R1(c, x, y)                                                  \
+    (EITHER(                                                                   \
+        r1 == 1,                                                               \
+        BUTTERFLY_1(x, y, card),                                               \
+        EITHER(                                                                \
+            r1 < card - 1,                                                     \
+            BUTTERFLY_3(c, x, y, card),                                        \
+            BUTTERFLY_2(x, y, card))));
+#define BUTTERFLY_R2(c, x, y)                                                  \
+    (EITHER(                                                                   \
+        r2 == 1,                                                               \
+        BUTTERFLY_1(x, y, card),                                               \
+        EITHER(                                                                \
+            r2 < card - 1,                                                     \
+            BUTTERFLY_3(c, x, y, card),                                        \
+            BUTTERFLY_2(x, y, card))));
+#define BUTTERFLY_R3(c, x, y)                                                  \
+    (EITHER(                                                                   \
+        r3 == 1,                                                               \
+        BUTTERFLY_1(x, y, card),                                               \
+        EITHER(                                                                \
+            r3 < card - 1,                                                     \
+            BUTTERFLY_3(c, x, y, card),                                        \
+            BUTTERFLY_2(x, y, card))));
+
+    const size_t end = len - 1;
+    const unsigned bufs_nb = buf.get_n();
+    // #pragma omp parallel for
+    // #pragma unroll
+    for (unsigned i = start; i < bufs_nb; i += step) {
+        m256i x1, y1, u1, v1;
+        m256i x2, y2, u2, v2;
+        m256i* __restrict p = reinterpret_cast<m256i*>(buf.get(i));
+        m256i* __restrict q = reinterpret_cast<m256i*>(buf.get(i + m));
+        m256i* __restrict r = reinterpret_cast<m256i*>(buf.get(i + 2 * m));
+        m256i* __restrict s = reinterpret_cast<m256i*>(buf.get(i + 3 * m));
+
+        // #pragma omp parallel for
+        size_t j = 0;
+        // #pragma unroll
+        for (; j < end; j += 2) {
+            // First layer (c1, x, y) & (c1, u, v)
+            x1 = LOAD(p + j);
+            y1 = LOAD(q + j);
+            x2 = LOAD(p + j + 1);
+            y2 = LOAD(q + j + 1);
+
+            u1 = LOAD(r + j);
+            v1 = LOAD(s + j);
+            u2 = LOAD(r + j + 1);
+            v2 = LOAD(s + j + 1);
+
+            BUTTERFLY_R1(c1, &x1, &y1);
+            BUTTERFLY_R1(c1, &x2, &y2);
+
+            BUTTERFLY_R1(c1, &u1, &v1);
+            BUTTERFLY_R1(c1, &u2, &v2);
+
+            // Second layer (c2, x, u) & (c3, y, v)
+            BUTTERFLY_R2(c2, &x1, &u1);
+            BUTTERFLY_R2(c2, &x2, &u2);
+
+            BUTTERFLY_R3(c3, &y1, &v1);
+            BUTTERFLY_R3(c3, &y2, &v2);
+
+            // Store back to memory
+            STORE(p + j, x1);
+            STORE(p + j + 1, x2);
+            STORE(q + j, y1);
+            STORE(q + j + 1, y2);
+
+            STORE(r + j, u1);
+            STORE(r + j + 1, u2);
+            STORE(s + j, v1);
+            STORE(s + j + 1, v2);
+        }
+        for (; j < len; ++j) {
+            // First layer (c1, x, y) & (c1, u, v)
+            x1 = LOAD(p + j);
+            y1 = LOAD(q + j);
+            u1 = LOAD(r + j);
+            v1 = LOAD(s + j);
+
+            BUTTERFLY_R1(c1, &x1, &y1);
+            BUTTERFLY_R1(c1, &u1, &v1);
+            // Second layer (c2, x, u) & (c3, y, v)
+            BUTTERFLY_R2(c2, &x1, &u1);
+            BUTTERFLY_R3(c3, &y1, &v1);
+            // Store back to memory
+            STORE(p + j, x1);
+            STORE(q + j, y1);
+            STORE(r + j, u1);
+            STORE(s + j, v1);
         }
     }
 }
 
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = Q + P
+// Q = Q - P
+inline void butterfly_gs_2(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card)
+{
+    for (int i = start; i < buf.get_n(); i += step) {
+        uint32_t* __restrict a = buf.get(i);
+        uint32_t* __restrict b = buf.get(i + m);
+        m256i* inputA = reinterpret_cast<m256i*>(a);
+        m256i* inputB = reinterpret_cast<m256i*>(b);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = 0; j < len; ++j) {
+            BUTTERFLY_ADD(inputB + j, inputA + j, card);
+        }
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + Q
+// Q = c * (P - Q)
+inline void butterfly_gs_3(
+    uint32_t coef,
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t len,
+    uint32_t card)
+{
+    m256i _coef = SET1(coef);
+    for (int i = start; i < buf.get_n(); i += step) {
+        uint32_t* __restrict a = buf.get(i);
+        uint32_t* __restrict b = buf.get(i + m);
+        m256i* __restrict _a = reinterpret_cast<m256i*>(a);
+        m256i* __restrict _b = reinterpret_cast<m256i*>(b);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = 0; j < len; ++j) {
+            BUTTERFLY_ADDMUL(_a + j, _b + j, &_coef, card);
+        }
+    }
+}
+
+inline void add_props(
+    Properties& props,
+    m256i threshold,
+    m256i mask,
+    m256i symb,
+    off_t offset)
+{
+    const m256i b = CMPEQ32(threshold, symb);
+    const m256i c = AND(mask, b);
+    uint32_t d = MVMSK8(c);
+    const unsigned element_size = sizeof(uint32_t);
+    while (d > 0) {
+        unsigned byte_idx = __builtin_ctz(d);
+        off_t _offset = offset + byte_idx / element_size;
+        props.add(_offset, OOR_MARK);
+        d ^= 1 << byte_idx;
+    }
+}
+
+inline void encode_post_process(
+    vec::Buffers<uint32_t>& output,
+    std::vector<Properties>& props,
+    off_t offset,
+    unsigned code_len,
+    uint32_t threshold,
+    size_t vecs_nb)
+{
+    const unsigned element_size = sizeof(uint32_t);
+    const unsigned vec_size = ALIGN_SIZE / element_size;
+    const uint32_t max = 1 << (element_size * 8 - 1);
+    const m256i _threshold = SET1(threshold);
+    const m256i mask_hi = SET1(max);
+
+    // #pragma unroll
+    for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
+        m256i* __restrict buf = reinterpret_cast<m256i*>(output.get(frag_id));
+
+        size_t vec_id = 0;
+        size_t end = vecs_nb - 3;
+        // #pragma unroll
+        for (; vec_id < end; vec_id += 4) {
+            m256i a1 = LOAD(buf + vec_id);
+            m256i a2 = LOAD(buf + vec_id + 1);
+            m256i a3 = LOAD(buf + vec_id + 2);
+            m256i a4 = LOAD(buf + vec_id + 3);
+
+            uint32_t c1 = TESTZ(a1, _threshold);
+            uint32_t c2 = TESTZ(a2, _threshold);
+            uint32_t c3 = TESTZ(a3, _threshold);
+            uint32_t c4 = TESTZ(a4, _threshold);
+
+            if (c1 == 0) {
+                const off_t curr_offset = offset + vec_id * vec_size;
+                add_props(props[frag_id], _threshold, mask_hi, a1, curr_offset);
+            }
+            if (c2 == 0) {
+                const off_t curr_offset = offset + (vec_id + 1) * vec_size;
+                add_props(props[frag_id], _threshold, mask_hi, a2, curr_offset);
+            }
+            if (c3 == 0) {
+                const off_t curr_offset = offset + (vec_id + 2) * vec_size;
+                add_props(props[frag_id], _threshold, mask_hi, a3, curr_offset);
+            }
+            if (c4 == 0) {
+                const off_t curr_offset = offset + (vec_id + 3) * vec_size;
+                add_props(props[frag_id], _threshold, mask_hi, a4, curr_offset);
+            }
+        }
+        for (; vec_id < vecs_nb; ++vec_id) {
+            m256i a = LOAD(buf + vec_id);
+            uint32_t c = TESTZ(a, _threshold);
+            if (c == 0) {
+                const off_t curr_offset = offset + vec_id * vec_size;
+                add_props(props[frag_id], _threshold, mask_hi, a, curr_offset);
+            }
+        }
+    }
+}
+
+/* ==================== Operations =================== */
 /** Perform a multiplication of a coefficient `a` to each element of `src` and
  *  add result to correspondent element of `dest`
+ *
+ * @note: 1 < `a` < card - 1
  */
 inline void mul_coef_to_buf(
-    const aint32 a,
+    const uint32_t a,
     aint32* src,
     aint32* dest,
     size_t len,
-    aint32 card = F4)
+    uint32_t card)
 {
-    const m256i coef = _mm256_set1_epi32(a);
+    const m256i coef = SET1(a);
 
-    m256i* _src = reinterpret_cast<m256i*>(src);
-    m256i* _dest = reinterpret_cast<m256i*>(dest);
+    m256i* __restrict _src = reinterpret_cast<m256i*>(src);
+    m256i* __restrict _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -256,7 +813,7 @@ inline void mul_coef_to_buf(
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform multiplication
-        _dest[i] = mul(coef, _src[i], card);
+        _dest[i] = MUL_MOD(coef, _src[i], card);
     }
     if (_last_len > 0) {
         uint64_t coef_64 = (uint64_t)a;
@@ -268,10 +825,10 @@ inline void mul_coef_to_buf(
 }
 
 inline void
-add_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
+add_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card)
 {
-    m256i* _src = reinterpret_cast<m256i*>(src);
-    m256i* _dest = reinterpret_cast<m256i*>(dest);
+    m256i* __restrict _src = reinterpret_cast<m256i*>(src);
+    m256i* __restrict _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -279,7 +836,7 @@ add_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform addition
-        _dest[i] = add(_src[i], _dest[i], card);
+        _dest[i] = ADD_MOD(_src[i], _dest[i], card);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
@@ -297,9 +854,9 @@ inline void sub_two_bufs(
     size_t len,
     aint32 card = F4)
 {
-    m256i* _bufa = reinterpret_cast<m256i*>(bufa);
-    m256i* _bufb = reinterpret_cast<m256i*>(bufb);
-    m256i* _res = reinterpret_cast<m256i*>(res);
+    m256i* __restrict _bufa = reinterpret_cast<m256i*>(bufa);
+    m256i* __restrict _bufb = reinterpret_cast<m256i*>(bufb);
+    m256i* __restrict _res = reinterpret_cast<m256i*>(res);
     const unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -307,7 +864,7 @@ inline void sub_two_bufs(
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform subtraction
-        _res[i] = sub(_bufa[i], _bufb[i], card);
+        _res[i] = SUB_MOD(_bufa[i], _bufb[i], card);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
@@ -321,10 +878,10 @@ inline void sub_two_bufs(
 }
 
 inline void
-mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
+mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card)
 {
-    m256i* _src = reinterpret_cast<m256i*>(src);
-    m256i* _dest = reinterpret_cast<m256i*>(dest);
+    m256i* __restrict _src = reinterpret_cast<m256i*>(src);
+    m256i* __restrict _dest = reinterpret_cast<m256i*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -332,7 +889,7 @@ mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform multiplicaton
-        _dest[i] = mul(_src[i], _dest[i], card);
+        _dest[i] = MULFULL_MOD(_src[i], _dest[i], card);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
@@ -342,295 +899,23 @@ mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
     }
 }
 
-/*
- * buf1[i] = buf1[i] + coef * buf2[i]
- * buf2[i] = buf1[i] - coef * buf2[i]
+/** Apply an element-wise negation to a buffer
  */
-inline void butterfly_ct(
-    uint32_t coef,
-    aint32* buf1,
-    aint32* buf2,
-    size_t len,
-    uint32_t card = F4)
+inline void neg(size_t len, aint32* buf, aint32 card = F4)
 {
-    const m256i _coef = _mm256_set1_epi32(coef);
-    m256i* _buf1 = reinterpret_cast<m256i*>(buf1);
-    m256i* _buf2 = reinterpret_cast<m256i*>(buf2);
+    m256i* _buf = reinterpret_cast<m256i*>(buf);
+    unsigned ratio = sizeof(*_buf) / sizeof(*buf);
+    size_t _len = len / ratio;
+    size_t _last_len = len - _len * ratio;
 
-    for (size_t i = 0; i < len; ++i) {
-        m256i a = mul(_coef, _buf2[i], card);
-        _buf2[i] = sub(_buf1[i], a, card);
-        _buf1[i] = add(_buf1[i], a, card);
+    size_t i;
+    for (i = 0; i < _len; i++) {
+        _buf[i] = NEG_MOD(_buf[i], card);
     }
-}
-
-// outputA = inputA + inputB
-// outputB = inputA - inputB
-inline void butterfly_step(
-    m256i* inputA,
-    m256i* inputB,
-    m256i* outputA,
-    m256i* outputB,
-    uint32_t _card)
-{
-    const m256i card = (_card == F3) ? F3_m256i : F4_m256i;
-    const m256i card_1 = (_card == F3) ? F3minus1_m256i : F4minus1_m256i;
-
-    // --------------------------------------
-    // outputB = inputA - inputB
-    // --------------------------------------
-    m256i a = _mm256_load_si256(inputA);
-    m256i b = _mm256_load_si256(inputB);
-    m256i cmp_1 = _mm256_cmpgt_epi32(b, a);
-    m256i res_1 = _mm256_add_epi32(a, _mm256_and_si256(card, cmp_1));
-
-    _mm256_store_si256(outputB, _mm256_sub_epi32(res_1, b));
-
-    // --------------------------------------
-    // outputA = symbA + symbB
-    // --------------------------------------
-    m256i res_2 = _mm256_add_epi32(a, b);
-    // modulo
-    m256i cmp_2 = _mm256_cmpgt_epi32(res_2, card_1);
-    m256i c = _mm256_sub_epi32(res_2, _mm256_and_si256(card, cmp_2));
-
-    _mm256_store_si256(outputA, c);
-}
-
-// for each pair (P, Q) = (buf[i], buf[i + m]):
-// P = P + Q
-// Q = P - Q
-inline void butterfly_ct_1(
-    vec::Buffers<uint32_t>& buf,
-    unsigned start,
-    unsigned m,
-    unsigned step,
-    size_t len,
-    uint32_t card = F4)
-{
-    for (int i = start; i < buf.get_n(); i += step) {
-        uint32_t* a = buf.get(i);
-        uint32_t* b = buf.get(i + m);
-        m256i* _a = reinterpret_cast<m256i*>(a);
-        m256i* _b = reinterpret_cast<m256i*>(b);
-        // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = 0; j < len; ++j) {
-            butterfly_step(&(_a[j]), &(_b[j]), &(_a[j]), &(_b[j]), card);
-        }
-    }
-}
-
-// for each pair (P, Q) = (buf[i], buf[i + m]):
-// P = P - Q
-// Q = P + Q
-inline void butterfly_ct_2(
-    vec::Buffers<uint32_t>& buf,
-    unsigned start,
-    unsigned m,
-    unsigned step,
-    size_t len,
-    uint32_t card = F4)
-{
-    for (int i = start; i < buf.get_n(); i += step) {
-        uint32_t* a = buf.get(i);
-        uint32_t* b = buf.get(i + m);
-        m256i* _a = reinterpret_cast<m256i*>(a);
-        m256i* _b = reinterpret_cast<m256i*>(b);
-        // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = 0; j < len; ++j) {
-            butterfly_step(&(_a[j]), &(_b[j]), &(_b[j]), &(_a[j]), card);
-        }
-    }
-}
-
-// output = coef * input
-inline void
-butterfly_mul(m256i* coef, m256i* input, m256i* output, uint32_t _card)
-{
-    const m256i card = (_card == F3) ? F3_m256i : F4_m256i;
-    const m256i card_2 = (_card == F3) ? F3minus2_m256i : F4minus2_m256i;
-
-    // --------------------------------------
-    // compute coef * symbB
-    // --------------------------------------
-    m256i _coef = _mm256_load_si256(coef);
-    m256i b = _mm256_load_si256(input);
-    m256i res = _mm256_mullo_epi32(_coef, b);
-    // modulo
-    m256i lo = _mm256_and_si256(res, card_2);
-    m256i res_shift =
-        (_card == F3) ? _mm256_srli_si256(res, 1) : _mm256_srli_si256(res, 2);
-    m256i hi = _mm256_and_si256(res_shift, card_2);
-
-    m256i cmp_1 = _mm256_cmpgt_epi32(hi, lo);
-    m256i _lo = _mm256_add_epi32(lo, _mm256_and_si256(card, cmp_1));
-
-    m256i res_2 = _mm256_sub_epi32(_lo, hi);
-
-    _mm256_store_si256(output, res_2);
-}
-
-// symbA = symbA + coef * symbB
-// symbB = symbA - coef * symbB
-inline void
-butterfly_ct_3_step(m256i* coef, m256i* symbA, m256i* symbB, uint32_t card)
-{
-    // --------------------------------------
-    // compute coef * symbB
-    // --------------------------------------
-    m256i coef_x_symbB;
-    butterfly_mul(coef, symbB, &coef_x_symbB, card);
-
-    // --------------------------------------
-    // symbA = symbA + coef_x_symbB
-    // symbB = symbA - coef_x_symbB
-    // --------------------------------------
-    butterfly_step(symbA, &coef_x_symbB, symbA, symbB, card);
-}
-
-// for each pair (P, Q) = (buf[i], buf[i + m]):
-// P = P + c * Q
-// Q = P - c * Q
-inline void butterfly_ct_3(
-    uint32_t coef,
-    vec::Buffers<uint32_t>& buf,
-    unsigned start,
-    unsigned m,
-    unsigned step,
-    size_t len,
-    uint32_t card = F4)
-{
-    m256i _coef = _mm256_set1_epi32(coef);
-    for (int i = start; i < buf.get_n(); i += step) {
-        uint32_t* a = buf.get(i);
-        uint32_t* b = buf.get(i + m);
-        m256i* _a = reinterpret_cast<m256i*>(a);
-        m256i* _b = reinterpret_cast<m256i*>(b);
-        // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = 0; j < len; ++j) {
-            butterfly_ct_3_step(&_coef, &(_a[j]), &(_b[j]), card);
-        }
-    }
-}
-
-// for each pair (P, Q) = (buf[i], buf[i + m]):
-// P = Q + P
-// Q = Q - P
-inline void butterfly_gs_2(
-    vec::Buffers<uint32_t>& buf,
-    unsigned start,
-    unsigned m,
-    unsigned step,
-    size_t len,
-    uint32_t card = F4)
-{
-    for (int i = start; i < buf.get_n(); i += step) {
-        uint32_t* a = buf.get(i);
-        uint32_t* b = buf.get(i + m);
-        m256i* _a = reinterpret_cast<m256i*>(a);
-        m256i* _b = reinterpret_cast<m256i*>(b);
-        // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = 0; j < len; ++j) {
-            butterfly_step(&(_b[j]), &(_a[j]), &(_a[j]), &(_b[j]), card);
-        }
-    }
-}
-
-// symbA = symbA + symbB
-// symbB = coef * (symbA - symbB)
-inline void
-butterfly_gs_3_step(m256i* coef, m256i* symbA, m256i* symbB, uint32_t _card)
-{
-    // --------------------------------------
-    // symbA = symbA + symbB
-    // symbB = symbA - symbB
-    // --------------------------------------
-    butterfly_step(symbA, symbB, symbA, symbB, _card);
-
-    // --------------------------------------
-    // symbB = coef * symbB
-    // --------------------------------------
-    butterfly_mul(coef, symbB, symbB, _card);
-}
-
-// for each pair (P, Q) = (buf[i], buf[i + m]):
-// P = P + Q
-// Q = c * (P - Q)
-inline void butterfly_gs_3(
-    uint32_t coef,
-    vec::Buffers<uint32_t>& buf,
-    unsigned start,
-    unsigned m,
-    unsigned step,
-    size_t len,
-    uint32_t card = F4)
-{
-    m256i _coef = _mm256_set1_epi32(coef);
-    for (int i = start; i < buf.get_n(); i += step) {
-        uint32_t* a = buf.get(i);
-        uint32_t* b = buf.get(i + m);
-        m256i* _a = reinterpret_cast<m256i*>(a);
-        m256i* _b = reinterpret_cast<m256i*>(b);
-        // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = 0; j < len; ++j) {
-            butterfly_gs_3_step(&_coef, &(_a[j]), &(_b[j]), card);
-        }
-    }
-}
-
-/*
- * buf1[i] = buf1[i] + buf2[i]
- * buf2[i] = coef * (buf1[i] - buf2[i])
- */
-inline void butterfly_gs(
-    uint32_t coef,
-    aint32* buf1,
-    aint32* buf2,
-    size_t len,
-    uint32_t card = F4)
-{
-    const m256i _coef = _mm256_set1_epi32(coef);
-    m256i* _buf1 = reinterpret_cast<m256i*>(buf1);
-    m256i* _buf2 = reinterpret_cast<m256i*>(buf2);
-
-    for (size_t i = 0; i < len; ++i) {
-        m256i a = add(_buf1[i], _buf2[i], card);
-        _buf2[i] = mul(_coef, sub(_buf1[i], _buf2[i], card), card);
-        _buf1[i] = a;
-    }
-}
-
-inline void encode_post_process(
-    vec::Buffers<uint32_t>& output,
-    std::vector<Properties>& props,
-    off_t offset,
-    unsigned code_len,
-    uint32_t threshold,
-    size_t vecs_nb)
-{
-    const unsigned vec_size = ALIGN_SIZE / sizeof(uint32_t);
-
-    const m256i _threshold = _mm256_set1_epi32(threshold);
-    const uint32_t max = 1 << (sizeof(uint32_t) * 8 - 1);
-    const m256i mask_hi = _mm256_set1_epi32(max);
-    const unsigned element_size = sizeof(uint32_t);
-
-    for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
-        uint32_t* chunk = output.get(frag_id);
-        m256i* buf = reinterpret_cast<m256i*>(chunk);
-        for (unsigned vec_id = 0; vec_id < vecs_nb; ++vec_id) {
-            const m256i a = _mm256_load_si256(&(buf[vec_id]));
-            const m256i b = _mm256_cmpeq_epi32(_threshold, a);
-            const m256i c = _mm256_and_si256(mask_hi, b);
-            uint32_t d = _mm256_movemask_epi8(c);
-
-            while (d > 0) {
-                unsigned byte_idx = __builtin_ctz(d);
-                unsigned element_idx = byte_idx / element_size;
-                off_t _offset = offset + vec_id * vec_size + element_idx;
-                props[frag_id].add(_offset, 1);
-                d ^= 1 << byte_idx;
-            }
+    if (_last_len > 0) {
+        for (i = _len * ratio; i < len; i++) {
+            if (buf[i])
+                buf[i] = card - buf[i];
         }
     }
 }

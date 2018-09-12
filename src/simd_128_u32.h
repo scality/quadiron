@@ -342,28 +342,6 @@ mul_two_bufs(aint32* src, aint32* dest, size_t len, aint32 card = F4)
     }
 }
 
-/*
- * buf1[i] = buf1[i] + coef * buf2[i]
- * buf2[i] = buf1[i] - coef * buf2[i]
- */
-inline void butterfly_ct(
-    uint32_t coef,
-    aint32* buf1,
-    aint32* buf2,
-    size_t len,
-    uint32_t card = F4)
-{
-    const m128i _coef = _mm_set1_epi32(coef);
-    m128i* _buf1 = reinterpret_cast<m128i*>(buf1);
-    m128i* _buf2 = reinterpret_cast<m128i*>(buf2);
-
-    for (size_t i = 0; i < len; ++i) {
-        m128i a = mul(_coef, _buf2[i], card);
-        _buf2[i] = sub(_buf1[i], a, card);
-        _buf1[i] = add(_buf1[i], a, card);
-    }
-}
-
 // outputA = inputA + inputB
 // outputB = inputA - inputB
 inline void butterfly_step(
@@ -574,30 +552,6 @@ inline void butterfly_gs_3(
         for (size_t j = 0; j < len; ++j) {
             butterfly_gs_3_step(&_coef, &(_a[j]), &(_b[j]), card);
         }
-    }
-}
-
-/*
- * buf1[i] = buf1[i] + buf2[i]
- * buf2[i] = coef * (buf1[i] - buf2[i])
- */
-inline void butterfly_gs(
-    uint32_t coef,
-    aint32* buf1,
-    aint32* buf2,
-    size_t len,
-    uint32_t card = F4)
-{
-    const m128i _coef = _mm_set1_epi32(coef);
-    m128i* _buf1 = reinterpret_cast<m128i*>(buf1);
-    m128i* _buf2 = reinterpret_cast<m128i*>(buf2);
-
-    for (size_t i = 0; i < len; ++i) {
-        m128i a = _buf1[i];
-        m128i b = _buf2[i];
-        m128i c = sub(a, b, card);
-        _buf1[i] = add(a, b, card);
-        _buf2[i] = mul(_coef, c, card);
     }
 }
 
