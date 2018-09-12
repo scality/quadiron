@@ -61,4 +61,4 @@ To generate the code coverage reports:
 Note that, even though code coverage is supported by both Clang and GCC, result
 with GCC seems more reliable (not surprising as we are using gcov).
 
-[badgepub]: https://circleci.com/gh/vrancurel/quadiron.svg?style=shield&circle-token=:circle-token
+[badgepub]: https://circleci.com/gh/scality/quadiron.svg?style=svg
