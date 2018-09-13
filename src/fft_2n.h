@@ -87,6 +87,16 @@ class Radix2 : public FourierTransform<T> {
 
   private:
     void init_bitrev();
+    void butterfly_ct_step(
+        vec::Buffers<T>& buf,
+        T r,
+        unsigned start,
+        unsigned m,
+        unsigned step);
+    void butterfly_ct_two_layers_step(
+        vec::Buffers<T>& buf,
+        unsigned start,
+        unsigned m);
     void butterfly_ct_1(
         vec::Buffers<T>& buf,
         unsigned start,
@@ -120,7 +130,17 @@ class Radix2 : public FourierTransform<T> {
         unsigned m,
         unsigned step);
 
+    // Only used for non-vectorized elements
+    void butterfly_ct_3_offset(
+        T coef,
+        vec::Buffers<T>& buf,
+        unsigned start,
+        unsigned m,
+        unsigned step,
+        size_t offset);
+
     unsigned data_len; // number of real input elements
+    T card_minus_one;
     T w;
     T inv_w;
     size_t pkt_size;
@@ -155,6 +175,8 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
     inv_W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
     gf.compute_omegas(*W, n, w);
     gf.compute_omegas(*inv_W, n, inv_w);
+
+    card_minus_one = this->gf->card_minus_one();
 
     rev = std::unique_ptr<T[]>(new T[n]);
     init_bitrev();
@@ -318,21 +340,105 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
             output.fill(i, 0);
         }
     }
-    const T h = this->gf->card_minus_one();
-    // perform butterfly operations
-    for (unsigned m = group_len; m < len; m *= 2) {
-        const unsigned doubled_m = 2 * m;
+
+    // ----------------------
+    // Single layer at a time
+    // ----------------------
+    // for (unsigned m = group_len; m < len; m <<= 1) {
+    //     const unsigned step = 2 * m;
+    //     for (unsigned j = 0; j < m; ++j) {
+    //         const T r = W->get(j * len / m / 2);
+    //         butterfly_ct_step(output, r, j, m, step);
+    //     }
+    // }
+
+    // ----------------------
+    // Two layers at a time
+    // ----------------------
+    unsigned m = group_len;
+    const unsigned end = len / 2;
+    for (; m < end; m <<= 2) {
         for (unsigned j = 0; j < m; ++j) {
-            const T r = W->get(j * len / doubled_m);
-            if (r == 1) {
-                butterfly_ct_1(output, j, m, doubled_m);
-            } else if (r == h) {
-                butterfly_ct_2(output, j, m, doubled_m);
-            } else {
-                butterfly_ct_3(r, output, j, m, doubled_m);
-            }
+            butterfly_ct_two_layers_step(output, j, m);
         }
     }
+    if (m < len) {
+        assert(m == end);
+        // perform the last butterfly operations
+        for (unsigned j = 0; j < m; ++j) {
+            const T r = W->get(j);
+            butterfly_ct_step(output, r, j, m, len);
+        }
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + c * Q
+// Q = P - c * Q
+template <typename T>
+void Radix2<T>::butterfly_ct_step(
+    vec::Buffers<T>& buf,
+    T r,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    if (r == 1) {
+        butterfly_ct_1(buf, start, m, step);
+    } else if (r == card_minus_one) {
+        butterfly_ct_2(buf, start, m, step);
+    } else {
+        butterfly_ct_3(r, buf, start, m, step);
+    }
+}
+
+/**
+ * Butterly CT on two-layers at a time
+ *
+ * For each quadruple
+ * (P, Q, R, S) = (buf[i], buf[i + m], buf[i + 2 * m], buf[i + 3 * m])
+ * First layer: butterfly on (P, Q) and (R, S) for step = 2 * m
+ *      coef r1 = W[start * n / (2 * m)]
+ *      P = P + r1 * Q
+ *      Q = P - r1 * Q
+ *      R = R + r1 * S
+ *      S = R - r1 * S
+ * Second layer: butterfly on (P, R) and (Q, S) for step = 4 * m
+ *      coef r2 = W[start * n / (4 * m)]
+ *      coef r3 = W[(start + m) * n / (4 * m)]
+ *      P = P + r2 * R
+ *      R = P - r2 * R
+ *      Q = Q + r3 * S
+ *      S = Q - r3 * S
+ *
+ * @param buf - working buffers
+ * @param start - index of buffer among `m` ones
+ * @param m - current group size
+ */
+template <typename T>
+void Radix2<T>::butterfly_ct_two_layers_step(
+    vec::Buffers<T>& buf,
+    unsigned start,
+    unsigned m)
+{
+    const unsigned step = m << 2;
+    //  ---------
+    // First layer
+    //  ---------
+    const T r1 = W->get(start * this->n / m / 2);
+    // first pair
+    butterfly_ct_step(buf, r1, start, m, step);
+    // second pair
+    butterfly_ct_step(buf, r1, start + 2 * m, m, step);
+    //  ---------
+    // Second layer
+    //  ---------
+    // first pair
+    const T r2 = W->get(start * this->n / m / 4);
+    butterfly_ct_step(buf, r2, start, 2 * m, step);
+    // second pair
+    const T r3 = W->get((start + m) * this->n / m / 4);
+    butterfly_ct_step(buf, r3, start + m, 2 * m, step);
 }
 
 // for each pair (P, Q) = (buf[i], buf[i + m]):
@@ -395,6 +501,27 @@ void Radix2<T>::butterfly_ct_3(
         T* b = buf.get(i + m);
         // perform butterfly operation for Cooley-Tukey FFT algorithm
         for (size_t j = 0; j < this->pkt_size; ++j) {
+            T x = this->gf->mul(coef, b[j]);
+            b[j] = this->gf->sub(a[j], x);
+            a[j] = this->gf->add(a[j], x);
+        }
+    }
+}
+
+template <typename T>
+void Radix2<T>::butterfly_ct_3_offset(
+    T coef,
+    vec::Buffers<T>& buf,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t offset)
+{
+    for (int i = start; i < this->n; i += step) {
+        T* a = buf.get(i);
+        T* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = offset; j < this->pkt_size; ++j) {
             T x = this->gf->mul(coef, b[j]);
             b[j] = this->gf->sub(a[j], x);
             a[j] = this->gf->add(a[j], x);
@@ -518,6 +645,11 @@ void Radix2<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 #ifdef QUADIRON_USE_SIMD
 
 /* Operations are vectorized by SIMD */
+template <>
+void Radix2<uint32_t>::butterfly_ct_two_layers_step(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m);
 template <>
 void Radix2<uint32_t>::butterfly_ct_1(
     vec::Buffers<uint32_t>& buf,
