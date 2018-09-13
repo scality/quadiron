@@ -74,8 +74,6 @@ static inline uint64_t hrtime_usec(timeval begin)
     return 1000000 * (tv.tv_sec - begin.tv_sec) + tv.tv_usec - begin.tv_usec;
 }
 
-#define OOR_MARK 1
-
 enum class FecType {
     /** Systematic code
      *
