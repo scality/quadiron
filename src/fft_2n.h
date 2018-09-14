@@ -87,6 +87,8 @@ class Radix2 : public FourierTransform<T> {
 
   private:
     void init_bitrev();
+    void bit_rev_permute(vec::Vector<T>& vec);
+    void bit_rev_permute(vec::Buffers<T>& vec);
 
     unsigned data_len; // number of real input elements
     T w;
@@ -137,6 +139,26 @@ void Radix2<T>::init_bitrev()
     // init bit-reversed indices
     for (unsigned i = 0; i < len; ++i) {
         rev[i] = reverse_bitwise(i, len, log_n);
+    }
+}
+
+template <typename T>
+void Radix2<T>::bit_rev_permute(vec::Vector<T>& vec)
+{
+    for (unsigned i = 0; i < (unsigned)this->n; ++i) {
+        if (rev[i] < i) {
+            vec.swap(i, rev[i]);
+        }
+    }
+}
+
+template <typename T>
+void Radix2<T>::bit_rev_permute(vec::Buffers<T>& vec)
+{
+    for (unsigned i = 0; i < (unsigned)this->n; ++i) {
+        if (rev[i] < i) {
+            vec.swap(i, rev[i]);
+        }
     }
 }
 
@@ -239,11 +261,7 @@ void Radix2<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
     }
 
     // reversion of elements of output to return values on the natural order
-    for (unsigned i = 0; i < len; i++) {
-        if (rev[i] < i) {
-            output.swap(i, rev[i]);
-        }
-    }
+    bit_rev_permute(output);
 }
 
 template <typename T>
@@ -322,13 +340,8 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
     const unsigned len = this->n;
 
     // 1st reversion of elements of output
-    for (unsigned i = 0; i < len; i++) {
-        if (rev[i] < i) {
-            output.swap(i, rev[i]);
-        }
-    }
+    bit_rev_permute(output);
 
-    // copy input to output
     output.copy(input);
 
     for (unsigned m = len / 2; m >= 1; m /= 2) {
@@ -346,11 +359,7 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
     }
 
     // 2nd reversion of elements of output to return its natural order
-    for (unsigned i = 0; i < len; i++) {
-        if (rev[i] < i) {
-            output.swap(i, rev[i]);
-        }
-    }
+    bit_rev_permute(output);
 }
 
 template <typename T>
