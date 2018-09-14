@@ -97,7 +97,7 @@ enum class BufMemAlloc {
  * - nothing (a shallow copy of another Buffers).
  */
 template <typename T>
-class Buffers {
+class Buffers final {
   public:
     Buffers(int n, size_t size);
     Buffers(int n, size_t size, const std::vector<T*>& mem);
@@ -281,6 +281,7 @@ Buffers<T>::Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2)
  *
  * @param vec - a given Buffers instance of `m` elements
  * @param map - a vector of `k` elements
+ * @param n - desired vector length
  */
 template <typename T>
 Buffers<T>::Buffers(
@@ -334,7 +335,6 @@ Buffers<T>::~Buffers()
         } else if (this->mem_alloc_case == BufMemAlloc::ZERO_EXTEND) {
             aligned_deallocate<T>(this->zeros);
         }
-        mem.shrink_to_fit();
     }
 }
 
@@ -471,7 +471,8 @@ bool operator==(const Buffers<T>& lhs, const Buffers<T>& rhs)
 template <typename T>
 void Buffers<T>::swap(unsigned i, unsigned j)
 {
-    std::swap(mem[i], mem[j]);
+    using std::swap;
+    swap(mem[i], mem[j]);
 }
 
 template <typename T>

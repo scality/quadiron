@@ -421,7 +421,8 @@ void Vector<T>::sort()
 template <typename T>
 void Vector<T>::swap(unsigned i, unsigned j)
 {
-    std::swap(mem[i], mem[j]);
+    using std::swap;
+    swap(mem[i], mem[j]);
 }
 
 template <typename T>
