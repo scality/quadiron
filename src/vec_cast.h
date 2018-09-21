@@ -51,13 +51,10 @@ inline void pack_next(
     int n,
     size_t size)
 {
-    int i;
-    std::vector<Tw*> tmp(n, nullptr);
-    for (i = 0; i < n; i++) {
-        tmp[i] = reinterpret_cast<Tw*>(src.at(i));
-        std::copy_n(tmp[i], size, dest.at(i));
+    for (int i = 0; i < n; i++) {
+        Tw* tmp = reinterpret_cast<Tw*>(src.at(i));
+        std::copy_n(tmp, size, dest.at(i));
     }
-    tmp.shrink_to_fit();
 }
 
 /*
@@ -85,16 +82,24 @@ inline void pack(
     assert(sizeof(Td) >= word_size);
     assert(word_size % sizeof(Ts) == 0);
     // get only word_size bytes from each element
-    if (word_size == 1) {
+    switch (word_size) {
+    case 1:
         pack_next<Ts, Td, uint8_t>(src, dest, n, size);
-    } else if (word_size == 2) {
+        break;
+    case 2:
         pack_next<Ts, Td, uint16_t>(src, dest, n, size);
-    } else if (word_size == 4) {
+        break;
+    case 4:
         pack_next<Ts, Td, uint32_t>(src, dest, n, size);
-    } else if (word_size == 8) {
+        break;
+    case 8:
         pack_next<Ts, Td, uint64_t>(src, dest, n, size);
-    } else if (word_size == 16) {
+        break;
+    case 16:
         pack_next<Ts, Td, __uint128_t>(src, dest, n, size);
+        break;
+    default:
+        break;
     }
 }
 
@@ -105,13 +110,10 @@ inline void unpack_next(
     int n,
     size_t size)
 {
-    int i;
-    std::vector<Tw*> tmp(n, nullptr);
-    for (i = 0; i < n; i++) {
-        tmp[i] = reinterpret_cast<Tw*>(dest.at(i));
-        std::copy_n(src.at(i), size, tmp[i]);
+    for (int i = 0; i < n; i++) {
+        Tw* tmp = reinterpret_cast<Tw*>(dest.at(i));
+        std::copy_n(src.at(i), size, tmp);
     }
-    tmp.shrink_to_fit();
 }
 
 /*
@@ -139,16 +141,24 @@ inline void unpack(
     assert(sizeof(Ts) >= word_size);
     assert(word_size % sizeof(Td) == 0);
     // get only word_size bytes from each element
-    if (word_size == 1) {
+    switch (word_size) {
+    case 1:
         unpack_next<Ts, Td, uint8_t>(src, dest, n, size);
-    } else if (word_size == 2) {
+        break;
+    case 2:
         unpack_next<Ts, Td, uint16_t>(src, dest, n, size);
-    } else if (word_size == 4) {
+        break;
+    case 4:
         unpack_next<Ts, Td, uint32_t>(src, dest, n, size);
-    } else if (word_size == 8) {
+        break;
+    case 8:
         unpack_next<Ts, Td, uint64_t>(src, dest, n, size);
-    } else if (word_size == 16) {
+        break;
+    case 16:
         unpack_next<Ts, Td, __uint128_t>(src, dest, n, size);
+        break;
+    default:
+        break;
     }
 }
 
