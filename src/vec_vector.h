@@ -415,7 +415,7 @@ void Vector<T>::to_poly(Polynomial<T>* poly)
 template <typename T>
 void Vector<T>::sort()
 {
-    std::sort(mem, mem + n - 1);
+    std::sort(mem, mem + n);
 }
 
 template <typename T>
