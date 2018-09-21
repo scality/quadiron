@@ -273,15 +273,22 @@ Buffers<T>::Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2)
 
 /**
  * Constructor of Buffers whose elements are shuffled from a given Buffers.
+ *
  * An extending is necessary if the output length is greater than that given
  * Buffers' length.
  *
- * Ex: input [p1, p2, p3, p4, p5] and map [3, 6, 1, 5, 4, 0, 2]
- * Output: [p3, 0, p1, 0, p4, p0, p2] where `0` is an all-zero buffer.
+ * The map will map every element of input vector to output:
+ *  map[i] = j => output[j] = input[i]
+ *
+ * Ex1: input [p0, p1, p2, p3, p4] and map [3, 2, 0, 1]
+ * Output: [p2, p3, p1, p0]
+ *
+ * Ex2: input [p0, p1, p2, p3, p4] and map [3, 6, 1, 5, 4]
+ * Output: [0, p2, 0, p0, p4, p3, p1] where `0` is an all-zero buffer.
  *
  * @param vec - a given Buffers instance of `m` elements
- * @param map - a vector of `k` elements
- * @param n - desired vector length
+ * @param map - a vector of `m` elements
+ * @param n - output vector length
  */
 template <typename T>
 Buffers<T>::Buffers(
@@ -291,8 +298,7 @@ Buffers<T>::Buffers(
 {
     const unsigned map_len = map.get_n();
     const unsigned vec_n = vec.get_n();
-    assert(map_len <= vec_n);
-    assert(vec_n <= n);
+    assert(map_len <= n);
 
     this->n = n;
     this->size = vec.get_size();
@@ -303,24 +309,18 @@ Buffers<T>::Buffers(
     mem.reserve(this->n);
     if (vec_n >= n) {
         this->mem_alloc_case = BufMemAlloc::SLICE;
-
-        mem.insert(mem.end(), vec_mem.begin(), vec_mem.begin() + n);
     } else { // output is zero-extended & shuffled from `vec`
         this->mem_alloc_case = BufMemAlloc::ZERO_EXTEND;
 
         this->zeros = aligned_allocate<T>(this->size);
         std::memset(this->zeros, 0, this->size * sizeof(T));
 
-        mem.insert(mem.end(), vec_mem.begin(), vec_mem.end());
-        mem.insert(mem.end(), n - vec_n, this->zeros);
+        for (unsigned i = 0; i < n; ++i) {
+            mem.push_back(zeros);
+        }
     }
-
-    // shuffle first `map_len` of `mem` according to `map`
-    // Note: map is sorted
-    int i = map_len - 1;
-    while (i >= 0) {
-        std::swap(mem[i], mem[map.get(i)]);
-        i--;
+    for (unsigned i = 0; i < map_len; ++i) {
+        mem[map.get(i)] = vec_mem[i];
     }
 }
 
