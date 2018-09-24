@@ -113,8 +113,8 @@ inline m256i NEG_MOD(m256i x, uint32_t q)
 inline m256i MUL_MOD(m256i x, m256i y, uint32_t q)
 {
     m256i res = MUL32(x, y);
-    m256i lo = BLEND16(ZERO, res, 0x5555);
-    m256i hi = BLEND16(ZERO, SHIFTR_2(res), 0x5555);
+    m256i lo = BLEND16(ZERO, res, 0x55);
+    m256i hi = BLEND16(ZERO, SHIFTR_2(res), 0x55);
     return SUB_MOD(lo, hi, q);
 }
 
@@ -129,8 +129,8 @@ inline m256i MULFULL_MOD(m256i x, m256i y, uint32_t q)
     m256i cmp = AND(CMPEQ32(x, CARD_M_1(q)), CMPEQ32(y, CARD_M_1(q)));
     res = (q == F3) ? XOR(res, AND(F4_u32, cmp)) : ADD32(res, AND(ONE, cmp));
 
-    m256i lo = BLEND16(ZERO, res, 0x5555);
-    m256i hi = SHIFTR_2(BLEND16(ZERO, res, 0xAAAA));
+    m256i lo = BLEND16(ZERO, res, 0x55);
+    m256i hi = SHIFTR_2(BLEND16(ZERO, res, 0xAA));
     return SUB_MOD(lo, hi, q);
 }
 
@@ -282,9 +282,9 @@ inline void butterfly_ct_step(
  */
 inline void butterfly_ct_two_layers_step(
     vec::Buffers<uint32_t>& buf,
-    unsigned r1,
-    unsigned r2,
-    unsigned r3,
+    uint32_t r1,
+    uint32_t r2,
+    uint32_t r3,
     unsigned start,
     unsigned m,
     size_t len,
