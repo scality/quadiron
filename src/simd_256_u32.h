@@ -754,24 +754,19 @@ inline void encode_post_process(
             m256i a3 = LOAD(buf + vec_id + 2);
             m256i a4 = LOAD(buf + vec_id + 3);
 
-            uint32_t c1 = TESTZ(a1, _threshold);
-            uint32_t c2 = TESTZ(a2, _threshold);
-            uint32_t c3 = TESTZ(a3, _threshold);
-            uint32_t c4 = TESTZ(a4, _threshold);
-
-            if (c1 == 0) {
+            if (TESTZ(a1, _threshold) == 0) {
                 const off_t curr_offset = offset + vec_id * vec_size;
                 add_props(props[frag_id], _threshold, mask_hi, a1, curr_offset);
             }
-            if (c2 == 0) {
+            if (TESTZ(a2, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 1) * vec_size;
                 add_props(props[frag_id], _threshold, mask_hi, a2, curr_offset);
             }
-            if (c3 == 0) {
+            if (TESTZ(a3, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 2) * vec_size;
                 add_props(props[frag_id], _threshold, mask_hi, a3, curr_offset);
             }
-            if (c4 == 0) {
+            if (TESTZ(a4, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 3) * vec_size;
                 add_props(props[frag_id], _threshold, mask_hi, a4, curr_offset);
             }
