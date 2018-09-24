@@ -52,6 +52,8 @@ namespace quadiron {
  */
 namespace simd {
 
+#define EITHER(x, a, b) (((x)) ? (a) : (b))
+
 // Vectorized operations are implemented in appropriated headers simd*.h
 
 } // namespace simd
