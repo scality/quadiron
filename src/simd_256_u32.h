@@ -592,13 +592,14 @@ inline void butterfly_ct_two_layers_step(
     const unsigned bufs_nb = buf.get_n();
     // #pragma omp parallel for
     // #pragma unroll
+    const std::vector<uint32_t*>& mem = buf.get_mem();
     for (unsigned i = start; i < bufs_nb; i += step) {
         m256i x1, y1, u1, v1;
         m256i x2, y2, u2, v2;
-        m256i* __restrict p = reinterpret_cast<m256i*>(buf.get(i));
-        m256i* __restrict q = reinterpret_cast<m256i*>(buf.get(i + m));
-        m256i* __restrict r = reinterpret_cast<m256i*>(buf.get(i + 2 * m));
-        m256i* __restrict s = reinterpret_cast<m256i*>(buf.get(i + 3 * m));
+        m256i* __restrict p = reinterpret_cast<m256i*>(mem[i]);
+        m256i* __restrict q = reinterpret_cast<m256i*>(mem[i + m]);
+        m256i* __restrict r = reinterpret_cast<m256i*>(mem[i + 2 * m]);
+        m256i* __restrict s = reinterpret_cast<m256i*>(mem[i + 3 * m]);
 
         // #pragma omp parallel for
         size_t j = 0;
@@ -742,8 +743,9 @@ inline void encode_post_process(
     const m256i mask_hi = SET1(max);
 
     // #pragma unroll
+    const std::vector<uint32_t*>& mem = output.get_mem();
     for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
-        m256i* __restrict buf = reinterpret_cast<m256i*>(output.get(frag_id));
+        m256i* __restrict buf = reinterpret_cast<m256i*>(mem[frag_id]);
 
         size_t vec_id = 0;
         size_t end = vecs_nb - 3;
