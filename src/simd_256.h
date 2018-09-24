@@ -35,16 +35,6 @@
 
 typedef __m256i m256i;
 
-#define F4_m256i _mm256_set1_epi32(65537)
-#define F4minus1_m256i _mm256_set1_epi32(65536)
-#define F4minus2_m256i _mm256_set1_epi32(65535)
-#define F3_m256i _mm256_set1_epi32(257)
-#define F3minus1_m256i _mm256_set1_epi32(256)
-#define F3minus2_m256i _mm256_set1_epi32(255)
-
-#define F3_m256i_u16 _mm256_set1_epi16(257)
-#define F3minus1_m256i_u16 _mm256_set1_epi16(256)
-
 /* GCC doesn't include the split store intrinsics so define them here. */
 #if defined(__GNUC__) && !defined(__clang__)
 
@@ -56,6 +46,45 @@ _mm256_storeu2_m128i(__m128i* const hi, __m128i* const lo, const __m256i a)
 }
 
 #endif /* defined(__GNUC__) */
+
+    // Following functions are used for AVX2 w/ both of u16 & u32
+
+#define ZERO (_mm256_setzero_si256())
+#define ONE (_mm256_set1_epi32(1))
+
+inline m256i LOAD(m256i* address)
+{
+    return _mm256_load_si256(address);
+}
+inline void STORE(m256i* address, m256i reg)
+{
+    _mm256_store_si256(address, reg);
+}
+
+inline m256i AND(m256i x, m256i y)
+{
+    return _mm256_and_si256(x, y);
+}
+inline m256i XOR(m256i x, m256i y)
+{
+    return _mm256_xor_si256(x, y);
+}
+inline m256i SHIFTR_1(m256i x)
+{
+    return _mm256_srli_si256(x, 1);
+}
+inline m256i SHIFTR_2(m256i x)
+{
+    return _mm256_srli_si256(x, 2);
+}
+inline uint32_t MVMSK8(m256i x)
+{
+    return _mm256_movemask_epi8(x);
+}
+inline uint32_t TESTZ(m256i x, m256i y)
+{
+    return _mm256_testz_si256(x, y);
+}
 
 #include "simd_256_u16.h"
 #include "simd_256_u32.h"
