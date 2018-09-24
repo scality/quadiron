@@ -279,9 +279,9 @@ inline void butterfly_ct_step(
  */
 inline void butterfly_ct_two_layers_step(
     vec::Buffers<uint16_t>& buf,
-    unsigned r1,
-    unsigned r2,
-    unsigned r3,
+    uint16_t r1,
+    uint16_t r2,
+    uint16_t r3,
     unsigned start,
     unsigned m,
     size_t len,
