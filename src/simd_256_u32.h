@@ -282,6 +282,10 @@ inline m256i CMPGT32(m256i x, m256i y)
 {
     return _mm256_cmpgt_epi32(x, y);
 }
+inline m256i MINU32(m256i x, m256i y) {
+    return _mm256_min_epu32(x, y);
+}
+#define BLEND16(x, y, imm8) (_mm256_blend_epi16(x, y, imm8))
 
 // z = x + y mod q
 // Input are loaded to registers
@@ -289,29 +293,25 @@ inline m256i CMPGT32(m256i x, m256i y)
 inline m256i ADD_MOD(m256i x, m256i y, uint32_t q)
 {
     m256i res = ADD32(x, y);
-    m256i cmp = CMPGT32(res, CARD_M_1(q));
-    m256i mask = AND(CARD(q), cmp);
-    return SUB32(res, mask);
+    return MINU32(res, SUB32(res, CARD(q)));
 }
 
-// z = x - y mod q
+// z = x - y mod q => z = q + x - y mod q
 // Input are loaded to registers
 // Output is register
 inline m256i SUB_MOD(m256i x, m256i y, uint32_t q)
 {
-    m256i cmp = CMPGT32(y, x);
-    m256i mask = AND(CARD(q), cmp);
-    m256i x_mask = ADD32(x, mask);
-    return SUB32(x_mask, y);
+    m256i res = SUB32(x, y);
+    return MINU32(res, ADD32(res, CARD(q)));
 }
 
-// y = 0 - x mod q
+// y = 0 - x mod q => y = q - x mod q
 // Input are loaded to registers
 // Output is register
 inline m256i NEG_MOD(m256i x, uint32_t q)
 {
-    m256i cmp = CMPGT32(x, ZERO);
-    return SUB32(AND(cmp, CARD(q)), x);
+    m256i res = SUB32(CARD(q), x);
+    return MINU32(res, SUB32(res, CARD(q)));
 }
 
 // z = x * y mod q
@@ -322,9 +322,8 @@ inline m256i NEG_MOD(m256i x, uint32_t q)
 inline m256i MUL_MOD(m256i x, m256i y, uint32_t q)
 {
     m256i res = MUL32(x, y);
-    m256i lo = AND(res, CARD_M_2(q));
-    m256i res_shift = (q == F3) ? SHIFTR_1(res) : SHIFTR_2(res);
-    m256i hi = AND(res_shift, CARD_M_2(q));
+    m256i lo = BLEND16(ZERO, res, 0x5555);
+    m256i hi = BLEND16(ZERO, SHIFTR_2(res), 0x5555);
     return SUB_MOD(lo, hi, q);
 }
 
@@ -339,9 +338,8 @@ inline m256i MULFULL_MOD(m256i x, m256i y, uint32_t q)
     m256i cmp = AND(CMPEQ32(x, CARD_M_1(q)), CMPEQ32(y, CARD_M_1(q)));
     res = (q == F3) ? XOR(res, AND(F4_m256i, cmp)) : ADD32(res, AND(ONE, cmp));
 
-    m256i lo = AND(res, CARD_M_2(q));
-    m256i res_shift = (q == F3) ? SHIFTR_1(res) : SHIFTR_2(res);
-    m256i hi = AND(res_shift, CARD_M_2(q));
+    m256i lo = BLEND16(ZERO, res, 0x5555);
+    m256i hi = SHIFTR_2(BLEND16(ZERO, res, 0xAAAA));
     return SUB_MOD(lo, hi, q);
 }
 
