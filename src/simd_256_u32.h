@@ -36,51 +36,17 @@
 namespace quadiron {
 namespace simd {
 
+#define F4_u32 _mm256_set1_epi32(65537)
+#define F4m1_u32 _mm256_set1_epi32(65536)
+#define F3_u32 _mm256_set1_epi32(257)
+#define F3m1_u32 _mm256_set1_epi32(256)
+
+#define CARD(q) (EITHER(q == F3, F3_u32, F4_u32))
+#define CARD_M_1(q) (EITHER(q == F3, F3m1_u32, F4m1_u32))
+
 /* ==================== Essential Operations =================== */
-
-// Following functions are used for AVX2 w/ both of u16 & u32
-#define EITHER(x, a, b) (((x)) ? (a) : (b))
-#define CARD(q) (EITHER(q == F3, F3_m256i, F4_m256i))
-#define CARD_M_1(q) (EITHER(q == F3, F3minus1_m256i, F4minus1_m256i))
-#define CARD_M_2(q) (EITHER(q == F3, F3minus2_m256i, F4minus2_m256i))
-#define ZERO (_mm256_setzero_si256())
-#define ONE (_mm256_set1_epi32(1))
-
-inline m256i LOAD(m256i* address)
-{
-    return _mm256_load_si256(address);
-}
-inline void STORE(m256i* address, m256i reg)
-{
-    _mm256_store_si256(address, reg);
-}
-
-inline m256i AND(m256i x, m256i y)
-{
-    return _mm256_and_si256(x, y);
-}
-inline m256i XOR(m256i x, m256i y)
-{
-    return _mm256_xor_si256(x, y);
-}
-inline m256i SHIFTR_1(m256i x)
-{
-    return _mm256_srli_si256(x, 1);
-}
-inline m256i SHIFTR_2(m256i x)
-{
-    return _mm256_srli_si256(x, 2);
-}
-inline uint32_t MVMSK8(m256i x)
-{
-    return _mm256_movemask_epi8(x);
-}
-inline uint32_t TESTZ(m256i x, m256i y)
-{
-    return _mm256_testz_si256(x, y);
-}
-
 // Following functions are used for AVX2 w/ u32 only
+
 inline m256i SET1(uint32_t val)
 {
     return _mm256_set1_epi32(val);
@@ -161,7 +127,7 @@ inline m256i MULFULL_MOD(m256i x, m256i y, uint32_t q)
 
     // filter elements of both of a & b = card-1
     m256i cmp = AND(CMPEQ32(x, CARD_M_1(q)), CMPEQ32(y, CARD_M_1(q)));
-    res = (q == F3) ? XOR(res, AND(F4_m256i, cmp)) : ADD32(res, AND(ONE, cmp));
+    res = (q == F3) ? XOR(res, AND(F4_u32, cmp)) : ADD32(res, AND(ONE, cmp));
 
     m256i lo = BLEND16(ZERO, res, 0x5555);
     m256i hi = SHIFTR_2(BLEND16(ZERO, res, 0xAAAA));
