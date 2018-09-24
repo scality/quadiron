@@ -59,7 +59,8 @@ void Radix2<uint32_t>::butterfly_ct_two_layers_step(
     const uint32_t r3 = W->get(coefIndex / 2 + this->n / 4);
 
     // perform vector operations
-    simd::butterfly_ct_two_layers_step(buf, r1, r2, r3, start, m, vec_len, card);
+    simd::butterfly_ct_two_layers_step(
+        buf, r1, r2, r3, start, m, vec_len, card);
 
     // for last elements, perform as non-SIMD method
     if (last_len > 0) {
