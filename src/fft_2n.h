@@ -144,6 +144,7 @@ class Radix2 : public FourierTransform<T> {
     T w;
     T inv_w;
     size_t pkt_size;
+    size_t buf_size;
 
     std::unique_ptr<T[]> rev = nullptr;
     std::unique_ptr<vec::Vector<T>> W = nullptr;
@@ -170,6 +171,7 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
     inv_w = gf.inv(w);
     this->pkt_size = pkt_size;
     this->data_len = data_len > 0 ? data_len : n;
+    buf_size = pkt_size * sizeof(T);
 
     W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
     inv_W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
@@ -325,19 +327,19 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
     const unsigned group_len =
         (input_len > data_len) ? len / input_len : len / data_len;
 
+    const std::vector<T*>& i_mem = input.get_mem();
+    const std::vector<T*>& o_mem = output.get_mem();
+
     for (unsigned idx = 0; idx < input_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
-        T* a = input.get(idx);
-        const unsigned end = rev[idx] + group_len;
-        for (unsigned i = rev[idx]; i < end; ++i) {
-            output.copy(i, a);
+        for (unsigned i = rev[idx]; i < rev[idx] + group_len; ++i) {
+            memcpy(o_mem[i], i_mem[idx], buf_size);
         }
     }
     for (unsigned idx = input_len; idx < data_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
-        const unsigned end = rev[idx] + group_len;
-        for (unsigned i = rev[idx]; i < end; ++i) {
-            output.fill(i, 0);
+        for (unsigned i = rev[idx]; i < rev[idx] + group_len; ++i) {
+            memset(o_mem[i], 0, buf_size);
         }
     }
 
