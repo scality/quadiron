@@ -466,6 +466,72 @@ inline void butterfly_gs_step(
     }
 }
 
+/**
+ * Vectorized butterly GS step
+ *
+ * For each pair (P, Q) = (buf[i], buf[i + m]) for step = 2 * m and coef `r`
+ *      Q = r * Q
+ *
+ * @param buf - working buffers
+ * @param r - coefficient
+ * @param start - index of buffer among `m` ones
+ * @param m - current group size
+ * @param len - number of vectors per buffer
+ * @param card - modulo cardinal
+ */
+inline void butterfly_gs_step_simple(
+    vec::Buffers<uint16_t>& buf,
+    uint16_t r,
+    unsigned start,
+    unsigned m,
+    size_t len,
+    uint16_t card)
+{
+    const unsigned step = m << 1;
+    m256i c = SET1(r);
+
+#define BUTTERFLY_GS_S(x)                                                      \
+    (EITHER(                                                                   \
+        r == 1,                                                                \
+        (x),                                                                   \
+        EITHER(r < card - 1, MUL_MOD(c, x, card), NEG_MOD(x, card))));
+
+    const size_t end = len - 1;
+    const unsigned bufs_nb = buf.get_n();
+    // #pragma omp parallel for
+    // #pragma unroll
+    const std::vector<uint16_t*>& mem = buf.get_mem();
+    for (unsigned i = start; i < bufs_nb; i += step) {
+        m256i x1, y1;
+        m256i x2, y2;
+        m256i* __restrict p = reinterpret_cast<m256i*>(mem[i]);
+        m256i* __restrict q = reinterpret_cast<m256i*>(mem[i + m]);
+
+        // #pragma omp parallel for
+        size_t j = 0;
+        // #pragma unroll
+        for (; j < end; j += 2) {
+            x1 = LOAD(p + j);
+            x2 = LOAD(p + j + 1);
+
+            y1 = BUTTERFLY_GS_S(x1);
+            y2 = BUTTERFLY_GS_S(x2);
+
+            // Store back to memory
+            STORE(q + j, y1);
+            STORE(q + j + 1, y2);
+        }
+        for (; j < len; ++j) {
+            x1 = LOAD(p + j);
+
+            y1 = BUTTERFLY_GS_S(x1);
+
+            // Store back to memory
+            STORE(q + j, y1);
+        }
+    }
+}
+
 inline void add_props_16(
     Properties& props,
     m256i threshold,
