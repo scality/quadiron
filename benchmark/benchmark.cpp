@@ -302,7 +302,7 @@ int Benchmark<T>::init()
         c_chunks_id->push_back(i);
     }
 
-    this->enc_stats = new Stats_t("Encode", chunk_size * n_c);
+    this->enc_stats = new Stats_t("Encode", chunk_size * n);
     this->dec_stats = new Stats_t("Decode", chunk_size * k);
     return 1;
 }
