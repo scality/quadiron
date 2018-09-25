@@ -895,9 +895,6 @@ bool FecCode<T>::decode_packet(
     unsigned parity_index = 0;
     unsigned avail_data_nb = 0;
 
-    if (type == FecType::SYSTEMATIC) {
-        assert(input_data_bufs.size() == n_data);
-    }
     assert(input_parities_bufs.size() == n_outputs);
     assert(input_parities_props.size() == n_outputs);
     assert(output_data_bufs.size() == n_data);
@@ -935,18 +932,16 @@ bool FecCode<T>::decode_packet(
 
     unsigned n_rec = fragment_index;
     vec::Slice<T> fragments_ids(&fragments_ids_raw, n_rec);
+
     fragments_ids.sort();
 
     decode_build();
 
     // vector of buffers storing data read from chunk
     vec::Buffers<uint8_t> words_char(n_rec, buf_size);
-    std::vector<uint8_t*>* words_mem_char = words_char.get_mem();
-    std::vector<T*>* words_mem_T = nullptr;
-    if (full_word_size)
-        words_mem_T = vec::cast_mem_of_vecp<uint8_t, T>(&words_char);
+    const std::vector<uint8_t*> words_mem_char = words_char.get_mem();
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> words(n_data, pkt_size);
+    vec::Buffers<T> words(n_rec, pkt_size);
     const std::vector<T*> words_mem_T = words.get_mem();
 
     int output_len = n_data;
