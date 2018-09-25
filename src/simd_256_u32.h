@@ -118,6 +118,13 @@ inline m256i MUL_MOD(m256i x, m256i y, uint32_t q)
     return SUB_MOD(lo, hi, q);
 }
 
+inline void MUL_MOD(m256i x, m256i y, m256i* z, uint32_t q)
+{
+    m256i res = MUL32(x, y);
+    m256i lo = BLEND16(ZERO, res, 0x55);
+    m256i hi = BLEND16(ZERO, SHIFTR_2(res), 0x55);
+    *z = SUB_MOD(lo, hi, q);
+}
 // z = x * y mod q
 // Input are loaded to registers
 // Output is register
@@ -565,14 +572,22 @@ inline void mul_coef_to_buf(
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
 
-    size_t i;
-    for (i = 0; i < _len; i++) {
+    size_t i = 0;
+    size_t end = _len - 3;
+    for (; i < end; i += 4) {
         // perform multiplication
-        _dest[i] = MUL_MOD(coef, _src[i], card);
+        MUL_MOD(coef, _src[i], _dest + i, card);
+        MUL_MOD(coef, _src[i + 1], _dest + i + 1, card);
+        MUL_MOD(coef, _src[i + 2], _dest + i + 2, card);
+        MUL_MOD(coef, _src[i + 3], _dest + i + 3, card);
     }
+    for (; i < _len; ++i) {
+        MUL_MOD(coef, _src[i], _dest + i, card);
+    }
+
     if (_last_len > 0) {
         uint64_t coef_64 = (uint64_t)a;
-        for (i = _len * ratio; i < len; i++) {
+        for (size_t i = _len * ratio; i < len; i++) {
             // perform multiplication
             dest[i] = (aint32)((coef_64 * src[i]) % card);
         }
