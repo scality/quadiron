@@ -434,34 +434,44 @@ inline void butterfly_gs_step(
             BUTTERFLY_5(c, x, y, card),                                        \
             BUTTERFLY_4(x, y, card))));
 
-    const size_t end = len - 1;
+    const size_t end = len - 3;
     const unsigned bufs_nb = buf.get_n();
     // #pragma omp parallel for
     // #pragma unroll
     const std::vector<uint32_t*>& mem = buf.get_mem();
     for (unsigned i = start; i < bufs_nb; i += step) {
-        m256i x1, y1;
-        m256i x2, y2;
+        m256i x1, x2, x3, x4;
+        m256i y1, y2, y3, y4;
         m256i* __restrict p = reinterpret_cast<m256i*>(mem[i]);
         m256i* __restrict q = reinterpret_cast<m256i*>(mem[i + m]);
 
         // #pragma omp parallel for
         size_t j = 0;
         // #pragma unroll
-        for (; j < end; j += 2) {
+        for (; j < end; j += 4) {
             x1 = LOAD(p + j);
-            y1 = LOAD(q + j);
             x2 = LOAD(p + j + 1);
+            x3 = LOAD(p + j + 2);
+            x4 = LOAD(p + j + 3);
+            y1 = LOAD(q + j);
             y2 = LOAD(q + j + 1);
+            y3 = LOAD(q + j + 2);
+            y4 = LOAD(q + j + 3);
 
             BUTTERFLY_GS(&x1, &y1);
             BUTTERFLY_GS(&x2, &y2);
+            BUTTERFLY_GS(&x3, &y3);
+            BUTTERFLY_GS(&x4, &y4);
 
             // Store back to memory
             STORE(p + j, x1);
             STORE(p + j + 1, x2);
+            STORE(p + j + 2, x3);
+            STORE(p + j + 3, x4);
             STORE(q + j, y1);
             STORE(q + j + 1, y2);
+            STORE(q + j + 2, y3);
+            STORE(q + j + 3, y4);
         }
         for (; j < len; ++j) {
             x1 = LOAD(p + j);
