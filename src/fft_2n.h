@@ -103,6 +103,12 @@ class Radix2 : public FourierTransform<T> {
         unsigned start,
         unsigned m,
         unsigned step);
+    void butterfly_gs_step_simple(
+        vec::Buffers<T>& buf,
+        T r,
+        unsigned start,
+        unsigned m,
+        unsigned step);
 
     // Only used for non-vectorized elements
     void butterfly_ct_step_offset(
@@ -113,6 +119,13 @@ class Radix2 : public FourierTransform<T> {
         unsigned step,
         size_t offset);
     void butterfly_gs_step_offset(
+        vec::Buffers<T>& buf,
+        T coef,
+        unsigned start,
+        unsigned m,
+        unsigned step,
+        size_t offset);
+    void butterfly_gs_step_offset_simple(
         vec::Buffers<T>& buf,
         T coef,
         unsigned start,
@@ -473,15 +486,25 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
     }
 
     // copy input to output
+    const std::vector<T*>& i_mem = input.get_mem();
+    const std::vector<T*>& o_mem = output.get_mem();
     unsigned i;
     for (i = 0; i < input_len; ++i) {
-        output.copy(i, input.get(i));
-    }
-    for (; i < len; ++i) {
-        output.fill(i, 0);
+        memcpy(o_mem[i], i_mem[i], buf_size);
     }
 
-    for (unsigned m = len / 2; m >= 1; m /= 2) {
+    // For Q are zeros only => Q = c * P
+    unsigned m = len / 2;
+    for (; m >= input_len; m /= 2) {
+        unsigned doubled_m = 2 * m;
+        for (unsigned j = 0; j < m; ++j) {
+            const T r = inv_W->get(j * len / doubled_m);
+            butterfly_gs_step_simple(output, r, j, m, doubled_m);
+        }
+    }
+
+    // Next, normal butterlfy GS is performed
+    for (; m >= 1; m /= 2) {
         unsigned doubled_m = 2 * m;
         for (unsigned j = 0; j < m; ++j) {
             const T r = inv_W->get(j * len / doubled_m);
@@ -493,6 +516,26 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
     for (unsigned i = 0; i < len; i++) {
         if (rev[i] < i) {
             output.swap(i, rev[i]);
+        }
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// Q = c * P
+template <typename T>
+void Radix2<T>::butterfly_gs_step_simple(
+    vec::Buffers<T>& buf,
+    T coef,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    for (int i = start; i < this->n; i += step) {
+        T* a = buf.get(i);
+        T* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = 0; j < this->pkt_size; ++j) {
+            b[j] = this->gf->mul(coef, a[j]);
         }
     }
 }
@@ -542,6 +585,25 @@ void Radix2<T>::butterfly_gs_step_offset(
 }
 
 template <typename T>
+void Radix2<T>::butterfly_gs_step_offset_simple(
+    vec::Buffers<T>& buf,
+    T coef,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t offset)
+{
+    for (int i = start; i < this->n; i += step) {
+        T* a = buf.get(i);
+        T* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = offset; j < this->pkt_size; ++j) {
+            b[j] = this->gf->mul(coef, a[j]);
+        }
+    }
+}
+
+template <typename T>
 void Radix2<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     fft_inv(output, input);
@@ -575,6 +637,14 @@ void Radix2<uint16_t>::butterfly_gs_step(
     unsigned m,
     unsigned step);
 template <>
+void Radix2<uint16_t>::butterfly_gs_step_simple(
+    vec::Buffers<uint16_t>& buf,
+    uint16_t coef,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+
+template <>
 void Radix2<uint32_t>::butterfly_ct_two_layers_step(
     vec::Buffers<uint32_t>& buf,
     unsigned start,
@@ -588,6 +658,13 @@ void Radix2<uint32_t>::butterfly_ct_step(
     unsigned step);
 template <>
 void Radix2<uint32_t>::butterfly_gs_step(
+    vec::Buffers<uint32_t>& buf,
+    uint32_t coef,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+template <>
+void Radix2<uint32_t>::butterfly_gs_step_simple(
     vec::Buffers<uint32_t>& buf,
     uint32_t coef,
     unsigned start,
