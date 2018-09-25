@@ -163,7 +163,7 @@ void Benchmark<T>::alloc_chunks(
     size_t chunk_size)
 {
     size_t size = chunk_size * chunks_nb;
-    chunks->at(0) = nttec::aligned_allocate<uint8_t>(size);
+    chunks->at(0) = quadiron::aligned_allocate<uint8_t>(size);
     for (unsigned i = 1; i < chunks_nb; ++i) {
         chunks->at(i) = chunks->at(i - 1) + chunk_size;
     }
@@ -213,8 +213,8 @@ int Benchmark<T>::init()
         fec = new quadiron::fec::RsLeo<T>(word_size, k, m, quadiron::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     case EC_TYPE_RS_WH:
-        fec = new nttec::fec::RsWH<T>(
-            word_size, k, m, nttec::fec::RsMatrixType::VANDERMONDE, pkt_size);
+        fec = new quadiron::fec::RsWH<T>(
+            word_size, k, m, quadiron::fec::RsMatrixType::VANDERMONDE, pkt_size);
         break;
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
@@ -473,7 +473,7 @@ void Benchmark<T>::get_avail_chunks(
     std::random_shuffle(c_chunks_id->begin(), c_chunks_id->end(), myrandom);
 
     int i;
-    for (i = 0; i < n_rec; i++) {
+    for (i = 0; i < k; i++) {
         avail_d_chunks->at(i) = nullptr;
     }
     for (i = 0; i < n_c; i++) {
@@ -528,7 +528,7 @@ bool Benchmark<T>::encode()
 template <typename T>
 bool Benchmark<T>::decode()
 {
-    std::vector<std::istream*> d_streams_shuffled(n_rec, nullptr);
+    std::vector<std::istream*> d_streams_shuffled(k, nullptr);
     std::vector<std::istream*> c_streams_shuffled(n_c, nullptr);
     std::vector<quadiron::Properties> c_props_shuffled(n_c);
 
@@ -858,8 +858,12 @@ int main(int argc, char** argv)
         params->sizeof_T = params->word_size;
     }
 
-    if (params->fec_type != EC_TYPE_RS_WH) {
-        params->n_rec = params->k;
+    if (params->n_rec == 0) {
+        if (params->fec_type != EC_TYPE_RS_WH) {
+            params->n_rec = params->k;
+        } else {
+            params->n_rec = params->k + 2;
+        }
     }
 
     if (params->pkt_size <= 0) {
