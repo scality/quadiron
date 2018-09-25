@@ -135,6 +135,30 @@ void Radix2<uint16_t>::butterfly_gs_step(
 }
 
 template <>
+void Radix2<uint16_t>::butterfly_gs_step_simple(
+    vec::Buffers<uint16_t>& buf,
+    uint16_t coef,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    const unsigned ratio = ALIGN_SIZE / sizeof(uint16_t);
+    const size_t len = this->pkt_size;
+    const size_t vec_len = len / ratio;
+    const size_t last_len = len - vec_len * ratio;
+    const uint16_t card = this->gf->card();
+
+    // perform vector operations
+    simd::butterfly_gs_step_simple(buf, coef, start, m, vec_len, card);
+
+    // for last elements, perform as non-SIMD method
+    if (last_len > 0) {
+        size_t offset = vec_len * ratio;
+        butterfly_gs_step_offset_simple(buf, coef, start, m, step, offset);
+    }
+}
+
+template <>
 void Radix2<uint32_t>::butterfly_ct_two_layers_step(
     vec::Buffers<uint32_t>& buf,
     unsigned start,
@@ -223,6 +247,30 @@ void Radix2<uint32_t>::butterfly_gs_step(
     if (last_len > 0) {
         size_t offset = vec_len * ratio;
         butterfly_gs_step_offset(buf, coef, start, m, step, offset);
+    }
+}
+
+template <>
+void Radix2<uint32_t>::butterfly_gs_step_simple(
+    vec::Buffers<uint32_t>& buf,
+    uint32_t coef,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    const unsigned ratio = ALIGN_SIZE / sizeof(uint32_t);
+    const size_t len = this->pkt_size;
+    const size_t vec_len = len / ratio;
+    const size_t last_len = len - vec_len * ratio;
+    const uint32_t card = this->gf->card();
+
+    // perform vector operations
+    simd::butterfly_gs_step_simple(buf, coef, start, m, vec_len, card);
+
+    // for last elements, perform as non-SIMD method
+    if (last_len > 0) {
+        size_t offset = vec_len * ratio;
+        butterfly_gs_step_offset_simple(buf, coef, start, m, step, offset);
     }
 }
 
