@@ -52,7 +52,6 @@ void Radix2<uint16_t>::butterfly_ct_two_layers_step(
     const size_t len = this->pkt_size;
     const size_t vec_len = len / ratio;
     const size_t last_len = len - vec_len * ratio;
-    const uint16_t card = this->gf->card();
     const uint16_t coefIndex = start * this->n / m / 2;
     const uint16_t r1 = W->get(coefIndex);
     const uint16_t r2 = W->get(coefIndex / 2);
@@ -98,7 +97,6 @@ void Radix2<uint16_t>::butterfly_ct_step(
     const size_t len = this->pkt_size;
     const size_t vec_len = len / ratio;
     const size_t last_len = len - vec_len * ratio;
-    const uint16_t card = this->gf->card();
 
     // perform vector operations
     simd::butterfly_ct_step(buf, r, start, m, vec_len, card);
@@ -122,7 +120,6 @@ void Radix2<uint16_t>::butterfly_gs_step(
     const size_t len = this->pkt_size;
     const size_t vec_len = len / ratio;
     const size_t last_len = len - vec_len * ratio;
-    const uint16_t card = this->gf->card();
 
     // perform vector operations
     simd::butterfly_gs_step(buf, coef, start, m, vec_len, card);
@@ -146,7 +143,6 @@ void Radix2<uint16_t>::butterfly_gs_step_simple(
     const size_t len = this->pkt_size;
     const size_t vec_len = len / ratio;
     const size_t last_len = len - vec_len * ratio;
-    const uint16_t card = this->gf->card();
 
     // perform vector operations
     simd::butterfly_gs_step_simple(buf, coef, start, m, vec_len, card);
@@ -168,7 +164,6 @@ void Radix2<uint32_t>::butterfly_ct_two_layers_step(
     const size_t len = this->pkt_size;
     const size_t vec_len = len / ratio;
     const size_t last_len = len - vec_len * ratio;
-    const uint32_t card = this->gf->card();
     const uint32_t coefIndex = start * this->n / m / 2;
     const uint32_t r1 = W->get(coefIndex);
     const uint32_t r2 = W->get(coefIndex / 2);
@@ -214,7 +209,6 @@ void Radix2<uint32_t>::butterfly_ct_step(
     const size_t len = this->pkt_size;
     const size_t vec_len = len / ratio;
     const size_t last_len = len - vec_len * ratio;
-    const uint32_t card = this->gf->card();
 
     // perform vector operations
     simd::butterfly_ct_step(buf, r, start, m, vec_len, card);
@@ -238,7 +232,6 @@ void Radix2<uint32_t>::butterfly_gs_step(
     const size_t len = this->pkt_size;
     const size_t vec_len = len / ratio;
     const size_t last_len = len - vec_len * ratio;
-    const uint32_t card = this->gf->card();
 
     // perform vector operations
     simd::butterfly_gs_step(buf, coef, start, m, vec_len, card);
@@ -262,7 +255,6 @@ void Radix2<uint32_t>::butterfly_gs_step_simple(
     const size_t len = this->pkt_size;
     const size_t vec_len = len / ratio;
     const size_t last_len = len - vec_len * ratio;
-    const uint32_t card = this->gf->card();
 
     // perform vector operations
     simd::butterfly_gs_step_simple(buf, coef, start, m, vec_len, card);

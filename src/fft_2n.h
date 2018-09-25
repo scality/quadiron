@@ -134,6 +134,7 @@ class Radix2 : public FourierTransform<T> {
         size_t offset);
 
     unsigned data_len; // number of real input elements
+    T card;
     T card_minus_one;
     T w;
     T inv_w;
@@ -172,6 +173,7 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
     gf.compute_omegas(*W, n, w);
     gf.compute_omegas(*inv_W, n, inv_w);
 
+    card = this->gf->card();
     card_minus_one = this->gf->card_minus_one();
 
     rev = std::unique_ptr<T[]>(new T[n]);
