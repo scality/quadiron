@@ -37,7 +37,7 @@
 #include "fec_base.h"
 #include "vec_vector.h"
 
-namespace nttec {
+namespace quadiron {
 namespace fec {
 
 typedef unsigned char u8;
@@ -116,11 +116,11 @@ class RsWH : public FecCode<T> {
         vec::Buffers<T>& words) override
     {
         size_t block_size = this->buf_size;
-        std::vector<T*>* vec_output = output.get_mem();
-        std::vector<T*>* vec_data = words.get_mem();
+        const std::vector<T*> vec_output = output.get_mem();
+        const std::vector<T*> vec_data = words.get_mem();
 
         WirehairCodec encoder = wirehair_encoder_create(
-            nullptr, vec_data->at(0), message_size, block_size);
+            nullptr, vec_data.at(0), message_size, block_size);
 
         if (!encoder) {
             std::cout << "!!! Failed to create encoder" << std::endl;
@@ -132,7 +132,7 @@ class RsWH : public FecCode<T> {
             const unsigned blockId = idx + this->n_data;
 
             WirehairResult encodeResult = wirehair_encode(
-                encoder, blockId, vec_output->at(idx), block_size, &writeLen);
+                encoder, blockId, vec_output.at(idx), block_size, &writeLen);
 
             if (encodeResult != Wirehair_Success) {
                 std::cout << "wirehair_encode failed" << std::endl;
@@ -149,7 +149,7 @@ class RsWH : public FecCode<T> {
     void decode_build() override {}
 
     std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
+    init_context_dec(vec::Vector<T>& fragments_ids, size_t size, vec::Buffers<T>* output) override
     {
         this->fragments_ids = &fragments_ids;
         std::unique_ptr<DecodeContext<T>> context;
@@ -173,8 +173,8 @@ class RsWH : public FecCode<T> {
         vec::Buffers<T>& words) override
     {
         size_t block_size = this->buf_size;
-        std::vector<T*>* vec_data = words.get_mem();
-        std::vector<T*>* vec_output = output.get_mem();
+        const std::vector<T*> vec_data = words.get_mem();
+        const std::vector<T*> vec_output = output.get_mem();
 
         WirehairCodec decoder =
             wirehair_decoder_create(nullptr, message_size, block_size);
@@ -191,7 +191,7 @@ class RsWH : public FecCode<T> {
             unsigned blockId = fragments_ids->get(idx);
 
             WirehairResult decodeResult = wirehair_decode(
-                decoder, blockId, vec_data->at(idx), block_size);
+                decoder, blockId, vec_data.at(idx), block_size);
 
             if (decodeResult == Wirehair_Success) {
                 decoding_success = true;
@@ -201,7 +201,7 @@ class RsWH : public FecCode<T> {
 
         if (decoding_success) {
             WirehairResult recoverResult =
-                wirehair_recover(decoder, vec_output->at(0), message_size);
+                wirehair_recover(decoder, vec_output.at(0), message_size);
                 // wirehair_recover(decoder, &message->at(0), message_size);
 
             if (recoverResult != Wirehair_Success) {
@@ -222,6 +222,6 @@ class RsWH : public FecCode<T> {
 };
 
 } // namespace fec
-} // namespace nttec
+} // namespace quadiron
 
 #endif
