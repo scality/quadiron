@@ -92,7 +92,7 @@ class RsWH : public FecCode<T> {
 
         message_size = this->n_data * this->buf_size;
 
-        size = this->n_data * this->pkt_size;
+        size_t size = this->n_data * this->pkt_size;
         message = std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(1, size));
     }
 
@@ -120,9 +120,7 @@ class RsWH : public FecCode<T> {
         const std::vector<T*> vec_data = words.get_mem();
 
         T* data = message->get(0);
-        for (unsigned idx = 0; idx < this->n_data; ++idx) {
-            std::copy_n(words.get(idx), this->pkt_size, data + idx * this->pkt_size);
-        }
+        message->copy_n_1(words);
 
         WirehairCodec encoder = wirehair_encoder_create(
             nullptr, data, message_size, block_size);
@@ -213,9 +211,7 @@ class RsWH : public FecCode<T> {
                 std::cout << "wirehair_recover failed" << std::endl;
             }
 
-            for (unsigned idx = 0; idx < this->n_data; ++idx) {
-                output.copy(idx, data + idx * this->pkt_size);
-            }
+            output.copy_1_n(*message);
         } else {
             std::cout << "wirehair_decode failed" << std::endl;
         }
@@ -225,7 +221,6 @@ class RsWH : public FecCode<T> {
 
   private:
     size_t message_size;
-    size_t size;
     vec::Vector<T>* fragments_ids;
     std::unique_ptr<vec::Buffers<T>> message = nullptr;
 };
