@@ -986,7 +986,7 @@ bool FecCode<T>::decode_packet(
             break;
 
         vec::pack<uint8_t, T>(
-            words_mem_char, words_mem_T, n_data, pkt_size, word_size);
+            words_mem_char, words_mem_T, n_rec, pkt_size, word_size);
 
         timeval t1 = tick();
         uint64_t start = hw_timer();
