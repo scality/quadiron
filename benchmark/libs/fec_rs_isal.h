@@ -102,6 +102,10 @@ class RsIsal : public FecCode<T> {
         dec_g_tbls =
             std::unique_ptr<u8>(new u8[this->n_data * this->n_data * 32]);
 
+        size_t size = this->n_data * this->pkt_size;
+        src_bufs = std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(1, size));
+        dest_bufs = std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(1, size));
+
         // Pick an encode matrix.
         if (mat_type == RsMatrixType::CAUCHY) {
             gf_gen_cauchy1_matrix(
@@ -134,10 +138,13 @@ class RsIsal : public FecCode<T> {
     {
         const unsigned input_len = words.get_n();
         const unsigned output_len = output.get_n();
+
+        src_bufs->copy_n_1(words);
+
         std::vector<T*> vec_data =
-            const_cast<std::vector<T*>&>(words.get_mem());
+            const_cast<std::vector<T*>&>(src_bufs->get_mem());
         std::vector<T*> vec_coding =
-            const_cast<std::vector<T*>&>(output.get_mem());
+            const_cast<std::vector<T*>&>(dest_bufs->get_mem());
 
         u8** data = reinterpret_cast<u8**>(vec_data.data());
         u8** coding = reinterpret_cast<u8**>(vec_coding.data());
@@ -153,6 +160,8 @@ class RsIsal : public FecCode<T> {
         ec_encode_data(
             this->pkt_size, input_len, output_len, tbls, data, coding);
 #endif
+
+        output.copy_1_n(*dest_bufs);
     }
 
     void encode(
@@ -223,6 +232,8 @@ class RsIsal : public FecCode<T> {
     std::unique_ptr<u8> decode_mat_tmp = nullptr;
     std::unique_ptr<u8> enc_g_tbls = nullptr;
     std::unique_ptr<u8> dec_g_tbls = nullptr;
+    std::unique_ptr<vec::Buffers<T>> src_bufs = nullptr;
+    std::unique_ptr<vec::Buffers<T>> dest_bufs = nullptr;
 };
 
 } // namespace fec
