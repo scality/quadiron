@@ -116,6 +116,8 @@ class Buffers {
     const T* get(int i) const;
     const std::vector<T*>& get_mem() const;
     void set_mem(std::vector<T*>* mem);
+    void copy_n_1(const Buffers<T>& v);
+    void copy_1_n(const Buffers<T>& v);
     void copy(const Buffers<T>& v);
     void copy(int i, T* buf);
     void separate_even_odd();
@@ -404,6 +406,23 @@ template <typename T>
 inline void Buffers<T>::set_mem(std::vector<T*>* mem)
 {
     this->mem = mem;
+}
+
+template <typename T>
+void Buffers<T>::copy_n_1(const Buffers<T>& v)
+{
+    const size_t v_size = v.get_size();
+    const unsigned vec_n = v.get_n();
+    for (int i = 0; i < vec_n; ++i)
+        std::copy_n(v.get(i), v_size, mem[0] + i * v_size);
+}
+
+template <typename T>
+void Buffers<T>::copy_1_n(const Buffers<T>& v)
+{
+    const std::vector<T*> v_mem = v.get_mem();
+    for (int i = 0; i < n; ++i)
+        std::copy_n(v_mem[0] + i * size, size, mem[i]);
 }
 
 template <typename T>
