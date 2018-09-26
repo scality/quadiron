@@ -93,7 +93,7 @@ class RsWH : public FecCode<T> {
         message_size = this->n_data * this->buf_size;
 
         size = this->n_data * this->pkt_size;
-        message = std::unique_ptr<std::vector<T>>(new std::vector<T>(size));
+        message = std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(1, size));
     }
 
     int get_n_outputs() override
@@ -119,8 +119,13 @@ class RsWH : public FecCode<T> {
         const std::vector<T*> vec_output = output.get_mem();
         const std::vector<T*> vec_data = words.get_mem();
 
+        T* data = message->get(0);
+        for (unsigned idx = 0; idx < this->n_data; ++idx) {
+            std::copy_n(words.get(idx), this->pkt_size, data + idx * this->pkt_size);
+        }
+
         WirehairCodec encoder = wirehair_encoder_create(
-            nullptr, vec_data.at(0), message_size, block_size);
+            nullptr, data, message_size, block_size);
 
         if (!encoder) {
             std::cout << "!!! Failed to create encoder" << std::endl;
@@ -200,12 +205,16 @@ class RsWH : public FecCode<T> {
         }
 
         if (decoding_success) {
+            T* data = message->get(0);
             WirehairResult recoverResult =
-                wirehair_recover(decoder, vec_output.at(0), message_size);
-                // wirehair_recover(decoder, &message->at(0), message_size);
+                wirehair_recover(decoder, data, message_size);
 
             if (recoverResult != Wirehair_Success) {
                 std::cout << "wirehair_recover failed" << std::endl;
+            }
+
+            for (unsigned idx = 0; idx < this->n_data; ++idx) {
+                output.copy(idx, data + idx * this->pkt_size);
             }
         } else {
             std::cout << "wirehair_decode failed" << std::endl;
@@ -218,7 +227,7 @@ class RsWH : public FecCode<T> {
     size_t message_size;
     size_t size;
     vec::Vector<T>* fragments_ids;
-    std::unique_ptr<std::vector<T>> message = nullptr;
+    std::unique_ptr<vec::Buffers<T>> message = nullptr;
 };
 
 } // namespace fec
