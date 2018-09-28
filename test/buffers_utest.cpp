@@ -46,8 +46,7 @@ class BuffersTest : public ::testing::Test {
         T max_val = 65537;
         const int max = (_max == 0) ? max_val : _max;
         std::uniform_int_distribution<uint32_t> dis(0, max - 1);
-        auto vec =
-            std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(n, size));
+        auto vec = std::make_unique<vec::Buffers<T>>(n, size);
 
         for (int i = 0; i < n; i++) {
             T* buf = quadiron::aligned_allocate<T>(size);
@@ -71,7 +70,7 @@ class BuffersTest : public ::testing::Test {
         }
         std::random_shuffle(mem.begin(), mem.end());
 
-        auto vec = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
+        auto vec = std::make_unique<vec::Vector<T>>(gf, n);
         for (size_t i = 0; i < n; i++) {
             vec->set(i, mem[i]);
         }
