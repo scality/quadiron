@@ -55,10 +55,10 @@ namespace simd {
 } // namespace simd
 } // namespace quadiron
 
-#ifdef QUADIRON_USE_SSE4
-#include "simd_128.h"
-#elif defined QUADIRON_USE_AVX2
+#if defined(__AVX2__)
 #include "simd_256.h"
+#elif defined(__SSE4_1__)
+#include "simd_128.h"
 #endif
 
 #include "simd_nf4.h"
