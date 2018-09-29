@@ -97,7 +97,9 @@ class Vector {
     friend bool operator==<T>(const Vector<T>& lhs, const Vector<T>& rhs);
     virtual void neg();
     void to_poly(Polynomial<T>* poly);
-    virtual void dump(void);
+    virtual void dump(void) const;
+    void sort();
+    void swap(unsigned i, unsigned j);
 
   protected:
     int n;
@@ -411,7 +413,20 @@ void Vector<T>::to_poly(Polynomial<T>* poly)
 }
 
 template <typename T>
-void Vector<T>::dump(void)
+void Vector<T>::sort()
+{
+    std::sort(mem, mem + n);
+}
+
+template <typename T>
+void Vector<T>::swap(unsigned i, unsigned j)
+{
+    using std::swap;
+    swap(mem[i], mem[j]);
+}
+
+template <typename T>
+void Vector<T>::dump(void) const
 {
     std::cout << "( ";
     for (int i = 0; i < n; i++)

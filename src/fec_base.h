@@ -199,8 +199,10 @@ class FecCode {
         const std::vector<Properties>& input_parities_props,
         std::vector<std::ostream*> output_data_bufs);
 
-    virtual std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids, size_t size = 0);
+    virtual std::unique_ptr<DecodeContext<T>> init_context_dec(
+        vec::Vector<T>& fragments_ids,
+        size_t size = 0,
+        vec::Buffers<T>* output = nullptr);
 
     bool decode_packet(
         std::vector<std::istream*> input_data_bufs,
@@ -749,8 +751,10 @@ void FecCode<T>::decode(
  * It supports for FEC using multiplicative FFT over FNT
  */
 template <typename T>
-std::unique_ptr<DecodeContext<T>>
-FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids, size_t size)
+std::unique_ptr<DecodeContext<T>> FecCode<T>::init_context_dec(
+    vec::Vector<T>& fragments_ids,
+    size_t size,
+    vec::Buffers<T>* output)
 {
     if (this->inv_r_powers == nullptr) {
         throw LogicError("FEC base: vector (inv_r)^i must be initialized");
@@ -770,7 +774,7 @@ FecCode<T>::init_context_dec(vec::Vector<T>& fragments_ids, size_t size)
     }
 
     return std::make_unique<DecodeContext<T>>(
-        *gf, *fft, *fft_2k, fragments_ids, vx, n_data, n, -1, size);
+        *gf, *fft, *fft_2k, fragments_ids, vx, n_data, n, -1, size, output);
 }
 
 /* Prepare for decoding
@@ -827,8 +831,7 @@ void FecCode<T>::decode_apply(
     vec1_n.zero_fill();
     for (unsigned i = 0; i <= k - 1; ++i) {
         vec1_n.set(
-            fragments_ids.get(i),
-            this->gf->mul(words.get(i), inv_A_i.get(fragments_ids.get(i))));
+            fragments_ids.get(i), this->gf->mul(words.get(i), inv_A_i.get(i)));
     }
 
     // compute vec2_n = FFT(vec1_n)
@@ -912,6 +915,7 @@ bool FecCode<T>::decode_packet(
         if (fragment_index == n_data)
             return true;
     }
+    fragments_ids.sort();
 
     vec::Vector<T> avail_parity_ids(*(this->gf), n_data - avail_data_nb);
 
@@ -954,7 +958,7 @@ bool FecCode<T>::decode_packet(
     const std::vector<uint8_t*> output_mem_char = output_char.get_mem();
 
     std::unique_ptr<DecodeContext<T>> context =
-        init_context_dec(fragments_ids, pkt_size);
+        init_context_dec(fragments_ids, pkt_size, &output);
 
     reset_stats_dec();
 
@@ -1097,46 +1101,28 @@ void FecCode<T>::decode_apply(
     vec::Buffers<T>& output,
     vec::Buffers<T>& words)
 {
-    const vec::Vector<T>& fragments_ids = context.get_fragments_id();
     vec::Vector<T>& inv_A_i = context.get_vector(CtxVec::INV_A_I);
     vec::Vector<T>& A_fft_2k = context.get_vector(CtxVec::A_FFT_2K);
+
+    vec::Buffers<T>& buf1_k = context.get_buffer(CtxBuf::K1);
     vec::Buffers<T>& buf1_n = context.get_buffer(CtxBuf::N1);
     vec::Buffers<T>& buf2_n = context.get_buffer(CtxBuf::N2);
     vec::Buffers<T>& buf1_2k = context.get_buffer(CtxBuf::B2K1);
     vec::Buffers<T>& buf2_2k = context.get_buffer(CtxBuf::B2K2);
-    vec::Buffers<T>& buf1_len2k_minus_k = context.get_buffer(CtxBuf::B2KMK);
-
-    unsigned k = this->n_data; // number of fragments received
-
-    assert(k != 0);
 
     // compute N'(x) = sum_i{n_i * x^z_i}
     // where n_i=v_i/A'_i(x_i)
-    buf1_n.zero_fill();
-    for (unsigned i = 0; i <= k - 1; ++i) {
-        this->gf->mul_coef_to_buf(
-            inv_A_i.get(fragments_ids.get(i)),
-            words.get(i),
-            buf1_n.get(fragments_ids.get(i)),
-            pkt_size);
-    }
+    this->gf->mul_vec_to_vecp(inv_A_i, words, buf1_k);
 
     // compute buf2_n
     this->fft->fft_inv(buf2_n, buf1_n);
 
-    // buf1_2k: first k buffers point to first k buffers of buf2_n
-    //          las k buffers point to a padded zero buffer
-    this->fft_2k->fft(buf2_2k, buf1_2k);
+    this->fft_2k->fft(buf1_2k, output);
 
     // multiply FFT(A) and buf2_2k
-    this->gf->mul_vec_to_vecp(A_fft_2k, buf2_2k, buf2_2k);
+    this->gf->mul_vec_to_vecp(A_fft_2k, buf1_2k, buf1_2k);
 
-    // buf3 concats `output` and a temporary buffer
-    //  - first k buffers point to output
-    //  - last (len_2k - k) buffers point to buf1_len2k_minus_k
-    vec::Buffers<T> buf3(output, buf1_len2k_minus_k);
-
-    this->fft_2k->ifft(buf3, buf2_2k);
+    this->fft_2k->ifft(buf2_2k, buf1_2k);
 
     // negatize output
     this->gf->neg(output);

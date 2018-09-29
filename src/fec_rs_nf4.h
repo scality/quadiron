@@ -38,7 +38,6 @@
 #include "gf_base.h"
 #include "gf_nf4.h"
 #include "vec_vector.h"
-#include "vec_zero_ext.h"
 
 namespace quadiron {
 namespace fec {
@@ -137,8 +136,7 @@ class RsNf4 : public FecCode<T> {
             words.set(i, ngff4->pack(words.get(i)));
         }
         // std::cout << "pack words:"; words.dump();
-        vec::ZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, vwords);
+        this->fft->fft(output, words);
         encode_post_process(output, props, offset);
     }
 
@@ -185,8 +183,10 @@ class RsNf4 : public FecCode<T> {
     int gf_n;
 
   protected:
-    std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
+    std::unique_ptr<DecodeContext<T>> init_context_dec(
+        vec::Vector<T>& fragments_ids,
+        size_t size,
+        vec::Buffers<T>* output) override
     {
         if (this->inv_r_powers == nullptr) {
             throw LogicError("FEC base: vector (inv_r)^i must be initialized");
@@ -217,7 +217,8 @@ class RsNf4 : public FecCode<T> {
                 k,
                 this->n,
                 -1,
-                size));
+                size,
+                output));
 
         return context;
     }
@@ -272,8 +273,7 @@ class RsNf4 : public FecCode<T> {
                 chunk[j] = ngff4->pack(chunk[j]);
             }
         }
-        vec::BuffersZeroExtended<T> vwords(words, this->n);
-        this->fft->fft(output, vwords);
+        this->fft->fft(output, words);
         encode_post_process(output, props, offset);
     }
 

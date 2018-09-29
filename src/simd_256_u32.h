@@ -350,11 +350,9 @@ inline void butterfly_gs(
     m256i* _buf2 = reinterpret_cast<m256i*>(buf2);
 
     for (size_t i = 0; i < len; ++i) {
-        m256i a = _buf1[i];
-        m256i b = _buf2[i];
-        m256i c = sub(a, b, card);
-        _buf1[i] = add(a, b, card);
-        _buf2[i] = mul(_coef, c, card);
+        m256i a = add(_buf1[i], _buf2[i], card);
+        _buf2[i] = mul(_coef, sub(_buf1[i], _buf2[i], card), card);
+        _buf1[i] = a;
     }
 }
 

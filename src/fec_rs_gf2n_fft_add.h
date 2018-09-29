@@ -128,8 +128,10 @@ class RsGf2nFftAdd : public FecCode<T> {
     std::unique_ptr<vec::Vector<T>> betas = nullptr;
 
   protected:
-    std::unique_ptr<DecodeContext<T>>
-    init_context_dec(vec::Vector<T>& fragments_ids, size_t size) override
+    std::unique_ptr<DecodeContext<T>> init_context_dec(
+        vec::Vector<T>& fragments_ids,
+        size_t size,
+        vec::Buffers<T>* output) override
     {
         if (this->betas == nullptr) {
             throw LogicError("FEC FFT ADD: vector 'betas' must be initialized");
@@ -198,9 +200,7 @@ class RsGf2nFftAdd : public FecCode<T> {
         // where n_i=v_i/A'_i(x_i)
         vec1_n.zero_fill();
         for (int i = 0; i <= k - 1; ++i) {
-            vec1_n.set(
-                i,
-                this->gf->mul(words.get(i), inv_A_i.get(fragments_ids.get(i))));
+            vec1_n.set(i, this->gf->mul(words.get(i), inv_A_i.get(i)));
         }
 
         // We have to find the numerator of the following expression:
