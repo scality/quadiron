@@ -64,8 +64,9 @@ class FftTest : public ::testing::Test {
     void test_taylor_expand(const gf::Field<T>& gf, fft::Additive<T>* fft)
     {
         for (int i = 0; i < 1000; i++) {
-            const int t = 2 + gf.weak_rand() % (fft->get_n() - 2);
-            const int n = t + 1 + gf.weak_rand() % (fft->get_n() - t);
+            const int t = 2 + gf.weak_rand() % (fft->get_n() - 1);
+            const int n = t + gf.weak_rand() % (fft->get_n() - t + 1);
+
             quadiron::vec::Vector<T> v1 = this->random_vec(gf, n, n);
 
             int m = n / t;
@@ -294,7 +295,7 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
 
         unsigned len = this->code_len;
         if (gf.card_minus_one() <= this->code_len) {
-            len = gf.weak_rand();
+            len = gf_n;
         }
 
         // n is power of 2 and at least n_data + n_parities.
