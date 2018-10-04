@@ -2,7 +2,7 @@
 
 [![CircleCI][badgepub]](https://circleci.com/gh/scality/quadiron)
 
-The QuadIron library is a C++ library, written in C++11, that offers a
+The QuadIron library is a C++ library, written in C++14, that offers a
 streaming API to use the different flavors of NTT-based erasure codes.
 
 The library focuses primarily on high fragmentation i.e. n >> k.
