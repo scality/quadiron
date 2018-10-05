@@ -393,7 +393,7 @@ void Radix2<T>::butterfly_ct_step(
 }
 
 /**
- * Butterly CT on two-layers at a time
+ * Butterfly CT on two-layers at a time
  *
  * For each quadruple
  * (P, Q, R, S) = (buf[i], buf[i + m], buf[i + 2 * m], buf[i + 3 * m])
