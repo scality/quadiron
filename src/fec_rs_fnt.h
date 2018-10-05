@@ -100,50 +100,49 @@ class RsFnt : public FecCode<T> {
         this->r = this->gf->get_nth_root(this->n);
 
         int m = arith::get_smallest_power_of_2<int>(this->n_data);
-        this->fft = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*(this->gf), this->n, m, this->pkt_size));
+        this->fft = std::make_unique<fft::Radix2<T>>(
+            *(this->gf), this->n, m, this->pkt_size);
 
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
-        this->fft_2k = std::unique_ptr<fft::Radix2<T>>(
-            new fft::Radix2<T>(*(this->gf), len_2k, len_2k, this->pkt_size));
+        this->fft_2k = std::make_unique<fft::Radix2<T>>(
+            *(this->gf), len_2k, len_2k, this->pkt_size);
     }
 
     inline void init_others() override
     {
         // vector stores r^{-i} for i = 0, ... , k
         T inv_r = this->gf->inv(this->r);
-        this->inv_r_powers = std::unique_ptr<vec::Vector<T>>(
-            new vec::Vector<T>(*(this->gf), this->n_data + 1));
+        this->inv_r_powers =
+            std::make_unique<vec::Vector<T>>(*(this->gf), this->n_data + 1);
         for (unsigned i = 0; i <= this->n_data; i++)
             this->inv_r_powers->set(i, this->gf->exp(inv_r, i));
 
         // vector stores r^{i} for i = 0, ... , n-1
-        this->r_powers = std::unique_ptr<vec::Vector<T>>(
-            new vec::Vector<T>(*(this->gf), this->n));
+        this->r_powers = std::make_unique<vec::Vector<T>>(*(this->gf), this->n);
         for (unsigned i = 0; i < this->n; i++) {
             this->r_powers->set(i, this->gf->exp(this->r, i));
         }
 
         if (this->type == FecType::SYSTEMATIC) {
             // for encoding
-            enc_frag_ids = std::unique_ptr<vec::Vector<T>>(
-                new vec::Vector<T>(*(this->gf), this->n_data));
+            enc_frag_ids =
+                std::make_unique<vec::Vector<T>>(*(this->gf), this->n_data);
             // ids of received fragments, from 0 to codelen-1
             for (unsigned i = 0; i < this->n_data; i++) {
                 enc_frag_ids->set(i, i);
             }
 
-            inter_words = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(this->n_data, this->pkt_size));
-            suffix_words = std::unique_ptr<vec::Buffers<T>>(new vec::Buffers<T>(
-                this->n - this->n_data - this->n_outputs, this->pkt_size));
+            inter_words =
+                std::make_unique<vec::Buffers<T>>(this->n_data, this->pkt_size);
+            suffix_words = std::make_unique<vec::Buffers<T>>(
+                this->n - this->n_data - this->n_outputs, this->pkt_size);
 
             enc_context = this->init_context_dec(
                 *enc_frag_ids, this->pkt_size, inter_words.get());
 
             // for decoding
-            this->dec_inter_codeword = std::unique_ptr<vec::Buffers<T>>(
-                new vec::Buffers<T>(this->n, this->pkt_size));
+            this->dec_inter_codeword =
+                std::make_unique<vec::Buffers<T>>(this->n, this->pkt_size);
         }
     }
 
