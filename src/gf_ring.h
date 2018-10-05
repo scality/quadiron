@@ -108,8 +108,6 @@ class RingModN {
         vec::Buffers<T>& veca,
         vec::Buffers<T>& vecb,
         vec::Buffers<T>& res) const;
-    virtual void butterfly_ct(T coef, T* buf1, T* buf2, size_t len) const;
-    virtual void butterfly_gs(T coef, T* buf1, T* buf2, size_t len) const;
     bool is_quadratic_residue(T q) const;
     virtual void compute_omegas(vec::Vector<T>& W, int n, T w) const;
     void compute_omegas_cached(vec::Vector<T>& W, int n, T w) const;
@@ -396,19 +394,20 @@ inline void RingModN<T>::mul_vec_to_vecp(
     int n = u.get_n();
     size_t len = src.get_size();
     T h = this->card_minus_one();
+    const std::vector<T*>& src_mem = src.get_mem();
+    const std::vector<T*>& dest_mem = dest.get_mem();
+    T* coef_vec = u.get_mem();
     for (i = 0; i < n; i++) {
-        T coef = u.get(i);
-        T* _src = src.get(i);
-        T* _dest = dest.get(i);
-        if (coef == 0) {
-            dest.fill(i, 0);
+        T coef = coef_vec[i];
+        if (coef > 1 && coef < h) {
+            this->mul_coef_to_buf(coef, src_mem[i], dest_mem[i], len);
         } else if (coef == 1) {
-            dest.copy(i, _src);
+            dest.copy(i, src_mem[i]);
+        } else if (coef == 0) {
+            dest.fill(i, 0);
         } else if (coef == h) {
-            dest.copy(i, _src);
-            this->neg(len, _dest);
-        } else if (coef > 1) {
-            this->mul_coef_to_buf(coef, _src, _dest, len);
+            dest.copy(i, src_mem[i]);
+            this->neg(len, dest_mem[i]);
         }
     }
 }
@@ -460,61 +459,6 @@ inline void RingModN<T>::sub_vecp_to_vecp(
     size_t len = veca.get_size();
     for (i = 0; i < n; i++) {
         this->sub_two_bufs(veca.get(i), vecb.get(i), res.get(i), len);
-    }
-}
-
-/** Butterfly computation for Cooley-Tukey FFT algorithm
- *
- * Perform in-place oprations on two buffers `P`, `Q` with a coefficient `c`
- *
- * \f{eqnarray*}{
- *  P_i &= P_i + c \times Q_i \\
- *  Q_i &= P_i - c \times Q_i \\
- * \f}
- *
- * @param coef - coefficient, a finite field element
- * @param buf1 - a buffer of `len` elements
- * @param buf2 - a buffer of `len` elements
- * @param len - number of elements per buffer
- */
-template <typename T>
-inline void
-RingModN<T>::butterfly_ct(T coef, T* buf1, T* buf2, size_t len) const
-{
-    size_t i;
-    for (i = 0; i < len; ++i) {
-        T a = buf1[i];
-        T b = mul(coef, buf2[i]);
-        buf1[i] = add(a, b);
-        buf2[i] = sub(a, b);
-    }
-}
-
-/** Butterfly computation for Gentleman-Sande FFT algorithm
- *
- * Perform in-place oprations on two buffers `P`, `Q` with a coefficient `c`
- *
- * \f{eqnarray*}{
- *  P_i &= P_i + Q_i \\
- *  Q_i &= c \times (P_i - Q_i)
- * \f}
- *
- * @param coef - coefficient, a finite field element
- * @param buf1 - a buffer of `len` elements
- * @param buf2 - a buffer of `len` elements
- * @param len - number of elements per buffer
- */
-template <typename T>
-inline void
-RingModN<T>::butterfly_gs(T coef, T* buf1, T* buf2, size_t len) const
-{
-    size_t i;
-    for (i = 0; i < len; ++i) {
-        T a = buf1[i];
-        T b = buf2[i];
-        T c = sub(a, b);
-        buf1[i] = add(a, b);
-        buf2[i] = mul(coef, c);
     }
 }
 
@@ -1002,34 +946,6 @@ void RingModN<uint32_t>::sub_two_bufs(
     uint32_t* bufa,
     uint32_t* bufb,
     uint32_t* res,
-    size_t len) const;
-
-template <>
-void RingModN<uint16_t>::butterfly_ct(
-    uint16_t coef,
-    uint16_t* buf1,
-    uint16_t* buf2,
-    size_t len) const;
-
-template <>
-void RingModN<uint32_t>::butterfly_ct(
-    uint32_t coef,
-    uint32_t* buf1,
-    uint32_t* buf2,
-    size_t len) const;
-
-template <>
-void RingModN<uint16_t>::butterfly_gs(
-    uint16_t coef,
-    uint16_t* buf1,
-    uint16_t* buf2,
-    size_t len) const;
-
-template <>
-void RingModN<uint32_t>::butterfly_gs(
-    uint32_t coef,
-    uint32_t* buf1,
-    uint32_t* buf2,
     size_t len) const;
 
 template <>

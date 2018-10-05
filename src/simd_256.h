@@ -33,19 +33,6 @@
 
 #include <x86intrin.h>
 
-typedef __m256i m256i;
-
-// Disable `cert-err58-cpp` on these: AFAIK they cannot throw.
-// (probably a false positive present in Clang 5 and fixed in Clang 6).
-const m256i F4_m256i = _mm256_set1_epi32(65537);       // NOLINT(cert-err58-cpp)
-const m256i F4minus1_m256i = _mm256_set1_epi32(65536); // NOLINT(cert-err58-cpp)
-const m256i F3_m256i = _mm256_set1_epi32(257);         // NOLINT(cert-err58-cpp)
-const m256i F3minus1_m256i = _mm256_set1_epi32(256);   // NOLINT(cert-err58-cpp)
-
-const m256i F3_m256i_u16 = _mm256_set1_epi16(257); // NOLINT(cert-err58-cpp)
-// NOLINTNEXTLINE(cert-err58-cpp)
-const m256i F3minus1_m256i_u16 = _mm256_set1_epi16(256);
-
 /* GCC doesn't include the split store intrinsics so define them here. */
 #if defined(__GNUC__) && !defined(__clang__)
 
@@ -58,7 +45,134 @@ _mm256_storeu2_m128i(__m128i* const hi, __m128i* const lo, const __m256i a)
 
 #endif /* defined(__GNUC__) */
 
-#include "simd_256_u16.h"
-#include "simd_256_u32.h"
+namespace quadiron {
+namespace simd {
+
+typedef __m256i VecType;
+typedef __m128i HalfVecType;
+typedef __uint128_t NF4Type;
+typedef uint32_t MaskIntType;
+
+#define F4_u32 _mm256_set1_epi32(65537)
+#define F4m1_u32 _mm256_set1_epi32(65536)
+#define F3_u32 _mm256_set1_epi32(257)
+#define F3m1_u32 _mm256_set1_epi32(256)
+
+#define F3_u16 _mm256_set1_epi16(257)
+#define F3m1_u16 _mm256_set1_epi16(256)
+
+#define CARD(q) (EITHER(q == F3, F3_u32, F4_u32))
+#define CARD_M_1(q) (EITHER(q == F3, F3m1_u32, F4m1_u32))
+
+/* ============= Essential Operations for AVX2 w/ both u16 & u32 ============ */
+
+#define ZERO (_mm256_setzero_si256())
+#define ONE16 (_mm256_set1_epi16(1))
+#define ONE32 (_mm256_set1_epi32(1))
+
+inline VecType LOAD(VecType* address)
+{
+    return _mm256_load_si256(address);
+}
+inline void STORE(VecType* address, VecType reg)
+{
+    _mm256_store_si256(address, reg);
+}
+
+inline VecType AND(VecType x, VecType y)
+{
+    return _mm256_and_si256(x, y);
+}
+inline VecType XOR(VecType x, VecType y)
+{
+    return _mm256_xor_si256(x, y);
+}
+inline VecType SHIFTR_1(VecType x)
+{
+    return _mm256_srli_si256(x, 1);
+}
+inline VecType SHIFTR_2(VecType x)
+{
+    return _mm256_srli_si256(x, 2);
+}
+inline uint32_t MVMSK8(VecType x)
+{
+    return _mm256_movemask_epi8(x);
+}
+inline uint32_t TESTZ(VecType x, VecType y)
+{
+    return _mm256_testz_si256(x, y);
+}
+
+/* ================= Essential Operations for AVX2 w/ u32 ================= */
+
+inline VecType SET1(uint32_t val)
+{
+    return _mm256_set1_epi32(val);
+}
+inline VecType ADD32(VecType x, VecType y)
+{
+    return _mm256_add_epi32(x, y);
+}
+inline VecType SUB32(VecType x, VecType y)
+{
+    return _mm256_sub_epi32(x, y);
+}
+inline VecType MUL32(VecType x, VecType y)
+{
+    return _mm256_mullo_epi32(x, y);
+}
+
+inline VecType CMPEQ32(VecType x, VecType y)
+{
+    return _mm256_cmpeq_epi32(x, y);
+}
+inline VecType CMPGT32(VecType x, VecType y)
+{
+    return _mm256_cmpgt_epi32(x, y);
+}
+inline VecType MINU32(VecType x, VecType y)
+{
+    return _mm256_min_epu32(x, y);
+}
+
+#define MASK8_LO (_mm256_set1_epi16(0x80))
+#define BLEND8(x, y, mask) (_mm256_blendv_epi8(x, y, mask))
+#define BLEND16(x, y, imm8) (_mm256_blend_epi16(x, y, imm8))
+
+/* ================= Essential Operations for AVX2 w/ u16 ================= */
+
+inline VecType SET1(uint16_t val)
+{
+    return _mm256_set1_epi16(val);
+}
+inline VecType ADD16(VecType x, VecType y)
+{
+    return _mm256_add_epi16(x, y);
+}
+inline VecType SUB16(VecType x, VecType y)
+{
+    return _mm256_sub_epi16(x, y);
+}
+inline VecType MUL16(VecType x, VecType y)
+{
+    return _mm256_mullo_epi16(x, y);
+}
+
+inline VecType CMPEQ16(VecType x, VecType y)
+{
+    return _mm256_cmpeq_epi16(x, y);
+}
+inline VecType CMPGT16(VecType x, VecType y)
+{
+    return _mm256_cmpgt_epi16(x, y);
+}
+inline VecType MINU16(VecType x, VecType y)
+{
+    return _mm256_min_epu16(x, y);
+}
+
+} // namespace simd
+} // namespace quadiron
 
 #endif
