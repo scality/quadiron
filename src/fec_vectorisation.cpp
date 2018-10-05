@@ -32,7 +32,7 @@
 #include "fec_rs_fnt.h"
 
 /*
- * The file includes vectorized operations used by FEC classes
+ * The file includes specialized operations used by FEC classes
  */
 
 #ifdef QUADIRON_USE_SIMD
