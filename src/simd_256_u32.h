@@ -426,6 +426,12 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     return m256i_to_uint128(res);
 }
 
+/** Store low 128-bit part of `reg` to memory */
+inline void store_low(aint128* address, m256i reg)
+{
+    _mm_store_si128((m128i*)address, _mm256_castsi256_si128(reg));
+}
+
 /** Add buffer `y` to two halves of `x`. `x` is of length `n` */
 inline void
 add_buf_to_two_bufs(int n, aint128* _x, aint128* _y, aint32 card = F4)
@@ -459,8 +465,8 @@ add_buf_to_two_bufs(int n, aint128* _x, aint128* _y, aint32 card = F4)
             m256i _x_next_p = _mm256_castsi128_si256((m128i)x_half[i]);
             m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
 
-            _x_p = add(_x_p, _y_p, card);
-            _x_next_p = add(_x_next_p, _y_p, card);
+            store_low(_x + i, add(_x_p, _y_p, card));
+            store_low(x_half + i, add(_x_next_p, _y_p, card));
         }
     }
 }
@@ -486,7 +492,7 @@ inline void hadamard_mul(int n, aint128* _x, aint128* _y)
             m256i _x_p = _mm256_castsi128_si256((m128i)_x[i]);
             m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
 
-            _x_p = mul(_x_p, _y_p, F4);
+            store_low(_x + i, mul(_x_p, _y_p, F4));
         }
     }
 }
@@ -522,8 +528,8 @@ inline void hadamard_mul_doubled(int n, aint128* _x, aint128* _y)
             m256i _x_next_p = _mm256_castsi128_si256((m128i)x_half[i]);
             m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
 
-            _x_p = mul(_x_p, _y_p, F4);
-            _x_next_p = mul(_x_next_p, _y_p, F4);
+            store_low(_x + i, mul(_x_p, _y_p, F4));
+            store_low(x_half + i, mul(_x_next_p, _y_p, F4));
         }
     }
 }
