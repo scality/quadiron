@@ -239,6 +239,8 @@ class FecCode {
     std::unique_ptr<vec::Vector<T>> inv_r_powers = nullptr;
     // This vector MUST be initialized by derived Class using multiplicative FFT
     std::unique_ptr<vec::Vector<T>> r_powers = nullptr;
+    // buffers for intermediate symbols used for systematic FNT
+    std::unique_ptr<vec::Buffers<T>> dec_inter_codeword;
 
     // pure abstract methods that will be defined in derived class
     virtual void check_params() = 0;
@@ -915,7 +917,6 @@ bool FecCode<T>::decode_packet(
         if (fragment_index == n_data)
             return true;
     }
-    fragments_ids.sort();
 
     vec::Vector<T> avail_parity_ids(*(this->gf), n_data - avail_data_nb);
 
@@ -938,6 +939,7 @@ bool FecCode<T>::decode_packet(
         if (fragment_index < n_data)
             return false;
     }
+    fragments_ids.sort();
 
     decode_build();
 
@@ -1041,6 +1043,13 @@ void FecCode<T>::decode(
 
     // Lagrange interpolation
     decode_apply(context, output, words);
+
+    if (type == FecType::SYSTEMATIC) {
+        this->fft->fft(*dec_inter_codeword, output);
+        for (unsigned i = 0; i < this->n_data; i++) {
+            output.copy(i, dec_inter_codeword->get(i));
+        }
+    }
 }
 
 /* Prepare for decoding
@@ -1060,8 +1069,14 @@ void FecCode<T>::decode_prepare(
 
     T thres = (this->gf->card() - 1);
     for (unsigned i = 0; i < this->n_data; i++) {
-        const int frag_id = fragments_ids.get(i);
+        unsigned frag_id = fragments_ids.get(i);
+        if (type == FecType::SYSTEMATIC && frag_id < this->n_data) {
+            continue;
+        }
         T* chunk = words.get(i);
+        if (type == FecType::SYSTEMATIC) {
+            frag_id -= this->n_data;
+        }
         // loop over marked symbols
         for (auto const& data : props[frag_id].get_map()) {
             off_t loc_offset = data.first;

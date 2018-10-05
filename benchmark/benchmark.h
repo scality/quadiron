@@ -47,6 +47,7 @@
 enum ec_type {
     EC_TYPE_ALL = 0,
     EC_TYPE_RS_FNT,
+    EC_TYPE_RS_FNT_SYS,
     EC_TYPE_RS_NF4,
     EC_TYPE_RS_GFP_FFT,
     EC_TYPE_RS_GF2N_FFT_ADD,
@@ -66,7 +67,10 @@ const std::map<ec_type, std::string> ec_desc = {
     {EC_TYPE_RS_GF2N_FFT_ADD,
      "Reed-solomon codes over GF(2^n) using additive FFT"},
     {EC_TYPE_RS_GFP_FFT, "Reed-solomon codes over GF(p) using FFT"},
-    {EC_TYPE_RS_FNT, "Reed-solomon codes over GF(p = Fermat number) using FFT"},
+    {EC_TYPE_RS_FNT,
+     "Non-systematic Reed-solomon codes over GF(p = Fermat number) using FFT"},
+    {EC_TYPE_RS_FNT_SYS,
+     "Systematic Reed-solomon codes over GF(p = Fermat number) using FFT"},
     {EC_TYPE_RS_NF4,
      "Reed-solomon codes over GF(65537) using FFT on pack of codewords"},
 };
@@ -80,6 +84,7 @@ const std::map<ec_type, std::string> ec_desc_short = {
     {EC_TYPE_RS_GF2N_FFT_ADD, "rs-gf2n-fft-add"},
     {EC_TYPE_RS_GFP_FFT, "rs-gfp-fft"},
     {EC_TYPE_RS_FNT, "rs-fnt"},
+    {EC_TYPE_RS_FNT_SYS, "rs-fnt-sys"},
     {EC_TYPE_RS_NF4, "rs-nf4"},
 };
 
@@ -120,6 +125,7 @@ const std::map<std::string, ec_type> fec_type_map = {
     {"rs-gf2n-fft-add", EC_TYPE_RS_GF2N_FFT_ADD},
     {"rs-gfp-fft", EC_TYPE_RS_GFP_FFT},
     {"rs-fnt", EC_TYPE_RS_FNT},
+    {"rs-fnt-sys", EC_TYPE_RS_FNT_SYS},
     {"rs-nf4", EC_TYPE_RS_NF4},
 };
 
