@@ -39,31 +39,35 @@
 const unsigned F4 = 65537;
 const unsigned F3 = 257;
 
-typedef uint8_t aint8 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
-typedef uint16_t aint16 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
-typedef uint32_t aint32 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
-typedef uint64_t aint64 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
-typedef __uint128_t aint128 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
-
 namespace quadiron {
-/** The namespace simd contains functions for GF-NF4 that are accelerated by
- *  using SIMD operations over 128bits
+/** The namespace simd contains functions accelerated by
+ *  using SIMD operations over 128bits and 256bits
  *
- *  It supports operations on 32-bit numbers
+ *  It supports operations on 16-bit and 32-bit numbers
  */
 namespace simd {
+
+#define EITHER(x, a, b) (((x)) ? (a) : (b))
 
 // Vectorized operations are implemented in appropriated headers simd*.h
 
 } // namespace simd
 } // namespace quadiron
 
+// Include essential operations that use SIMD functions
 #if defined(__AVX2__)
 #include "simd_256.h"
 #elif defined(__SSE4_1__)
 #include "simd_128.h"
 #endif
 
+// Include basic operations
+#include "simd_basic.h"
+
+// Include accelerated operations dedicated for FNT
+#include "simd_fnt.h"
+
+// Include accelerated operations dedicated for NF4
 #include "simd_nf4.h"
 
 #endif // #ifdef QUADIRON_USE_SIMD
