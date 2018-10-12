@@ -123,6 +123,8 @@ set(TEST_SRC
   ${CMAKE_CURRENT_SOURCE_DIR}/rs_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/buffers_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/vector_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_definitions.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_simd.cpp
 
   CACHE
   INTERNAL
