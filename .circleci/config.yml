@@ -46,7 +46,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Compilation
+          name: Bootstrap
           command: >
             mkdir build && cd build &&
             cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_SIMD=ON 'Unix Makefiles' .. &&
@@ -58,8 +58,24 @@ jobs:
           name: Lint
           command: cd build && make check-lint
       - run:
-          name: Unit tests
-          command: cd build && make check
+          name: Unit tests (No SIMD)
+          command: >
+            rm -rf build && mkdir build && cd build &&
+            cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_SIMD=OFF 'Unix Makefiles' .. &&
+            make check
+      - run:
+          name: Unit tests (SSE)
+          command: >
+            rm -rf build && mkdir build && cd build &&
+            cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_SIMD=SSE 'Unix Makefiles' .. &&
+            make check
+      - run:
+          name: Unit tests (AVX)
+          command: >
+            rm -rf build && mkdir build && cd build &&
+            cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_SIMD=AVX 'Unix Makefiles' .. &&
+            make check
+
   benchmark:
     docker:
       - image: slaperche0scality/quadiron:latest
