@@ -60,6 +60,17 @@ jobs:
       - run:
           name: Unit tests
           command: cd build && make check
+  benchmark:
+    docker:
+      - image: slaperche0scality/quadiron:latest
+    steps:
+      - checkout
+      - run:
+          name: Compilation
+          command: >
+            mkdir build && cd build &&
+            cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_SIMD=ON 'Unix Makefiles' .. &&
+            make
       - run:
           name: Benchmark
           command: cd build && make benchmark
@@ -71,3 +82,4 @@ workflows:
       - build
       - android
       - test
+      - benchmark
