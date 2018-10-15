@@ -34,6 +34,7 @@
 #include <random>
 
 #include "big_int.h"
+#include "simd/simd.h"
 
 namespace quadiron {
 
@@ -104,22 +105,16 @@ static inline std::mt19937& prng()
     return PRNG;
 }
 
-#if defined(__AVX2__)
-#define ALIGN_SIZE 32
-#elif defined(__SSE4_1__)
-#define ALIGN_SIZE 16
-#endif
-
 template <typename T>
 inline T* aligned_allocate(size_t size)
 {
 #ifdef QUADIRON_USE_SIMD
-    size_t len = ALIGN_SIZE + size * sizeof(T);
+    size_t len = simd::ALIGNMENT + size * sizeof(T);
     uint8_t* ptr = new uint8_t[len];
     if (!ptr)
         return nullptr;
-    unsigned offset = (unsigned)((uintptr_t)ptr % ALIGN_SIZE);
-    ptr += ALIGN_SIZE - offset - 1;
+    unsigned offset = (unsigned)((uintptr_t)ptr % simd::ALIGNMENT);
+    ptr += simd::ALIGNMENT - offset - 1;
     // store offset
     ptr[0] = (uint8_t)offset; // NOLINT
     // increment ptr to the aligned location
@@ -142,7 +137,7 @@ inline void aligned_deallocate(T* data)
 #ifdef QUADIRON_USE_SIMD
     uint8_t* ptr = (uint8_t*)data;
     unsigned offset = *(ptr - 1);
-    ptr -= ALIGN_SIZE - offset;
+    ptr -= simd::ALIGNMENT - offset;
     delete[] ptr;
 #else
     delete[] data;

@@ -34,15 +34,16 @@
 #ifdef QUADIRON_USE_SIMD
 
 #include "property.h"
+#include "simd/simd.h"
 
 const unsigned F4 = 65537;
 const unsigned F3 = 257;
 
-typedef uint8_t aint8 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint16_t aint16 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint32_t aint32 __attribute__((aligned(ALIGN_SIZE)));
-typedef uint64_t aint64 __attribute__((aligned(ALIGN_SIZE)));
-typedef __uint128_t aint128 __attribute__((aligned(ALIGN_SIZE)));
+typedef uint8_t aint8 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
+typedef uint16_t aint16 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
+typedef uint32_t aint32 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
+typedef uint64_t aint64 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
+typedef __uint128_t aint128 __attribute__((aligned(quadiron::simd::ALIGNMENT)));
 
 namespace quadiron {
 /** The namespace simd contains functions for GF-NF4 that are accelerated by

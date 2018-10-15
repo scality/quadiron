@@ -38,6 +38,7 @@
 #ifdef QUADIRON_USE_SIMD
 
 #include "simd.h"
+#include "simd/simd.h"
 
 namespace quadiron {
 namespace fec {
@@ -53,7 +54,7 @@ void RsFnt<uint16_t>::encode_post_process(
     unsigned code_len = this->n_outputs;
 
     // number of elements per vector register
-    unsigned vec_size = ALIGN_SIZE / sizeof(uint16_t);
+    unsigned vec_size = simd::countof<uint16_t>();
     // number of vector registers per fragment packet
     size_t vecs_nb = size / vec_size;
     // odd number of elements not vectorized
@@ -85,7 +86,7 @@ void RsFnt<uint32_t>::encode_post_process(
     const unsigned code_len = this->n_outputs;
 
     // number of elements per vector register
-    const unsigned vec_size = ALIGN_SIZE / sizeof(uint32_t);
+    const unsigned vec_size = simd::countof<uint32_t>();
     // number of vector registers per fragment packet
     const size_t vecs_nb = size / vec_size;
     // odd number of elements not vectorized

@@ -33,6 +33,8 @@
 
 #include <x86intrin.h>
 
+#include <simd/simd.h>
+
 namespace quadiron {
 namespace simd {
 
@@ -52,7 +54,7 @@ static inline aint128 m128i_to_uint128(m128i v)
 inline aint128 expand16(uint16_t* arr, int n)
 {
     // since n <= 4
-    uint16_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
+    uint16_t _arr[4] __attribute__((aligned(ALIGNMENT))) = {0, 0, 0, 0};
     std::copy_n(arr, n, _arr);
 
     m128i b = _mm_set_epi16(0, 0, 0, 0, _arr[3], _arr[2], _arr[1], _arr[0]);
@@ -63,7 +65,7 @@ inline aint128 expand16(uint16_t* arr, int n)
 inline aint128 expand32(uint32_t* arr, int n)
 {
     // since n <= 4
-    uint32_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
+    uint32_t _arr[4] __attribute__((aligned(simd::ALIGNMENT))) = {0, 0, 0, 0};
     std::copy_n(arr, n, _arr);
 
     m128i b = _mm_set_epi32(_arr[3], _arr[2], _arr[1], _arr[0]);

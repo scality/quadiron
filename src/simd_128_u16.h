@@ -34,6 +34,7 @@
 #include <x86intrin.h>
 
 #include "property.h"
+#include "simd/simd.h"
 
 namespace quadiron {
 namespace simd {
@@ -324,7 +325,7 @@ inline void encode_post_process(
     uint16_t threshold,
     size_t vecs_nb)
 {
-    unsigned vec_size = ALIGN_SIZE / sizeof(uint16_t);
+    const unsigned vec_size = simd::countof<uint16_t>();
 
     const m128i _threshold = _mm_set1_epi16(threshold);
     uint16_t max = 1 << (sizeof(uint16_t) * 8 - 1);
