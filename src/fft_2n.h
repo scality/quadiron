@@ -88,15 +88,64 @@ class Radix2 : public FourierTransform<T> {
     void init_bitrev();
     void bit_rev_permute(vec::Vector<T>& vec);
     void bit_rev_permute(vec::Buffers<T>& vec);
+    void butterfly_ct_step(
+        vec::Buffers<T>& buf,
+        T r,
+        unsigned start,
+        unsigned m,
+        unsigned step);
+    void butterfly_ct_two_layers_step(
+        vec::Buffers<T>& buf,
+        unsigned start,
+        unsigned m);
+    void butterfly_gs_step(
+        vec::Buffers<T>& buf,
+        T r,
+        unsigned start,
+        unsigned m,
+        unsigned step);
+    void butterfly_gs_step_simple(
+        vec::Buffers<T>& buf,
+        T r,
+        unsigned start,
+        unsigned m,
+        unsigned step);
+
+    // Only used for non-vectorized elements
+    void butterfly_ct_step_slow(
+        vec::Buffers<T>& buf,
+        T coef,
+        unsigned start,
+        unsigned m,
+        unsigned step,
+        size_t offset = 0);
+    void butterfly_gs_step_slow(
+        vec::Buffers<T>& buf,
+        T coef,
+        unsigned start,
+        unsigned m,
+        unsigned step,
+        size_t offset = 0);
+    void butterfly_gs_step_simple_slow(
+        vec::Buffers<T>& buf,
+        T coef,
+        unsigned start,
+        unsigned m,
+        unsigned step,
+        size_t offset = 0);
 
     unsigned data_len; // number of real input elements
+    T card;
+    T card_minus_one;
     T w;
     T inv_w;
     size_t pkt_size;
+    size_t buf_size;
 
     std::unique_ptr<T[]> rev = nullptr;
     std::unique_ptr<vec::Vector<T>> W = nullptr;
     std::unique_ptr<vec::Vector<T>> inv_W = nullptr;
+    T* vec_W;
 };
 
 /**
@@ -119,11 +168,17 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
     inv_w = gf.inv(w);
     this->pkt_size = pkt_size;
     this->data_len = data_len > 0 ? data_len : n;
+    buf_size = pkt_size * sizeof(T);
 
     W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
     inv_W = std::unique_ptr<vec::Vector<T>>(new vec::Vector<T>(gf, n));
     gf.compute_omegas(*W, n, w);
     gf.compute_omegas(*inv_W, n, inv_w);
+
+    vec_W = W->get_mem();
+
+    card = this->gf->card();
+    card_minus_one = this->gf->card_minus_one();
 
     rev = std::unique_ptr<T[]>(new T[n]);
     init_bitrev();
@@ -283,39 +338,127 @@ template <typename T>
 void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     const unsigned len = this->n;
-    const unsigned size = this->pkt_size;
     const unsigned input_len = input.get_n();
     // to support FFT on input vectors of length greater than from `data_len`
     const unsigned group_len =
         (input_len > data_len) ? len / input_len : len / data_len;
 
+    const std::vector<T*>& i_mem = input.get_mem();
+    const std::vector<T*>& o_mem = output.get_mem();
+
     for (unsigned idx = 0; idx < input_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
-        T* a = input.get(idx);
-        const unsigned end = rev[idx] + group_len;
-        for (unsigned i = rev[idx]; i < end; ++i) {
-            output.copy(i, a);
+        for (unsigned i = rev[idx]; i < rev[idx] + group_len; ++i) {
+            memcpy(o_mem[i], i_mem[idx], buf_size);
         }
     }
     for (unsigned idx = input_len; idx < data_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
-        const unsigned end = rev[idx] + group_len;
-        for (unsigned i = rev[idx]; i < end; ++i) {
-            output.fill(i, 0);
+        for (unsigned i = rev[idx]; i < rev[idx] + group_len; ++i) {
+            memset(o_mem[i], 0, buf_size);
         }
     }
-    // perform butterfly operations
-    for (unsigned m = group_len; m < len; m *= 2) {
-        const unsigned doubled_m = 2 * m;
-        for (unsigned j = 0; j < m; ++j) {
-            const T r = W->get(j * len / doubled_m);
-            for (unsigned i = j; i < len; i += doubled_m) {
-                T* a = output.get(i);
-                T* b = output.get(i + m);
 
-                // perform butterfly operation for Cooley-Tukey FFT algorithm
-                this->gf->butterfly_ct(r, a, b, size);
-            }
+    // ----------------------
+    // Two layers at a time
+    // ----------------------
+    unsigned m = group_len;
+    const unsigned end = len / 2;
+    for (; m < end; m <<= 2) {
+        for (unsigned j = 0; j < m; ++j) {
+            butterfly_ct_two_layers_step(output, j, m);
+        }
+    }
+    if (m < len) {
+        assert(m == end);
+        // perform the last butterfly operations
+        for (unsigned j = 0; j < m; ++j) {
+            const T r = W->get(j);
+            butterfly_ct_step(output, r, j, m, len);
+        }
+    }
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + c * Q
+// Q = P - c * Q
+template <typename T>
+void Radix2<T>::butterfly_ct_step(
+    vec::Buffers<T>& buf,
+    T r,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    butterfly_ct_step_slow(buf, r, start, m, step);
+}
+
+/**
+ * Butterly CT on two-layers at a time
+ *
+ * For each quadruple
+ * (P, Q, R, S) = (buf[i], buf[i + m], buf[i + 2 * m], buf[i + 3 * m])
+ * First layer: butterfly on (P, Q) and (R, S) for step = 2 * m
+ *      coef r1 = W[start * n / (2 * m)]
+ *      P = P + r1 * Q
+ *      Q = P - r1 * Q
+ *      R = R + r1 * S
+ *      S = R - r1 * S
+ * Second layer: butterfly on (P, R) and (Q, S) for step = 4 * m
+ *      coef r2 = W[start * n / (4 * m)]
+ *      coef r3 = W[(start + m) * n / (4 * m)]
+ *      P = P + r2 * R
+ *      R = P - r2 * R
+ *      Q = Q + r3 * S
+ *      S = Q - r3 * S
+ *
+ * @param buf - working buffers
+ * @param start - index of buffer among `m` ones
+ * @param m - current group size
+ */
+template <typename T>
+void Radix2<T>::butterfly_ct_two_layers_step(
+    vec::Buffers<T>& buf,
+    unsigned start,
+    unsigned m)
+{
+    const unsigned step = m << 2;
+    //  ---------
+    // First layer
+    //  ---------
+    const T r1 = W->get(start * this->n / m / 2);
+    // first pair
+    butterfly_ct_step(buf, r1, start, m, step);
+    // second pair
+    butterfly_ct_step(buf, r1, start + 2 * m, m, step);
+    //  ---------
+    // Second layer
+    //  ---------
+    // first pair
+    const T r2 = W->get(start * this->n / m / 4);
+    butterfly_ct_step(buf, r2, start, 2 * m, step);
+    // second pair
+    const T r3 = W->get((start + m) * this->n / m / 4);
+    butterfly_ct_step(buf, r3, start + m, 2 * m, step);
+}
+
+template <typename T>
+void Radix2<T>::butterfly_ct_step_slow(
+    vec::Buffers<T>& buf,
+    T coef,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t offset)
+{
+    for (int i = start; i < this->n; i += step) {
+        T* a = buf.get(i);
+        T* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = offset; j < this->pkt_size; ++j) {
+            T x = this->gf->mul(coef, b[j]);
+            b[j] = this->gf->sub(a[j], x);
+            a[j] = this->gf->add(a[j], x);
         }
     }
 }
@@ -335,37 +478,117 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 template <typename T>
 void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
-    const unsigned size = this->pkt_size;
     const unsigned len = this->n;
     const unsigned input_len = input.get_n();
 
     // 1st reversion of elements of output
     bit_rev_permute(output);
 
+    // copy input to output
+    const std::vector<T*>& i_mem = input.get_mem();
+    const std::vector<T*>& o_mem = output.get_mem();
     unsigned i;
     for (i = 0; i < input_len; ++i) {
-        output.copy(i, input.get(i));
-    }
-    for (; i < len; ++i) {
-        output.fill(i, 0);
+        memcpy(o_mem[i], i_mem[i], buf_size);
     }
 
-    for (unsigned m = len / 2; m >= 1; m /= 2) {
+    unsigned m = len / 2;
+
+    if (input_len < len) {
+        const unsigned input_len_power_2 =
+            arith::get_smallest_power_of_2<unsigned>(input_len);
+        for (; i < input_len_power_2; ++i) {
+            memset(o_mem[i], 0, buf_size);
+        }
+
+        // For Q are zeros only => Q = c * P
+        for (; m >= input_len; m /= 2) {
+            unsigned doubled_m = 2 * m;
+            for (unsigned j = 0; j < m; ++j) {
+                const T r = inv_W->get(j * len / doubled_m);
+                butterfly_gs_step_simple(output, r, j, m, doubled_m);
+            }
+        }
+    }
+
+    // Next, normal butterlfy GS is performed
+    for (; m >= 1; m /= 2) {
         unsigned doubled_m = 2 * m;
         for (unsigned j = 0; j < m; ++j) {
-            T r = inv_W->get(j * len / doubled_m);
-            for (unsigned i = j; i < len; i += doubled_m) {
-                T* a = output.get(i);
-                T* b = output.get(i + m);
-
-                // perform butterfly operation for Gentleman-Sande FFT algorithm
-                this->gf->butterfly_gs(r, a, b, size);
-            }
+            const T r = inv_W->get(j * len / doubled_m);
+            butterfly_gs_step(output, r, j, m, doubled_m);
         }
     }
 
     // 2nd reversion of elements of output to return its natural order
     bit_rev_permute(output);
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// Q = c * P
+template <typename T>
+void Radix2<T>::butterfly_gs_step_simple(
+    vec::Buffers<T>& buf,
+    T coef,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    butterfly_gs_step_simple_slow(buf, coef, start, m, step);
+}
+
+// for each pair (P, Q) = (buf[i], buf[i + m]):
+// P = P + Q
+// Q = c * (P - Q)
+template <typename T>
+void Radix2<T>::butterfly_gs_step(
+    vec::Buffers<T>& buf,
+    T coef,
+    unsigned start,
+    unsigned m,
+    unsigned step)
+{
+    butterfly_gs_step_slow(buf, coef, start, m, step);
+}
+
+template <typename T>
+void Radix2<T>::butterfly_gs_step_slow(
+    vec::Buffers<T>& buf,
+    T coef,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t offset)
+{
+    for (int i = start; i < this->n; i += step) {
+        T* a = buf.get(i);
+        T* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = offset; j < this->pkt_size; ++j) {
+            T x = this->gf->sub(a[j], b[j]);
+            a[j] = this->gf->add(a[j], b[j]);
+            b[j] = this->gf->mul(coef, x);
+        }
+    }
+}
+
+template <typename T>
+void Radix2<T>::butterfly_gs_step_simple_slow(
+    vec::Buffers<T>& buf,
+    T coef,
+    unsigned start,
+    unsigned m,
+    unsigned step,
+    size_t offset)
+{
+    for (int i = start; i < this->n; i += step) {
+        T* a = buf.get(i);
+        T* b = buf.get(i + m);
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        for (size_t j = offset; j < this->pkt_size; ++j) {
+            b[j] = this->gf->mul(coef, a[j]);
+        }
+    }
 }
 
 template <typename T>
