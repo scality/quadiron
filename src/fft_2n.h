@@ -602,6 +602,65 @@ void Radix2<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
     this->gf->mul_vec_to_vecp(*(this->vec_inv_n), output, output);
 }
 
+#ifdef QUADIRON_USE_SIMD
+
+/* Operations are vectorized by SIMD */
+template <>
+void Radix2<uint16_t>::butterfly_ct_two_layers_step(
+    vec::Buffers<uint16_t>& buf,
+    unsigned start,
+    unsigned m);
+template <>
+void Radix2<uint16_t>::butterfly_ct_step(
+    vec::Buffers<uint16_t>& buf,
+    uint16_t r,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+template <>
+void Radix2<uint16_t>::butterfly_gs_step(
+    vec::Buffers<uint16_t>& buf,
+    uint16_t coef,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+template <>
+void Radix2<uint16_t>::butterfly_gs_step_simple(
+    vec::Buffers<uint16_t>& buf,
+    uint16_t coef,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+
+template <>
+void Radix2<uint32_t>::butterfly_ct_two_layers_step(
+    vec::Buffers<uint32_t>& buf,
+    unsigned start,
+    unsigned m);
+template <>
+void Radix2<uint32_t>::butterfly_ct_step(
+    vec::Buffers<uint32_t>& buf,
+    uint32_t r,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+template <>
+void Radix2<uint32_t>::butterfly_gs_step(
+    vec::Buffers<uint32_t>& buf,
+    uint32_t coef,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+template <>
+void Radix2<uint32_t>::butterfly_gs_step_simple(
+    vec::Buffers<uint32_t>& buf,
+    uint32_t coef,
+    unsigned start,
+    unsigned m,
+    unsigned step);
+
+#endif // #ifdef QUADIRON_USE_SIMD
+
 } // namespace fft
 } // namespace quadiron
 
