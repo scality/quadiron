@@ -38,6 +38,7 @@
 #include <sys/types.h>
 
 #include "quadiron.h"
+#include "simd/simd.h"
 
 #include "core.h"
 #include "iostreambuf.h"
@@ -298,6 +299,7 @@ class Benchmark {
     PRNG* prng = nullptr;
     quadiron::fec::FecCode<T>* fec = nullptr;
     Params_t* params = nullptr;
+    quadiron::simd::AlignedAllocator<uint8_t> allocator;
 
     bool systematic_ec = false;
 

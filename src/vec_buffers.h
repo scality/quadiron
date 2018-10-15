@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "core.h"
+#include "simd/simd.h"
 
 namespace quadiron {
 namespace vec {
@@ -131,6 +132,7 @@ class Buffers final {
     int n;
 
   private:
+    simd::AlignedAllocator<T> allocator;
     BufMemAlloc mem_alloc_case = BufMemAlloc::FULL;
     T* zeros = nullptr;
 };
@@ -151,7 +153,7 @@ Buffers<T>::Buffers(int n, size_t size)
     this->mem_alloc_case = BufMemAlloc::FULL;
     mem.reserve(n);
     for (int i = 0; i < n; i++) {
-        mem.push_back(aligned_allocate<T>(size));
+        mem.push_back(this->allocator.allocate(size));
     }
 }
 
@@ -193,7 +195,7 @@ Buffers<T>::Buffers(const Buffers<T>& vec, int n)
 
     mem.reserve(n);
     for (i = 0; i < this->n; i++) {
-        mem.push_back(aligned_allocate<T>(this->size));
+        mem.push_back(this->allocator.allocate(size));
     }
 
     int copy_len = (this->n <= vec_n) ? this->n : vec_n;
@@ -238,7 +240,7 @@ Buffers<T>::Buffers(const Buffers<T>& vec, int begin, int end)
     } else { // slice and padding zeros
         this->mem_alloc_case = BufMemAlloc::ZERO_EXTEND;
 
-        this->zeros = aligned_allocate<T>(this->size);
+        this->zeros = this->allocator.allocate(size);
         std::memset(this->zeros, 0, this->size * sizeof(T));
 
         mem.insert(mem.end(), vec_mem.begin() + begin, vec_mem.end());
@@ -312,7 +314,7 @@ Buffers<T>::Buffers(
     } else { // output is zero-extended & shuffled from `vec`
         this->mem_alloc_case = BufMemAlloc::ZERO_EXTEND;
 
-        this->zeros = aligned_allocate<T>(this->size);
+        this->zeros = this->allocator.allocate(size);
         std::memset(this->zeros, 0, this->size * sizeof(T));
 
         for (unsigned i = 0; i < n; ++i) {
@@ -330,10 +332,10 @@ Buffers<T>::~Buffers()
     if (this->mem_alloc_case != BufMemAlloc::NONE && mem.size() > 0) {
         if (this->mem_alloc_case == BufMemAlloc::FULL) {
             for (int i = 0; i < n; i++) {
-                aligned_deallocate<T>(mem[i]);
+                this->allocator.deallocate(mem[i], size);
             }
         } else if (this->mem_alloc_case == BufMemAlloc::ZERO_EXTEND) {
-            aligned_deallocate<T>(this->zeros);
+            this->allocator.deallocate(this->zeros, size);
         }
     }
 }
@@ -375,7 +377,7 @@ inline void Buffers<T>::set(int i, T* buf)
     assert(i >= 0 && i < n);
 
     if ((mem_alloc_case == BufMemAlloc::NONE) && (mem[i] != nullptr))
-        aligned_deallocate<T>(mem[i]);
+        this->allocator.deallocate(mem[i], size);
 
     mem[i] = buf;
 }
