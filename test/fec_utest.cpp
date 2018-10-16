@@ -129,16 +129,28 @@ TYPED_TEST_CASE(FecTestNo128, No128);
 
 TYPED_TEST(FecTestNo128, TestFnt) // NOLINT
 {
-    fec::RsFnt<TypeParam> fec(
-        fec::FecType::NON_SYSTEMATIC, 2, this->n_data, this->n_parities);
-    this->run_test(fec, this->n_data, this->n_data + this->n_parities, true);
+    for (unsigned word_size = 1; word_size <= 2; ++word_size) {
+        fec::RsFnt<TypeParam> fec(
+            fec::FecType::NON_SYSTEMATIC,
+            word_size,
+            this->n_data,
+            this->n_parities);
+        this->run_test(
+            fec, this->n_data, this->n_data + this->n_parities, true);
+    }
 }
 
 TYPED_TEST(FecTestNo128, TestFntSys) // NOLINT
 {
-    fec::RsFnt<TypeParam> fec(
-        fec::FecType::SYSTEMATIC, 2, this->n_data, this->n_parities);
-    this->run_test(fec, this->n_data, this->n_data + this->n_parities, true);
+    for (unsigned word_size = 1; word_size <= 2; ++word_size) {
+        fec::RsFnt<TypeParam> fec(
+            fec::FecType::SYSTEMATIC,
+            word_size,
+            this->n_data,
+            this->n_parities);
+        this->run_test(
+            fec, this->n_data, this->n_data + this->n_parities, true);
+    }
 }
 
 TYPED_TEST(FecTestNo128, TestGfpFft) // NOLINT

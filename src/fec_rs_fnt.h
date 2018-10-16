@@ -185,6 +185,38 @@ class RsFnt : public FecCode<T> {
         }
     }
 
+    void decode_data(
+        const DecodeContext<T>& context,
+        vec::Buffers<T>& output,
+        vec::Buffers<T>& words)
+    {
+        vec::Vector<T>& inv_A_i = context.get_vector(CtxVec::INV_A_I);
+        vec::Vector<T>& A_fft_2k = context.get_vector(CtxVec::A_FFT_2K);
+
+        vec::Buffers<T>& buf1_k = context.get_buffer(CtxBuf::K1);
+        vec::Buffers<T>& buf2_n = context.get_buffer(CtxBuf::N2);
+        vec::Buffers<T>& buf1_2k = context.get_buffer(CtxBuf::B2K1);
+        vec::Buffers<T>& buf2_2k = context.get_buffer(CtxBuf::B2K2);
+
+        // compute N'(x) = sum_i{n_i * x^z_i}
+        // where n_i=v_i/A'_i(x_i)
+        this->gf->mul_vec_to_vecp(inv_A_i, words, buf1_k);
+
+        // compute buf2_n
+        // Input `buf1_k` contains first `k` received symbols from 0 .. k-1
+        this->fft->fft_inv(buf2_n, buf1_k);
+
+        this->fft_2k->fft(buf1_2k, output);
+
+        // multiply FFT(A) and buf2_2k
+        this->gf->mul_vec_to_vecp(A_fft_2k, buf1_2k, buf1_2k);
+
+        this->fft_2k->ifft(buf2_2k, buf1_2k);
+
+        // negatize output
+        this->gf->neg(output);
+    }
+
     void encode(
         vec::Buffers<T>& output,
         std::vector<Properties>& props,
@@ -192,7 +224,7 @@ class RsFnt : public FecCode<T> {
         vec::Buffers<T>& words) override
     {
         if (this->type == FecType::SYSTEMATIC) {
-            this->decode_apply(*enc_context, *inter_words, words);
+            decode_data(*enc_context, *inter_words, words);
             vec::Buffers<T> _tmp(words, output);
             vec::Buffers<T> _output(_tmp, *suffix_words);
             this->fft->fft(_output, *inter_words);
