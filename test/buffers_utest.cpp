@@ -32,6 +32,7 @@
 #include <gtest/gtest.h>
 
 #include "quadiron.h"
+#include "simd/simd.h"
 
 namespace vec = quadiron::vec;
 namespace gf = quadiron::gf;
@@ -39,6 +40,8 @@ namespace gf = quadiron::gf;
 template <typename T>
 class BuffersTest : public ::testing::Test {
   public:
+    quadiron::simd::AlignedAllocator<T> allocator;
+
     std::unique_ptr<vec::Buffers<T>>
     gen_buffers_rand_data(int n, int size, int _max = 0)
     {
@@ -49,7 +52,7 @@ class BuffersTest : public ::testing::Test {
         auto vec = std::make_unique<vec::Buffers<T>>(n, size);
 
         for (int i = 0; i < n; i++) {
-            T* buf = quadiron::aligned_allocate<T>(size);
+            T* buf = this->allocator.allocate(size);
             for (int j = 0; j < size; j++) {
                 buf[j] = dis(prng);
             }

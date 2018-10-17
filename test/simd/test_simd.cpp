@@ -27,84 +27,32 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __QUAD_CORE_H__
-#define __QUAD_CORE_H__
+#include <vector>
 
-#include <cstdint>
-#include <random>
+#include <gtest/gtest.h>
 
-#include "big_int.h"
 #include "simd/simd.h"
 
-namespace quadiron {
+namespace simd = quadiron::simd;
 
-template <typename Type>
-struct DoubleSize {
-};
-template <>
-struct DoubleSize<uint16_t> {
-    typedef uint32_t T;
-};
-template <>
-struct DoubleSize<uint32_t> {
-    typedef uint64_t T;
-};
-template <>
-struct DoubleSize<uint64_t> {
-    typedef __uint128_t T;
-};
-template <>
-struct DoubleSize<__uint128_t> {
-    typedef UInt256 T;
-};
-
-template <typename Type>
-struct SignedDoubleSize {
-};
-template <>
-struct SignedDoubleSize<uint16_t> {
-    typedef int32_t T;
-};
-template <>
-struct SignedDoubleSize<uint32_t> {
-    typedef int64_t T;
-};
-template <>
-struct SignedDoubleSize<uint64_t> {
-    typedef __int128_t T;
-};
-template <>
-struct SignedDoubleSize<__uint128_t> {
-    typedef Int256 T;
-};
-
-/** A group of values stored as one.
- *
- * This allows faster processing, as the values can be processed as one.
- */
-template <typename T>
-struct GroupedValues {
-    // A group of several values.
-    T values;
-
-    /** Per-value flags.
-     *
-     * For now, only the first n bits (n being the number of values stored) are
-     * used.
-     * When the bit is set, the corresponding value should be 0 and that means
-     * that the real value is Fn-1.
-     */
-    uint32_t flag;
-};
-
-/** Return a reference to the global PRNG. */
-static inline std::mt19937& prng()
+TEST(SimdTest, TestCountOf) // NOLINT
 {
-    static std::mt19937 PRNG;
+    std::vector<std::size_t> expected;
 
-    return PRNG;
+    switch (simd::INSTRUCTION_SET) {
+    case simd::InstructionSet::NONE:
+        expected = {1, 1, 1, 1};
+        break;
+    case simd::InstructionSet::SSE:
+        expected = {16, 8, 4, 2};
+        break;
+    case simd::InstructionSet::AVX:
+        expected = {32, 16, 8, 4};
+        break;
+    }
+
+    ASSERT_EQ(simd::countof<uint8_t>(), expected[0]);
+    ASSERT_EQ(simd::countof<uint16_t>(), expected[1]);
+    ASSERT_EQ(simd::countof<uint32_t>(), expected[2]);
+    ASSERT_EQ(simd::countof<uint64_t>(), expected[3]);
 }
-
-} // namespace quadiron
-
-#endif

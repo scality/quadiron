@@ -32,6 +32,7 @@
 
 #ifdef QUADIRON_USE_SIMD
 #include "simd.h"
+#include "simd/simd.h"
 
 namespace quadiron {
 namespace gf {
@@ -65,7 +66,7 @@ void RingModN<uint16_t>::butterfly_ct(
     uint16_t* buf2,
     size_t len) const
 {
-    unsigned ratio = ALIGN_SIZE / sizeof(*buf1);
+    unsigned ratio = simd::countof<uint16_t>();
     size_t vec_len = len / ratio;
     size_t last_len = len - vec_len * ratio;
 
@@ -90,7 +91,7 @@ void RingModN<uint32_t>::butterfly_ct(
     uint32_t* buf2,
     size_t len) const
 {
-    unsigned ratio = ALIGN_SIZE / sizeof(*buf1);
+    unsigned ratio = simd::countof<uint32_t>();
     size_t vec_len = len / ratio;
     size_t last_len = len - vec_len * ratio;
 
@@ -115,7 +116,7 @@ void RingModN<uint16_t>::butterfly_gs(
     uint16_t* buf2,
     size_t len) const
 {
-    unsigned ratio = ALIGN_SIZE / sizeof(*buf1);
+    unsigned ratio = simd::countof<uint16_t>();
     size_t vec_len = len / ratio;
     size_t last_len = len - vec_len * ratio;
 
@@ -141,7 +142,7 @@ void RingModN<uint32_t>::butterfly_gs(
     uint32_t* buf2,
     size_t len) const
 {
-    unsigned ratio = ALIGN_SIZE / sizeof(*buf1);
+    unsigned ratio = simd::countof<uint32_t>();
     size_t vec_len = len / ratio;
     size_t last_len = len - vec_len * ratio;
 

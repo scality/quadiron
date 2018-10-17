@@ -33,6 +33,8 @@
 
 #include <x86intrin.h>
 
+#include <simd/simd.h>
+
 namespace quadiron {
 namespace simd {
 
@@ -52,11 +54,10 @@ static inline aint128 m128i_to_uint128(m128i v)
 inline aint128 expand16(uint16_t* arr, int n)
 {
     // since n <= 4
-    uint16_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
+    uint16_t _arr[4] __attribute__((aligned(ALIGNMENT))) = {0, 0, 0, 0};
     std::copy_n(arr, n, _arr);
 
-    m128i b = _mm_set_epi64(
-        _mm_setzero_si64(), _mm_set_pi16(_arr[3], _arr[2], _arr[1], _arr[0]));
+    m128i b = _mm_set_epi16(0, 0, 0, 0, _arr[3], _arr[2], _arr[1], _arr[0]);
 
     return m128i_to_uint128(b);
 }
@@ -64,7 +65,7 @@ inline aint128 expand16(uint16_t* arr, int n)
 inline aint128 expand32(uint32_t* arr, int n)
 {
     // since n <= 4
-    uint32_t _arr[4] __attribute__((aligned(ALIGN_SIZE))) = {0, 0, 0, 0};
+    uint32_t _arr[4] __attribute__((aligned(simd::ALIGNMENT))) = {0, 0, 0, 0};
     std::copy_n(arr, n, _arr);
 
     m128i b = _mm_set_epi32(_arr[3], _arr[2], _arr[1], _arr[0]);
@@ -90,8 +91,7 @@ inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
     const uint32_t flag =
         ai[1] | (!!ai[3] << 1u) | (!!ai[5] << 2u) | (!!ai[7] << 3u);
 
-    m128i val = _mm_set_epi64(
-        _mm_setzero_si64(), _mm_set_pi16(ai[6], ai[4], ai[2], ai[0]));
+    m128i val = _mm_set_epi16(0, 0, 0, 0, ai[6], ai[4], ai[2], ai[0]);
     _mm_store_si128((m128i*)&values, val);
 
     GroupedValues<__uint128_t> b = {values, flag};
@@ -117,8 +117,7 @@ inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
     const uint32_t flag =
         ai[1] | (!!ai[3] << 1u) | (!!ai[5] << 2u) | (!!ai[7] << 3u);
 
-    m128i val = _mm_set_epi64(
-        _mm_setzero_si64(), _mm_set_pi16(ai[6], ai[4], ai[2], ai[0]));
+    m128i val = _mm_set_epi16(0, 0, 0, 0, ai[6], ai[4], ai[2], ai[0]);
     _mm_store_si128((m128i*)&values, val);
 
     b.flag = flag;

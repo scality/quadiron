@@ -40,6 +40,7 @@
 
 #include "core.h"
 #include "gf_ring.h"
+#include "simd/simd.h"
 #include "vec_cast.h"
 #include "vec_doubled.h"
 
@@ -108,6 +109,7 @@ class Vector {
     T* mem;
     int mem_len;
     bool new_mem;
+    simd::AlignedAllocator<T> allocator;
 };
 
 template <typename T>
@@ -116,7 +118,7 @@ Vector<T>::Vector(const gf::RingModN<T>& rn, int n, T* mem, int mem_len)
     this->rn = &rn;
     this->n = n;
     if (mem == nullptr) {
-        this->mem = aligned_allocate<T>(n);
+        this->mem = this->allocator.allocate(n);
         this->mem_len = n;
         this->new_mem = true;
     } else {
@@ -139,8 +141,9 @@ Vector<T>::Vector(const gf::RingModN<T>& rn, std::initializer_list<T> values)
 template <typename T>
 Vector<T>::~Vector()
 {
-    if (new_mem)
-        aligned_deallocate<T>(this->mem);
+    if (new_mem) {
+        this->allocator.deallocate(this->mem, n);
+    }
 }
 
 template <typename T>
@@ -203,8 +206,9 @@ inline T* Vector<T>::get_mem() const
 template <typename T>
 inline void Vector<T>::set_mem(T* mem, int mem_len)
 {
-    if (new_mem)
-        aligned_deallocate<T>(this->mem);
+    if (new_mem) {
+        this->allocator.deallocate(this->mem, n);
+    }
     new_mem = false;
     this->mem = mem;
     this->mem_len = mem_len;
