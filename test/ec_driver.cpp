@@ -27,6 +27,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <iomanip>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -36,6 +37,8 @@
 
 int vflag = 0;
 int tflag = 0;
+int data_zpad = -1;
+int coding_zpad = -1;
 char* prefix = nullptr;
 
 void xusage()
@@ -44,13 +47,13 @@ void xusage()
     "ec [-e rs-gf2n-v|rs-gf2n-c|rs-gf2n-fft|rs-gf2n-fft-add|rs-gfp-fft|rs-fnt|rs-fnt-sys|rs-nf4]" +
     "[-w word_size][-n n_data][-m n_parities][-p prefix][-v (verbose)]" +
     " -c (encode) | -r (repair)\n";
-    exit(1);
+    std::exit(EXIT_FAILURE);
 }
 
 void xperror(const char* str)
 {
     std::cerr << str << "\n";
-    exit(1);
+    std::exit(EXIT_FAILURE);
 }
 
 char* xstrdup(const char* str)
@@ -62,6 +65,29 @@ char* xstrdup(const char* str)
     return n;
 }
 
+static inline unsigned count_digits(uint32_t number)
+{
+    int digits = 0;
+    while (number) {
+        number /= 10;
+        digits++;
+    }
+    return digits;
+}
+
+static inline std::string get_filename(
+    const std::string& pfx,
+    char type,
+    int zpad,
+    int part,
+    const std::string& ext = "")
+{
+    std::ostringstream oss;
+    oss << pfx << "." << type << std::setfill('0') << std::setw(zpad) << part
+        << ext;
+    return oss.str();
+}
+
 /**
  * (re-)create missing prefix.c1 ... cm files
  *
@@ -71,30 +97,48 @@ void create_coding_files(
     quadiron::fec::FecCode<T>* fec,
     bool operation_on_packet = false)
 {
-    char filename[1024];
+    std::string filename;
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
     std::vector<std::ostream*> c_files(fec->n_outputs, nullptr);
     std::vector<std::ostream*> c_props_files(fec->n_outputs, nullptr);
     std::vector<quadiron::Properties> c_props(fec->n_outputs);
 
     for (unsigned i = 0; i < fec->n_data; i++) {
-        snprintf(filename, sizeof(filename), "%s.d%d", prefix, i);
+        filename = get_filename(prefix, 'd', data_zpad, i);
         if (vflag)
             std::cerr << "create: opening data " << filename << "\n";
         d_files[i] = new std::ifstream(filename);
+        if (d_files[i]->fail()) {
+          std::cerr << "l." << __LINE__ <<
+            ": Exception opening data file (RO) for generation: " <<
+            filename << "\n";
+            std::exit(EXIT_FAILURE);
+        }
     }
 
     for (unsigned i = 0; i < fec->n_outputs; i++) {
-        snprintf(filename, sizeof(filename), "%s.c%d", prefix, i);
+        filename = get_filename(prefix, 'c', coding_zpad, i);
         if (vflag)
-            std::cerr << "create: opening coding for writing " << filename
-                      << "\n";
+            std::cerr << "create: opening coding for writing " <<
+              filename << "\n";
         c_files[i] = new std::ofstream(filename);
-        snprintf(filename, sizeof(filename), "%s.c%d.props", prefix, i);
+        if (c_files[i]->fail()) {
+          std::cerr << "l." << __LINE__ <<
+           ": Exception creating coding file (RW) for generation: " <<
+            filename << "\n";
+            std::exit(EXIT_FAILURE);
+        }
+        filename = get_filename(prefix, 'c', coding_zpad, i, ".props");
         if (vflag)
-            std::cerr << "create: opening coding props for writing " << filename
-                      << "\n";
+          std::cerr << "create: opening coding props for writing " <<
+            filename << "\n";
         c_props_files[i] = new std::ofstream(filename);
+        if (c_props_files[i]->fail()) {
+          std::cerr << "l." << __LINE__ <<
+            ": Exception creating props file (RW) for generation: " <<
+            filename << "\n";
+            std::exit(EXIT_FAILURE);
+        }
     }
 
     if (operation_on_packet) {
@@ -128,7 +172,7 @@ bool repair_data_files(
     quadiron::fec::FecCode<T>* fec,
     bool operation_on_packet = false)
 {
-    char filename[1024];
+    std::string filename;
     std::vector<std::istream*> d_files(fec->n_data, nullptr);
     std::vector<std::istream*> c_files(fec->n_outputs, nullptr);
     std::vector<std::istream*> c_props_files(fec->n_outputs, nullptr);
@@ -137,39 +181,62 @@ bool repair_data_files(
 
     // re-read data
     for (unsigned i = 0; i < fec->n_data; i++) {
-        snprintf(filename, sizeof(filename), "%s.d%d", prefix, i);
+        filename = get_filename(prefix, 'd', data_zpad, i);
         if (vflag)
             std::cerr << "repair: checking data " << filename << "\n";
-        if (-1 == access(filename, F_OK)) {
+        if (-1 == access(filename.c_str(), F_OK)) {
             if (vflag)
                 std::cerr << filename << " is missing\n";
             d_files[i] = nullptr;
             r_files[i] = new std::ofstream(filename);
+            if (r_files[i]->fail()) {
+              std::cerr << "l." << __LINE__ <<
+                ": Exception creating data file (RW) for repair: " <<
+                filename << "\n";
+                std::exit(EXIT_FAILURE);
+            }
         } else {
             r_files[i] = nullptr;
             d_files[i] = new std::ifstream(filename);
+            if (d_files[i]->fail()) {
+              std::cerr << "l." << __LINE__ <<
+                ": Exception opening data file (RO) for repair: " <<
+                filename << "\n";
+                std::exit(EXIT_FAILURE);
+            }
         }
     }
 
     for (unsigned i = 0; i < fec->n_outputs; i++) {
-        snprintf(filename, sizeof(filename), "%s.c%d", prefix, i);
+        filename = get_filename(prefix, 'c', coding_zpad, i);
         if (vflag)
             std::cerr << "repair: checking coding " << filename << "\n";
-        if (access(filename, F_OK)) {
+        if (access(filename.c_str(), F_OK)) {
             if (vflag)
                 std::cerr << filename << " is missing\n";
             c_files[i] = nullptr;
         } else {
             c_files[i] = new std::ifstream(filename);
+            if (c_files[i]->fail()) {
+              std::cerr << "l." << __LINE__ <<
+                ": Exception opening coding file (RO) for repair: " <<
+                filename << "\n";
+              std::exit(EXIT_FAILURE);
+            }
         }
-
-        snprintf(filename, sizeof(filename), "%s.c%d.props", prefix, i);
+        filename = get_filename(prefix, 'c', coding_zpad, i, ".props");
         if (vflag)
             std::cerr << "repair: checking coding props " << filename << "\n";
-        if (access(filename, F_OK)) {
+        if (access(filename.c_str(), F_OK)) {
             c_props_files[i] = nullptr;
         } else {
             c_props_files[i] = new std::ifstream(filename);
+            if (c_props_files[i]->fail()) {
+              std::cerr << "l." << __LINE__ <<
+                ": Exception opening coding file (RO) for repair: " <<
+                filename << "\n";
+                std::exit(EXIT_FAILURE);
+            }
             *(c_props_files[i]) >> c_props[i];
         }
     }
@@ -259,13 +326,15 @@ void run_fec_rs_gf2n(
     fec = new quadiron::fec::RsGf2n<T>(
         word_size, n_data, n_parities, gf2nrs_type);
 
+    coding_zpad = count_digits(fec->n_outputs - 1);
+
     if (tflag) {
         print_fec_type<T>(fec);
-        exit(1);
+        std::exit(EXIT_FAILURE);
     }
     if (rflag) {
         if (0 != repair_data_files<T>(fec)) {
-            exit(1);
+            std::exit(EXIT_FAILURE);
         }
     }
     create_coding_files<T>(fec);
@@ -279,13 +348,15 @@ void run_fec_rs_gf2n_fft(int word_size, int n_data, int n_parities, int rflag)
     quadiron::fec::RsGf2nFft<T>* fec;
     fec = new quadiron::fec::RsGf2nFft<T>(word_size, n_data, n_parities);
 
+    coding_zpad = count_digits(fec->n_outputs - 1);
+
     if (tflag) {
         print_fec_type<T>(fec);
-        exit(1);
+        std::exit(EXIT_FAILURE);
     }
     if (rflag) {
         if (0 != repair_data_files<T>(fec)) {
-            exit(1);
+            std::exit(EXIT_FAILURE);
         }
     }
     create_coding_files<T>(fec);
@@ -303,13 +374,15 @@ void run_fec_rs_gf2n_fft_add(
     quadiron::fec::RsGf2nFftAdd<T>* fec;
     fec = new quadiron::fec::RsGf2nFftAdd<T>(word_size, n_data, n_parities);
 
+    coding_zpad = count_digits(fec->n_outputs - 1);
+
     if (tflag) {
         print_fec_type<T>(fec);
-        exit(1);
+        std::exit(EXIT_FAILURE);
     }
     if (rflag) {
         if (0 != repair_data_files<T>(fec)) {
-            exit(1);
+            std::exit(EXIT_FAILURE);
         }
     }
     create_coding_files<T>(fec);
@@ -329,13 +402,15 @@ void run_fec_rs_gfp_fft(
     quadiron::fec::RsGfpFft<T>* fec;
     fec = new quadiron::fec::RsGfpFft<T>(word_size, n_data, n_parities);
 
+    coding_zpad = count_digits(fec->n_outputs - 1);
+
     if (tflag) {
         print_fec_type<T>(fec);
-        exit(1);
+        std::exit(EXIT_FAILURE);
     }
     if (rflag) {
         if (0 != repair_data_files<T>(fec)) {
-            exit(1);
+            std::exit(EXIT_FAILURE);
         }
     }
     create_coding_files<T>(fec);
@@ -356,13 +431,15 @@ void run_fec_rs_fnt(
     fec = new quadiron::fec::RsFnt<T>(
         type, word_size, n_data, n_parities, pkt_size);
 
+    coding_zpad = count_digits(fec->n_outputs - 1);
+
     if (tflag) {
         print_fec_type<T>(fec);
-        exit(1);
+        std::exit(EXIT_FAILURE);
     }
     if (rflag) {
         if (0 != repair_data_files<T>(fec, true)) {
-            exit(1);
+            std::exit(EXIT_FAILURE);
         }
     }
     create_coding_files<T>(fec, true);
@@ -377,13 +454,15 @@ void run_fec_rs_nf4(int word_size, int n_data, int n_parities, int rflag)
     size_t pkt_size = 1024;
     fec = new quadiron::fec::RsNf4<T>(word_size, n_data, n_parities, pkt_size);
 
+    coding_zpad = count_digits(fec->n_outputs - 1);
+
     if (tflag) {
         print_fec_type<T>(fec);
-        exit(1);
+        std::exit(EXIT_FAILURE);
     }
     if (rflag) {
         if (0 != repair_data_files<T>(fec)) {
-            exit(1);
+            std::exit(EXIT_FAILURE);
         }
     }
     create_coding_files<T>(fec);
@@ -492,11 +571,13 @@ int main(int argc, char** argv)
     if (0 == check(n_data + n_parities, word_size, eflag)) {
         std::cerr
             << "Number of fragments is too big compared to Galois field size\n";
-        exit(1);
+        std::exit(EXIT_FAILURE);
     }
 
     if (-1 == n_data || -1 == n_parities || nullptr == prefix)
         xusage();
+
+    data_zpad = count_digits(n_data - 1);
 
     if (eflag == EC_TYPE_RS_FNT) {
         if (word_size <= 4) {

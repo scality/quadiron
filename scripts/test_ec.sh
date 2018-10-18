@@ -68,19 +68,30 @@ do_test()
 
     rm -f foo.*
 
-    for i in `seq 0 $(expr ${n_data} - 1)`
+    for i in `seq -w 0 $(expr ${n_data} - 1)`
     do
         dd if=/dev/urandom of=foo.d${i} bs=${bs} count=1 > /dev/null 2>&1
         md5sum foo.d${i} > foo.d${i}.md5sum.1
+        checkfail "checksumming data"
     done
 
     echo -n "GEN,"
     ${valgrind} ${bin} -e ${fec_type} -w ${word_size} -n ${n_data} -m ${n_coding} -p foo -c ${extraopts} ${vflag}
     checkfail "coding generation"
 
-    for i in `seq 0 $(expr ${n_coding} - 1)`
+    if [ "${type}" = "NON_SYSTEMATIC" ]
+    then
+        _n_coding=$(expr ${n_data} + ${n_coding})
+        _n_digits=${#_n_coding}
+        _fmt=%0${_n_digits}d
+    else
+        _n_coding=${n_coding}
+    fi
+    
+    for i in `seq -w 0 $(expr ${_n_coding} - 1)`
     do
         md5sum foo.c${i} > foo.c${i}.md5sum.1
+        checkfail "checksumming codings"
     done
 
     if [ "${type}" = "NON_SYSTEMATIC" ]
@@ -92,35 +103,44 @@ do_test()
         for i in $files
         do
             mv ${i} ${i}.1
+            checkfail "mv data"
         done
     fi
 
-    j=0
-    for i in $data_loss
-    do
-        if [ "${type}" = "NON_SYSTEMATIC" ]
-        then
-            mv foo.c${j} foo.c${j}.1
-            mv foo.c${j}.props foo.c${j}.props.1
-        else
-            mv foo.d${i} foo.d${i}.1
-        fi
-        j=`expr ${j} + 1`
-    done
-
-    for i in $coding_loss
-    do
-        if [ "${type}" = "NON_SYSTEMATIC" ]
-        then
-            mv foo.c${j} foo.c${j}.1
-            mv foo.c${j}.props foo.c${j}.props.1
-        else
-            mv foo.c${i} foo.c${i}.1
-            mv foo.c${i}.props foo.c${i}.props.1
-        fi
-        j=`expr ${j} + 1`
-    done
-
+    if [ "${type}" = "NON_SYSTEMATIC" ]
+    then
+        for pos in $data_loss
+        do
+            _pos=$(printf ${_fmt} ${pos})
+            mv foo.c${_pos} foo.c${_pos}.1
+            checkfail "data loss: mv non-sys codings"
+            mv foo.c${_pos}.props foo.c${_pos}.props.1
+            checkfail "data loss: mv non-sys props"
+        done
+        for pos in $coding_loss
+        do
+            _pos=$(expr ${n_data} + ${pos})
+            _pos=$(printf ${_fmt} ${_pos})
+            mv foo.c${_pos} foo.c${_pos}.1
+            checkfail "coding loss: mv non-sys codings"
+            mv foo.c${_pos}.props foo.c${_pos}.props.1
+            checkfail "coding loss: nv non-sys props"
+        done
+    else
+        for pos in $data_loss
+        do
+            mv foo.d${pos} foo.d${pos}.1
+            checkfail "data loss: mv data"
+        done
+        for pos in $coding_loss
+        do
+            mv foo.c${pos} foo.c${pos}.1
+            checkfail "coding loss: nm codings"
+            mv foo.c${pos}.props foo.c${pos}.props.1
+            checkfail "coding loss: mv props"
+        done
+    fi
+    
     if [ "${directive}" == "enconly" ]
     then
         echo
@@ -131,15 +151,17 @@ do_test()
     ${valgrind} ${bin} -e ${fec_type} -w ${word_size} -n ${n_data} -m ${n_coding} -p foo -r ${extraopts} ${vflag}
     checkfail "repairing"
 
-    for i in `seq 0 $(expr ${n_data} - 1)`
+    for i in `seq -w 0 $(expr ${n_data} - 1)`
     do
         md5sum foo.d${i} > foo.d${i}.md5sum.2
+        checkfail "checksumming repaired data"
         diff foo.d${i}.md5sum.1 foo.d${i}.md5sum.2
         checkfail "data files mismatch"
     done
-    for i in `seq 0 $(expr ${n_coding} - 1)`
+    for i in `seq -w 0 $(expr ${_n_coding} - 1)`
     do
         md5sum foo.c${i} > foo.c${i}.md5sum.2
+        checkfail "checksumming repaired codings"
         diff foo.c${i}.md5sum.1 foo.c${i}.md5sum.2
         checkfail "coding files mismatch"
     done
