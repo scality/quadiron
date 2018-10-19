@@ -121,6 +121,7 @@ include(CheckCXXCompilerFlag)
 set(COMMON_CXX_FLAGS
   -pipe
   -Wall
+  -fopenmp 
 )
 
 # Option for enabling/disabling SIMD flags is for both of debug and release

@@ -31,6 +31,8 @@
 #ifndef __QUAD_FFT_2N_H__
 #define __QUAD_FFT_2N_H__
 
+#include <omp.h>
+
 #include "arith.h"
 #include "fft_2.h"
 #include "fft_base.h"
@@ -197,6 +199,7 @@ void Radix2<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
     const unsigned group_len =
         (input_len > data_len) ? len / input_len : len / data_len;
 
+#pragma omp parallel for
     for (unsigned idx = 0; idx < input_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
         const T a = input.get(idx);
@@ -205,6 +208,7 @@ void Radix2<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
             output.set(i, a);
         }
     }
+#pragma omp parallel for
     for (unsigned idx = input_len; idx < data_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
         const unsigned end = rev[idx] + group_len;
@@ -216,6 +220,7 @@ void Radix2<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
     for (unsigned m = group_len; m < len; m *= 2) {
         const unsigned doubled_m = 2 * m;
         const unsigned ratio = len / doubled_m;
+#pragma omp parallel for
         for (unsigned j = 0; j < m; ++j) {
             const T r = W->get(j * ratio);
             for (unsigned i = j; i < len; i += doubled_m) {
@@ -249,6 +254,7 @@ void Radix2<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 
     for (unsigned m = len / 2; m >= 1; m /= 2) {
         unsigned doubled_m = 2 * m;
+#pragma omp parallel for
         for (unsigned j = 0; j < m; ++j) {
             T r = inv_W->get(j * len / doubled_m);
             for (unsigned i = j; i < len; i += doubled_m) {
@@ -290,6 +296,7 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
     const unsigned group_len =
         (input_len > data_len) ? len / input_len : len / data_len;
 
+#pragma omp parallel for           
     for (unsigned idx = 0; idx < input_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
         T* a = input.get(idx);
@@ -298,6 +305,7 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
             output.copy(i, a);
         }
     }
+#pragma omp parallel for           
     for (unsigned idx = input_len; idx < data_len; ++idx) {
         // set output  = scramble(input), i.e. bit reversal ordering
         const unsigned end = rev[idx] + group_len;
@@ -308,6 +316,7 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
     // perform butterfly operations
     for (unsigned m = group_len; m < len; m *= 2) {
         const unsigned doubled_m = 2 * m;
+#pragma omp parallel for           
         for (unsigned j = 0; j < m; ++j) {
             const T r = W->get(j * len / doubled_m);
             for (unsigned i = j; i < len; i += doubled_m) {
@@ -344,6 +353,7 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
     bit_rev_permute(output);
 
     unsigned i;
+#pragma omp parallel for    
     for (i = 0; i < input_len; ++i) {
         output.copy(i, input.get(i));
     }
@@ -353,6 +363,7 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
 
     for (unsigned m = len / 2; m >= 1; m /= 2) {
         unsigned doubled_m = 2 * m;
+#pragma omp parallel for    
         for (unsigned j = 0; j < m; ++j) {
             T r = inv_W->get(j * len / doubled_m);
             for (unsigned i = j; i < len; i += doubled_m) {
