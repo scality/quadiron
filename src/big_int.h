@@ -31,15 +31,6 @@
 #ifndef __QUAD_BIG_INT_H__
 #define __QUAD_BIG_INT_H__
 
-#include <iostream>
-
-namespace std {
-
-std::ostream& operator<<(std::ostream& dest, __uint128_t value);
-std::ostream& operator<<(std::ostream& dest, __int128_t value);
-
-} // namespace std
-
 namespace quadiron {
 
 struct UInt256 {

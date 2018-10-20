@@ -36,6 +36,7 @@
  * The root namespace of the QuadIron library.
  */
 
+#include "build_info.h"
 #include "fec_base.h"
 #include "fec_rs_fnt.h"
 #include "fec_rs_gf2n.h"
@@ -51,6 +52,9 @@
  *
  * @return the version string.
  */
-const char* get_version();
+static inline const char* get_version()
+{
+    return VERSION;
+}
 
 #endif

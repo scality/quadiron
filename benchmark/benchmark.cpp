@@ -634,7 +634,7 @@ bool Benchmark<T>::enc_dec()
     return true;
 }
 
-[[noreturn]] void xusage()
+[[noreturn]] static void xusage()
 {
     std::cerr << "Usage: benchmark [options]\n"
               << "Options:\n"
@@ -693,7 +693,7 @@ void init_run_bench(Params_t* params)
     }
 }
 
-void run_scenario(Params_t* params)
+static void run_scenario(Params_t* params)
 {
     // get sizeof_T if necessary
     params->get_sizeof_T();
@@ -718,7 +718,7 @@ void run_scenario(Params_t* params)
     }
 }
 
-void run_benchmark(Params_t* params)
+static void run_benchmark(Params_t* params)
 {
     if (params->fec_type == EC_TYPE_ALL) {
         for (int type = EC_TYPE_ALL + 1; type < EC_TYPE_END; type++) {
@@ -730,7 +730,7 @@ void run_benchmark(Params_t* params)
     }
 }
 
-void do_join(std::thread& t)
+static void do_join(std::thread& t)
 {
     t.join();
 }
