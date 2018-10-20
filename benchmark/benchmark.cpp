@@ -181,6 +181,8 @@ int Benchmark<T>::init()
         fec = new quadiron::fec::RsFnt<T>(
             quadiron::fec::FecType::SYSTEMATIC, word_size, k, m, pkt_size);
         break;
+    case EC_TYPE_ALL: /* FALLTHROUGH */
+    case EC_TYPE_END: /* FALLTHROUGH */
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
