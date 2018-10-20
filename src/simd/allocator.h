@@ -74,7 +74,7 @@ class AlignedAllocator {
     AlignedAllocator() noexcept {}
     // No state, => nothing to copy.
     template <class U>
-    AlignedAllocator(AlignedAllocator<U> const& other) noexcept
+    AlignedAllocator(AlignedAllocator<U> const& /* other */) noexcept
     {
     }
 
@@ -113,7 +113,7 @@ class AlignedAllocator {
         return reinterpret_cast<value_type*>(aligned_ptr);
     }
 
-    void deallocate(value_type* ptr, std::size_t count) noexcept
+    void deallocate(value_type* ptr, std::size_t /* count */) noexcept
     {
         // No SIMD: default allocator is good enough!
         if (INSTRUCTION_SET == InstructionSet::NONE) {

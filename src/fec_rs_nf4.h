@@ -161,20 +161,10 @@ class RsNf4 : public FecCode<T> {
         // std::cout << "unpacked:"; output.dump();
     }
 
-    void decode_add_data(int fragment_index, int row) override
+    void decode_add_data(int, int) override
     {
         // not applicable
         assert(false);
-    }
-
-    void decode_add_parities(int fragment_index, int row) override
-    {
-        // we can't anticipate here
-    }
-
-    void decode_build() override
-    {
-        // nothing to do
     }
 
   private:

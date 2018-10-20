@@ -137,6 +137,7 @@ inline m128i mul(m128i a, m128i b)
  */
 inline m128i mul(m128i a, m128i b, aint16 card)
 {
+    (void)card; // UNUSED
     // FIXME: generalize card
     assert(card == F3);
     return mul(a, b);

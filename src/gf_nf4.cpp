@@ -77,14 +77,14 @@ void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y) const
 template <>
 GroupedValues<__uint128_t> NF4<__uint128_t>::unpack(__uint128_t a) const
 {
-    return simd::unpack(a, this->n);
+    return simd::unpack(a);
 }
 
 template <>
 void NF4<__uint128_t>::unpack(__uint128_t a, GroupedValues<__uint128_t>& b)
     const
 {
-    simd::unpack(a, b, this->n);
+    simd::unpack(a, b);
 }
 
 template <>

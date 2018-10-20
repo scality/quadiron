@@ -134,6 +134,7 @@ inline m256i mul(m256i a, m256i b)
  */
 inline m256i mul(m256i a, m256i b, aint16 card)
 {
+    (void)card; // UNUSED.
     // FIXME: generalize card
     assert(card == F3);
     return mul(a, b);

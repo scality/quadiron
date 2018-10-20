@@ -688,7 +688,7 @@ void init_run_bench(Params_t* params)
     try {
         Benchmark<T> bench(params);
         run<T>(&bench, params);
-    } catch (const std::exception& e) {
+    } catch (const std::exception&) {
         return;
     }
 }

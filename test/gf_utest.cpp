@@ -56,7 +56,7 @@ class GfTestCommon : public ::testing::Test {
                 const T y = gf.inv(x);
                 ASSERT_EQ(gf.mul(x, y), gf.get_unit());
                 n_found++;
-            } catch (const quadiron::Exception& e) {
+            } catch (const quadiron::Exception&) {
                 continue;
             }
         }

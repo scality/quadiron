@@ -100,28 +100,18 @@ class RsGf2nFftAdd : public FecCode<T> {
      */
     void encode(
         vec::Vector<T>& output,
-        std::vector<Properties>& props,
-        off_t offset,
+        std::vector<Properties>&,
+        off_t,
         vec::Vector<T>& words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
     }
 
-    void decode_add_data(int fragment_index, int row) override
+    void decode_add_data(int, int) override
     {
         // not applicable
         assert(false);
-    }
-
-    void decode_add_parities(int fragment_index, int row) override
-    {
-        // we can't anticipate here
-    }
-
-    void decode_build() override
-    {
-        // nothing to do
     }
 
   private:
@@ -130,8 +120,8 @@ class RsGf2nFftAdd : public FecCode<T> {
   protected:
     std::unique_ptr<DecodeContext<T>> init_context_dec(
         vec::Vector<T>& fragments_ids,
-        size_t size,
-        vec::Buffers<T>* output) override
+        size_t,
+        vec::Buffers<T>*) override
     {
         if (this->betas == nullptr) {
             throw LogicError("FEC FFT ADD: vector 'betas' must be initialized");
@@ -168,10 +158,10 @@ class RsGf2nFftAdd : public FecCode<T> {
     }
 
     void decode_prepare(
-        const DecodeContext<T>& context,
-        const std::vector<Properties>& props,
-        off_t offset,
-        vec::Vector<T>& words) override
+        const DecodeContext<T>&,
+        const std::vector<Properties>&,
+        off_t,
+        vec::Vector<T>&) override
     {
         // nothing to do
     }

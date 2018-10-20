@@ -73,7 +73,7 @@ inline aint128 expand32(uint32_t* arr, int n)
     return m128i_to_uint128(b);
 }
 
-inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
+inline GroupedValues<__uint128_t> unpack(__uint128_t a)
 {
     uint16_t ai[8];
     aint128 values;
@@ -99,7 +99,7 @@ inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
     return b;
 }
 
-inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
+inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b)
 {
     uint16_t ai[8];
     aint128 values;
