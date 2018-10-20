@@ -105,6 +105,13 @@ static inline std::mt19937& prng()
     return PRNG;
 }
 
+// A static_cast to do explicit value narrowing (better grepability!).
+template <class T, class U>
+constexpr T narrow_cast(U&& u) noexcept
+{
+    return static_cast<T>(std::forward<U>(u));
+}
+
 } // namespace quadiron
 
 #endif
