@@ -79,22 +79,22 @@ class RingModN {
     bool isNF4 = false;
     void compute_factors_of_order();
     void find_primitive_root();
-    virtual const T card(void) const;
-    virtual const T card_minus_one(void) const;
+    virtual T card(void) const;
+    virtual T card_minus_one(void) const;
     virtual bool check(T a) const;
-    virtual const T neg(T a) const;
-    virtual const T add(T a, T b) const;
-    virtual const T sub(T a, T b) const;
-    virtual const T mul(T a, T b) const;
-    virtual const T div(T a, T b) const;
-    const T inv_bezout(T a) const;
-    virtual const T inv(T a) const;
-    virtual const T exp(T a, T b) const;
-    virtual const T log(T a, T b) const;
-    const T exp_naive(T base, T exponent) const;
-    const T exp_quick(T base, T exponent) const;
-    const T log_naive(T base, T exponent) const;
-    virtual const T replicate(T a) const;
+    virtual T neg(T a) const;
+    virtual T add(T a, T b) const;
+    virtual T sub(T a, T b) const;
+    virtual T mul(T a, T b) const;
+    virtual T div(T a, T b) const;
+    T inv_bezout(T a) const;
+    virtual T inv(T a) const;
+    virtual T exp(T a, T b) const;
+    virtual T log(T a, T b) const;
+    T exp_naive(T base, T exponent) const;
+    T exp_quick(T base, T exponent) const;
+    T log_naive(T base, T exponent) const;
+    virtual T replicate(T a) const;
     virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len) const;
     virtual void mul_vec_to_vecp(
         vec::Vector<T>& u,
@@ -169,13 +169,13 @@ void RingModN<T>::init()
 }
 
 template <typename T>
-inline const T RingModN<T>::card(void) const
+inline T RingModN<T>::card(void) const
 {
     return this->_card;
 }
 
 template <typename T>
-inline const T RingModN<T>::card_minus_one(void) const
+inline T RingModN<T>::card_minus_one(void) const
 {
     return this->_card - 1;
 }
@@ -187,7 +187,7 @@ bool RingModN<T>::check(T a) const
 }
 
 template <typename T>
-inline const T RingModN<T>::neg(T a) const
+inline T RingModN<T>::neg(T a) const
 {
     assert(check(a));
 
@@ -195,7 +195,7 @@ inline const T RingModN<T>::neg(T a) const
 }
 
 template <typename T>
-inline const T RingModN<T>::add(T a, T b) const
+inline T RingModN<T>::add(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -207,7 +207,7 @@ inline const T RingModN<T>::add(T a, T b) const
 }
 
 template <typename T>
-inline const T RingModN<T>::sub(T a, T b) const
+inline T RingModN<T>::sub(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -219,7 +219,7 @@ inline const T RingModN<T>::sub(T a, T b) const
 }
 
 template <typename T>
-inline const T RingModN<T>::mul(T a, T b) const
+inline T RingModN<T>::mul(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -228,7 +228,7 @@ inline const T RingModN<T>::mul(T a, T b) const
 }
 
 template <typename T>
-inline const T RingModN<T>::div(T a, T b) const
+inline T RingModN<T>::div(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -246,7 +246,7 @@ inline const T RingModN<T>::div(T a, T b) const
  * @return
  */
 template <typename T>
-inline const T RingModN<T>::inv_bezout(T a) const
+inline T RingModN<T>::inv_bezout(T a) const
 {
     assert(check(a));
 
@@ -261,13 +261,13 @@ inline const T RingModN<T>::inv_bezout(T a) const
 }
 
 template <typename T>
-inline const T RingModN<T>::inv(T a) const
+inline T RingModN<T>::inv(T a) const
 {
     return inv_bezout(a);
 }
 
 template <typename T>
-inline const T RingModN<T>::exp(T a, T b) const
+inline T RingModN<T>::exp(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -276,7 +276,7 @@ inline const T RingModN<T>::exp(T a, T b) const
 }
 
 template <typename T>
-inline const T RingModN<T>::log(T a, T b) const
+inline T RingModN<T>::log(T a, T b) const
 {
     assert(check(a));
 
@@ -292,7 +292,7 @@ inline const T RingModN<T>::log(T a, T b) const
  * @return
  */
 template <typename T>
-inline const T RingModN<T>::exp_naive(T base, T exponent) const
+inline T RingModN<T>::exp_naive(T base, T exponent) const
 {
     T result;
     T i;
@@ -319,7 +319,7 @@ inline const T RingModN<T>::exp_naive(T base, T exponent) const
  * @return
  */
 template <typename T>
-inline const T RingModN<T>::exp_quick(T base, T exponent) const
+inline T RingModN<T>::exp_quick(T base, T exponent) const
 {
     T result;
 
@@ -350,7 +350,7 @@ inline const T RingModN<T>::exp_quick(T base, T exponent) const
  * return
  */
 template <typename T>
-inline const T RingModN<T>::log_naive(T base, T exponent) const
+inline T RingModN<T>::log_naive(T base, T exponent) const
 {
     T result;
 
@@ -364,7 +364,7 @@ inline const T RingModN<T>::log_naive(T base, T exponent) const
 
 /** This operation is only reserved for NF4 */
 template <typename T>
-inline const T RingModN<T>::replicate(T a) const
+inline T RingModN<T>::replicate(T a) const
 {
     return a;
 }

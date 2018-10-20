@@ -38,32 +38,32 @@ namespace quadiron {
 namespace gf {
 
 template <>
-const __uint128_t NF4<__uint128_t>::expand16(uint16_t* arr) const
+__uint128_t NF4<__uint128_t>::expand16(uint16_t* arr) const
 {
     return simd::expand16(arr, this->n);
 }
 
 template <>
-const __uint128_t NF4<__uint128_t>::expand32(uint32_t* arr) const
+__uint128_t NF4<__uint128_t>::expand32(uint32_t* arr) const
 {
     return simd::expand32(arr, this->n);
 }
 
 template <>
-const __uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b) const
+__uint128_t NF4<__uint128_t>::add(__uint128_t a, __uint128_t b) const
 {
     __uint128_t c = simd::add(a, b);
     return c;
 }
 
 template <>
-const __uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b) const
+__uint128_t NF4<__uint128_t>::sub(__uint128_t a, __uint128_t b) const
 {
     return simd::sub(a, b);
 }
 
 template <>
-const __uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b) const
+__uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b) const
 {
     return simd::mul(a, b);
 }
@@ -88,13 +88,13 @@ void NF4<__uint128_t>::unpack(__uint128_t a, GroupedValues<__uint128_t>& b)
 }
 
 template <>
-const __uint128_t NF4<__uint128_t>::pack(__uint128_t a) const
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a) const
 {
     return simd::pack(a);
 }
 
 template <>
-const __uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag) const
+__uint128_t NF4<__uint128_t>::pack(__uint128_t a, uint32_t flag) const
 {
     return simd::pack(a, flag);
 }

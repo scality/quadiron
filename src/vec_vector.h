@@ -72,8 +72,8 @@ class Vector {
     Vector(const gf::RingModN<T>& rn, std::initializer_list<T> values);
     virtual ~Vector();
     const gf::RingModN<T>& get_gf(void) const;
-    virtual const int get_n(void) const;
-    const int get_mem_len(void) const;
+    virtual int get_n(void) const;
+    int get_mem_len(void) const;
     virtual void zero_fill(void);
     void fill(T val);
     virtual void set(int i, T val);
@@ -150,13 +150,13 @@ inline const gf::RingModN<T>& Vector<T>::get_gf(void) const
 }
 
 template <typename T>
-inline const int Vector<T>::get_n(void) const
+inline int Vector<T>::get_n(void) const
 {
     return this->n;
 }
 
 template <typename T>
-inline const int Vector<T>::get_mem_len(void) const
+inline int Vector<T>::get_mem_len(void) const
 {
     return this->mem_len;
 }
