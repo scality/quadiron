@@ -632,7 +632,7 @@ bool Benchmark<T>::enc_dec()
     return true;
 }
 
-void xusage()
+[[noreturn]] void xusage()
 {
     std::cerr << "Usage: benchmark [options]\n"
               << "Options:\n"
@@ -661,7 +661,7 @@ void xusage()
               << "2, 4, 8, 16 for uint16_t, uint32_t, uint64_t, __uint128_t\n"
               << "\t-g \tNumber of threads\n"
               << "\t-x \tExtra parameter\n\n";
-    exit(1);
+    std::exit(EXIT_FAILURE);
 }
 
 template <typename T>

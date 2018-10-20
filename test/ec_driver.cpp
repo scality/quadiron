@@ -41,6 +41,7 @@ int data_zpad = -1;
 int coding_zpad = -1;
 char* prefix = nullptr;
 
+[[noreturn]]
 void xusage()
 {
     std::cerr << std::string("Usage: ") +
@@ -50,6 +51,7 @@ void xusage()
     std::exit(EXIT_FAILURE);
 }
 
+[[noreturn]]
 void xperror(const char* str)
 {
     std::cerr << str << "\n";
