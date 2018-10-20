@@ -317,31 +317,31 @@ inline bool FecCode<T>::readw(T* ptr, std::istream* stream)
 {
     if (word_size == 1) {
         uint8_t c;
-        if (stream->read((char*)&c, 1)) {
+        if (stream->read(reinterpret_cast<char*>(&c), sizeof(c))) {
             *ptr = c;
             return true;
         }
     } else if (word_size == 2) {
         uint16_t s;
-        if (stream->read((char*)&s, 2)) {
+        if (stream->read(reinterpret_cast<char*>(&s), sizeof(s))) {
             *ptr = s;
             return true;
         }
     } else if (word_size == 4) {
         uint32_t s;
-        if (stream->read((char*)&s, 4)) {
+        if (stream->read(reinterpret_cast<char*>(&s), sizeof(s))) {
             *ptr = s;
             return true;
         }
     } else if (word_size == 8) {
         uint64_t s;
-        if (stream->read((char*)&s, 8)) {
+        if (stream->read(reinterpret_cast<char*>(&s), sizeof(s))) {
             *ptr = s;
             return true;
         }
     } else if (word_size == 16) {
         __uint128_t s;
-        if (stream->read((char*)&s, 16)) {
+        if (stream->read(reinterpret_cast<char*>(&s), sizeof(s))) {
             *ptr = s;
             return true;
         }
@@ -356,23 +356,23 @@ inline bool FecCode<T>::writew(T val, std::ostream* stream)
 {
     if (word_size == 1) {
         uint8_t c = val;
-        if (stream->write((char*)&c, 1))
+        if (stream->write(reinterpret_cast<char*>(&c), sizeof(c)))
             return true;
     } else if (word_size == 2) {
         uint16_t s = val;
-        if (stream->write((char*)&s, 2))
+        if (stream->write(reinterpret_cast<char*>(&s), sizeof(s)))
             return true;
     } else if (word_size == 4) {
         uint32_t s = val;
-        if (stream->write((char*)&s, 4))
+        if (stream->write(reinterpret_cast<char*>(&s), sizeof(s)))
             return true;
     } else if (word_size == 8) {
         uint64_t s = val;
-        if (stream->write((char*)&s, 8))
+        if (stream->write(reinterpret_cast<char*>(&s), sizeof(s)))
             return true;
     } else if (word_size == 16) {
         __uint128_t s = val;
-        if (stream->write((char*)&s, 16))
+        if (stream->write(reinterpret_cast<char*>(&s), sizeof(s)))
             return true;
     } else {
         assert(false && "no such size");
@@ -383,18 +383,13 @@ inline bool FecCode<T>::writew(T val, std::ostream* stream)
 template <typename T>
 inline bool FecCode<T>::read_pkt(char* pkt, std::istream& stream)
 {
-    if (stream.read(pkt, buf_size)) {
-        return true;
-    }
-    return false;
+    return static_cast<bool>(stream.read(pkt, buf_size));
 }
 
 template <typename T>
 inline bool FecCode<T>::write_pkt(char* pkt, std::ostream& stream)
 {
-    if (stream.write(pkt, buf_size))
-        return true;
-    return false;
+    return static_cast<bool>(stream.write(pkt, buf_size));
 }
 
 /**
@@ -506,7 +501,8 @@ void FecCode<T>::encode_packet(
         // TODO: get number of read bytes -> true buf size
         for (unsigned i = 0; i < n_data; i++) {
             if (!read_pkt(
-                    (char*)(words_mem_char.at(i)), *(input_data_bufs[i]))) {
+                    reinterpret_cast<char*>(words_mem_char.at(i)),
+                    *(input_data_bufs[i]))) {
                 cont = false;
                 break;
             }
@@ -532,7 +528,8 @@ void FecCode<T>::encode_packet(
 
         for (unsigned i = 0; i < n_outputs; i++) {
             write_pkt(
-                (char*)(output_mem_char.at(i)), *(output_parities_bufs[i]));
+                reinterpret_cast<char*>(output_mem_char.at(i)),
+                *(output_parities_bufs[i]));
         }
         offset += pkt_size;
     }
@@ -970,7 +967,7 @@ bool FecCode<T>::decode_packet(
             for (unsigned i = 0; i < avail_data_nb; i++) {
                 unsigned data_idx = fragments_ids.get(i);
                 if (!read_pkt(
-                        (char*)(words_mem_char.at(i)),
+                        reinterpret_cast<char*>(words_mem_char.at(i)),
                         *(input_data_bufs[data_idx]))) {
                     cont = false;
                     break;
@@ -980,7 +977,8 @@ bool FecCode<T>::decode_packet(
         for (unsigned i = 0; i < n_data - avail_data_nb; ++i) {
             unsigned parity_idx = avail_parity_ids.get(i);
             if (!read_pkt(
-                    (char*)(words_mem_char.at(avail_data_nb + i)),
+                    reinterpret_cast<char*>(
+                        words_mem_char.at(avail_data_nb + i)),
                     *(input_parities_bufs[parity_idx]))) {
                 cont = false;
                 break;
@@ -1009,7 +1007,8 @@ bool FecCode<T>::decode_packet(
         for (unsigned i = 0; i < n_data; i++) {
             if (output_data_bufs[i] != nullptr) {
                 write_pkt(
-                    (char*)(output_mem_char.at(i)), *(output_data_bufs[i]));
+                    reinterpret_cast<char*>(output_mem_char.at(i)),
+                    *(output_data_bufs[i]));
             }
         }
         offset += pkt_size;

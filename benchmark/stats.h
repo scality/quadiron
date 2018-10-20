@@ -63,8 +63,9 @@ class Stats_t {
 
     void end()
     {
-        avg = (double)sum / (double)nb;
-        std_dev = sqrt((double)sum_2 / (double)nb - avg * avg);
+        avg = static_cast<double>(sum) / static_cast<double>(nb);
+        std_dev = sqrt(
+            static_cast<double>(sum_2) / static_cast<double>(nb) - avg * avg);
     }
 
     void show()
@@ -86,7 +87,7 @@ class Stats_t {
 
     double get_thrpt()
     {
-        return (double)work_load / avg;
+        return work_load / avg;
     }
 
   private:

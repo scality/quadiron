@@ -48,7 +48,7 @@ class ArithTestCommon : public ::testing::Test {
         else {
             max = 0;
             for (size_t i = 0; i < sizeof(T) * 8; i++) {
-                max += (T)1 << i;
+                max += static_cast<T>(1) << i;
             }
         }
         uniform_dist_max = std::uniform_int_distribution<uint32_t>(

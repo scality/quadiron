@@ -118,7 +118,7 @@ template <class T>
 T sqrt(T remainder)
 {
     // calculated by precompiler = same runtime as: place = 0x40000000
-    T place = (T)1 << (sizeof(T) * 8 - 2);
+    T place = static_cast<T>(1) << (sizeof(T) * 8 - 2);
     while (place > remainder)
         place /= 4; // optimized by complier as place >>= 2
 

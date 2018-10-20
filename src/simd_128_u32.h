@@ -231,10 +231,10 @@ inline void mul_coef_to_buf(
         _dest[i] = mul(coef, _src[i], card);
     }
     if (_last_len > 0) {
-        uint64_t coef_64 = (uint64_t)a;
+        uint64_t coef_64 = a;
         for (i = _len * ratio; i < len; i++) {
             // perform multiplication
-            dest[i] = (aint32)((coef_64 * src[i]) % card);
+            dest[i] = narrow_cast<aint32>((coef_64 * src[i]) % card);
         }
     }
 }
@@ -401,26 +401,26 @@ inline void encode_post_process(
 static inline aint128 m128i_to_uint128(m128i v)
 {
     aint128 i;
-    _mm_store_si128((m128i*)&i, v);
+    _mm_store_si128(reinterpret_cast<m128i*>(&i), v);
 
     return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
 }
 
 inline __uint128_t add(__uint128_t a, __uint128_t b)
 {
-    m128i res = add((m128i)a, (m128i)b, F4);
+    m128i res = add(reinterpret_cast<m128i>(a), reinterpret_cast<m128i>(b), F4);
     return m128i_to_uint128(res);
 }
 
 inline __uint128_t sub(__uint128_t a, __uint128_t b)
 {
-    m128i res = sub((m128i)a, (m128i)b, F4);
+    m128i res = sub(reinterpret_cast<m128i>(a), reinterpret_cast<m128i>(b), F4);
     return m128i_to_uint128(res);
 }
 
 inline __uint128_t mul(__uint128_t a, __uint128_t b)
 {
-    m128i res = mul((m128i)a, (m128i)b, F4);
+    m128i res = mul(reinterpret_cast<m128i>(a), reinterpret_cast<m128i>(b), F4);
     return m128i_to_uint128(res);
 }
 

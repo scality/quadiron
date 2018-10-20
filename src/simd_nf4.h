@@ -45,7 +45,7 @@ typedef __m128i m128i;
 static inline aint128 m128i_to_uint128(m128i v)
 {
     aint128 i;
-    _mm_store_si128((m128i*)&i, v);
+    _mm_store_si128(reinterpret_cast<m128i*>(&i), v);
 
     return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
 }
@@ -78,7 +78,7 @@ inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
     uint16_t ai[8];
     aint128 values;
 
-    m128i _a = _mm_loadu_si128((m128i*)&a);
+    m128i _a = _mm_loadu_si128(reinterpret_cast<m128i*>(&a));
     ai[0] = _mm_extract_epi16(_a, 0);
     ai[1] = _mm_extract_epi16(_a, 1);
     ai[2] = _mm_extract_epi16(_a, 2);
@@ -92,7 +92,7 @@ inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
         ai[1] | (!!ai[3] << 1u) | (!!ai[5] << 2u) | (!!ai[7] << 3u);
 
     m128i val = _mm_set_epi16(0, 0, 0, 0, ai[6], ai[4], ai[2], ai[0]);
-    _mm_store_si128((m128i*)&values, val);
+    _mm_store_si128(reinterpret_cast<m128i*>(&values), val);
 
     GroupedValues<__uint128_t> b = {values, flag};
 
@@ -104,7 +104,7 @@ inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
     uint16_t ai[8];
     aint128 values;
 
-    m128i _a = _mm_loadu_si128((m128i*)&a);
+    m128i _a = _mm_loadu_si128(reinterpret_cast<m128i*>(&a));
     ai[0] = _mm_extract_epi16(_a, 0);
     ai[1] = _mm_extract_epi16(_a, 1);
     ai[2] = _mm_extract_epi16(_a, 2);
@@ -118,7 +118,7 @@ inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
         ai[1] | (!!ai[3] << 1u) | (!!ai[5] << 2u) | (!!ai[7] << 3u);
 
     m128i val = _mm_set_epi16(0, 0, 0, 0, ai[6], ai[4], ai[2], ai[0]);
-    _mm_store_si128((m128i*)&values, val);
+    _mm_store_si128(reinterpret_cast<m128i*>(&values), val);
 
     b.flag = flag;
     b.values = values; // NOLINT(clang-analyzer-core.uninitialized.Assign)
@@ -126,7 +126,7 @@ inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
 
 inline aint128 pack(__uint128_t a)
 {
-    m128i _a = _mm_loadu_si128((m128i*)&a);
+    m128i _a = _mm_loadu_si128(reinterpret_cast<m128i*>(&a));
     m128i b = _mm_set_epi32(
         _mm_extract_epi16(_a, 3),
         _mm_extract_epi16(_a, 2),
@@ -139,27 +139,18 @@ inline aint128 pack(__uint128_t a)
 inline aint128 pack(__uint128_t a, uint32_t flag)
 {
     aint32 b0, b1, b2, b3;
-    m128i _a = _mm_loadu_si128((m128i*)&a);
+    m128i _a = _mm_loadu_si128(reinterpret_cast<m128i*>(&a));
 
-    if (flag & 1)
-        b0 = 65536;
-    else
-        b0 = _mm_extract_epi16(_a, 0);
+    b0 = (flag & 1) ? 65536 : _mm_extract_epi16(_a, 0);
+
     flag >>= 1;
-    if (flag & 1)
-        b1 = 65536;
-    else
-        b1 = _mm_extract_epi16(_a, 1);
+    b1 = (flag & 1) ? 65536 : _mm_extract_epi16(_a, 1);
+
     flag >>= 1;
-    if (flag & 1)
-        b2 = 65536;
-    else
-        b2 = _mm_extract_epi16(_a, 2);
+    b2 = (flag & 1) ? 65536 : _mm_extract_epi16(_a, 2);
+
     flag >>= 1;
-    if (flag & 1)
-        b3 = 65536;
-    else
-        b3 = _mm_extract_epi16(_a, 3);
+    b3 = (flag & 1) ? 65536 : _mm_extract_epi16(_a, 3);
 
     m128i b = _mm_set_epi32(b3, b2, b1, b0);
 

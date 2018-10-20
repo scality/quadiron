@@ -89,8 +89,8 @@ class RsGfpFft : public FecCode<T> {
             gf_p = (1ULL << (8 * this->word_size)) + 1;
             this->limit_value = (1ULL << (8 * this->word_size));
         } else if (this->word_size == 4) {
-            gf_p = (T)4294991873ULL;              // p-1=2^13 29^1 101^1 179^1
-            this->limit_value = (T)4294967296ULL; // 2^32
+            gf_p = static_cast<T>(4294991873ULL); // p-1=2^13 29^1 101^1 179^1
+            this->limit_value = static_cast<T>(4294967296ULL); // 2^32
         } else {
             assert(false); // not support yet
             exit(1);

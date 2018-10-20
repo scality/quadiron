@@ -205,11 +205,11 @@ inline T NF4<T>::add(T a, T b) const
 {
     uint32_t arr[this->n];
 
-    arr[0] = ((uint32_t)(a & MASK32) + (uint32_t)(b & MASK32)) % 65537;
+    arr[0] = (narrow_cast<uint32_t>(a) + narrow_cast<uint32_t>(b)) % 65537;
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        arr[i] = ((uint32_t)(a & MASK32) + (uint32_t)(b & MASK32)) % 65537;
+        arr[i] = (narrow_cast<uint32_t>(a) + narrow_cast<uint32_t>(b)) % 65537;
     }
 
     T c = expand32(arr);
@@ -223,21 +223,15 @@ inline T NF4<T>::sub(T a, T b) const
     uint32_t arr[this->n];
     uint32_t ae, be;
 
-    ae = (a & MASK32);
-    be = (b & MASK32);
-    if (ae >= be)
-        arr[0] = ae - be;
-    else
-        arr[0] = 65537 + ae - be;
+    ae = narrow_cast<uint32_t>(a);
+    be = narrow_cast<uint32_t>(b);
+    arr[0] = ae >= be ? ae - be : 65537 + ae - be;
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        ae = (uint32_t)(a & MASK32);
-        be = (uint32_t)(b & MASK32);
-        if (ae >= be)
-            arr[i] = ae - be;
-        else
-            arr[i] = 65537 + ae - be;
+        ae = narrow_cast<uint32_t>(a);
+        be = narrow_cast<uint32_t>(b);
+        arr[i] = ae >= be ? ae - be : 65537 + ae - be;
     }
 
     T c = expand32(arr);
@@ -252,21 +246,15 @@ inline T NF4<T>::mul(T a, T b) const
     uint64_t ae;
     uint32_t be;
 
-    ae = (uint64_t)(a & MASK32);
-    be = (uint32_t)(b & MASK32);
-    if (ae == 65536 && be == 65536)
-        arr[0] = 1;
-    else
-        arr[0] = (ae * be) % 65537;
+    ae = static_cast<uint64_t>(a & MASK32);
+    be = narrow_cast<uint32_t>(b);
+    arr[0] = (ae == 65536 && be == 65536) ? 1 : (ae * be) % 65537;
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        ae = (uint64_t)(a & MASK32);
-        be = (uint32_t)(b & MASK32);
-        if (ae == 65536 && be == 65536)
-            arr[i] = 1;
-        else
-            arr[i] = (ae * be) % 65537;
+        ae = static_cast<uint64_t>(a & MASK32);
+        be = narrow_cast<uint32_t>(b);
+        arr[i] = (ae == 65536 && be == 65536) ? 1 : (ae * be) % 65537;
     }
 
     T c = expand32(arr);
@@ -278,11 +266,12 @@ inline T NF4<T>::div(T a, T b) const
 {
     uint32_t arr[this->n];
 
-    arr[0] = sub_field->div((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+    arr[0] = sub_field->div(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        arr[i] = sub_field->div((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+        arr[i] =
+            sub_field->div(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     }
 
     T c = expand32(arr);
@@ -294,10 +283,10 @@ inline T NF4<T>::inv(T a) const
 {
     uint32_t arr[this->n];
 
-    arr[0] = sub_field->inv((uint32_t)(a & MASK32));
+    arr[0] = sub_field->inv(narrow_cast<uint32_t>(a));
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
-        arr[i] = sub_field->inv((uint32_t)(a & MASK32));
+        arr[i] = sub_field->inv(narrow_cast<uint32_t>(a));
     }
 
     T c = expand32(arr);
@@ -309,11 +298,12 @@ inline T NF4<T>::exp(T a, T b) const
 {
     uint32_t arr[this->n];
 
-    arr[0] = sub_field->exp((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+    arr[0] = sub_field->exp(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        arr[i] = sub_field->exp((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+        arr[i] =
+            sub_field->exp(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     }
 
     T c = expand32(arr);
@@ -325,11 +315,12 @@ inline T NF4<T>::log(T a, T b) const
 {
     uint32_t arr[this->n];
 
-    arr[0] = sub_field->log((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+    arr[0] = sub_field->log(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        arr[i] = sub_field->log((uint32_t)(a & MASK32), (uint32_t)(b & MASK32));
+        arr[i] =
+            sub_field->log(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     }
 
     T c = expand32(arr);
@@ -360,10 +351,10 @@ template <typename T>
 inline T NF4<T>::pack(T a) const
 {
     uint32_t arr[this->n];
-    arr[0] = (uint32_t)(a & MASK16);
+    arr[0] = static_cast<uint32_t>(a & MASK16);
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16);
-        arr[i] = (uint32_t)(a & MASK16);
+        arr[i] = static_cast<uint32_t>(a & MASK16);
     }
 
     T c = expand32(arr);
@@ -378,17 +369,11 @@ template <typename T>
 inline T NF4<T>::pack(T a, uint32_t flag) const
 {
     uint32_t arr[this->n];
-    if (flag & 1)
-        arr[0] = 65536;
-    else
-        arr[0] = (uint32_t)(a & MASK16);
+    arr[0] = (flag & 1) ? 65536 : static_cast<uint32_t>(a & MASK16);
     for (int i = 1; i < this->n; i++) {
         flag >>= 1;
         a = (a >> 16);
-        if (flag & 1)
-            arr[i] = 65536;
-        else
-            arr[i] = (uint32_t)(a & MASK16);
+        arr[i] = (flag & 1) ? 65536 : static_cast<uint32_t>(a & MASK16);
     }
 
     T c = expand32(arr);
@@ -408,20 +393,22 @@ inline GroupedValues<T> NF4<T>::unpack(T a) const
     uint32_t ae;
     uint16_t arr[this->n];
 
-    ae = (uint32_t)(a & MASK32);
+    ae = narrow_cast<uint32_t>(a);
     if (ae == 65536) {
         flag |= 1;
         arr[0] = 0;
-    } else
-        arr[0] = (uint16_t)ae;
+    } else {
+        arr[0] = narrow_cast<uint16_t>(ae);
+    }
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
-        ae = (uint32_t)(a & MASK32);
+        ae = narrow_cast<uint32_t>(a);
         if (ae == 65536) {
             flag |= (1 << i);
             arr[i] = 0;
-        } else
+        } else {
             arr[i] = ae;
+        }
     }
 
     b.flag = flag;
@@ -436,20 +423,22 @@ inline void NF4<T>::unpack(T a, GroupedValues<T>& b) const
     uint32_t ae;
     uint16_t arr[this->n];
 
-    ae = (uint32_t)(a & MASK32);
+    ae = narrow_cast<uint32_t>(a);
     if (ae == 65536) {
         flag |= 1;
         arr[0] = 0;
-    } else
-        arr[0] = (uint16_t)ae;
+    } else {
+        arr[0] = narrow_cast<uint16_t>(ae);
+    }
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
-        ae = (uint32_t)(a & MASK32);
+        ae = narrow_cast<uint32_t>(a);
         if (ae == 65536) {
             flag |= (1 << i);
             arr[i] = 0;
-        } else
+        } else {
             arr[i] = ae;
+        }
     }
 
     b.flag = flag;

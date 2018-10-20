@@ -187,10 +187,10 @@ inline void mul_coef_to_buf(
         _dest[i] = mul(coef, _src[i], card);
     }
     if (_last_len > 0) {
-        uint32_t coef_doubled = (uint32_t)a;
+        uint32_t coef_doubled = a;
         for (i = _len * ratio; i < len; i++) {
             // perform multiplication
-            dest[i] = (aint16)((coef_doubled * src[i]) % card);
+            dest[i] = narrow_cast<aint16>((coef_doubled * src[i]) % card);
         }
     }
 }

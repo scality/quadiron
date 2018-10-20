@@ -214,18 +214,18 @@ int Benchmark<T>::init()
     c_ostreambufs = new std::vector<ostreambuf<char>*>(n_c);
     r_ostreambufs = new std::vector<ostreambuf<char>*>(k);
     for (i = 0; i < k; i++) {
-        d_istreambufs->at(i) =
-            new istreambuf<char>((char*)d_chunks->at(i), chunk_size);
+        d_istreambufs->at(i) = new istreambuf<char>(
+            reinterpret_cast<char*>(d_chunks->at(i)), chunk_size);
     }
     for (i = 0; i < n_c; i++) {
-        c_istreambufs->at(i) =
-            new istreambuf<char>((char*)c_chunks->at(i), chunk_size);
-        c_ostreambufs->at(i) =
-            new ostreambuf<char>((char*)c_chunks->at(i), chunk_size);
+        c_istreambufs->at(i) = new istreambuf<char>(
+            reinterpret_cast<char*>(c_chunks->at(i)), chunk_size);
+        c_ostreambufs->at(i) = new ostreambuf<char>(
+            reinterpret_cast<char*>(c_chunks->at(i)), chunk_size);
     }
     for (i = 0; i < k; i++) {
-        r_ostreambufs->at(i) =
-            new ostreambuf<char>((char*)r_chunks->at(i), chunk_size);
+        r_ostreambufs->at(i) = new ostreambuf<char>(
+            reinterpret_cast<char*>(r_chunks->at(i)), chunk_size);
     }
 
     // Allocate memory for streams
@@ -720,7 +720,7 @@ void run_benchmark(Params_t* params)
 {
     if (params->fec_type == EC_TYPE_ALL) {
         for (int type = EC_TYPE_ALL + 1; type < EC_TYPE_END; type++) {
-            params->fec_type = (ec_type)type;
+            params->fec_type = static_cast<ec_type>(type);
             run_scenario(params);
         }
     } else {

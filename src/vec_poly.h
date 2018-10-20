@@ -81,7 +81,7 @@ Poly<T>::Poly(const gf::Field<T>& field, int n) : Vector<T>(field, n)
 template <typename T>
 Poly<T>::Poly(const Poly<T>& a) : Vector<T>(a.get_gf(), a.get_n())
 {
-    this->field = (gf::Field<T>*)this->rn;
+    this->field = dynamic_cast<const gf::Field<T>*>(this->rn);
     this->buf = this->get_mem();
     this->field_characteristic = field->get_p();
 

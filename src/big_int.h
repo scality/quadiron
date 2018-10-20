@@ -74,22 +74,22 @@ struct Int256 {
 
     bool operator<(__uint128_t x)
     {
-        return (lo < x);
+        return lo < x;
     }
 
     bool operator<(int x)
     {
-        return (lo < (__uint128_t)x);
+        return lo < static_cast<__uint128_t>(x);
     }
 
     bool operator!=(__uint128_t x)
     {
-        return (lo != x);
+        return lo != x;
     }
 
     bool operator!=(int x)
     {
-        return (lo != (__uint128_t)x);
+        return lo != static_cast<__uint128_t>(x);
     }
 
     Int256 operator+(__uint128_t x)
