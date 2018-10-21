@@ -32,6 +32,7 @@
 #define __QUAD_GF_NF4_H__
 
 #include <iostream>
+#include <vector>
 
 #include "gf_base.h"
 #include "gf_prime.h"
@@ -91,6 +92,11 @@ class NF4 : public gf::Field<T> {
     T h;
     std::unique_ptr<gf::Field<uint32_t>> sub_field;
 
+    // Scratch space for arithmetic operations.
+    // Note: those are not part of the externally visible state of the class.
+    mutable std::vector<uint16_t> scratch16;
+    mutable std::vector<uint32_t> scratch32;
+
     bool check_n(unsigned n);
     explicit NF4(unsigned n);
 
@@ -120,6 +126,9 @@ NF4<T>::NF4(unsigned n) : gf::Field<T>(T(65537), n)
     unit = NF4<T>::replicate(1);
     q = NF4<T>::replicate(T(65537));
     h = NF4<T>::replicate(T(65536));
+
+    scratch16.reserve(this->n);
+    scratch32.reserve(this->n);
 }
 
 template <typename T>
@@ -205,16 +214,16 @@ inline T NF4<T>::neg(T a) const
 template <typename T>
 inline T NF4<T>::add(T a, T b) const
 {
-    uint32_t arr[this->n];
-
-    arr[0] = (narrow_cast<uint32_t>(a) + narrow_cast<uint32_t>(b)) % 65537;
+    scratch32[0] =
+        (narrow_cast<uint32_t>(a) + narrow_cast<uint32_t>(b)) % 65537;
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        arr[i] = (narrow_cast<uint32_t>(a) + narrow_cast<uint32_t>(b)) % 65537;
+        scratch32[i] =
+            (narrow_cast<uint32_t>(a) + narrow_cast<uint32_t>(b)) % 65537;
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
 
     return c;
 }
@@ -222,21 +231,20 @@ inline T NF4<T>::add(T a, T b) const
 template <typename T>
 inline T NF4<T>::sub(T a, T b) const
 {
-    uint32_t arr[this->n];
     uint32_t ae, be;
 
     ae = narrow_cast<uint32_t>(a);
     be = narrow_cast<uint32_t>(b);
-    arr[0] = ae >= be ? ae - be : 65537 + ae - be;
+    scratch32[0] = ae >= be ? ae - be : 65537 + ae - be;
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
         ae = narrow_cast<uint32_t>(a);
         be = narrow_cast<uint32_t>(b);
-        arr[i] = ae >= be ? ae - be : 65537 + ae - be;
+        scratch32[i] = ae >= be ? ae - be : 65537 + ae - be;
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
 
     return c;
 }
@@ -244,88 +252,82 @@ inline T NF4<T>::sub(T a, T b) const
 template <typename T>
 inline T NF4<T>::mul(T a, T b) const
 {
-    uint32_t arr[this->n];
     uint64_t ae;
     uint32_t be;
 
     ae = static_cast<uint64_t>(a & MASK32);
     be = narrow_cast<uint32_t>(b);
-    arr[0] = (ae == 65536 && be == 65536) ? 1 : (ae * be) % 65537;
+    scratch32[0] = (ae == 65536 && be == 65536) ? 1 : (ae * be) % 65537;
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
         ae = static_cast<uint64_t>(a & MASK32);
         be = narrow_cast<uint32_t>(b);
-        arr[i] = (ae == 65536 && be == 65536) ? 1 : (ae * be) % 65537;
+        scratch32[i] = (ae == 65536 && be == 65536) ? 1 : (ae * be) % 65537;
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
     return c;
 }
 
 template <typename T>
 inline T NF4<T>::div(T a, T b) const
 {
-    uint32_t arr[this->n];
-
-    arr[0] = sub_field->div(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
+    scratch32[0] =
+        sub_field->div(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        arr[i] =
+        scratch32[i] =
             sub_field->div(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
     return c;
 }
 
 template <typename T>
 inline T NF4<T>::inv(T a) const
 {
-    uint32_t arr[this->n];
-
-    arr[0] = sub_field->inv(narrow_cast<uint32_t>(a));
+    scratch32[0] = sub_field->inv(narrow_cast<uint32_t>(a));
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
-        arr[i] = sub_field->inv(narrow_cast<uint32_t>(a));
+        scratch32[i] = sub_field->inv(narrow_cast<uint32_t>(a));
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
     return c;
 }
 
 template <typename T>
 inline T NF4<T>::exp(T a, T b) const
 {
-    uint32_t arr[this->n];
-
-    arr[0] = sub_field->exp(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
+    scratch32[0] =
+        sub_field->exp(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        arr[i] =
+        scratch32[i] =
             sub_field->exp(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
     return c;
 }
 
 template <typename T>
 inline T NF4<T>::log(T a, T b) const
 {
-    uint32_t arr[this->n];
-
-    arr[0] = sub_field->log(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
+    scratch32[0] =
+        sub_field->log(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         b = (b >> 16) >> 16;
-        arr[i] =
+        scratch32[i] =
             sub_field->log(narrow_cast<uint32_t>(a), narrow_cast<uint32_t>(b));
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
     return c;
 }
 
@@ -352,14 +354,13 @@ T NF4<T>::weak_rand(void) const
 template <typename T>
 inline T NF4<T>::pack(T a) const
 {
-    uint32_t arr[this->n];
-    arr[0] = static_cast<uint32_t>(a & MASK16);
+    scratch32[0] = static_cast<uint32_t>(a & MASK16);
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16);
-        arr[i] = static_cast<uint32_t>(a & MASK16);
+        scratch32[i] = static_cast<uint32_t>(a & MASK16);
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
     return c;
 }
 
@@ -370,15 +371,14 @@ inline T NF4<T>::pack(T a) const
 template <typename T>
 inline T NF4<T>::pack(T a, uint32_t flag) const
 {
-    uint32_t arr[this->n];
-    arr[0] = (flag & 1) ? 65536 : static_cast<uint32_t>(a & MASK16);
+    scratch32[0] = (flag & 1) ? 65536 : static_cast<uint32_t>(a & MASK16);
     for (int i = 1; i < this->n; i++) {
         flag >>= 1;
         a = (a >> 16);
-        arr[i] = (flag & 1) ? 65536 : static_cast<uint32_t>(a & MASK16);
+        scratch32[i] = (flag & 1) ? 65536 : static_cast<uint32_t>(a & MASK16);
     }
 
-    T c = expand32(arr);
+    T c = expand32(scratch32.data());
     return c;
 }
 
@@ -393,28 +393,27 @@ inline GroupedValues<T> NF4<T>::unpack(T a) const
     GroupedValues<T> b = GroupedValues<T>();
     uint32_t flag = 0;
     uint32_t ae;
-    uint16_t arr[this->n];
 
     ae = narrow_cast<uint32_t>(a);
     if (ae == 65536) {
         flag |= 1;
-        arr[0] = 0;
+        scratch16[0] = 0;
     } else {
-        arr[0] = narrow_cast<uint16_t>(ae);
+        scratch16[0] = narrow_cast<uint16_t>(ae);
     }
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         ae = narrow_cast<uint32_t>(a);
         if (ae == 65536) {
             flag |= (1 << i);
-            arr[i] = 0;
+            scratch16[i] = 0;
         } else {
-            arr[i] = ae;
+            scratch16[i] = ae;
         }
     }
 
     b.flag = flag;
-    b.values = expand16(arr);
+    b.values = expand16(scratch16.data());
     return b;
 }
 
@@ -423,28 +422,27 @@ inline void NF4<T>::unpack(T a, GroupedValues<T>& b) const
 {
     uint32_t flag = 0;
     uint32_t ae;
-    uint16_t arr[this->n];
 
     ae = narrow_cast<uint32_t>(a);
     if (ae == 65536) {
         flag |= 1;
-        arr[0] = 0;
+        scratch16[0] = 0;
     } else {
-        arr[0] = narrow_cast<uint16_t>(ae);
+        scratch16[0] = narrow_cast<uint16_t>(ae);
     }
     for (int i = 1; i < this->n; i++) {
         a = (a >> 16) >> 16;
         ae = narrow_cast<uint32_t>(a);
         if (ae == 65536) {
             flag |= (1 << i);
-            arr[i] = 0;
+            scratch16[i] = 0;
         } else {
-            arr[i] = ae;
+            scratch16[i] = ae;
         }
     }
 
     b.flag = flag;
-    b.values = expand16(arr);
+    b.values = expand16(scratch16.data());
 }
 
 // Use for fft
