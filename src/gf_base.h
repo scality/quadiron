@@ -43,7 +43,7 @@ namespace gf {
 template <typename T>
 class Prime;
 
-/** Generic class for Galois Fields of q=p<sup>n/<sup>. */
+/** Generic class for Galois Fields of q=p<sup>n</sup>. */
 template <typename T>
 class Field : public RingModN<T> {
   public:

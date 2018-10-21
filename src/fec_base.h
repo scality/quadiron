@@ -123,11 +123,10 @@ class FecCode {
         size_t pkt_size = 8);
     virtual ~FecCode() = default;
 
-    /**
-     * Return the number actual parities for SYSTEMATIC it is exactly
-     * n_parities, for NON_SYSTEMATIC it maybe at least n_data+n_parities (but
-     * sometimes more).
-     * @return
+    /** Return the number of output parts.
+     *
+     * @return `n_parities` for SYSTEMATIC and at least `n_data + n_parities`
+     * for NON_SYSTEMATIC
      */
     virtual int get_n_outputs() = 0;
 
@@ -152,10 +151,10 @@ class FecCode {
     /**
      * Decode a vector of words
      *
+     * @param context decoding context
+     * @param output original data (must be of n_data length)
      * @param props properties bound to parity fragments
      * @param offset offset in the data fragments
-     * @param output original data (must be of n_data length)
-     * @param fragments_ids identifiers of available fragments
      * @param words input words if SYSTEMATIC must be n_data,
      *  if NON_SYSTEMATIC get_n_outputs()
      */
@@ -280,13 +279,7 @@ class FecCode {
         vec::Buffers<T>& words);
 };
 
-/**
- * Create an encoder
- *
- * @param word_size in bytes
- * @param n_data
- * @param n_parities
- */
+/// Create an encoder.
 template <typename T>
 FecCode<T>::FecCode(
     FecType type,
@@ -802,7 +795,8 @@ void FecCode<T>::decode_prepare(
  *
  * @param context calculated for given indices of received fragments
  * @param output must be exactly n_data
- * @param words \f$v=(v_0, v_1, ..., v_{k-1})\f$ \f$k\f$ must be exactly n_data
+ * @param words vector \f$v=(v_0, v_1, ..., v_{k-1})\f$, \f$k\f$ must be exactly
+ * n_data
  */
 template <typename T>
 void FecCode<T>::decode_apply(
@@ -1019,11 +1013,12 @@ bool FecCode<T>::decode_packet(
  *
  * @note If all fragments are available ifft(words) is enough
  *
+ * @param context decoding context
  * @param output must be exactly n_data
  * @param props special values dictionary must be exactly n_data
  * @param offset used to locate special values
- * @param fragments_ids unused
- * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
+ * @param words vector \f$v=(v_0, v_1, ..., v_{k-1})\f$, \f$k\f$ must be exactly
+ * n_data
  */
 template <typename T>
 void FecCode<T>::decode(
@@ -1099,11 +1094,10 @@ void FecCode<T>::decode_prepare(
  *
  * @note If all fragments are available ifft(words) is enough
  *
+ * @param context decoding context
  * @param output must be exactly n_data
- * @param props special values dictionary must be exactly n_data
- * @param offset used to locate special values
- * @param fragments_ids unused
- * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
+ * @param words vector \f$v=(v_0, v_1, ..., v_{k-1})\f$, \f$k\f$ must be exactly
+ * n_data
  */
 template <typename T>
 void FecCode<T>::decode_apply(

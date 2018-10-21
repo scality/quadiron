@@ -211,10 +211,9 @@ inline void Vector<T>::set_mem(T* mem, int mem_len)
     this->mem_len = mem_len;
 }
 
-/**
- * Multiplication of a vector by a scalar
+/** Multiplication of a vector by a scalar
  *
- * @param scalar
+ * @param[in] scalar a number
  */
 template <typename T>
 void Vector<T>::mul_scalar(T scalar)
@@ -223,10 +222,9 @@ void Vector<T>::mul_scalar(T scalar)
         set(i, rn->mul(get(i), scalar));
 }
 
-/**
- * Multiplication of ith element of a vector by a scalar = beta^i
+/** Multiplication of i<sup>th</sup> element of a vector by a scalar = beta^i
  *
- * @param scalar
+ * @param[in] beta a number
  */
 template <typename T>
 void Vector<T>::mul_beta(T beta)
@@ -238,10 +236,9 @@ void Vector<T>::mul_beta(T beta)
     }
 }
 
-/**
- * entrywise product
+/** Entrywise product
  *
- * @param v
+ * @param[in] v a vector
  */
 template <typename T>
 void Vector<T>::hadamard_mul(Vector<T>* v)

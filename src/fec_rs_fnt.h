@@ -99,7 +99,7 @@ class RsFnt : public FecCode<T> {
         // compute root of order n-1 such as r^(n-1) mod q == 1
         this->r = this->gf->get_nth_root(this->n);
 
-        int m = arith::get_smallest_power_of_2<int>(this->n_data);
+        int m = arith::ceil2<int>(this->n_data);
         this->fft = std::make_unique<fft::Radix2<T>>(
             *(this->gf), this->n, m, this->pkt_size);
 

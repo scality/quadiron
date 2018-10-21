@@ -96,13 +96,6 @@ class Additive : public FourierTransform<T> {
     Additive<T>* fft_add = nullptr;
 };
 
-/**
- * @param gf
- * @param n
- * @param id: index in the list of factors of n
- *
- * @return
- */
 template <typename T>
 Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
     : FourierTransform<T>(gf, arith::exp2<T>(m), true)
@@ -222,14 +215,14 @@ void Additive<T>::compute_B(vec::Vector<T>& B)
     compute_subspace(*betas, B);
 }
 
-/*
- * Compute subspace spanned by basis
- *  We use balanced Gray sequence to decrease computations number
- *  Intuitively, binary image of two consecutive number of the Gray sequence
- *    differ at 1 position
+/** Compute subspace spanned by basis.
  *
- * @param basis: vector of `dim` linear independent elements
- * @param subspace: output, a vector of 2^dim length
+ * We use balanced Gray sequence to decrease computations number.
+ * Intuitively, binary image of two consecutive number of the Gray sequence
+ * differ at 1 position
+ *
+ * @param basis vector of `dim` linear independent elements
+ * @param subspace output, a vector of 2^dim length
  */
 template <typename T>
 void Additive<T>::compute_subspace(
@@ -320,9 +313,9 @@ void Additive<T>::_ifft(vec::Vector<T>& output, vec::Vector<T>& input)
     }
 }
 
-/**
- * Additive FFT
- *  Algorithm 2 in the paper of Shuhong Gao and Todd Mateer:
+/** Compute the additive FFT.
+ *
+ * Algorithm 2 in the paper of Shuhong Gao and Todd Mateer:
  *    "Additive Fast Fourier Transforms Over Finite Fields"
  *
  * Input: (f, m, B) where m >= 1, f(x) of degree < n = 2
@@ -348,8 +341,8 @@ void Additive<T>::_ifft(vec::Vector<T>& output, vec::Vector<T>& input)
  *         w_{k+1} = w_i + v_i
  * Step7: return (w_0, w_1, .., w_{n-1})
  *
- * @param output: output of hi(x) polynomials
- * @param input: input polynomial f(x)
+ * @param output output of hi(x) polynomials
+ * @param input input polynomial f(x)
  */
 template <typename T>
 void Additive<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
@@ -409,8 +402,8 @@ void Additive<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
  *         g1(x) = sum_{i=0, k-1} g_i1 * x^i
  * Step6: Compute f(x) = g(beta_m^(-1) * x)
  *
- * @param output: output of hi(x) polynomials
- * @param input: input polynomial f(x)
+ * @param output output of hi(x) polynomials
+ * @param input input polynomial f(x)
  */
 template <typename T>
 void Additive<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
@@ -425,12 +418,8 @@ void Additive<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
  *
  * This function is used for FFT over n=2^m, hence n must be power of 2
  *
- * @param g0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
- *            The polynomial is of degree at most t*2^k
- * @param g1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
- *            The polynomial is of degree at most (n-t*2^k)
- * @param n: a power of 2
- * @param do_copy: flag to do a copy of input or not since this function will
+ * @param n a power of 2
+ * @param do_copy flag to do a copy of input or not since this function will
  *  modify input vector
  */
 template <typename T>
@@ -441,7 +430,7 @@ void Additive<T>::taylor_expand_t2(vec::Vector<T>& input, int n, bool do_copy)
     assert(input.get_n() <= n);
 
     // find k s.t. t2^k < n <= 2 *t2^k
-    int _k = find_k(n, 2);
+    int k = find_k(n, 2);
 
     vec::Vector<T>* _input;
     if (do_copy) {
@@ -450,7 +439,7 @@ void Additive<T>::taylor_expand_t2(vec::Vector<T>& input, int n, bool do_copy)
     } else
         _input = &input;
 
-    _taylor_expand_t2(*_input, n, _k, 0);
+    _taylor_expand_t2(*_input, n, k, 0);
 
     // get g0, g1 from mem
     for (int i = 0; i < this->n; i += 2) {
@@ -469,23 +458,18 @@ void Additive<T>::taylor_expand_t2(vec::Vector<T>& input, int n, bool do_copy)
  *
  * This function is used for FFT over n=2^m, hence n must be power of 2
  *
- * @param g0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
- *            The polynomial is of degree at most t*2^k
- * @param g1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
- *            The polynomial is of degree at most (n-t*2^k)
- *
- * @param n: a power of 2
- * @param k: a number st t*2^k < n <= 2*t*2^k
- * @param s_deg: start degree of g0 and g1
+ * @param n a power of 2
+ * @param k a number st \f$t2^{k} < n \leq 2t 2^{k}\f$
+ * @param s_deg start degree of g0 and g1
  */
 template <typename T>
 void Additive<T>::_taylor_expand_t2(
     vec::Vector<T>& input,
     int n,
-    int _k,
+    int k,
     int s_deg)
 {
-    int deg2 = arith::exp2<T>(_k);
+    int deg2 = arith::exp2<T>(k);
     int deg0 = 2 * deg2;
     int deg1 = deg0 - deg2;
 
@@ -505,24 +489,19 @@ void Additive<T>::_taylor_expand_t2(
     _g0.add_mutual(&_g1, deg2, deg1);
 
     if (deg0 > 2) {
-        _taylor_expand_t2(_g0, deg0, _k - 1, s_deg);
-        _taylor_expand_t2(_g1, n - deg0, _k - 1, s_deg + deg2);
+        _taylor_expand_t2(_g0, deg0, k - 1, s_deg);
+        _taylor_expand_t2(_g1, n - deg0, k - 1, s_deg + deg2);
     }
 }
 
-/*
- * This function compute f(x) from its taylor expansion
- *  f(x) = sum_i (gi0 + gi1 * x) * (x^2 - x)^i
+/** This function compute f(x) from its taylor expansion.
+ *
+ * \f$f(x) = sum_i (gi0 + gi1 * x) * (x^2 - x)^i\f$
  *
  * We perform it in the following way
  *  f(x) = (..(( h_k*y + h_{k-1} )*y + h_{k-2})*y ...)
  *  where y = x^2 - x
  *        h_i = gi0 + gi1*x
- *
- * @param g0: vector for poly of gi0 of hi(x) polynomials = gi0 + gi1 * x
- *            The polynomial is of degree at most t*2^k
- * @param g1: vector poly of gi1 of hi(x) polynomials = gi0 + gi1 * x
- *            The polynomial is of degree at most (n-t*2^k)
  */
 template <typename T>
 void Additive<T>::inv_taylor_expand_t2(vec::Vector<T>& output)
@@ -560,12 +539,11 @@ void Additive<T>::mul_xt_x(vec::Vector<T>& vec, int t)
     vec.set(0, 0);
 }
 
-/**
- * find k s.t. t2^k < n <= 2 *t2^k
+/** find k s.t. t2^k < n <= 2 *t2^k
  *
- * @param n: n
- * @param t: t
- * @return k: such that t2^k < n <= 2 *t2^k
+ * @param n n
+ * @param t t
+ * @return k such that t2^k < n <= 2 *t2^k
  */
 template <typename T>
 inline int Additive<T>::find_k(int n, int t)
@@ -581,17 +559,16 @@ inline int Additive<T>::find_k(int n, int t)
     return 0;
 }
 
-/**
- * Taylor expansion at (x^t - x)
+/** Taylor expansion at (x^t - x)
  *  Algorithm 1 in the paper of Shuhong Gao and Todd Mateer:
  *    "Additive Fast Fourier Transforms Over Finite Fields"
  *
  *  f(x) = sum_i h_i(x) * (x^t - x)^i
  *
- * @param output: output of hi(x) polynomials
- * @param input: input polynomial f(x)
- * @param n
- * @param t
+ * @param output output of hi(x) polynomials
+ * @param input input polynomial f(x)
+ * @param n n
+ * @param t t
  */
 template <typename T>
 void Additive<T>::taylor_expand(
@@ -654,7 +631,7 @@ void Additive<T>::_taylor_expand(vec::Vector<T>& input, int n, int t)
  *  where y = x^t - x
  *        h_i := ith polynomial of taylor expansion output
  *
- * @param result: vector of hi(x) polynomials
+ * @param result vector of hi(x) polynomials
  * @param t
  */
 template <typename T>

@@ -72,8 +72,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = smallest power of 2 and at least (n_parities + n_data)
-        this->n =
-            arith::get_smallest_power_of_2<T>(this->n_data + this->n_parities);
+        this->n = arith::ceil2<T>(this->n_data + this->n_parities);
 
         T m = arith::log2<T>(this->n);
 
@@ -94,12 +93,9 @@ class RsGf2nFftAdd : public FecCode<T> {
         return this->n;
     }
 
-    /**
-     * Encode vector
+    /** Encode vector.
      *
      * @param output must be n
-     * @param props special values dictionary must be exactly n_data
-     * @param offset used to locate special values
      * @param words must be n_data
      */
     void encode(

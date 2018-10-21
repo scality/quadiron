@@ -106,12 +106,9 @@ class RsGf2nFft : public FecCode<T> {
         return this->n;
     }
 
-    /**
-     * Encode vector
+    /** Encode vector.
      *
      * @param output must be n
-     * @param props special values dictionary must be exactly n_data
-     * @param offset used to locate special values
      * @param words must be n_data
      */
     void encode(

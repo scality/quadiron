@@ -58,13 +58,7 @@ Prime<T>::Prime(T p) : gf::Field<T>(p, 1)
 {
 }
 
-/**
- * Inverse by exponentiation
- *
- * @param a
- *
- * @return
- */
+/// Inverse by exponentiation.
 template <typename T>
 T Prime<T>::inv_exp(T a)
 {

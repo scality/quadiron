@@ -86,7 +86,7 @@ class RsNf4 : public FecCode<T> {
         // compute root of order n-1 such as r^(n-1) mod q == (1, ..,1)
         this->r = ngff4->get_nth_root(this->n);
 
-        int m = arith::get_smallest_power_of_2<int>(this->n_data);
+        int m = arith::ceil2<int>(this->n_data);
         this->fft = std::unique_ptr<fft::Radix2<T>>(
             new fft::Radix2<T>(*ngff4, this->n, m, this->pkt_size));
 

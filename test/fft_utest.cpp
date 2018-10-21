@@ -394,7 +394,7 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
         }
 
         // n is power of 2 and at least n_data + n_parities.
-        const int n = quadiron::arith::get_smallest_power_of_2<TypeParam>(len);
+        const int n = quadiron::arith::ceil2<TypeParam>(len);
         const int m = quadiron::arith::log2<TypeParam>(n);
         fft::Additive<TypeParam> fft(gf, m);
 
@@ -452,8 +452,7 @@ TYPED_TEST(FftTest, TestFft2Gfp) // NOLINT
 TYPED_TEST(FftTest, TestFftSingleGfp) // NOLINT
 {
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
-    const int n =
-        quadiron::arith::get_smallest_power_of_2<TypeParam>(this->code_len);
+    const int n = quadiron::arith::ceil2<TypeParam>(this->code_len);
     fft::Single<TypeParam> fft(gf, n);
 
     this->test_fft_codec(gf, &fft, 1);

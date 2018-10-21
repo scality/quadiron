@@ -238,13 +238,7 @@ inline T RingModN<T>::div(T a, T b) const
     return mul(a, inv_b);
 }
 
-/**
- * Inverse by Bezout
- *
- * @param a
- *
- * @return
- */
+/// Inverse by Bezout.
 template <typename T>
 inline T RingModN<T>::inv_bezout(T a) const
 {
@@ -283,14 +277,7 @@ inline T RingModN<T>::log(T a, T b) const
     return log_naive(a, b);
 }
 
-/**
- * Naive exponentiation in the group
- *
- * @param base
- * @param exponent
- *
- * @return
- */
+/// Naive exponentiation in the group.
 template <typename T>
 inline T RingModN<T>::exp_naive(T base, T exponent) const
 {
@@ -310,14 +297,7 @@ inline T RingModN<T>::exp_naive(T base, T exponent) const
     return result;
 }
 
-/**
- * Quick exponentiation in the group
- *
- * @param base
- * @param exponent
- *
- * @return
- */
+/// Quick exponentiation in the group.
 template <typename T>
 inline T RingModN<T>::exp_quick(T base, T exponent) const
 {
@@ -339,15 +319,9 @@ inline T RingModN<T>::exp_quick(T base, T exponent) const
     return result;
 }
 
-/**
- * Naive brute force algorithm in the group
- *
- * @param base
- * @param exponent
+/** Naive brute force algorithm in the group.
  *
  * @throw quadiron::NoSolution if no solution exists.
- *
- * return
  */
 template <typename T>
 inline T RingModN<T>::log_naive(T base, T exponent) const
@@ -362,16 +336,14 @@ inline T RingModN<T>::log_naive(T base, T exponent) const
     throw NoSolution("solution not found");
 }
 
-/** This operation is only reserved for NF4 */
+// This operation is only reserved for NF4.
 template <typename T>
 inline T RingModN<T>::replicate(T a) const
 {
     return a;
 }
 
-/*
- * For each i, dest[i] = a * src[i]
- */
+// For each i, dest[i] = a * src[i]
 template <typename T>
 inline void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) const
 {
@@ -532,13 +504,11 @@ void RingModN<T>::compute_factors_of_order()
     proper_divisors = arith::get_proper_divisors<T>(h, primes);
 }
 
-/**
- * check if q is a quadractic residue
+/** Check if `q` is a quadractic residue.
  *
- * q is a quadratic residue, if x^2 == q % n
+ * `q` is a quadratic residue, if x<sup>2</sup> == q % n
  *
- * @param q
- *
+ * @param q a number
  * @return boolean
  */
 template <typename T>
@@ -554,11 +524,10 @@ bool RingModN<T>::is_quadratic_residue(T q) const
     return false;
 }
 
-/**
- * Compute the different powers of the root of unity into a vector
+/** Compute the different powers of the root of unity into a vector.
  *
  * @param W output vector (must be of length n)
- * @param n
+ * @param n length of the output vector
  * @param w n-th root of unity
  */
 template <typename T>
@@ -569,15 +538,13 @@ inline void RingModN<T>::compute_omegas(vec::Vector<T>& W, int n, T w) const
     }
 }
 
-/**
- * Compute the different powers of the root of unity into a vector
+/** Compute the different powers of the root of unity into a vector.
  *
  * @note cache the result in a file called W<w>.cache
- *
  * @note XXX not reentrant
  *
  * @param W output vector (must be of length n)
- * @param n
+ * @param n length of the output vector
  * @param w n-th root of unity
  */
 template <typename T>
@@ -833,13 +800,7 @@ bool RingModN<T>::check_order_naive(T nb, T order) const
     return true;
 }
 
-/**
- * compute root of order n: g^((q-1)/d) where d = gcd(n, q-1)
- *
- * @param n
- *
- * @return root
- */
+/// Compute root of order n: g^((q-1)/d) where d = gcd(n, q-1).
 template <typename T>
 T RingModN<T>::get_nth_root(T n) const
 {
@@ -859,34 +820,26 @@ T RingModN<T>::get_primitive_root() const
     return this->root;
 }
 
-/**
- * find smallest number is
- *  - at least n
- *  - divisible by (q-1)
+/** Find smallest number that is ≥ `n` and divisible by `q-1`.
  *
- * @param n
- *
- * @return root
+ * @param[in] n the lower bound
+ * @return the code length
  */
 template <typename T>
 T RingModN<T>::get_code_len(T n) const
 {
     T nb = this->card_minus_one();
-    if (nb < n)
+    if (nb < n) {
         assert(false);
+    }
 
     return arith::get_code_len<T>(nb, n);
 }
 
-/**
- * find smallest number is
- *  - highly composited
- *  - at least n
- *  - divisible by (q-1)
+/** Find smallest number that is highly composite, ≥ `n` and divisible by `q-1`.
  *
- * @param n
- *
- * @return root
+ * @param[in] n the lower bound
+ * @return the code length
  */
 template <typename T>
 T RingModN<T>::get_code_len_high_compo(T n) const

@@ -117,14 +117,11 @@ class CooleyTukey : public FourierTransform<T> {
     void mul_twiddle_factors(bool inv);
 };
 
-/**
+/** Initialize the FFT.
+ *
  * n-th root will be constructed with primitive root
  *
- * @param gf
- * @param n
- * @param id: index in the list of factors of n
- *
- * @return
+ * @param id index in the list of factors of n
  */
 template <typename T>
 CooleyTukey<T>::CooleyTukey(

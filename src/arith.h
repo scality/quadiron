@@ -59,7 +59,7 @@ T exp_mod(T base, T exponent, T modulus);
 template <typename T>
 bool is_power_of_2(int x);
 template <typename T>
-T get_smallest_power_of_2(int x);
+T ceil2(int x);
 template <typename T>
 int log2(int x);
 template <typename T>
@@ -107,25 +107,27 @@ std::vector<T> get_prime_factors(
     const std::vector<T>& primes,
     const std::vector<int>& exponent);
 
-/**
- * integer square root (from Wikipedia)
+/** Compute the integer square root.
  *
- * @param n
+ * @param[in] n a value
+ * @return the integer square root of `n`
  *
- * @return
+ * @pre `n` must be strictly positive.
  */
+// Taken from Wikipedia.
 template <typename T>
-T sqrt(T remainder)
+T sqrt(T n)
 {
-    // calculated by precompiler = same runtime as: place = 0x40000000
-    T place = static_cast<T>(1) << (sizeof(T) * 8 - 2);
-    while (place > remainder)
-        place /= 4; // optimized by complier as place >>= 2
+    T place = static_cast<T>(1) << (sizeof(T) * CHAR_BIT - 2);
+
+    while (place > n) {
+        place /= 4;
+    }
 
     T root = 0;
     while (place) {
-        if (remainder >= root + place) {
-            remainder -= root + place;
+        if (n >= root + place) {
+            n -= root + place;
             root += place * 2;
         }
         root /= 2;
@@ -135,55 +137,54 @@ T sqrt(T remainder)
     return root;
 }
 
-/**
- * Regular exponentation
+/** Compute the regular exponentation.
  *
- * @param gf
- * @param base
- * @param exponent
- * @param modulus
- *
- * @return
+ * @param[in] base the base `b`
+ * @param[in] exponent the exponent `e`
+ * @return the value of \f$b^e\f$
  */
-template <class T>
+template <typename T>
 T exp(T base, T exponent)
 {
-    if (exponent == 0)
+    if (exponent == 0) {
         return 1;
+    }
     T result = 1;
     while (true) {
-        if (exponent % 2 == 1)
+        if (exponent % 2 == 1) {
             result *= base;
+        }
         exponent >>= 1;
-        if (exponent == 0)
+        if (exponent == 0) {
             break;
+        }
         base *= base;
     }
 
     return result;
 }
 
-/**
- * Modular exponentation taken from Applied Cryptography by Bruce Schneier.
+/** Compute the modular exponentation.
  *
- * @param gf
- * @param base
- * @param exponent
- * @param modulus
- *
- * @return
+ * @param[in] base the base `b`
+ * @param[in] exponent the exponent `e`
+ * @param[in] modulus the modulus `m`
+ * @return the value of \f$b^e \mod m\f$
  */
-template <class T>
+// Taken from Applied Cryptography by Bruce Schneier.
+template <typename T>
 T exp_mod(T base, T exponent, T modulus)
 {
-    if (1 == modulus)
+    if (modulus == 1) {
         return 0;
+    }
 
     T result = 1;
     base = base % modulus;
     while (exponent > 0) {
-        if (exponent % 2 == 1)
+        if (exponent % 2 == 1) {
             result = (result * base) % modulus;
+        }
         exponent = exponent >> 1;
         base = (base * base) % modulus;
     }
@@ -191,90 +192,85 @@ T exp_mod(T base, T exponent, T modulus)
     return result;
 }
 
-/**
- * check if x is a power of 2
+/** Test if `n` is a power of two.
  *
- * @param x
- *
- * @return
+ * @param[in] n a number
+ * @return true if `n` is a power of two.
  */
 template <typename T>
-bool is_power_of_2(int x)
+bool is_power_of_2(int n)
 {
-    return x > 0 && !(x & (x - 1));
+    return n > 0 && !(n & (n - 1));
 }
 
-/**
- * Get a smallest power of 2 and >= x
+/** Round up to the next power of two.
  *
- * @param x
- *
- * @return
+ * @param[in] n a number
+ * @return a power of two greater than or equal to `n`
  */
 template <typename T>
-T get_smallest_power_of_2(int x)
+T ceil2(int n)
 {
-    if (is_power_of_2<T>(x))
-        return x;
-    return exp2<T>(log2<T>(x) + 1);
+    if (is_power_of_2<T>(n)) {
+        return n;
+    }
+    return exp2<T>(log2<T>(n) + 1);
 }
 
-/**
- * Compute log2(x)
+/** Compute the binary logarithm.
  *
- * @param exponent
+ * @param[in] n a number
+ * @return the value of \f$log_2(n)\f$
  *
- * @return
+ * @pre `n` must be strictly positive.
  */
 template <typename T>
-int log2(int x)
+int log2(int n)
 {
-    int result = 0;
-
-    if (x == 0) {
-        throw DomainError("pole error: x is zero");
+    if (n == 0) {
+        throw DomainError("pole error: n is zero");
+    }
+    if (n == 1) {
+        return 0;
     }
 
-    if (x == 1)
-        return 0;
-
-    while (x > 1) {
-        x >>= 1;
+    int result = 0;
+    while (n > 1) {
+        n >>= 1;
         result++;
     }
 
     return result;
 }
 
-/**
- * Compute 2^x
+/** Compute \f$2^n\f$.
  *
- * @param x
- *
- * @return
+ * @param[in] n a number
+ * @return the value of \f$2^n\f$
  */
 template <typename T>
-int exp2(int x)
+int exp2(int n)
 {
-    return 1 << x;
+    return static_cast<T>(1) << n;
 }
 
-/**
- * Extended Euclidean algorithm (from Wikipedia)
+/** Compute the Extended Euclidean algorithm.
+ *
  * Perform ax+by = gcd(a, b)
  *   If a and b are coprime then:
  *         x = inv(a) mod b
  *         y = inv(b) mod a
  *
- * @param a
- * @param b
- * @param bezout_coef[output] computed bezout coefficients, might be nullptr
- * @param quotient_gcd[output] computed quotient by the GCD, might be nullptr
+ * @param[in] a a number
+ * @param[in] b a number
+ * @param[out] bezout_coef computed bezout coefficients, might be nullptr
+ * @param[out] quotient_gcd computed quotient by the GCD, might be nullptr
  *
- * XXX take care of the signs of input
+ * @todo take care of the signs of input
  *
  * @return the GCD
  */
+// Taken from Wikipedia.
 template <typename T>
 SignedDoubleSizeVal<T> extended_gcd(
     SignedDoubleSizeVal<T> a,
@@ -322,16 +318,15 @@ SignedDoubleSizeVal<T> extended_gcd(
 
 /** Apply the Chinese remainder theorem.
  *
- * Implementation from Wikipedia.
- *
- * @param n_mod number of moduli
- * @param a the a's (integers)
- * @param n the n's (moduli)
+ * @param[in] n_mod number of moduli
+ * @param[in] a the a's (integers)
+ * @param[in] n the n's (moduli)
  *
  * @todo Check if there is a solution.
  *
  * @return the solution.
  */
+// Taken from Wikipedia.
 template <typename T>
 T chinese_remainder(int n_mod, T a[], T n[])
 {
@@ -370,21 +365,20 @@ T chinese_remainder(int n_mod, T a[], T n[])
     return x;
 }
 
-/**
- * Compute the jacobi symbol of the 2 numbers
- * https://groups.google.com/forum/#!topic/sci.crypt/v9_cNF06XjU
+/** Compute the Jacobi symbol of the numbers `n` and `m`.
  *
- * The jacobi symbol is defined as follow:
+ * The Jacobi symbol is defined as follow:
  *    n    |  0 if n % m == 0
  *  ( _) = |  1 if n % m != 0 and for some x, n % m == x^2 (quadratic residue)
  *    m    | -1 if n % m != 0 and there is no such x
  *
- * @param n
- * @param m
+ * @param[in] n a value
+ * @param[in] m a modulus
  *
- * @return the jacobi symbol
+ * @return the Jacobi symbol
  * @throw DomainError if b is even or b is negative
  */
+// Taken from https://groups.google.com/forum/#!topic/sci.crypt/v9_cNF06XjU
 template <typename T>
 int jacobi(SignedDoubleSizeVal<T> n, SignedDoubleSizeVal<T> m)
 {
@@ -465,12 +459,10 @@ bool solovay_strassen(T n)
     return true;
 }
 
-/**
- * Brute force prime checking until sqrt(n)
+/** Brute force prime checking until sqrt(n)
  *
- * @param n
- *
- * @return
+ * @param[in] n a number
+ * @return true if `n` is a prime number, otherwise false
  */
 template <typename T>
 bool is_prime(T n)
@@ -593,11 +585,13 @@ void factor_prime(T nb, std::vector<T>* primes, std::vector<int>* exponent)
     }
 }
 
-/**
- * Modern Euclidean algorithm
- * Implementation of Algorithm A in "The Art of Computing", p.322, Donald Knuth
- * @param u
- * @param v
+/** Modern Euclidean algorithm implementation
+ *
+ * This is an implementation of the Algorithm A, p.322 of "The Art of Computer
+ * Programming" by Donald Knuth
+ *
+ * @param[in] u a number
+ * @param[in] v a number
  * @return the GCD(u, v)
  */
 template <typename T>
@@ -636,52 +630,48 @@ std::vector<T> get_all_divisors(T n)
     return divisors;
 }
 
-/**
- * find smallest number is
- *  - at least n
- *  - divisible by (order)
+/** Find smallest number that is ≥ `n` and divisible by `order`.
  *
- * @param order - a prime number
- * @param n
- *
- * @return root
+ * @param[in] order a prime number
+ * @param[in] n the lower bound for the result
+ * @return the code length
  */
 template <typename T>
 T get_code_len(T order, T n)
 {
-    if (order % n == 0)
+    if (order % n == 0) {
         return n;
-    if (order < n)
+    }
+    if (order < n) {
         assert(false);
+    }
     T nb_sqrt = sqrt<T>(order);
     T i;
     if (n > nb_sqrt) {
         for (i = order / n; i >= 1; i--) {
             // if i divides n, return n/i
-            if (order % i == 0)
+            if (order % i == 0) {
                 return order / i;
+            }
         }
         assert(false);
     }
     for (i = n; i <= nb_sqrt; i++) {
         // if i divides n, return i
-        if (order % i == 0)
+        if (order % i == 0) {
             return i;
+        }
     }
     // order is prime
     return order;
 }
 
-/**
- * find smallest number is
- *  - highly composited
- *  - at least n
- *  - divisible by (order)
+/** Find smallest number that is highly composite, ≥ `n` and divisible by
+ * `order`.
  *
- * @param order - a prime number
- * @param n
- *
- * @return root
+ * @param[in] order a prime number
+ * @param[in] n the lower bound for the result
+ * @return the code length
  */
 template <typename T>
 T get_code_len_high_compo(T order, T n)
@@ -690,11 +680,10 @@ T get_code_len_high_compo(T order, T n)
     return get_code_len_high_compo(get_prime_factors<T>(order), n);
 }
 
-/** Find smallest number that his highly composite and greater than `n`
+/** Find smallest number that is highly composite and ≥ `n`
  *
- * @param factors vector of all prime factors of a given order
- * @param n the lower bound for the result
- *
+ * @param[in] factors vector of all prime factors of a given order
+ * @param[in] n the lower bound for the result
  * @return the code length
  */
 template <typename T>
@@ -709,8 +698,9 @@ T get_code_len_high_compo(const std::vector<T>& factors, T n)
             // backward to get smaller number
             for (j = 0; j != i + 1 && j != factors.size(); j++) {
                 x /= factors[j];
-                if (x < n)
+                if (x < n) {
                     return x * factors[j];
+                }
             }
         }
     }

@@ -41,10 +41,10 @@
 
 /** Compute bit-reversed number for a given number
  *
- * @param x - input number
- * @param len - upper bound of the number's range. It is a power of 2
- * @param bit_len - log2 of len
- * @return - bit-reversed number of `x`
+ * @param x input number
+ * @param len upper bound of the number's range. It is a power of 2
+ * @param bit_len log2 of len
+ * @return bit-reversed number of `x`
  */
 inline unsigned reverse_bitwise(unsigned x, unsigned len, unsigned bit_len)
 {
@@ -66,7 +66,7 @@ namespace fft {
 /** Implementation of the radix-2 FFT
  *
  * It uses bit-reversal permutation algorithm that is originally described in
- * Algorithm 9.5.5 in \cite primenumbers
+ * Algorithm 9.5.5 in @cite primenumbers
  */
 template <typename T>
 class Radix2 : public FourierTransform<T> {
@@ -99,17 +99,16 @@ class Radix2 : public FourierTransform<T> {
     std::unique_ptr<vec::Vector<T>> inv_W = nullptr;
 };
 
-/**
+/** Initialize the FFT object.
+ *
  * n-th root will be constructed with primitive root
  *
- * @param gf
+ * @param gf field associated to the FFT
  * @param n FFT length, for now must be a power of 2
- * @param m length of input vector without zero padding. It allows shorterning
- *  operation cycles
+ * @param data_len length of input vector without zero padding. It allows
+ * shorterning operation cycles
  * @param pkt_size size of packet, i.e. number of symbols per chunk will be
  *  received and processed at a time
- *
- * @return
  */
 template <typename T>
 Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)

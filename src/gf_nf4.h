@@ -460,11 +460,10 @@ bool NF4<T>::check(T a) const
     return (a >= 0 && a < q);
 }
 
-/**
- * Compute the different powers of the root of unity into a vector
+/** Compute the different powers of the root of unity into a vector.
  *
  * @param W output vector (must be of length n+1)
- * @param n
+ * @param n the length of the output vector
  * @param w n-th root of unity
  */
 template <typename T>
