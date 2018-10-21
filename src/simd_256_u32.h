@@ -369,7 +369,7 @@ inline void encode_post_process(
     const unsigned vec_size = simd::countof<uint32_t>();
 
     const m256i _threshold = _mm256_set1_epi32(threshold);
-    const uint32_t max = 1 << (sizeof(uint32_t) * 8 - 1);
+    const uint32_t max = 1U << (sizeof(uint32_t) * 8 - 1);
     const m256i mask_hi = _mm256_set1_epi32(max);
     const unsigned element_size = sizeof(uint32_t);
 
