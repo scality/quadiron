@@ -67,7 +67,7 @@ class FftTest : public ::testing::Test {
             const int t = 2 + gf.weak_rand() % (fft->get_n() - 1);
             const int n = t + gf.weak_rand() % (fft->get_n() - t + 1);
 
-            quadiron::vec::Vector<T> v1 = this->random_vec(gf, n, n);
+            quadiron::vec::Vector<T> v1(this->random_vec(gf, n, n));
 
             int m = n / t;
             while (m * t < n) {
@@ -87,7 +87,7 @@ class FftTest : public ::testing::Test {
     {
         for (int i = 0; i < 1000; i++) {
             const int n = fft->get_n();
-            quadiron::vec::Vector<T> v1 = this->random_vec(gf, n, n);
+            quadiron::vec::Vector<T> v1(this->random_vec(gf, n, n));
 
             fft->taylor_expand_t2(v1, n, true);
             quadiron::vec::Vector<T> _v1(gf, n);
@@ -104,8 +104,8 @@ class FftTest : public ::testing::Test {
         quadiron::vec::Vector<T> _v(gf, fft->get_n());
         quadiron::vec::Vector<T> v2(gf, fft->get_n());
         for (int j = 0; j < 1000; j++) {
-            quadiron::vec::Vector<T> v =
-                this->random_vec(gf, fft->get_n(), n_data);
+            quadiron::vec::Vector<T> v(
+                this->random_vec(gf, fft->get_n(), n_data));
 
             fft->fft(_v, v);
             fft->ifft(v2, _v);
@@ -126,8 +126,8 @@ class FftTest : public ::testing::Test {
         quadiron::vec::Vector<T> ifft_1(gf, fft1->get_n());
         quadiron::vec::Vector<T> ifft_2(gf, fft1->get_n());
         for (int j = 0; j < 100; j++) {
-            quadiron::vec::Vector<T> v =
-                this->random_vec(gf, fft1->get_n(), n_data);
+            quadiron::vec::Vector<T> v(
+                this->random_vec(gf, fft1->get_n(), n_data));
 
             fft1->fft(fft_1, v);
             fft2->fft(fft_2, v);
@@ -238,8 +238,8 @@ TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
         quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
         for (unsigned len = 2; len < n; len *= 2) {
             for (int j = 0; j < 100; j++) {
-                quadiron::vec::Vector<TypeParam> v =
-                    this->random_vec(gf, len, len);
+                quadiron::vec::Vector<TypeParam> v(
+                    this->random_vec(gf, len, len));
 
                 fft.fft(_v, v);
                 fft.ifft(v2, _v);
