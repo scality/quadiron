@@ -100,6 +100,10 @@ namespace fft {
 template <typename T>
 class GoodThomas : public FourierTransform<T> {
   public:
+    using FourierTransform<T>::fft;
+    using FourierTransform<T>::ifft;
+    using FourierTransform<T>::fft_inv;
+
     GoodThomas(
         const gf::Field<T>& gf,
         T n,

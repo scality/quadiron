@@ -47,6 +47,9 @@ enum class RsMatrixType { VANDERMONDE, CAUCHY };
 template <typename T>
 class RsGf2n : public FecCode<T> {
   public:
+    using FecCode<T>::decode;
+    using FecCode<T>::encode;
+
     RsMatrixType mat_type;
 
     RsGf2n(

@@ -49,6 +49,10 @@ namespace fft {
 template <typename T>
 class Additive : public FourierTransform<T> {
   public:
+    using FourierTransform<T>::fft;
+    using FourierTransform<T>::ifft;
+    using FourierTransform<T>::fft_inv;
+
     Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas = nullptr);
     ~Additive();
     void compute_basis();

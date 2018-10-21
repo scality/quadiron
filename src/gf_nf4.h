@@ -50,6 +50,8 @@ namespace gf {
 template <typename T>
 class NF4 : public gf::Field<T> {
   public:
+    using gf::Field<T>::neg;
+
     NF4(NF4&& other)
     noexcept
         : Field<T>(std::move(other)), unit(other.unit), q(other.q), h(other.h),

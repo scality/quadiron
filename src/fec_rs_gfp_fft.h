@@ -73,6 +73,10 @@ namespace fec {
 template <typename T>
 class RsGfpFft : public FecCode<T> {
   public:
+    using FecCode<T>::decode_prepare;
+    using FecCode<T>::encode_post_process;
+    using FecCode<T>::encode;
+
     RsGfpFft(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {

@@ -48,7 +48,6 @@ class BinExtension : public gf::Field<T> {
     T card(void) const override;
     T card_minus_one(void) const override;
     bool check(T a) const override;
-    T neg(T a) const override;
     T add(T a, T b) const override;
     T sub(T a, T b) const override;
     T mul(T a, T b) const override;
@@ -367,14 +366,6 @@ bool BinExtension<T>::check(T a) const
     if (this->restricted)
         return (a >= 0 && a <= my_card);
     return (a >= 0 && a < my_card);
-}
-
-template <typename T>
-inline T BinExtension<T>::neg(T a) const
-{
-    assert(check(a));
-
-    return sub(0, a);
 }
 
 template <typename T>

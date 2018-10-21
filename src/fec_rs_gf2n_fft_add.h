@@ -45,6 +45,10 @@ namespace fec {
 template <typename T>
 class RsGf2nFftAdd : public FecCode<T> {
   public:
+    using FecCode<T>::decode_apply;
+    using FecCode<T>::decode_prepare;
+    using FecCode<T>::encode;
+
     // NOTE: only NON_SYSTEMATIC is supported now
     RsGf2nFftAdd(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
