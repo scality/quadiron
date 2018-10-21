@@ -120,7 +120,33 @@ include(CheckCXXCompilerFlag)
 
 set(COMMON_CXX_FLAGS
   -pipe
-  -Wall
+  -Wall -Wextra -Wdeprecated -Wpedantic
+  -Wdocumentation -Wdocumentation-pedantic
+  -Wno-documentation-unknown-command  # Doesn't recognize @cite :(
+  -Wunused-exception-parameter -Wunused-macros -Wunused-member-function -Wunused-template
+  -Wgcc-compat -Wgnu
+  -Warray-bounds-pointer-arithmetic
+  -Wassign-enum
+  -Wbad-function-cast -Wcast-qual -Wcast-align -Wold-style-cast -Wuseless-cast
+  -Wconditional-uninitialized
+  -Wduplicate-method-arg -Wduplicate-method-match
+  -Wfloat-equal -Wdouble-promotion
+  -Wformat-pedantic
+  -Winit-self
+  -Wimplicit-fallthrough=4
+  -Wlogical-op
+  -Wmissing-noreturn -Wmissing-prototypes -Wmissing-include-dirs -Wmissing-declarations
+  -Wnested-anon-types
+  -Wnon-virtual-dtor
+  -Woverlength-strings -Wwrite-strings
+  -Woverloaded-virtual
+  -Wredundant-decls
+  -Wshift-sign-overflow
+  -Wstring-compare -Wstring-conversion -Wstring-plus-char
+  -Wstrict-null-sentinel
+  -Wsometimes-uninitialized
+  -Wswitch-enum
+  -Wunreachable-code-aggressive
 )
 
 # Option for enabling/disabling SIMD flags is for both of debug and release
