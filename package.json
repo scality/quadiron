@@ -1,0 +1,17 @@
+{
+  "name": "quadironjs",
+  "version": "0.0.1",
+  "description": "Native module using Quadiron ECC",
+  "dependencies": {
+    "bindings": "*",
+    "cmake-js": "2",
+    "nan": "2"
+  },
+  "scripts": {
+    "test": "mocha ./tests",
+    "install": "cmake-js compile"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  }
+}

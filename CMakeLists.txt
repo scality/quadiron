@@ -178,6 +178,8 @@ endforeach(flag)
 # QuadIron build
 ################
 
+include_directories(${CMAKE_JS_INC})
+
 find_package(codecov)
 
 # QuadIron

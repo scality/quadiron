@@ -36,6 +36,7 @@ set(LIB_SRC
   ${SOURCE_DIR}/gf_ring.cpp
   ${SOURCE_DIR}/property.cpp
   ${SOURCE_DIR}/vec_vector.cpp
+  ${SOURCE_DIR}/binding.cpp
 
   CACHE
   INTERNAL
