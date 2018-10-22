@@ -151,13 +151,13 @@ set(COMMON_CXX_FLAGS
 
 # Option for enabling/disabling SIMD flags is for both of debug and release
 if (USE_SIMD STREQUAL "ON")
-  SET(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -march=native")
+  list(APPEND COMMON_CXX_FLAGS "-march=native")
   add_definitions(-DQUADIRON_USE_SIMD)
 elseif (USE_SIMD STREQUAL "SSE")
-  SET(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -msse4.1")
+  list(APPEND COMMON_CXX_FLAGS "-msse4.1")
   add_definitions(-DQUADIRON_USE_SIMD)
 elseif (USE_SIMD STREQUAL "AVX")
-  SET(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -mavx2")
+  list(APPEND COMMON_CXX_FLAGS "-mavx2")
   add_definitions(-DQUADIRON_USE_SIMD)
 endif()
 
