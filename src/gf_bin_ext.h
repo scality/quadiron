@@ -57,8 +57,6 @@ class BinExtension : public gf::Field<T> {
     const T exp(T a, T b) const override;
     const T log(T a, T b) const override;
     void hadamard_mul(int n, T* x, T* y) const override;
-    void hadamard_mul_doubled(int n, T* x, T* y) const override;
-    void add_doubled(int n, T* x, T* y) const override;
 
     BinExtension(BinExtension&&) = default;
 
@@ -601,39 +599,6 @@ inline void BinExtension<T>::hadamard_mul(int n, T* x, T* y) const
     }
 }
 
-template <typename T>
-inline void BinExtension<T>::hadamard_mul_doubled(int n, T* x, T* y) const
-{
-    const int half = n / 2;
-    T* x_next = x + half;
-
-    // multiply y to the first half of `x`
-    for (int i = 0; i < half; i++) {
-        x[i] = mul(x[i], y[i]);
-    }
-
-    // multiply y to the second half of `x`
-    for (int i = 0; i < half; i++) {
-        x_next[i] = mul(x_next[i], y[i]);
-    }
-}
-
-template <typename T>
-inline void BinExtension<T>::add_doubled(int n, T* x, T* y) const
-{
-    const int half = n / 2;
-    T* x_next = x + half;
-
-    // add y to the first half of `x`
-    for (int i = 0; i < half; i++) {
-        x[i] = add(x[i], y[i]);
-    }
-
-    // add y to the second half of `x`
-    for (int i = 0; i < half; i++) {
-        x_next[i] = add(x_next[i], y[i]);
-    }
-}
 } // namespace gf
 } // namespace quadiron
 

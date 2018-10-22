@@ -179,16 +179,6 @@ void RingModN<uint32_t>::sub_two_bufs(
 }
 
 template <>
-void RingModN<uint32_t>::add_doubled(int n, uint32_t* x_u32, uint32_t* y_u32)
-    const
-{
-    const int half = n / 2;
-    uint32_t* x_next = x_u32 + half;
-    simd::add_two_bufs(y_u32, x_u32, half, this->_card);
-    simd::add_two_bufs(y_u32, x_next, half, this->_card);
-}
-
-template <>
 void RingModN<uint16_t>::mul_coef_to_buf(
     uint16_t a,
     uint16_t* src,
@@ -216,28 +206,6 @@ void RingModN<uint16_t>::sub_two_bufs(
 }
 
 template <>
-void RingModN<uint16_t>::add_doubled(int n, uint16_t* x_u16, uint16_t* y_u16)
-    const
-{
-    const int half = n / 2;
-    uint16_t* x_next = x_u16 + half;
-    simd::add_two_bufs(y_u16, x_u16, half, this->_card);
-    simd::add_two_bufs(y_u16, x_next, half, this->_card);
-}
-
-// TODO
-// template <>
-// void RingModN<uint64_t>::add_doubled(int n, uint64_t* x_u64, uint64_t* y_u64)
-// const
-// {
-// }
-// template <>
-// void RingModN<__uint128_t>::add_doubled(int n, __uint128_t* x_u128,
-// __uint128_t* y_u128) const
-// {
-// }
-
-template <>
 void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x_u16, uint16_t* y_u16)
     const
 {
@@ -250,42 +218,6 @@ void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x_u32, uint32_t* y_u32)
 {
     simd::mul_two_bufs(y_u32, x_u32, n, this->_card);
 }
-
-template <>
-void RingModN<uint16_t>::hadamard_mul_doubled(
-    int n,
-    uint16_t* x_u16,
-    uint16_t* y_u16) const
-{
-    const int half = n / 2;
-    uint16_t* x_next = x_u16 + half;
-    simd::mul_two_bufs(y_u16, x_u16, half, this->_card);
-    simd::mul_two_bufs(y_u16, x_next, half, this->_card);
-}
-
-template <>
-void RingModN<uint32_t>::hadamard_mul_doubled(
-    int n,
-    uint32_t* x_u32,
-    uint32_t* y_u32) const
-{
-    const int half = n / 2;
-    uint32_t* x_next = x_u32 + half;
-    simd::mul_two_bufs(y_u32, x_u32, half, this->_card);
-    simd::mul_two_bufs(y_u32, x_next, half, this->_card);
-}
-
-// TODO
-// template <>
-// void RingModN<uint64_t>::hadamard_mul_doubled(int n, uint64_t* x_u64,
-// uint64_t* y_u64) const
-// {
-// }
-// template <>
-// void RingModN<__uint128_t>::hadamard_mul_doubled(int n, __uint128_t* x_u128,
-// __uint128_t* y_u128) const
-// {
-// }
 
 } // namespace gf
 } // namespace quadiron

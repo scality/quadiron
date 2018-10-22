@@ -42,7 +42,6 @@
 #include "gf_ring.h"
 #include "simd/simd.h"
 #include "vec_cast.h"
-#include "vec_doubled.h"
 
 namespace quadiron {
 
@@ -84,9 +83,7 @@ class Vector {
     void mul_scalar(T scalar);
     void mul_beta(T beta);
     void hadamard_mul(Vector<T>* v);
-    void hadamard_mul(Doubled<T>* v);
     void add(Vector<T>* v);
-    void add(Doubled<T>* v);
     void add(Vector<T>* v, int offset);
     void add_mutual(Vector<T>* v);
     void add_mutual(Vector<T>* v, int offset);
@@ -255,22 +252,6 @@ void Vector<T>::hadamard_mul(Vector<T>* v)
     rn->hadamard_mul(n, dest, src);
 }
 
-/**
- * entrywise product
- *
- * @param v
- */
-template <typename T>
-void Vector<T>::hadamard_mul(Doubled<T>* v)
-{
-    assert(n == v->get_n());
-
-    // typical butterfly operation
-    T* dest = mem;
-    T* src = v->get_mem();
-    rn->hadamard_mul_doubled(n, dest, src);
-}
-
 template <typename T>
 void Vector<T>::add(Vector<T>* v)
 {
@@ -279,17 +260,6 @@ void Vector<T>::add(Vector<T>* v)
     T* src = v->get_mem();
     for (int i = 0; i < n; i++)
         mem[i] = rn->add(mem[i], src[i]);
-}
-
-template <typename T>
-void Vector<T>::add(Doubled<T>* v)
-{
-    assert(n == v->get_n());
-
-    // typical butterfly operation
-    T* dest = mem;
-    T* src = v->get_mem();
-    rn->add_doubled(n, dest, src);
 }
 
 template <typename T>
@@ -437,20 +407,6 @@ void Vector<T>::dump(void) const
         std::cout << get(i) << " ";
     std::cout << ")\n";
 }
-
-#ifndef QUADIRON_USE_SIMD
-// try to improve performance without parallization
-template <>
-void Vector<uint32_t>::add(Doubled<uint32_t>* v);
-template <>
-void Vector<uint64_t>::add(Doubled<uint64_t>* v);
-
-template <>
-void Vector<uint32_t>::hadamard_mul(Doubled<uint32_t>* v);
-template <>
-void Vector<uint64_t>::hadamard_mul(Doubled<uint64_t>* v);
-
-#endif
 
 } // namespace vec
 } // namespace quadiron

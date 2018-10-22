@@ -434,45 +434,6 @@ inline void store_low(aint128* address, m256i reg)
     _mm_store_si128((m128i*)address, _mm256_castsi256_si128(reg));
 }
 
-/** Add buffer `y` to two halves of `x`. `x` is of length `n` */
-inline void
-add_buf_to_two_bufs(int n, aint128* _x, aint128* _y, aint32 card = F4)
-{
-    int i;
-    m256i* x = reinterpret_cast<m256i*>(_x);
-    m256i* y = reinterpret_cast<m256i*>(_y);
-
-    const unsigned ratio = sizeof(*x) / sizeof(*_x);
-    const int len_y = n / 2;
-    const int len_y_256 = len_y / ratio;
-    const int last_len_y = len_y - len_y_256 * ratio;
-
-    aint128* x_half = _x + len_y;
-    m256i* x_next = reinterpret_cast<m256i*>(x_half);
-
-    // add y to the first half of `x`
-    for (i = 0; i < len_y_256; i++) {
-        x[i] = add(x[i], y[i], card);
-    }
-
-    // add y to the second half of `x`
-    for (i = 0; i < len_y_256; i++) {
-        x_next[i] = add(x_next[i], y[i], card);
-    }
-
-    if (last_len_y > 0) {
-        // add last _y[] to x and x_next
-        for (i = len_y_256 * ratio; i < len_y; i++) {
-            m256i _x_p = _mm256_castsi128_si256((m128i)_x[i]);
-            m256i _x_next_p = _mm256_castsi128_si256((m128i)x_half[i]);
-            m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
-
-            store_low(_x + i, add(_x_p, _y_p, card));
-            store_low(x_half + i, add(_x_next_p, _y_p, card));
-        }
-    }
-}
-
 inline void hadamard_mul(int n, aint128* _x, aint128* _y)
 {
     int i;
@@ -495,43 +456,6 @@ inline void hadamard_mul(int n, aint128* _x, aint128* _y)
             m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
 
             store_low(_x + i, mul(_x_p, _y_p, F4));
-        }
-    }
-}
-
-inline void hadamard_mul_doubled(int n, aint128* _x, aint128* _y)
-{
-    int i;
-    m256i* x = reinterpret_cast<m256i*>(_x);
-    m256i* y = reinterpret_cast<m256i*>(_y);
-
-    const unsigned ratio = sizeof(*x) / sizeof(*_x);
-    const int len_y = n / 2;
-    const int len_y_256 = len_y / ratio;
-    const int last_len_y = len_y - len_y_256 * ratio;
-
-    aint128* x_half = _x + len_y;
-    m256i* x_next = reinterpret_cast<m256i*>(x_half);
-
-    // multiply y to the first half of `x`
-    for (i = 0; i < len_y_256; i++) {
-        x[i] = mul(x[i], y[i], F4);
-    }
-
-    // multiply y to the second half of `x`
-    for (i = 0; i < len_y_256; i++) {
-        x_next[i] = mul(x_next[i], y[i], F4);
-    }
-
-    if (last_len_y > 0) {
-        // add last _y[] to x and x_next
-        for (i = len_y_256 * ratio; i < len_y; i++) {
-            m256i _x_p = _mm256_castsi128_si256((m128i)_x[i]);
-            m256i _x_next_p = _mm256_castsi128_si256((m128i)x_half[i]);
-            m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
-
-            store_low(_x + i, mul(_x_p, _y_p, F4));
-            store_low(x_half + i, mul(_x_next_p, _y_p, F4));
         }
     }
 }
