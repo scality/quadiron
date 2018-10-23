@@ -69,24 +69,9 @@ const __uint128_t NF4<__uint128_t>::mul(__uint128_t a, __uint128_t b) const
 }
 
 template <>
-void NF4<__uint128_t>::add_doubled(int n, __uint128_t* x, __uint128_t* y) const
-{
-    simd::add_buf_to_two_bufs(n, x, y);
-}
-
-template <>
 void NF4<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t* y) const
 {
     simd::hadamard_mul(n, x, y);
-}
-
-template <>
-void NF4<__uint128_t>::hadamard_mul_doubled(
-    int n,
-    __uint128_t* x,
-    __uint128_t* y) const
-{
-    simd::hadamard_mul_doubled(n, x, y);
 }
 
 template <>

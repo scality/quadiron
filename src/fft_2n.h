@@ -36,7 +36,6 @@
 #include "fft_base.h"
 #include "fft_single.h"
 #include "gf_base.h"
-#include "vec_doubled.h"
 #include "vec_vector.h"
 #include "vec_zero_ext.h"
 
