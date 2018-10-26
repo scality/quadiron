@@ -61,7 +61,7 @@ inline VecType CARD_M_1(T q)
 template <typename T>
 inline VecType ADD_MOD(VecType x, VecType y, T q)
 {
-    VecType res = ADD<T>(x, y);
+    const VecType res = ADD<T>(x, y);
     return MIN<T>(res, SUB<T>(res, CARD(q)));
 }
 
@@ -76,7 +76,7 @@ inline VecType ADD_MOD(VecType x, VecType y, T q)
 template <typename T>
 inline VecType SUB_MOD(VecType x, VecType y, T q)
 {
-    VecType res = SUB<T>(x, y);
+    const VecType res = SUB<T>(x, y);
     return MIN<T>(res, ADD<T>(res, CARD(q)));
 }
 
@@ -90,7 +90,7 @@ inline VecType SUB_MOD(VecType x, VecType y, T q)
 template <typename T>
 inline VecType NEG_MOD(VecType x, T q)
 {
-    VecType res = SUB<T>(CARD(q), x);
+    const VecType res = SUB<T>(CARD(q), x);
     return MIN<T>(res, SUB<T>(res, CARD(q)));
 }
 
@@ -108,10 +108,10 @@ inline VecType NEG_MOD(VecType x, T q)
 template <typename T>
 inline VecType MUL_MOD(VecType x, VecType y, T q)
 {
-    VecType res = MUL<T>(x, y);
-    VecType lo =
+    const VecType res = MUL<T>(x, y);
+    const VecType lo =
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
-    VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
+    const VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
                            : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
     return SUB_MOD(lo, hi, q);
 }
@@ -132,12 +132,12 @@ inline VecType MULFULL_MOD(VecType x, VecType y, T q)
     VecType res = MUL<T>(x, y);
 
     // filter elements of both of a & b = card-1
-    VecType cmp = AND(CMPEQ<T>(x, CARD_M_1(q)), CMPEQ<T>(y, CARD_M_1(q)));
+    const VecType cmp = AND(CMPEQ<T>(x, CARD_M_1(q)), CMPEQ<T>(y, CARD_M_1(q)));
     res = (q == F3) ? XOR(res, AND(F4_u32, cmp)) : ADD<T>(res, AND(ONE32, cmp));
 
-    VecType lo =
+    const VecType lo =
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
-    VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
+    const VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
                            : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
     return SUB_MOD(lo, hi, q);
 }
@@ -166,8 +166,8 @@ inline void ADD_PROPS(
     auto d = MVMSK8(c);
     const unsigned element_size = sizeof(T);
     while (d > 0) {
-        unsigned byte_idx = __builtin_ctz(d);
-        off_t _offset = offset + byte_idx / element_size;
+        const unsigned byte_idx = __builtin_ctz(d);
+        const size_t _offset = offset + byte_idx / element_size;
         props.add(_offset, OOR_MARK);
         d ^= 1 << byte_idx;
     }
@@ -191,7 +191,7 @@ inline void mul_coef_to_buf(const T a, T* src, T* dest, size_t len, T card)
     const size_t _last_len = len - _len * ratio;
 
     size_t i = 0;
-    size_t end = (_len > 3) ? _len - 3 : 0;
+    const size_t end = (_len > 3) ? _len - 3 : 0;
     for (; i < end; i += 4) {
         _dest[i] = MUL_MOD(coef, _src[i], card);
         _dest[i + 1] = MUL_MOD(coef, _src[i + 1], card);
@@ -203,7 +203,7 @@ inline void mul_coef_to_buf(const T a, T* src, T* dest, size_t len, T card)
     }
 
     if (_last_len > 0) {
-        DoubleSizeVal<T> coef_double = DoubleSizeVal<T>(a);
+        const DoubleSizeVal<T> coef_double = DoubleSizeVal<T>(a);
         for (size_t i = _len * ratio; i < len; i++) {
             dest[i] = (T)((coef_double * src[i]) % card);
         }
@@ -225,7 +225,7 @@ inline void add_two_bufs(T* src, T* dest, size_t len, T card)
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
-            T tmp = src[i] + dest[i];
+            const T tmp = src[i] + dest[i];
             dest[i] = (tmp >= card) ? (tmp - card) : tmp;
         }
     }
@@ -249,10 +249,11 @@ inline void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len, T card)
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
             // perform subtraction
-            if (bufa[i] >= bufb[i])
+            if (bufa[i] >= bufb[i]) {
                 res[i] = bufa[i] - bufb[i];
-            else
+            } else {
                 res[i] = card - (bufb[i] - bufa[i]);
+            }
         }
     }
 }
