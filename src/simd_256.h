@@ -53,6 +53,8 @@ typedef __m128i HalfVecType;
 typedef __uint128_t NF4Type;
 typedef uint32_t MaskIntType;
 
+/* ============= Constant variable  ============ */
+
 #define F4_u32 _mm256_set1_epi32(65537)
 #define F4m1_u32 _mm256_set1_epi32(65536)
 #define F3_u32 _mm256_set1_epi32(257)
@@ -61,14 +63,23 @@ typedef uint32_t MaskIntType;
 #define F3_u16 _mm256_set1_epi16(257)
 #define F3m1_u16 _mm256_set1_epi16(256)
 
-#define CARD(q) (EITHER(q == F3, F3_u32, F4_u32))
-#define CARD_M_1(q) (EITHER(q == F3, F3m1_u32, F4m1_u32))
-
-/* ============= Essential Operations for AVX2 w/ both u16 & u32 ============ */
-
 #define ZERO (_mm256_setzero_si256())
 #define ONE16 (_mm256_set1_epi16(1))
 #define ONE32 (_mm256_set1_epi32(1))
+
+/* ============= Essential Operations for AVX2 w/ both u16 & u32 ============ */
+
+template <typename T>
+inline VecType CARD(T q)
+{
+    return (q == F3) ? F3_u32 : F4_u32;
+}
+
+template <typename T>
+inline VecType CARD_M_1(T q)
+{
+    return (q == F3) ? F3m1_u32 : F4m1_u32;
+}
 
 inline VecType LOAD(VecType* address)
 {
