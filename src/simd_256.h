@@ -66,6 +66,8 @@ typedef __uint128_t NF4Type;
 #define ONE16 (_mm256_set1_epi16(1))
 #define ONE32 (_mm256_set1_epi32(1))
 
+#define MASK8_LO (_mm256_set1_epi16(0x80))
+
 /* ============= Essential Operations for AVX2 w/ both u16 & u32 ============ */
 
 inline VecType LOAD(VecType* address)
@@ -134,7 +136,6 @@ inline VecType MINU32(VecType x, VecType y)
     return _mm256_min_epu32(x, y);
 }
 
-#define MASK8_LO (_mm256_set1_epi16(0x80))
 #define BLEND8(x, y, mask) (_mm256_blendv_epi8(x, y, mask))
 #define BLEND16(x, y, imm8) (_mm256_blend_epi16(x, y, imm8))
 
