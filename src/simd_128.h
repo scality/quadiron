@@ -38,6 +38,8 @@ namespace simd {
 
 typedef __m128i VecType;
 
+/* ============= Constant variable  ============ */
+
 #define F4_u32 _mm_set1_epi32(65537)
 #define F4m1_u32 _mm_set1_epi32(65536)
 #define F3_u32 _mm_set1_epi32(257)
@@ -46,14 +48,11 @@ typedef __m128i VecType;
 #define F3_u16 _mm_set1_epi16(257)
 #define F3m1_u16 _mm_set1_epi16(256)
 
-#define CARD(q) (EITHER(q == F3, F3_u32, F4_u32))
-#define CARD_M_1(q) (EITHER(q == F3, F3m1_u32, F4m1_u32))
-
-/* ============= Essential Operations for AVX2 w/ both u16 & u32 ============ */
-
 #define ZERO (_mm_setzero_si128())
 #define ONE16 (_mm_set1_epi16(1))
 #define ONE32 (_mm_set1_epi32(1))
+
+/* ============= Essential Operations for SSE w/ both u16 & u32 ============ */
 
 inline VecType LOAD(VecType* address)
 {
@@ -89,7 +88,7 @@ inline uint16_t TESTZ(VecType x, VecType y)
     return _mm_testz_si128(x, y);
 }
 
-/* ================= Essential Operations for AVX2 w/ u32 ================= */
+/* ================= Essential Operations for SSE w/ u32 ================= */
 
 inline VecType SET1(uint32_t val)
 {
@@ -120,11 +119,12 @@ inline VecType MINU32(VecType x, VecType y)
 {
     return _mm_min_epu32(x, y);
 }
+
 #define MASK8_LO (_mm_set1_epi16(0x80))
 #define BLEND8(x, y, mask) (_mm_blendv_epi8(x, y, mask))
 #define BLEND16(x, y, imm8) (_mm_blend_epi16(x, y, imm8))
 
-/* ================= Essential Operations for AVX2 w/ u16 ================= */
+/* ================= Essential Operations for SSE w/ u16 ================= */
 
 inline VecType SET1(uint16_t val)
 {

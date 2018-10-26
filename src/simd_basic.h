@@ -36,6 +36,18 @@
 namespace quadiron {
 namespace simd {
 
+template <typename T>
+inline VecType CARD(T q)
+{
+    return (q == F3) ? F3_u32 : F4_u32;
+}
+
+template <typename T>
+inline VecType CARD_M_1(T q)
+{
+    return (q == F3) ? F3m1_u32 : F4m1_u32;
+}
+
 /* ================= Basic Operations for u32 ================= */
 
 /**
