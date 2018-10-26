@@ -41,6 +41,8 @@ int data_zpad = -1;
 int coding_zpad = -1;
 char* prefix = nullptr;
 
+ThreadPool pool(10);
+
 void xusage()
 {
     std::cerr << std::string("Usage: ") +
@@ -334,7 +336,7 @@ void run_fec_rs_gf2n(
     }
     if (rflag) {
         if (0 != repair_data_files<T>(fec)) {
-            std::exit(EXIT_FAILURE);
+          std::exit(EXIT_FAILURE);
         }
     }
     create_coding_files<T>(fec);
@@ -428,7 +430,7 @@ void run_fec_rs_fnt(
 {
     quadiron::fec::RsFnt<T>* fec;
     size_t pkt_size = 1024;
-    fec = new quadiron::fec::RsFnt<T>(
+    fec = new quadiron::fec::RsFnt<T>(pool, 
         type, word_size, n_data, n_parities, pkt_size);
 
     coding_zpad = count_digits(fec->n_outputs - 1);
@@ -567,6 +569,8 @@ int main(int argc, char** argv)
 
     if (!(uflag || cflag || rflag))
         xusage();
+
+    pool.init();
 
     if (0 == check(n_data + n_parities, word_size, eflag)) {
         std::cerr

@@ -152,6 +152,10 @@ Benchmark<T>::~Benchmark()
 template <typename T>
 int Benchmark<T>::init()
 {
+  ThreadPool pool(10);
+
+  pool.init();
+
     switch (fec_type) {
     case EC_TYPE_RS_GF2N_V:
         fec = new quadiron::fec::RsGf2n<T>(
@@ -174,11 +178,11 @@ int Benchmark<T>::init()
         fec = new quadiron::fec::RsNf4<T>(word_size, k, m, pkt_size);
         break;
     case EC_TYPE_RS_FNT:
-        fec = new quadiron::fec::RsFnt<T>(
+      fec = new quadiron::fec::RsFnt<T>(pool, 
             quadiron::fec::FecType::NON_SYSTEMATIC, word_size, k, m, pkt_size);
         break;
     case EC_TYPE_RS_FNT_SYS:
-        fec = new quadiron::fec::RsFnt<T>(
+      fec = new quadiron::fec::RsFnt<T>(pool,
             quadiron::fec::FecType::SYSTEMATIC, word_size, k, m, pkt_size);
         break;
     default:

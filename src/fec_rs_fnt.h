@@ -37,6 +37,7 @@
 #include "gf_prime.h"
 #include "vec_buffers.h"
 #include "vec_vector.h"
+#include "thread_pool.h"
 
 namespace quadiron {
 namespace fec {
@@ -62,6 +63,7 @@ class RsFnt : public FecCode<T> {
 
   public:
     RsFnt(
+        ThreadPool &thread_pool,
         FecType type,
         unsigned word_size,
         unsigned n_data,

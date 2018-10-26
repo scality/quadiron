@@ -31,6 +31,7 @@
 # Adapted from http://www.kaizou.org/2014/11/gtest-cmake/
 #########################################################
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # Download and install GoogleTest
@@ -141,6 +142,7 @@ add_coverage(${UNIT_TESTS})
 target_link_libraries(${UNIT_TESTS}
   libgtest
   ${STATIC_LIB}
+  Threads::Threads
 )
 # Use SYSTEM so that our strict compilers settings are not applied on this code.
 target_include_directories(${UNIT_TESTS} SYSTEM
@@ -165,6 +167,7 @@ add_coverage(${EC_DRIVER})
 # Link librairies.
 target_link_libraries(${EC_DRIVER}
   ${STATIC_LIB}
+  Threads::Threads
 )
 
 # Tests

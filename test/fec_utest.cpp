@@ -129,8 +129,12 @@ TYPED_TEST_CASE(FecTestNo128, No128);
 
 TYPED_TEST(FecTestNo128, TestFnt) // NOLINT
 {
+    ThreadPool pool(3);
+
+    pool.init();
+
     for (unsigned word_size = 1; word_size <= 2; ++word_size) {
-        fec::RsFnt<TypeParam> fec(
+      fec::RsFnt<TypeParam> fec(pool,
             fec::FecType::NON_SYSTEMATIC,
             word_size,
             this->n_data,
@@ -142,8 +146,12 @@ TYPED_TEST(FecTestNo128, TestFnt) // NOLINT
 
 TYPED_TEST(FecTestNo128, TestFntSys) // NOLINT
 {
+    ThreadPool pool(3);
+
+    pool.init();
+
     for (unsigned word_size = 1; word_size <= 2; ++word_size) {
-        fec::RsFnt<TypeParam> fec(
+      fec::RsFnt<TypeParam> fec(pool,
             fec::FecType::SYSTEMATIC,
             word_size,
             this->n_data,
