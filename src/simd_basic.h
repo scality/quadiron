@@ -107,8 +107,8 @@ inline VecType MUL_MOD(VecType x, VecType y, uint32_t q)
     VecType res = MUL32(x, y);
     VecType lo =
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
-    VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR_1(res), MASK8_LO)
-                           : BLEND16(ZERO, SHIFTR_2(res), 0x55);
+    VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
+                           : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
     return SUB_MOD(lo, hi, q);
 }
 
@@ -132,8 +132,8 @@ inline VecType MULFULL_MOD(VecType x, VecType y, uint32_t q)
 
     VecType lo =
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
-    VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR_1(res), MASK8_LO)
-                           : BLEND16(ZERO, SHIFTR_2(res), 0x55);
+    VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
+                           : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
     return SUB_MOD(lo, hi, q);
 }
 
@@ -225,7 +225,7 @@ inline VecType MUL_MOD(VecType x, VecType y, uint16_t q)
 {
     VecType res = MUL16(x, y);
     VecType lo = BLEND8(ZERO, res, MASK8_LO);
-    VecType hi = BLEND8(ZERO, SHIFTR_1(res), MASK8_LO);
+    VecType hi = BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO);
     return SUB_MOD(lo, hi, q);
 }
 
@@ -248,7 +248,7 @@ inline VecType MULFULL_MOD(VecType x, VecType y, uint16_t q)
     res = ADD16(res, AND(ONE16, cmp));
 
     VecType lo = BLEND8(ZERO, res, MASK8_LO);
-    VecType hi = BLEND8(ZERO, SHIFTR_1(res), MASK8_LO);
+    VecType hi = BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO);
     return SUB_MOD(lo, hi, q);
 }
 

@@ -73,14 +73,6 @@ inline VecType XOR(VecType x, VecType y)
 {
     return _mm_xor_si128(x, y);
 }
-inline VecType SHIFTR_1(VecType x)
-{
-    return _mm_srli_si128(x, 1);
-}
-inline VecType SHIFTR_2(VecType x)
-{
-    return _mm_srli_si128(x, 2);
-}
 inline uint16_t MVMSK8(VecType x)
 {
     return _mm_movemask_epi8(x);
@@ -89,6 +81,8 @@ inline uint16_t TESTZ(VecType x, VecType y)
 {
     return _mm_testz_si128(x, y);
 }
+
+#define SHIFTR(x, imm8) (_mm_srli_si128(x, imm8))
 
 /* ================= Essential Operations for SSE w/ u32 ================= */
 

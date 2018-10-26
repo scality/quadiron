@@ -87,14 +87,6 @@ inline VecType XOR(VecType x, VecType y)
 {
     return _mm256_xor_si256(x, y);
 }
-inline VecType SHIFTR_1(VecType x)
-{
-    return _mm256_srli_si256(x, 1);
-}
-inline VecType SHIFTR_2(VecType x)
-{
-    return _mm256_srli_si256(x, 2);
-}
 inline uint32_t MVMSK8(VecType x)
 {
     return _mm256_movemask_epi8(x);
@@ -103,6 +95,8 @@ inline uint32_t TESTZ(VecType x, VecType y)
 {
     return _mm256_testz_si256(x, y);
 }
+
+#define SHIFTR(x, imm8) (_mm256_srli_si256(x, imm8))
 
 /* ================= Essential Operations for AVX2 w/ u32 ================= */
 
