@@ -97,70 +97,85 @@ inline uint32_t TESTZ(VecType x, VecType y)
 }
 
 #define SHIFTR(x, imm8) (_mm256_srli_si256(x, imm8))
+#define BLEND8(x, y, mask) (_mm256_blendv_epi8(x, y, mask))
+#define BLEND16(x, y, imm8) (_mm256_blend_epi16(x, y, imm8))
 
-/* ================= Essential Operations for AVX2 w/ u32 ================= */
+/* ================= Essential Operations for AVX2 ================= */
 
+template <typename T>
+inline VecType SET1(T val);
+template <>
 inline VecType SET1(uint32_t val)
 {
     return _mm256_set1_epi32(val);
 }
-inline VecType ADD32(VecType x, VecType y)
-{
-    return _mm256_add_epi32(x, y);
-}
-inline VecType SUB32(VecType x, VecType y)
-{
-    return _mm256_sub_epi32(x, y);
-}
-inline VecType MUL32(VecType x, VecType y)
-{
-    return _mm256_mullo_epi32(x, y);
-}
-
-inline VecType CMPEQ32(VecType x, VecType y)
-{
-    return _mm256_cmpeq_epi32(x, y);
-}
-inline VecType CMPGT32(VecType x, VecType y)
-{
-    return _mm256_cmpgt_epi32(x, y);
-}
-inline VecType MINU32(VecType x, VecType y)
-{
-    return _mm256_min_epu32(x, y);
-}
-
-#define BLEND8(x, y, mask) (_mm256_blendv_epi8(x, y, mask))
-#define BLEND16(x, y, imm8) (_mm256_blend_epi16(x, y, imm8))
-
-/* ================= Essential Operations for AVX2 w/ u16 ================= */
-
+template <>
 inline VecType SET1(uint16_t val)
 {
     return _mm256_set1_epi16(val);
 }
-inline VecType ADD16(VecType x, VecType y)
+
+template <typename T>
+inline VecType ADD(VecType x, VecType y);
+template <>
+inline VecType ADD<uint32_t>(VecType x, VecType y)
+{
+    return _mm256_add_epi32(x, y);
+}
+template <>
+inline VecType ADD<uint16_t>(VecType x, VecType y)
 {
     return _mm256_add_epi16(x, y);
 }
-inline VecType SUB16(VecType x, VecType y)
+
+template <typename T>
+inline VecType SUB(VecType x, VecType y);
+template <>
+inline VecType SUB<uint32_t>(VecType x, VecType y)
+{
+    return _mm256_sub_epi32(x, y);
+}
+template <>
+inline VecType SUB<uint16_t>(VecType x, VecType y)
 {
     return _mm256_sub_epi16(x, y);
 }
-inline VecType MUL16(VecType x, VecType y)
+
+template <typename T>
+inline VecType MUL(VecType x, VecType y);
+template <>
+inline VecType MUL<uint32_t>(VecType x, VecType y)
+{
+    return _mm256_mullo_epi32(x, y);
+}
+template <>
+inline VecType MUL<uint16_t>(VecType x, VecType y)
 {
     return _mm256_mullo_epi16(x, y);
 }
 
-inline VecType CMPEQ16(VecType x, VecType y)
+template <typename T>
+inline VecType CMPEQ(VecType x, VecType y);
+template <>
+inline VecType CMPEQ<uint32_t>(VecType x, VecType y)
+{
+    return _mm256_cmpeq_epi32(x, y);
+}
+template <>
+inline VecType CMPEQ<uint16_t>(VecType x, VecType y)
 {
     return _mm256_cmpeq_epi16(x, y);
 }
-inline VecType CMPGT16(VecType x, VecType y)
+
+template <typename T>
+inline VecType MIN(VecType x, VecType y);
+template <>
+inline VecType MIN<uint32_t>(VecType x, VecType y)
 {
-    return _mm256_cmpgt_epi16(x, y);
+    return _mm256_min_epu32(x, y);
 }
-inline VecType MINU16(VecType x, VecType y)
+template <>
+inline VecType MIN<uint16_t>(VecType x, VecType y)
 {
     return _mm256_min_epu16(x, y);
 }
