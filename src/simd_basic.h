@@ -48,20 +48,21 @@ inline VecType CARD_M_1(T q)
     return (q == F3) ? F3m1_u32 : F4m1_u32;
 }
 
-/* ================= Basic Operations for u32 ================= */
+/* ================= Basic Operations ================= */
 
 /**
- * Modular addition for packed unsigned 32-bit integers
+ * Modular addition
  *
  * @param x input register
  * @param y input register
  * @param q modulo
  * @return (x + y) mod q
  */
-inline VecType ADD_MOD(VecType x, VecType y, uint32_t q)
+template <typename T>
+inline VecType ADD_MOD(VecType x, VecType y, T q)
 {
-    VecType res = ADD32(x, y);
-    return MINU32(res, SUB32(res, CARD(q)));
+    VecType res = ADD<T>(x, y);
+    return MIN<T>(res, SUB<T>(res, CARD(q)));
 }
 
 /**
@@ -72,10 +73,11 @@ inline VecType ADD_MOD(VecType x, VecType y, uint32_t q)
  * @param q modulo
  * @return (x - y) mod q
  */
-inline VecType SUB_MOD(VecType x, VecType y, uint32_t q)
+template <typename T>
+inline VecType SUB_MOD(VecType x, VecType y, T q)
 {
-    VecType res = SUB32(x, y);
-    return MINU32(res, ADD32(res, CARD(q)));
+    VecType res = SUB<T>(x, y);
+    return MIN<T>(res, ADD<T>(res, CARD(q)));
 }
 
 /**
@@ -85,10 +87,11 @@ inline VecType SUB_MOD(VecType x, VecType y, uint32_t q)
  * @param q modulo
  * @return (-x) mod q
  */
-inline VecType NEG_MOD(VecType x, uint32_t q)
+template <typename T>
+inline VecType NEG_MOD(VecType x, T q)
 {
-    VecType res = SUB32(CARD(q), x);
-    return MINU32(res, SUB32(res, CARD(q)));
+    VecType res = SUB<T>(CARD(q), x);
+    return MIN<T>(res, SUB<T>(res, CARD(q)));
 }
 
 /**
@@ -102,9 +105,10 @@ inline VecType NEG_MOD(VecType x, uint32_t q)
  * @param q modulo
  * @return (x * y) mod q
  */
-inline VecType MUL_MOD(VecType x, VecType y, uint32_t q)
+template <typename T>
+inline VecType MUL_MOD(VecType x, VecType y, T q)
 {
-    VecType res = MUL32(x, y);
+    VecType res = MUL<T>(x, y);
     VecType lo =
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
     VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
@@ -122,13 +126,14 @@ inline VecType MUL_MOD(VecType x, VecType y, uint32_t q)
  * @param q modulo
  * @return (x * y) mod q
  */
-inline VecType MULFULL_MOD(VecType x, VecType y, uint32_t q)
+template <typename T>
+inline VecType MULFULL_MOD(VecType x, VecType y, T q)
 {
-    VecType res = MUL32(x, y);
+    VecType res = MUL<T>(x, y);
 
     // filter elements of both of a & b = card-1
-    VecType cmp = AND(CMPEQ32(x, CARD_M_1(q)), CMPEQ32(y, CARD_M_1(q)));
-    res = (q == F3) ? XOR(res, AND(F4_u32, cmp)) : ADD32(res, AND(ONE32, cmp));
+    VecType cmp = AND(CMPEQ<T>(x, CARD_M_1(q)), CMPEQ<T>(y, CARD_M_1(q)));
+    res = (q == F3) ? XOR(res, AND(F4_u32, cmp)) : ADD<T>(res, AND(ONE32, cmp));
 
     VecType lo =
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
@@ -147,133 +152,19 @@ inline VecType MULFULL_MOD(VecType x, VecType y, uint32_t q)
  * @param offset offset in the data fragments
  * @param max a dummy variable
  */
+template <typename T>
 inline void ADD_PROPS(
     Properties& props,
     VecType threshold,
     VecType mask,
     VecType symb,
     off_t offset,
-    uint32_t max)
+    T max)
 {
-    const VecType b = CMPEQ32(threshold, symb);
+    const VecType b = CMPEQ<T>(threshold, symb);
     const VecType c = AND(mask, b);
     auto d = MVMSK8(c);
-    const unsigned element_size = sizeof(uint32_t);
-    while (d > 0) {
-        unsigned byte_idx = __builtin_ctz(d);
-        off_t _offset = offset + byte_idx / element_size;
-        props.add(_offset, OOR_MARK);
-        d ^= 1 << byte_idx;
-    }
-}
-
-/* ================= Basic Operations for u16 ================= */
-
-/**
- * Modular addition for packed unsigned 16-bit integers
- *
- * @param x input register
- * @param y input register
- * @param q modulo
- * @return (x + y) mod q
- */
-inline VecType ADD_MOD(VecType x, VecType y, uint16_t q)
-{
-    VecType res = ADD16(x, y);
-    return MINU16(res, SUB16(res, F3_u16));
-}
-
-/**
- * Modular subtraction for packed unsigned 16-bit integers
- *
- * @param x input register
- * @param y input register
- * @param q modulo
- * @return (x - y) mod q
- */
-inline VecType SUB_MOD(VecType x, VecType y, uint16_t q)
-{
-    VecType res = SUB16(x, y);
-    return MINU16(res, SUB16(ADD16(x, F3_u16), y));
-}
-
-/**
- * Modular negation for packed unsigned 16-bit integers
- *
- * @param x input register
- * @param q modulo
- * @return (-x) mod q
- */
-inline VecType NEG_MOD(VecType x, uint16_t q)
-{
-    VecType res = SUB16(F3_u16, x);
-    return MINU16(res, SUB16(res, F3_u16));
-}
-
-/**
- * Modular multiplication for packed unsigned 16-bit integers
- *
- * @note We assume that at least `x` or `y` is less than `q-1` so it's
- * not necessary to verify overflow on multiplying elements
- *
- * @param x input register
- * @param y input register
- * @param q modulo
- * @return (x * y) mod q
- */
-inline VecType MUL_MOD(VecType x, VecType y, uint16_t q)
-{
-    VecType res = MUL16(x, y);
-    VecType lo = BLEND8(ZERO, res, MASK8_LO);
-    VecType hi = BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO);
-    return SUB_MOD(lo, hi, q);
-}
-
-/**
- * Modular general multiplication for packed unsigned 16-bit integers
- *
- * @note It's necessary to verify overflow on multiplying elements
- *
- * @param x input register
- * @param y input register
- * @param q modulo
- * @return (x * y) mod q
- */
-inline VecType MULFULL_MOD(VecType x, VecType y, uint16_t q)
-{
-    VecType res = MUL16(x, y);
-
-    // filter elements of both of a & b = card-1
-    VecType cmp = AND(CMPEQ16(x, F3m1_u16), CMPEQ16(y, F3m1_u16));
-    res = ADD16(res, AND(ONE16, cmp));
-
-    VecType lo = BLEND8(ZERO, res, MASK8_LO);
-    VecType hi = BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO);
-    return SUB_MOD(lo, hi, q);
-}
-
-/**
- * Update property for a given register for packed unsigned 32-bit integers
- *
- * @param props properties bound to fragments
- * @param threshold register storing max value in its elements
- * @param mask a specific mask
- * @param symb input register
- * @param offset offset in the data fragments
- * @param max a dummy variable
- */
-inline void ADD_PROPS(
-    Properties& props,
-    VecType threshold,
-    VecType mask,
-    VecType symb,
-    off_t offset,
-    uint16_t max)
-{
-    const VecType b = CMPEQ16(threshold, symb);
-    const VecType c = AND(mask, b);
-    auto d = MVMSK8(c);
-    const unsigned element_size = sizeof(uint16_t);
+    const unsigned element_size = sizeof(T);
     while (d > 0) {
         unsigned byte_idx = __builtin_ctz(d);
         off_t _offset = offset + byte_idx / element_size;
