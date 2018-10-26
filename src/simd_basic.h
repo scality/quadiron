@@ -145,7 +145,7 @@ inline void ADD_PROPS(
 {
     const VecType b = CMPEQ32(threshold, symb);
     const VecType c = AND(mask, b);
-    MaskIntType d = MVMSK8(c);
+    auto d = MVMSK8(c);
     const unsigned element_size = sizeof(uint32_t);
     while (d > 0) {
         unsigned byte_idx = __builtin_ctz(d);
@@ -260,7 +260,7 @@ inline void ADD_PROPS(
 {
     const VecType b = CMPEQ16(threshold, symb);
     const VecType c = AND(mask, b);
-    MaskIntType d = MVMSK8(c);
+    auto d = MVMSK8(c);
     const unsigned element_size = sizeof(uint16_t);
     while (d > 0) {
         unsigned byte_idx = __builtin_ctz(d);

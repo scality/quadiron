@@ -37,7 +37,6 @@ namespace quadiron {
 namespace simd {
 
 typedef __m128i VecType;
-typedef uint32_t MaskIntType;
 
 #define F4_u32 _mm_set1_epi32(65537)
 #define F4m1_u32 _mm_set1_epi32(65536)
