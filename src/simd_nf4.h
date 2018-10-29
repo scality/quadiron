@@ -39,18 +39,17 @@ namespace quadiron {
 namespace simd {
 
 typedef uint32_t aint32 __attribute__((aligned(ALIGNMENT)));
-typedef __uint128_t NF4Type;
 
-/** Return NF4Type integer from a _m128i register */
-static inline NF4Type m128i_to_uint128(__m128i v)
+/** Return __uint128_t integer from a _m128i register */
+static inline __uint128_t m128i_to_uint128(__m128i v)
 {
-    NF4Type i;
+    __uint128_t i;
     _mm_store_si128((__m128i*)&i, v);
 
     return i; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
 }
 
-inline NF4Type expand16(uint16_t* arr, int n)
+inline __uint128_t expand16(uint16_t* arr, int n)
 {
     // since n <= 4
     uint16_t _arr[4] __attribute__((aligned(ALIGNMENT))) = {0, 0, 0, 0};
@@ -61,7 +60,7 @@ inline NF4Type expand16(uint16_t* arr, int n)
     return m128i_to_uint128(b);
 }
 
-inline NF4Type expand32(uint32_t* arr, int n)
+inline __uint128_t expand32(uint32_t* arr, int n)
 {
     // since n <= 4
     uint32_t _arr[4] __attribute__((aligned(simd::ALIGNMENT))) = {0, 0, 0, 0};
@@ -75,7 +74,7 @@ inline NF4Type expand32(uint32_t* arr, int n)
 inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
 {
     uint16_t ai[8];
-    NF4Type values;
+    __uint128_t values;
 
     __m128i _a = _mm_loadu_si128((__m128i*)&a);
     ai[0] = _mm_extract_epi16(_a, 0);
@@ -101,7 +100,7 @@ inline GroupedValues<__uint128_t> unpack(__uint128_t a, int n)
 inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
 {
     uint16_t ai[8];
-    NF4Type values;
+    __uint128_t values;
 
     __m128i _a = _mm_loadu_si128((__m128i*)&a);
     ai[0] = _mm_extract_epi16(_a, 0);
@@ -123,7 +122,7 @@ inline void unpack(__uint128_t a, GroupedValues<__uint128_t>& b, int n)
     b.values = values; // NOLINT(clang-analyzer-core.uninitialized.Assign)
 }
 
-inline NF4Type pack(__uint128_t a)
+inline __uint128_t pack(__uint128_t a)
 {
     __m128i _a = _mm_loadu_si128((__m128i*)&a);
     __m128i b = _mm_set_epi32(
@@ -135,7 +134,7 @@ inline NF4Type pack(__uint128_t a)
     return m128i_to_uint128(b);
 }
 
-inline NF4Type pack(__uint128_t a, uint32_t flag)
+inline __uint128_t pack(__uint128_t a, uint32_t flag)
 {
     aint32 b0, b1, b2, b3;
     __m128i _a = _mm_loadu_si128((__m128i*)&a);
@@ -179,35 +178,35 @@ inline void STORE_LOW(HalfVecType* address, VecType reg)
     _mm_store_si128(address, _mm256_castsi256_si128(reg));
 }
 
-inline NF4Type add(NF4Type a, NF4Type b)
+inline __uint128_t add(__uint128_t a, __uint128_t b)
 {
     HalfVecType res;
     VecType _a = CAST_TO_DOUBLE((HalfVecType)a);
     VecType _b = CAST_TO_DOUBLE((HalfVecType)b);
     STORE_LOW(&res, ADD_MOD(_a, _b, F4));
-    return (NF4Type)res;
+    return (__uint128_t)res;
 }
 
-inline NF4Type sub(NF4Type a, NF4Type b)
+inline __uint128_t sub(__uint128_t a, __uint128_t b)
 {
     HalfVecType res;
     VecType _a = CAST_TO_DOUBLE((HalfVecType)a);
     VecType _b = CAST_TO_DOUBLE((HalfVecType)b);
     STORE_LOW(&res, SUB_MOD(_a, _b, F4));
-    return (NF4Type)res;
+    return (__uint128_t)res;
 }
 
-inline NF4Type mul(NF4Type a, NF4Type b)
+inline __uint128_t mul(__uint128_t a, __uint128_t b)
 {
     HalfVecType res;
     VecType _a = CAST_TO_DOUBLE((HalfVecType)a);
     VecType _b = CAST_TO_DOUBLE((HalfVecType)b);
     STORE_LOW(&res, MULFULL_MOD(_a, _b, F4));
-    return (NF4Type)res;
+    return (__uint128_t)res;
 }
 
 inline void
-add_buf_to_two_bufs_rem(unsigned n, NF4Type* x, NF4Type* x_half, NF4Type* y)
+add_buf_to_two_bufs_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint128_t* y)
 {
     // add last _y[] to x and x_next
     HalfVecType* _x = reinterpret_cast<HalfVecType*>(x);
@@ -223,7 +222,7 @@ add_buf_to_two_bufs_rem(unsigned n, NF4Type* x, NF4Type* x_half, NF4Type* y)
     }
 }
 
-inline void hadamard_mul_rem(unsigned n, NF4Type* x, NF4Type* y)
+inline void hadamard_mul_rem(unsigned n, __uint128_t* x, __uint128_t* y)
 {
     HalfVecType* _x = reinterpret_cast<HalfVecType*>(x);
     HalfVecType* _y = reinterpret_cast<HalfVecType*>(y);
@@ -236,7 +235,7 @@ inline void hadamard_mul_rem(unsigned n, NF4Type* x, NF4Type* y)
 }
 
 inline void
-hadamard_mul_doubled_rem(unsigned n, NF4Type* x, NF4Type* x_half, NF4Type* y)
+hadamard_mul_doubled_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint128_t* y)
 {
     HalfVecType* _x = reinterpret_cast<HalfVecType*>(x);
     HalfVecType* _x_half = reinterpret_cast<HalfVecType*>(x_half);
@@ -253,40 +252,40 @@ hadamard_mul_doubled_rem(unsigned n, NF4Type* x, NF4Type* x_half, NF4Type* y)
 
 #elif defined(__SSE4_1__)
 
-inline NF4Type add(NF4Type a, NF4Type b)
+inline __uint128_t add(__uint128_t a, __uint128_t b)
 {
     VecType res;
     STORE(&res, ADD_MOD((VecType)a, (VecType)b, F4));
-    return (NF4Type)res;
+    return (__uint128_t)res;
 }
 
-inline NF4Type sub(NF4Type a, NF4Type b)
+inline __uint128_t sub(__uint128_t a, __uint128_t b)
 {
     VecType res;
     STORE(&res, SUB_MOD((VecType)a, (VecType)b, F4));
-    return (NF4Type)res;
+    return (__uint128_t)res;
 }
 
-inline NF4Type mul(NF4Type a, NF4Type b)
+inline __uint128_t mul(__uint128_t a, __uint128_t b)
 {
     VecType res;
     STORE(&res, MULFULL_MOD((VecType)a, (VecType)b, F4));
-    return (NF4Type)res;
+    return (__uint128_t)res;
 }
 
 inline void
-add_buf_to_two_bufs_rem(unsigned n, NF4Type* x, NF4Type* x_half, NF4Type* y)
+add_buf_to_two_bufs_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint128_t* y)
 {
     // do nothing
 }
 
-inline void hadamard_mul_rem(unsigned n, NF4Type* x, NF4Type* y)
+inline void hadamard_mul_rem(unsigned n, __uint128_t* x, __uint128_t* y)
 {
     // do nothing
 }
 
 inline void
-hadamard_mul_doubled_rem(unsigned n, NF4Type* x, NF4Type* x_half, NF4Type* y)
+hadamard_mul_doubled_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint128_t* y)
 {
     // do nothing
 }
@@ -296,7 +295,7 @@ hadamard_mul_doubled_rem(unsigned n, NF4Type* x, NF4Type* x_half, NF4Type* y)
 /* ==================== Operations for NF4 =================== */
 
 /** Add buffer `y` to two halves of `x`. `x` is of length `n` */
-inline void add_buf_to_two_bufs(unsigned n, NF4Type* _x, NF4Type* _y)
+inline void add_buf_to_two_bufs(unsigned n, __uint128_t* _x, __uint128_t* _y)
 {
     unsigned i;
     VecType* x = reinterpret_cast<VecType*>(_x);
@@ -308,7 +307,7 @@ inline void add_buf_to_two_bufs(unsigned n, NF4Type* _x, NF4Type* _y)
     const unsigned num_len = vec_len * ratio;
     const unsigned rem_len = half_len - num_len;
 
-    NF4Type* x_half = _x + half_len;
+    __uint128_t* x_half = _x + half_len;
     VecType* x_next = reinterpret_cast<VecType*>(x_half);
 
     // add y to the first half of `x`
@@ -327,7 +326,7 @@ inline void add_buf_to_two_bufs(unsigned n, NF4Type* _x, NF4Type* _y)
     }
 }
 
-inline void hadamard_mul(unsigned n, NF4Type* _x, NF4Type* _y)
+inline void hadamard_mul(unsigned n, __uint128_t* _x, __uint128_t* _y)
 {
     unsigned i;
     VecType* x = reinterpret_cast<VecType*>(_x);
