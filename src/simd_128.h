@@ -81,6 +81,10 @@ inline uint16_t TESTZ(VecType x, VecType y)
 {
     return _mm_testz_si128(x, y);
 }
+inline int is_all_zeros(VecType x)
+{
+    return _mm_testc_si128(ZERO, y);
+}
 
 #define SHIFTR(x, imm8) (_mm_srli_si128(x, imm8))
 #define BLEND8(x, y, mask) (_mm_blendv_epi8(x, y, mask))
