@@ -83,7 +83,7 @@ inline uint16_t TESTZ(VecType x, VecType y)
 }
 inline int is_all_zeros(VecType x)
 {
-    return _mm_testc_si128(ZERO, y);
+    return _mm_testc_si128(ZERO, x);
 }
 
 #define SHIFTR(x, imm8) (_mm_srli_si128(x, imm8))
