@@ -50,7 +50,6 @@ namespace simd {
 
 typedef __m256i VecType;
 typedef __m128i HalfVecType;
-typedef __uint128_t NF4Type;
 
 /* ============= Constant variable  ============ */
 
