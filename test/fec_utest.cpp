@@ -39,21 +39,22 @@ class FecTestCommon : public ::testing::Test {
     const unsigned n_data = 3;
     const unsigned n_parities = 3;
 
-    void run_test(
-        fec::FecCode<T>& fec,
-        int n_data,
-        int code_len,
-        bool props_flag = false)
+    void
+    run_test(fec::FecCode<T>& fec, bool props_flag = false, bool is_nf4 = false)
     {
-        const quadiron::gf::Field<T>* gf = &(fec.get_gf());
+        const int code_len = n_data + n_parities;
 
-        quadiron::vec::Vector<T> v(*gf, n_data);
-        quadiron::vec::Vector<T> _v(*gf, fec.n);
-        quadiron::vec::Vector<T> _v2(*gf, n_data);
-        quadiron::vec::Vector<T> f(*gf, n_data);
-        quadiron::vec::Vector<T> v2(*gf, n_data);
-        quadiron::vec::Vector<T> v_p(*gf, n_data);
+        const quadiron::gf::Field<T>& gf = fec.get_gf();
+        const quadiron::gf::NF4<T>& nf4 =
+            static_cast<const quadiron::gf::NF4<T>&>(gf);
+
+        quadiron::vec::Vector<T> data_frags(gf, n_data);
+        quadiron::vec::Vector<T> copied_data_frags(gf, n_data);
+        quadiron::vec::Vector<T> encoded_frags(gf, fec.n);
+        quadiron::vec::Vector<T> received_frags(gf, n_data);
+        quadiron::vec::Vector<T> decoded_frags(gf, n_data);
         std::vector<int> ids;
+        quadiron::vec::Vector<T> fragments_ids(gf, n_data);
 
         for (int i = 0; i < code_len; i++) {
             ids.push_back(i);
@@ -66,21 +67,28 @@ class FecTestCommon : public ::testing::Test {
                     props[i] = quadiron::Properties();
                 }
             }
-            for (int i = 0; i < n_data; i++) {
-                v.set(i, gf->weak_rand());
+
+            // gen_data(gf, data_frags, is_nf4);
+            for (unsigned i = 0; i < n_data; i++) {
+                const T v = is_nf4 ? nf4.unpacked_weak_rand() : gf.weak_rand();
+                data_frags.set(i, v);
             }
             // FIXME: ngff4 will modify v after encode
-            v_p.copy(&v);
-            fec.encode(_v, props, 0, v);
+            copied_data_frags.copy(&data_frags);
+
+            fec.encode(encoded_frags, props, 0, data_frags);
+
             std::random_shuffle(ids.begin(), ids.end());
-            for (int i = 0; i < n_data; i++) {
-                f.set(i, ids.at(i));
-                _v2.set(i, _v.get(ids.at(i)));
+            for (unsigned i = 0; i < n_data; i++) {
+                fragments_ids.set(i, ids.at(i));
+                received_frags.set(i, encoded_frags.get(ids.at(i)));
             }
             std::unique_ptr<fec::DecodeContext<T>> context =
-                fec.init_context_dec(f);
-            fec.decode(*context, v2, props, 0, _v2);
-            ASSERT_EQ(v_p, v2);
+                fec.init_context_dec(fragments_ids);
+
+            fec.decode(*context, decoded_frags, props, 0, received_frags);
+
+            ASSERT_EQ(copied_data_frags, decoded_frags);
         }
     }
 };
@@ -96,8 +104,7 @@ TYPED_TEST(FecTestCommon, TestNf4) // NOLINT
         const unsigned word_size = 1 << i;
         fec::RsNf4<TypeParam> fec(word_size, this->n_data, this->n_parities);
 
-        this->run_test(
-            fec, this->n_data, this->n_data + this->n_parities, true);
+        this->run_test(fec, true, true);
     }
 }
 
@@ -106,7 +113,7 @@ TYPED_TEST(FecTestCommon, TestGf2nFft) // NOLINT
     for (size_t wordsize = 1; wordsize <= sizeof(TypeParam); wordsize *= 2) {
         fec::RsGf2nFft<TypeParam> fec(wordsize, this->n_data, this->n_parities);
 
-        this->run_test(fec, this->n_data, this->n_data + this->n_parities);
+        this->run_test(fec);
     }
 }
 
@@ -116,7 +123,7 @@ TYPED_TEST(FecTestCommon, TestGf2nFftAdd) // NOLINT
         fec::RsGf2nFftAdd<TypeParam> fec(
             wordsize, this->n_data, this->n_parities);
 
-        this->run_test(fec, this->n_data, this->n_data + this->n_parities);
+        this->run_test(fec);
     }
 }
 
@@ -135,8 +142,7 @@ TYPED_TEST(FecTestNo128, TestFnt) // NOLINT
             word_size,
             this->n_data,
             this->n_parities);
-        this->run_test(
-            fec, this->n_data, this->n_data + this->n_parities, true);
+        this->run_test(fec, true);
     }
 }
 
@@ -148,8 +154,7 @@ TYPED_TEST(FecTestNo128, TestFntSys) // NOLINT
             word_size,
             this->n_data,
             this->n_parities);
-        this->run_test(
-            fec, this->n_data, this->n_data + this->n_parities, true);
+        this->run_test(fec, true);
     }
 }
 
@@ -159,7 +164,6 @@ TYPED_TEST(FecTestNo128, TestGfpFft) // NOLINT
          word_size *= 2) {
         fec::RsGfpFft<TypeParam> fec(word_size, this->n_data, this->n_parities);
 
-        this->run_test(
-            fec, this->n_data, this->n_data + this->n_parities, true);
+        this->run_test(fec, true);
     }
 }
