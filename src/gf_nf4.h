@@ -73,7 +73,7 @@ class NF4 : public gf::Field<T> {
     T inv(T a) const override;
     T exp(T a, T b) const override;
     T log(T a, T b) const override;
-    T weak_rand_tuple(void) const;
+    T unpacked_weak_rand(void) const;
     T weak_rand(void) const override;
     T get_unit(void) const override;
     T replicate(T a) const override;
@@ -332,7 +332,7 @@ inline T NF4<T>::log(T a, T b) const
 }
 
 template <typename T>
-T NF4<T>::weak_rand_tuple() const
+T NF4<T>::weak_rand() const
 {
     T c = sub_field->weak_rand();
     for (int i = 1; i < this->n; i++) {
@@ -342,9 +342,9 @@ T NF4<T>::weak_rand_tuple() const
 }
 
 template <typename T>
-T NF4<T>::weak_rand(void) const
+T NF4<T>::unpacked_weak_rand(void) const
 {
-    T c = weak_rand_tuple();
+    T c = weak_rand();
     return unpack(c).values;
 }
 
