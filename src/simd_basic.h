@@ -129,17 +129,16 @@ inline VecType MUL_MOD(VecType x, VecType y, T q)
 template <typename T>
 inline VecType MULFULL_MOD(VecType x, VecType y, T q)
 {
-    VecType res = MUL<T>(x, y);
+    const VecType res = MUL_MOD(x, y, q);
 
     // filter elements of both of a & b = card-1
     const VecType cmp = AND(CMPEQ<T>(x, CARD_M_1(q)), CMPEQ<T>(y, CARD_M_1(q)));
-    res = (q == F3) ? XOR(res, AND(F4_u32, cmp)) : ADD<T>(res, AND(ONE32, cmp));
 
-    const VecType lo =
-        (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
-    const VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
-                           : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
-    return SUB_MOD(lo, hi, q);
+    if (is_all_zeros(cmp) == 1) {
+        return res;
+    }
+    return (q == F3) ? XOR(res, AND(F4_u32, cmp)) :
+                       ADD<T>(res, AND(ONE32, cmp));
 }
 
 /**
