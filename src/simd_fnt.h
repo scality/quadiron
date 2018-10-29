@@ -38,77 +38,70 @@ namespace simd {
 
 /* ================= Vectorized Operations ================= */
 
-// butterfly CT with r == 1
-template <typename T>
-inline void BUTTERFLY_1(VecType* x, VecType* y, T q)
-{
-    VecType add = ADD_MOD(*x, *y, q);
-    *y = SUB_MOD(*x, *y, q);
-    *x = add;
-}
-
-// butterfly CT with r == q - 1
-template <typename T>
-inline void BUTTERFLY_2(VecType* x, VecType* y, T q)
-{
-    VecType add = ADD_MOD(*x, *y, q);
-    *x = SUB_MOD(*x, *y, q);
-    *y = add;
-}
-
-// butterfly CT with 1 < r < q - 1
-template <typename T>
-inline void BUTTERFLY_3(VecType c, VecType* x, VecType* y, T q)
-{
-    VecType z = MUL_MOD(c, *y, q);
-    *y = SUB_MOD(*x, z, q);
-    *x = ADD_MOD(*x, z, q);
-}
-
+/**
+ * Butterfly Cooley-Tukey operation
+ *
+ * x <- x + r * y
+ * y <- x - r * y
+ *
+ * @param rp1 coefficient `r` plus one
+ * @param c a register stores coefficient `r`
+ * @param x working register
+ * @param y working register
+ * @param q modular
+ */
 template <typename T>
 inline void BUTTERFLY_CT(T rp1, VecType c, VecType* x, VecType* y, T q)
 {
-    if (rp1 == 2) {
-        BUTTERFLY_1(x, y, q);
-    } else if (rp1 < q) {
-        BUTTERFLY_3(c, x, y, q);
-    } else {
-        BUTTERFLY_2(x, y, q);
+    VecType z = (rp1 == 2) ? *y : MUL_MOD(c, *y, q);
+    if (rp1 < q) {
+        *y = SUB_MOD(*x, z, q);
+        *x = ADD_MOD(*x, z, q);
+    } else { // i.e. r == q - 1
+        *y = ADD_MOD(*x, z, q);
+        *x = SUB_MOD(*x, z, q);
     }
 }
 
-// butterfly GS w/ r = q - 1
-template <typename T>
-inline void BUTTERFLY_4(VecType* x, VecType* y, T q)
-{
-    VecType add = ADD_MOD(*x, *y, q);
-    *y = SUB_MOD(*y, *x, q);
-    *x = add;
-}
-
-// butterfly GS w/ 1 < r < q - 1
-// x = x + y mod q
-// y = z * (x - y) mod q
-template <typename T>
-inline void BUTTERFLY_5(VecType c, VecType* x, VecType* y, T q)
-{
-    VecType sub = SUB_MOD(*x, *y, q);
-    *x = ADD_MOD(*x, *y, q);
-    *y = MUL_MOD(c, sub, q);
-}
-
+/**
+ * Butterfly Genteleman-Sande operation
+ *
+ * x <- x + y
+ * y <- r * (x - y)
+ *
+ * @param rp1 coefficient `r` plus one
+ * @param c a register stores coefficient `r`
+ * @param x working register
+ * @param y working register
+ * @param q modular
+ */
 template <typename T>
 inline void BUTTERFLY_GS(T rp1, VecType c, VecType* x, VecType* y, T q)
 {
+    VecType add = ADD_MOD(*x, *y, q);
     if (rp1 == 2) {
-        BUTTERFLY_1(x, y, q);
+        *y = SUB_MOD(*x, *y, q);
     } else if (rp1 < q) {
-        BUTTERFLY_5(c, x, y, q);
-    } else {
-        BUTTERFLY_4(x, y, q);
+        VecType sub = SUB_MOD(*x, *y, q);
+        *y = MUL_MOD(c, sub, q);
+    } else { // i.e. r == q - 1
+        *y = SUB_MOD(*y, *x, q);
     }
+    *x = add;
 }
 
+/**
+ * Butterfly Genteleman-Sande simple operation where y = 0
+ *
+ * x <- x, i.e. no operation
+ * y <- r * x
+ *
+ * @param rp1 coefficient `r` plus one
+ * @param c a register stores coefficient `r`
+ * @param x working register
+ * @param q modular
+ * @return r * x
+ */
 template <typename T>
 inline VecType BUTTERFLY_GS_SIMPLE(T rp1, VecType c, VecType x, T q)
 {
