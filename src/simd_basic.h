@@ -285,9 +285,9 @@ template <typename T>
 inline void neg(size_t len, T* buf, T card)
 {
     VecType* _buf = reinterpret_cast<VecType*>(buf);
-    unsigned ratio = sizeof(*_buf) / sizeof(*buf);
-    size_t _len = len / ratio;
-    size_t _last_len = len - _len * ratio;
+    const unsigned ratio = sizeof(*_buf) / sizeof(*buf);
+    const size_t _len = len / ratio;
+    const size_t _last_len = len - _len * ratio;
 
     size_t i;
     for (i = 0; i < _len; i++) {
