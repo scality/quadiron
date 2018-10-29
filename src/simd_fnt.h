@@ -115,7 +115,7 @@ inline VecType BUTTERFLY_GS_SIMPLE(T rp1, VecType c, VecType x, T q)
 }
 
 /**
- * Vectorized butterly CT step
+ * Vectorized butterfly CT step
  *
  * For each pair (P, Q) = (buf[i], buf[i + m]) for step = 2 * m and coef `r`
  *      P = P + r * Q
@@ -147,8 +147,6 @@ inline void butterfly_ct_step(
 
     const size_t end = (len > 1) ? len - 1 : 0;
     const unsigned bufs_nb = buf.get_n();
-    // #pragma omp parallel for
-    // #pragma unroll
     const std::vector<T*>& mem = buf.get_mem();
     for (unsigned i = start; i < bufs_nb; i += step) {
         VecType x1, y1;
@@ -156,9 +154,7 @@ inline void butterfly_ct_step(
         VecType* __restrict p = reinterpret_cast<VecType*>(mem[i]);
         VecType* __restrict q = reinterpret_cast<VecType*>(mem[i + m]);
 
-        // #pragma omp parallel for
         size_t j = 0;
-        // #pragma unroll
         for (; j < end; j += 2) {
             x1 = LOAD(p + j);
             y1 = LOAD(q + j);
@@ -213,10 +209,8 @@ inline static void do_butterfly_ct_2_layers(
     VecType* __restrict r = reinterpret_cast<VecType*>(mem[start + 2 * m]);
     VecType* __restrict s = reinterpret_cast<VecType*>(mem[start + 3 * m]);
 
-    // #pragma omp parallel for
     size_t j = 0;
     const size_t end = (len > 1) ? len - 1 : 0;
-    // #pragma unroll
     while (j < end) {
         // First layer (c1, x, y) & (c1, u, v)
         VecType x1 = LOAD(p);
@@ -281,7 +275,7 @@ inline static void do_butterfly_ct_2_layers(
 }
 
 /**
- * Vectorized butterly CT on two-layers at a time
+ * Vectorized butterfly CT on two-layers at a time
  *
  * For each quadruple
  * (P, Q, R, S) = (buf[i], buf[i + m], buf[i + 2 * m], buf[i + 3 * m])
@@ -325,8 +319,6 @@ inline void butterfly_ct_two_layers_step(
     const unsigned step = m << 2;
     const unsigned bufs_nb = buf.get_n();
 
-    // #pragma omp parallel for
-    // #pragma unroll
     const std::vector<T*>& mem = buf.get_mem();
     for (unsigned i = start; i < bufs_nb; i += step) {
         do_butterfly_ct_2_layers(mem, r1, r2, r3, i, m, len, card);
@@ -334,7 +326,7 @@ inline void butterfly_ct_two_layers_step(
 }
 
 /**
- * Vectorized butterly GS step
+ * Vectorized butterfly GS step
  *
  * For each pair (P, Q) = (buf[i], buf[i + m]) for step = 2 * m and coef `r`
  *      P = P + Q
@@ -365,8 +357,6 @@ inline void butterfly_gs_step(
 
     const size_t end = (len > 3) ? len - 3 : 0;
     const unsigned bufs_nb = buf.get_n();
-    // #pragma omp parallel for
-    // #pragma unroll
     const std::vector<T*>& mem = buf.get_mem();
     for (unsigned i = start; i < bufs_nb; i += step) {
         VecType x1, x2, x3, x4;
@@ -374,9 +364,7 @@ inline void butterfly_gs_step(
         VecType* __restrict p = reinterpret_cast<VecType*>(mem[i]);
         VecType* __restrict q = reinterpret_cast<VecType*>(mem[i + m]);
 
-        // #pragma omp parallel for
         size_t j = 0;
-        // #pragma unroll
         for (; j < end; j += 4) {
             x1 = LOAD(p + j);
             x2 = LOAD(p + j + 1);
@@ -416,7 +404,7 @@ inline void butterfly_gs_step(
 }
 
 /**
- * Vectorized butterly GS step
+ * Vectorized butterfly GS step
  *
  * For each pair (P, Q) = (buf[i], buf[i + m]) for step = 2 * m and coef `r`
  *      Q = r * P
@@ -446,8 +434,6 @@ inline void butterfly_gs_step_simple(
 
     const size_t end = (len > 1) ? len - 1 : 0;
     const unsigned bufs_nb = buf.get_n();
-    // #pragma omp parallel for
-    // #pragma unroll
     const std::vector<T*>& mem = buf.get_mem();
     for (unsigned i = start; i < bufs_nb; i += step) {
         VecType x1, y1;
@@ -455,9 +441,7 @@ inline void butterfly_gs_step_simple(
         VecType* __restrict p = reinterpret_cast<VecType*>(mem[i]);
         VecType* __restrict q = reinterpret_cast<VecType*>(mem[i + m]);
 
-        // #pragma omp parallel for
         size_t j = 0;
-        // #pragma unroll
         for (; j < end; j += 2) {
             x1 = LOAD(p + j);
             x2 = LOAD(p + j + 1);
@@ -495,14 +479,12 @@ inline void encode_post_process(
     const VecType _threshold = SET1(threshold);
     const VecType mask_hi = SET1(max);
 
-    // #pragma unroll
     const std::vector<T*>& mem = output.get_mem();
     for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
         VecType* __restrict buf = reinterpret_cast<VecType*>(mem[frag_id]);
 
         size_t vec_id = 0;
         size_t end = (vecs_nb > 3) ? vecs_nb - 3 : 0;
-        // #pragma unroll
         for (; vec_id < end; vec_id += 4) {
             VecType a1 = LOAD(buf + vec_id);
             VecType a2 = LOAD(buf + vec_id + 1);
