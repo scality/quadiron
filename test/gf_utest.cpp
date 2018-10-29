@@ -123,11 +123,11 @@ TYPED_TEST(GfTestCommon, TestGfNf4) // NOLINT
 
         auto gf(gf::create<gf::NF4<TypeParam>>(n));
         this->test_negation(gf);
-        this->test_negation(gf);
+        this->test_reciprocal(gf);
 
         // Test pack/unpack.
         for (int i = 0; i < 100; i++) {
-            const TypeParam x = gf.weak_rand_tuple();
+            const TypeParam x = gf.weak_rand();
             const quadiron::GroupedValues<TypeParam> z = gf.unpack(x);
             const TypeParam y = gf.pack(z.values, z.flag);
             ASSERT_EQ(x, y);
