@@ -168,9 +168,15 @@ inline __uint128_t pack(__uint128_t a, uint32_t flag)
 
 #if defined(__AVX2__)
 
-inline VecType CAST_TO_DOUBLE(HalfVecType x)
+inline VecType load_to_reg(HalfVecType x)
 {
-    return _mm256_castsi128_si256(x);
+    return _mm256_castsi128_si256(_mm_load_si128(&x));
+}
+
+inline VecType load_to_reg(__uint128_t x)
+{
+    const HalfVecType* _x = reinterpret_cast<const HalfVecType*>(&x);
+    return load_to_reg(*_x);
 }
 
 inline void STORE_LOW(HalfVecType* address, VecType reg)
@@ -181,28 +187,28 @@ inline void STORE_LOW(HalfVecType* address, VecType reg)
 inline __uint128_t add(__uint128_t a, __uint128_t b)
 {
     HalfVecType res;
-    VecType _a = CAST_TO_DOUBLE((HalfVecType)a);
-    VecType _b = CAST_TO_DOUBLE((HalfVecType)b);
+    VecType _a = load_to_reg(a);
+    VecType _b = load_to_reg(b);
     STORE_LOW(&res, ADD_MOD(_a, _b, F4));
-    return (__uint128_t)res;
+    return reinterpret_cast<__uint128_t>(res);
 }
 
 inline __uint128_t sub(__uint128_t a, __uint128_t b)
 {
     HalfVecType res;
-    VecType _a = CAST_TO_DOUBLE((HalfVecType)a);
-    VecType _b = CAST_TO_DOUBLE((HalfVecType)b);
+    VecType _a = load_to_reg(a);
+    VecType _b = load_to_reg(b);
     STORE_LOW(&res, SUB_MOD(_a, _b, F4));
-    return (__uint128_t)res;
+    return reinterpret_cast<__uint128_t>(res);
 }
 
 inline __uint128_t mul(__uint128_t a, __uint128_t b)
 {
     HalfVecType res;
-    VecType _a = CAST_TO_DOUBLE((HalfVecType)a);
-    VecType _b = CAST_TO_DOUBLE((HalfVecType)b);
+    VecType _a = load_to_reg(a);
+    VecType _b = load_to_reg(b);
     STORE_LOW(&res, MULFULL_MOD(_a, _b, F4));
-    return (__uint128_t)res;
+    return reinterpret_cast<__uint128_t>(res);
 }
 
 inline void
@@ -213,9 +219,9 @@ add_buf_to_two_bufs_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint1
     HalfVecType* _x_half = reinterpret_cast<HalfVecType*>(x_half);
     HalfVecType* _y = reinterpret_cast<HalfVecType*>(y);
     for (unsigned i = 0; i < n; ++i) {
-        VecType _x_p = CAST_TO_DOUBLE(_x[i]);
-        VecType _x_next_p = CAST_TO_DOUBLE(_x_half[i]);
-        VecType _y_p = CAST_TO_DOUBLE(_y[i]);
+        VecType _x_p = load_to_reg(_x[i]);
+        VecType _x_next_p = load_to_reg(_x_half[i]);
+        VecType _y_p = load_to_reg(_y[i]);
 
         STORE_LOW(_x + i, ADD_MOD(_x_p, _y_p, F4));
         STORE_LOW(_x_half + i, ADD_MOD(_x_next_p, _y_p, F4));
@@ -227,8 +233,8 @@ inline void hadamard_mul_rem(unsigned n, __uint128_t* x, __uint128_t* y)
     HalfVecType* _x = reinterpret_cast<HalfVecType*>(x);
     HalfVecType* _y = reinterpret_cast<HalfVecType*>(y);
     for (unsigned i = 0; i < n; ++i) {
-        VecType _x_p = CAST_TO_DOUBLE(_x[i]);
-        VecType _y_p = CAST_TO_DOUBLE(_y[i]);
+        VecType _x_p = load_to_reg(_x[i]);
+        VecType _y_p = load_to_reg(_y[i]);
 
         STORE_LOW(_x + i, MULFULL_MOD(_x_p, _y_p, F4));
     }
@@ -241,9 +247,9 @@ hadamard_mul_doubled_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint
     HalfVecType* _x_half = reinterpret_cast<HalfVecType*>(x_half);
     HalfVecType* _y = reinterpret_cast<HalfVecType*>(y);
     for (unsigned i = 0; i < n; ++i) {
-        VecType _x_p = CAST_TO_DOUBLE(_x[i]);
-        VecType _x_next_p = CAST_TO_DOUBLE(_x_half[i]);
-        VecType _y_p = CAST_TO_DOUBLE(_y[i]);
+        VecType _x_p = load_to_reg(_x[i]);
+        VecType _x_next_p = load_to_reg(_x_half[i]);
+        VecType _y_p = load_to_reg(_y[i]);
 
         STORE_LOW(_x + i, MULFULL_MOD(_x_p, _y_p, F4));
         STORE_LOW(_x_half + i, MULFULL_MOD(_x_next_p, _y_p, F4));
@@ -252,25 +258,37 @@ hadamard_mul_doubled_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint
 
 #elif defined(__SSE4_1__)
 
+inline VecType load_to_reg(__uint128_t x)
+{
+    const VecType* _x = reinterpret_cast<const VecType*>(&x);
+    return _mm_load_si128(_x);
+}
+
 inline __uint128_t add(__uint128_t a, __uint128_t b)
 {
     VecType res;
-    STORE(&res, ADD_MOD((VecType)a, (VecType)b, F4));
-    return (__uint128_t)res;
+    VecType _a = load_to_reg(a);
+    VecType _b = load_to_reg(b);
+    STORE(&res, ADD_MOD(_a, _b, F4));
+    return reinterpret_cast<__uint128_t>(res);
 }
 
 inline __uint128_t sub(__uint128_t a, __uint128_t b)
 {
     VecType res;
-    STORE(&res, SUB_MOD((VecType)a, (VecType)b, F4));
-    return (__uint128_t)res;
+    VecType _a = load_to_reg(a);
+    VecType _b = load_to_reg(b);
+    STORE(&res, SUB_MOD(_a, _b, F4));
+    return reinterpret_cast<__uint128_t>(res);
 }
 
 inline __uint128_t mul(__uint128_t a, __uint128_t b)
 {
     VecType res;
-    STORE(&res, MULFULL_MOD((VecType)a, (VecType)b, F4));
-    return (__uint128_t)res;
+    VecType _a = load_to_reg(a);
+    VecType _b = load_to_reg(b);
+    STORE(&res, MULFULL_MOD(_a, _b, F4));
+    return reinterpret_cast<__uint128_t>(res);
 }
 
 inline void
