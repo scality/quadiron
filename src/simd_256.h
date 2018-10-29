@@ -95,6 +95,10 @@ inline uint32_t TESTZ(VecType x, VecType y)
 {
     return _mm256_testz_si256(x, y);
 }
+inline int is_all_zeros(VecType x)
+{
+    return _mm256_testc_si256(ZERO, x);
+}
 
 #define SHIFTR(x, imm8) (_mm256_srli_si256(x, imm8))
 #define BLEND8(x, y, mask) (_mm256_blendv_epi8(x, y, mask))
