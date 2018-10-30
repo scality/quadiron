@@ -53,20 +53,13 @@ void RsFnt<uint16_t>::encode_post_process(
     uint16_t threshold = this->gf->card_minus_one();
     unsigned code_len = this->n_outputs;
 
-    // number of elements per vector register
-    unsigned vec_size = simd::countof<uint16_t>();
-    // number of vector registers per fragment packet
-    size_t vecs_nb = size / vec_size;
-    // odd number of elements not vectorized
-    size_t last_len = size - vecs_nb * vec_size;
-
     simd::encode_post_process(
-        output, props, offset, code_len, threshold, vecs_nb);
+        output, props, offset, code_len, threshold, simd_vec_len);
 
-    if (last_len > 0) {
+    if (simd_trailing_len > 0) {
         for (unsigned i = 0; i < code_len; ++i) {
             uint16_t* chunk = output.get(i);
-            for (size_t j = vecs_nb * vec_size; j < size; ++j) {
+            for (size_t j = simd_offset; j < size; ++j) {
                 if (chunk[j] == threshold) {
                     props[i].add(offset + j, OOR_MARK);
                 }
@@ -85,20 +78,13 @@ void RsFnt<uint32_t>::encode_post_process(
     const uint32_t threshold = this->gf->card_minus_one();
     const unsigned code_len = this->n_outputs;
 
-    // number of elements per vector register
-    const unsigned vec_size = simd::countof<uint32_t>();
-    // number of vector registers per fragment packet
-    const size_t vecs_nb = size / vec_size;
-    // odd number of elements not vectorized
-    const size_t last_len = size - vecs_nb * vec_size;
-
     simd::encode_post_process(
-        output, props, offset, code_len, threshold, vecs_nb);
+        output, props, offset, code_len, threshold, simd_vec_len);
 
-    if (last_len > 0) {
+    if (simd_trailing_len > 0) {
         for (unsigned i = 0; i < code_len; ++i) {
             uint32_t* chunk = output.get(i);
-            for (size_t j = vecs_nb * vec_size; j < size; ++j) {
+            for (size_t j = simd_offset; j < size; ++j) {
                 if (chunk[j] == threshold) {
                     props[i].add(offset + j, OOR_MARK);
                 }
