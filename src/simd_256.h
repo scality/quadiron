@@ -94,7 +94,7 @@ inline uint32_t AndIsZero(VecType x, VecType y)
 {
     return _mm256_testz_si256(x, y);
 }
-inline int is_all_zeros(VecType x)
+inline int IsZero(VecType x)
 {
     return _mm256_testc_si256(ZERO, x);
 }

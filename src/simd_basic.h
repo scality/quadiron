@@ -134,7 +134,7 @@ inline VecType MULFULL_MOD(VecType x, VecType y, T q)
     // filter elements of both of a & b = card-1
     const VecType cmp = And(CMPEQ<T>(x, CARD_M_1(q)), CMPEQ<T>(y, CARD_M_1(q)));
 
-    if (is_all_zeros(cmp) == 1) {
+    if (IsZero(cmp) == 1) {
         return res;
     }
     return (q == F3) ? Xor(res, And(F4_u32, cmp))

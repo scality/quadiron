@@ -81,7 +81,7 @@ inline uint16_t AndIsZero(VecType x, VecType y)
 {
     return _mm_testz_si128(x, y);
 }
-inline int is_all_zeros(VecType x)
+inline int IsZero(VecType x)
 {
     return _mm_testc_si128(ZERO, x);
 }
