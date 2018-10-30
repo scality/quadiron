@@ -86,7 +86,7 @@ inline VecType Xor(VecType x, VecType y)
 {
     return _mm256_xor_si256(x, y);
 }
-inline uint32_t MVMSK8(VecType x)
+inline uint32_t Msb8Mask(VecType x)
 {
     return _mm256_movemask_epi8(x);
 }
