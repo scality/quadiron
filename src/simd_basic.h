@@ -153,7 +153,7 @@ inline VecType ModMulSafe(VecType x, VecType y, T q)
  * @param max a dummy variable
  */
 template <typename T>
-inline void ADD_PROPS(
+inline void AddProps(
     Properties& props,
     VecType threshold,
     VecType mask,

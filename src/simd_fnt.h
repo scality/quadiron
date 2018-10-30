@@ -493,22 +493,22 @@ inline void encode_post_process(
 
             if (AndIsZero(a1, _threshold) == 0) {
                 const off_t curr_offset = offset + vec_id * vec_size;
-                ADD_PROPS(
+                AddProps(
                     props[frag_id], _threshold, mask_hi, a1, curr_offset, max);
             }
             if (AndIsZero(a2, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 1) * vec_size;
-                ADD_PROPS(
+                AddProps(
                     props[frag_id], _threshold, mask_hi, a2, curr_offset, max);
             }
             if (AndIsZero(a3, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 2) * vec_size;
-                ADD_PROPS(
+                AddProps(
                     props[frag_id], _threshold, mask_hi, a3, curr_offset, max);
             }
             if (AndIsZero(a4, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 3) * vec_size;
-                ADD_PROPS(
+                AddProps(
                     props[frag_id], _threshold, mask_hi, a4, curr_offset, max);
             }
         }
@@ -517,7 +517,7 @@ inline void encode_post_process(
             uint32_t c = AndIsZero(a, _threshold);
             if (c == 0) {
                 const off_t curr_offset = offset + vec_id * vec_size;
-                ADD_PROPS(
+                AddProps(
                     props[frag_id], _threshold, mask_hi, a, curr_offset, max);
             }
         }
