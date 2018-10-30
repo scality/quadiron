@@ -112,6 +112,11 @@ class Radix2 : public FourierTransform<T> {
         unsigned step);
 
     // Only used for non-vectorized elements
+    void butterfly_ct_two_layers_step_slow(
+        vec::Buffers<T>& buf,
+        unsigned start,
+        unsigned m,
+        size_t offset = 0);
     void butterfly_ct_step_slow(
         vec::Buffers<T>& buf,
         T coef,
@@ -433,24 +438,34 @@ void Radix2<T>::butterfly_ct_two_layers_step(
     unsigned start,
     unsigned m)
 {
+    butterfly_ct_two_layers_step_slow(buf, start, m);
+}
+
+template <typename T>
+void Radix2<T>::butterfly_ct_two_layers_step_slow(
+    vec::Buffers<T>& buf,
+    unsigned start,
+    unsigned m,
+    size_t offset)
+{
     const unsigned step = m << 2;
     //  ---------
     // First layer
     //  ---------
     const T r1 = W->get(start * this->n / m / 2);
     // first pair
-    butterfly_ct_step(buf, r1, start, m, step);
+    butterfly_ct_step_slow(buf, r1, start, m, step, offset);
     // second pair
-    butterfly_ct_step(buf, r1, start + 2 * m, m, step);
+    butterfly_ct_step_slow(buf, r1, start + 2 * m, m, step, offset);
     //  ---------
     // Second layer
     //  ---------
     // first pair
     const T r2 = W->get(start * this->n / m / 4);
-    butterfly_ct_step(buf, r2, start, 2 * m, step);
+    butterfly_ct_step_slow(buf, r2, start, 2 * m, step, offset);
     // second pair
     const T r3 = W->get((start + m) * this->n / m / 4);
-    butterfly_ct_step(buf, r3, start + m, 2 * m, step);
+    butterfly_ct_step_slow(buf, r3, start + m, 2 * m, step, offset);
 }
 
 template <typename T>
