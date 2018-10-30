@@ -53,7 +53,7 @@ namespace simd {
 template <typename T>
 inline void BUTTERFLY_CT(T rp1, VecType c, VecType* x, VecType* y, T q)
 {
-    VecType z = (rp1 == 2) ? *y : MUL_MOD(c, *y, q);
+    VecType z = (rp1 == 2) ? *y : ModMul(c, *y, q);
     if (rp1 < q) {
         *y = ModSub(*x, z, q);
         *x = ModAdd(*x, z, q);
@@ -83,7 +83,7 @@ inline void BUTTERFLY_GS(T rp1, VecType c, VecType* x, VecType* y, T q)
         *y = ModSub(*x, *y, q);
     } else if (rp1 < q) {
         VecType sub = ModSub(*x, *y, q);
-        *y = MUL_MOD(c, sub, q);
+        *y = ModMul(c, sub, q);
     } else { // i.e. r == q - 1
         *y = ModSub(*y, *x, q);
     }
@@ -108,7 +108,7 @@ inline VecType BUTTERFLY_GS_SIMPLE(T rp1, VecType c, VecType x, T q)
     if (rp1 == 2) {
         return x;
     } else if (rp1 < q) {
-        return MUL_MOD(c, x, q);
+        return ModMul(c, x, q);
     } else {
         return ModNeg(x, q);
     }

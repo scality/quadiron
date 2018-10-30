@@ -106,7 +106,7 @@ inline VecType ModNeg(VecType x, T q)
  * @return (x * y) mod q
  */
 template <typename T>
-inline VecType MUL_MOD(VecType x, VecType y, T q)
+inline VecType ModMul(VecType x, VecType y, T q)
 {
     const VecType res = Mul<T>(x, y);
     const VecType lo =
@@ -129,7 +129,7 @@ inline VecType MUL_MOD(VecType x, VecType y, T q)
 template <typename T>
 inline VecType MULFULL_MOD(VecType x, VecType y, T q)
 {
-    const VecType res = MUL_MOD(x, y, q);
+    const VecType res = ModMul(x, y, q);
 
     // filter elements of both of a & b = card-1
     const VecType cmp =
@@ -193,13 +193,13 @@ inline void mul_coef_to_buf(const T a, T* src, T* dest, size_t len, T card)
     size_t i = 0;
     const size_t end = (_len > 3) ? _len - 3 : 0;
     for (; i < end; i += 4) {
-        _dest[i] = MUL_MOD(coef, _src[i], card);
-        _dest[i + 1] = MUL_MOD(coef, _src[i + 1], card);
-        _dest[i + 2] = MUL_MOD(coef, _src[i + 2], card);
-        _dest[i + 3] = MUL_MOD(coef, _src[i + 3], card);
+        _dest[i] = ModMul(coef, _src[i], card);
+        _dest[i + 1] = ModMul(coef, _src[i + 1], card);
+        _dest[i + 2] = ModMul(coef, _src[i + 2], card);
+        _dest[i + 3] = ModMul(coef, _src[i + 3], card);
     }
     for (; i < _len; ++i) {
-        _dest[i] = MUL_MOD(coef, _src[i], card);
+        _dest[i] = ModMul(coef, _src[i], card);
     }
 
     if (_last_len > 0) {
