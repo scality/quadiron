@@ -179,7 +179,7 @@ inline VecType LoadToReg(__uint128_t x)
     return LoadToReg(*_x);
 }
 
-inline void STORE_LOW(HalfVecType* address, VecType reg)
+inline void StoreLowHalfToMem(HalfVecType* address, VecType reg)
 {
     _mm_store_si128(address, _mm256_castsi256_si128(reg));
 }
@@ -189,7 +189,7 @@ inline __uint128_t add(__uint128_t a, __uint128_t b)
     HalfVecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    STORE_LOW(&res, ModAdd(_a, _b, F4));
+    StoreLowHalfToMem(&res, ModAdd(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -198,7 +198,7 @@ inline __uint128_t sub(__uint128_t a, __uint128_t b)
     HalfVecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    STORE_LOW(&res, ModSub(_a, _b, F4));
+    StoreLowHalfToMem(&res, ModSub(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -207,7 +207,7 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     HalfVecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    STORE_LOW(&res, ModMulSafe(_a, _b, F4));
+    StoreLowHalfToMem(&res, ModMulSafe(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -226,8 +226,8 @@ inline void add_buf_to_two_bufs_rem(
         VecType _x_next_p = LoadToReg(_x_half[i]);
         VecType _y_p = LoadToReg(_y[i]);
 
-        STORE_LOW(_x + i, ModAdd(_x_p, _y_p, F4));
-        STORE_LOW(_x_half + i, ModAdd(_x_next_p, _y_p, F4));
+        StoreLowHalfToMem(_x + i, ModAdd(_x_p, _y_p, F4));
+        StoreLowHalfToMem(_x_half + i, ModAdd(_x_next_p, _y_p, F4));
     }
 }
 
@@ -239,7 +239,7 @@ inline void hadamard_mul_rem(unsigned n, __uint128_t* x, __uint128_t* y)
         VecType _x_p = LoadToReg(_x[i]);
         VecType _y_p = LoadToReg(_y[i]);
 
-        STORE_LOW(_x + i, ModMulSafe(_x_p, _y_p, F4));
+        StoreLowHalfToMem(_x + i, ModMulSafe(_x_p, _y_p, F4));
     }
 }
 
@@ -257,8 +257,8 @@ inline void hadamard_mul_doubled_rem(
         VecType _x_next_p = LoadToReg(_x_half[i]);
         VecType _y_p = LoadToReg(_y[i]);
 
-        STORE_LOW(_x + i, ModMulSafe(_x_p, _y_p, F4));
-        STORE_LOW(_x_half + i, ModMulSafe(_x_next_p, _y_p, F4));
+        StoreLowHalfToMem(_x + i, ModMulSafe(_x_p, _y_p, F4));
+        StoreLowHalfToMem(_x_half + i, ModMulSafe(_x_next_p, _y_p, F4));
     }
 }
 
