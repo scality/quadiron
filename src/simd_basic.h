@@ -62,6 +62,19 @@ inline VecType CardMinusOne<uint32_t>(uint32_t q)
     return (q == F3) ? F3_MINUS_ONE_U32 : F4_MINUS_ONE_U32;
 }
 
+template <typename T>
+inline VecType GetLowHalf(VecType x, T q)
+{
+    return (q == F3) ? BLEND8(ZERO, x, MASK8_LO) : BLEND16(ZERO, x, 0x55);
+}
+
+template <typename T>
+inline VecType GetHighHalf(VecType x, T q)
+{
+    return (q == F3) ? BLEND8(ZERO, SHIFTR(x, 1), MASK8_LO)
+                     : BLEND16(ZERO, SHIFTR(x, 2), 0x55);
+}
+
 /* ================= Basic Operations ================= */
 
 /**
@@ -123,10 +136,8 @@ template <typename T>
 inline VecType ModMul(VecType x, VecType y, T q)
 {
     const VecType res = Mul<T>(x, y);
-    const VecType lo =
-        (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
-    const VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
-                                 : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
+    const VecType lo = GetLowHalf(res, q);
+    const VecType hi = GetHighHalf(res, q);
     return ModSub(lo, hi, q);
 }
 
