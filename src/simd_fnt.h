@@ -51,7 +51,7 @@ namespace simd {
  * @param q modular
  */
 template <typename T>
-inline void BUTTERFLY_CT(T rp1, VecType c, VecType* x, VecType* y, T q)
+inline void ButterflyCT(T rp1, VecType c, VecType* x, VecType* y, T q)
 {
     VecType z = (rp1 == 2) ? *y : ModMul(c, *y, q);
     if (rp1 < q) {
@@ -159,12 +159,12 @@ inline void butterfly_ct_step(
             x1 = LoadToReg(p + j);
             y1 = LoadToReg(q + j);
 
-            BUTTERFLY_CT(rp1, c, &x1, &y1, card);
+            ButterflyCT(rp1, c, &x1, &y1, card);
 
             x2 = LoadToReg(p + j + 1);
             y2 = LoadToReg(q + j + 1);
 
-            BUTTERFLY_CT(rp1, c, &x2, &y2, card);
+            ButterflyCT(rp1, c, &x2, &y2, card);
 
             // Store back to memory
             StoreToMem(p + j, x1);
@@ -176,7 +176,7 @@ inline void butterfly_ct_step(
             x1 = LoadToReg(p + j);
             y1 = LoadToReg(q + j);
 
-            BUTTERFLY_CT(rp1, c, &x1, &y1, card);
+            ButterflyCT(rp1, c, &x1, &y1, card);
 
             // Store back to memory
             StoreToMem(p + j, x1);
@@ -218,23 +218,23 @@ inline static void do_butterfly_ct_2_layers(
         VecType y1 = LoadToReg(q);
         VecType y2 = LoadToReg(q + 1);
 
-        BUTTERFLY_CT(r1p1, c1, &x1, &y1, card);
-        BUTTERFLY_CT(r1p1, c1, &x2, &y2, card);
+        ButterflyCT(r1p1, c1, &x1, &y1, card);
+        ButterflyCT(r1p1, c1, &x2, &y2, card);
 
         VecType u1 = LoadToReg(r);
         VecType u2 = LoadToReg(r + 1);
         VecType v1 = LoadToReg(s);
         VecType v2 = LoadToReg(s + 1);
 
-        BUTTERFLY_CT(r1p1, c1, &u1, &v1, card);
-        BUTTERFLY_CT(r1p1, c1, &u2, &v2, card);
+        ButterflyCT(r1p1, c1, &u1, &v1, card);
+        ButterflyCT(r1p1, c1, &u2, &v2, card);
 
         // Second layer (c2, x, u) & (c3, y, v)
-        BUTTERFLY_CT(r2p1, c2, &x1, &u1, card);
-        BUTTERFLY_CT(r2p1, c2, &x2, &u2, card);
+        ButterflyCT(r2p1, c2, &x1, &u1, card);
+        ButterflyCT(r2p1, c2, &x2, &u2, card);
 
-        BUTTERFLY_CT(r3p1, c3, &y1, &v1, card);
-        BUTTERFLY_CT(r3p1, c3, &y2, &v2, card);
+        ButterflyCT(r3p1, c3, &y1, &v1, card);
+        ButterflyCT(r3p1, c3, &y2, &v2, card);
 
         // Store back to memory
         StoreToMem(p, x1);
@@ -261,10 +261,10 @@ inline static void do_butterfly_ct_2_layers(
         VecType v1 = LoadToReg(s + j);
 
         // BUTTERFLY_3_test(c1, &x1, &y1, &u1, &v1, card);
-        BUTTERFLY_CT(r1p1, c1, &x1, &y1, card);
-        BUTTERFLY_CT(r1p1, c1, &u1, &v1, card);
-        BUTTERFLY_CT(r2p1, c2, &x1, &u1, card);
-        BUTTERFLY_CT(r3p1, c3, &y1, &v1, card);
+        ButterflyCT(r1p1, c1, &x1, &y1, card);
+        ButterflyCT(r1p1, c1, &u1, &v1, card);
+        ButterflyCT(r2p1, c2, &x1, &u1, card);
+        ButterflyCT(r3p1, c3, &y1, &v1, card);
 
         // Store back to memory
         StoreToMem(p + j, x1);
