@@ -80,7 +80,7 @@ class Additive : public FourierTransform<T> {
 
     bool create_betas;
     T m;
-    T k, deg0, deg1, deg2;
+    T m_k, deg0, deg1, deg2;
     T beta_1, inv_beta_1;
     T beta_m, inv_beta_m;
     vec::Vector<T>* betas = nullptr;
@@ -125,18 +125,18 @@ Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
     this->beta_m_powers = new vec::Vector<T>(gf, this->n);
     this->compute_beta_m_powers();
     if (m > 1) {
-        this->k = arith::exp2<T>(m - 1);
+        this->m_k = arith::exp2<T>(m - 1);
 
         // compute gammas and deltas
         this->gammas = new vec::Vector<T>(gf, m - 1);
         this->deltas = new vec::Vector<T>(gf, m - 1);
-        this->G = new vec::Vector<T>(gf, this->k);
+        this->G = new vec::Vector<T>(gf, this->m_k);
         this->compute_basis();
 
-        this->u = new vec::Vector<T>(gf, this->k);
-        this->v = new vec::Vector<T>(gf, this->k);
-        this->g0 = new vec::Vector<T>(gf, this->k);
-        this->g1 = new vec::Vector<T>(gf, this->k);
+        this->u = new vec::Vector<T>(gf, this->m_k);
+        this->v = new vec::Vector<T>(gf, this->m_k);
+        this->g0 = new vec::Vector<T>(gf, this->m_k);
+        this->g1 = new vec::Vector<T>(gf, this->m_k);
 
         this->mem = new vec::Vector<T>(gf, this->n);
         this->fft_add = new Additive(gf, m - 1, this->deltas);
@@ -272,15 +272,15 @@ void Additive<T>::_fft(vec::Vector<T>& output, vec::Vector<T>& input)
     this->fft_add->fft(*v, *g1);
 
     // copy output = (undefined, v)
-    output.copy(v, k, k);
+    output.copy(v, m_k, m_k);
     // perform G * v hadamard multiplication
     v->hadamard_mul(G);
     // v += u
     v->add(u);
     // output = (u + G*v, v)
-    output.copy(v, k);
+    output.copy(v, m_k);
     // output = (u + G*v, (u + G*v) + v)
-    output.add(v, k);
+    output.add(v, m_k);
 }
 
 template <typename T>
@@ -291,9 +291,9 @@ void Additive<T>::_ifft(vec::Vector<T>& output, vec::Vector<T>& input)
      * input = (w0, w1)
      * calculate u, v s.t. v = w1 - w0, u = w0 - G * v
      */
-    vec::Slice<T> w0(&input, k);
+    vec::Slice<T> w0(&input, m_k);
     // v = w_1
-    v->copy(&input, k, 0, k);
+    v->copy(&input, m_k, 0, m_k);
     // v = w0 + w1
     v->add(&w0);
     // u = v
