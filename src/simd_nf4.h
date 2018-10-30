@@ -189,7 +189,7 @@ inline __uint128_t add(__uint128_t a, __uint128_t b)
     HalfVecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    STORE_LOW(&res, ADD_MOD(_a, _b, F4));
+    STORE_LOW(&res, ModAdd(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -226,8 +226,8 @@ inline void add_buf_to_two_bufs_rem(
         VecType _x_next_p = LoadToReg(_x_half[i]);
         VecType _y_p = LoadToReg(_y[i]);
 
-        STORE_LOW(_x + i, ADD_MOD(_x_p, _y_p, F4));
-        STORE_LOW(_x_half + i, ADD_MOD(_x_next_p, _y_p, F4));
+        STORE_LOW(_x + i, ModAdd(_x_p, _y_p, F4));
+        STORE_LOW(_x_half + i, ModAdd(_x_next_p, _y_p, F4));
     }
 }
 
@@ -275,7 +275,7 @@ inline __uint128_t add(__uint128_t a, __uint128_t b)
     VecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    StoreToMem(&res, ADD_MOD(_a, _b, F4));
+    StoreToMem(&res, ModAdd(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -342,12 +342,12 @@ inline void add_buf_to_two_bufs(unsigned n, __uint128_t* _x, __uint128_t* _y)
 
     // add y to the first half of `x`
     for (i = 0; i < vec_len; ++i) {
-        x[i] = ADD_MOD(x[i], y[i], F4);
+        x[i] = ModAdd(x[i], y[i], F4);
     }
 
     // add y to the second half of `x`
     for (i = 0; i < vec_len; ++i) {
-        x_next[i] = ADD_MOD(x_next[i], y[i], F4);
+        x_next[i] = ModAdd(x_next[i], y[i], F4);
     }
 
     if (rem_len > 0) {

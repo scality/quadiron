@@ -56,9 +56,9 @@ inline void BUTTERFLY_CT(T rp1, VecType c, VecType* x, VecType* y, T q)
     VecType z = (rp1 == 2) ? *y : MUL_MOD(c, *y, q);
     if (rp1 < q) {
         *y = SUB_MOD(*x, z, q);
-        *x = ADD_MOD(*x, z, q);
+        *x = ModAdd(*x, z, q);
     } else { // i.e. r == q - 1
-        *y = ADD_MOD(*x, z, q);
+        *y = ModAdd(*x, z, q);
         *x = SUB_MOD(*x, z, q);
     }
 }
@@ -78,7 +78,7 @@ inline void BUTTERFLY_CT(T rp1, VecType c, VecType* x, VecType* y, T q)
 template <typename T>
 inline void BUTTERFLY_GS(T rp1, VecType c, VecType* x, VecType* y, T q)
 {
-    VecType add = ADD_MOD(*x, *y, q);
+    VecType add = ModAdd(*x, *y, q);
     if (rp1 == 2) {
         *y = SUB_MOD(*x, *y, q);
     } else if (rp1 < q) {
