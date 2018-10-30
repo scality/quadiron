@@ -56,7 +56,7 @@ typedef __m128i VecType;
 
 /* ============= Essential Operations for SSE w/ both u16 & u32 ============ */
 
-inline VecType LOAD(VecType* address)
+inline VecType LoadToReg(VecType* address)
 {
     return _mm_load_si128(address);
 }
@@ -156,7 +156,6 @@ inline VecType CMPEQ<uint16_t>(VecType x, VecType y)
 {
     return _mm_cmpeq_epi16(x, y);
 }
-
 
 template <typename T>
 inline VecType MIN(VecType x, VecType y);

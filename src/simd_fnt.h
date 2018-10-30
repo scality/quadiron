@@ -156,13 +156,13 @@ inline void butterfly_ct_step(
 
         size_t j = 0;
         for (; j < end; j += 2) {
-            x1 = LOAD(p + j);
-            y1 = LOAD(q + j);
+            x1 = LoadToReg(p + j);
+            y1 = LoadToReg(q + j);
 
             BUTTERFLY_CT(rp1, c, &x1, &y1, card);
 
-            x2 = LOAD(p + j + 1);
-            y2 = LOAD(q + j + 1);
+            x2 = LoadToReg(p + j + 1);
+            y2 = LoadToReg(q + j + 1);
 
             BUTTERFLY_CT(rp1, c, &x2, &y2, card);
 
@@ -173,8 +173,8 @@ inline void butterfly_ct_step(
             STORE(q + j + 1, y2);
         }
         for (; j < len; ++j) {
-            x1 = LOAD(p + j);
-            y1 = LOAD(q + j);
+            x1 = LoadToReg(p + j);
+            y1 = LoadToReg(q + j);
 
             BUTTERFLY_CT(rp1, c, &x1, &y1, card);
 
@@ -213,18 +213,18 @@ inline static void do_butterfly_ct_2_layers(
     const size_t end = (len > 1) ? len - 1 : 0;
     while (j < end) {
         // First layer (c1, x, y) & (c1, u, v)
-        VecType x1 = LOAD(p);
-        VecType x2 = LOAD(p + 1);
-        VecType y1 = LOAD(q);
-        VecType y2 = LOAD(q + 1);
+        VecType x1 = LoadToReg(p);
+        VecType x2 = LoadToReg(p + 1);
+        VecType y1 = LoadToReg(q);
+        VecType y2 = LoadToReg(q + 1);
 
         BUTTERFLY_CT(r1p1, c1, &x1, &y1, card);
         BUTTERFLY_CT(r1p1, c1, &x2, &y2, card);
 
-        VecType u1 = LOAD(r);
-        VecType u2 = LOAD(r + 1);
-        VecType v1 = LOAD(s);
-        VecType v2 = LOAD(s + 1);
+        VecType u1 = LoadToReg(r);
+        VecType u2 = LoadToReg(r + 1);
+        VecType v1 = LoadToReg(s);
+        VecType v2 = LoadToReg(s + 1);
 
         BUTTERFLY_CT(r1p1, c1, &u1, &v1, card);
         BUTTERFLY_CT(r1p1, c1, &u2, &v2, card);
@@ -255,10 +255,10 @@ inline static void do_butterfly_ct_2_layers(
 
     for (; j < len; ++j) {
         // First layer (c1, x, y) & (c1, u, v)
-        VecType x1 = LOAD(p + j);
-        VecType y1 = LOAD(q + j);
-        VecType u1 = LOAD(r + j);
-        VecType v1 = LOAD(s + j);
+        VecType x1 = LoadToReg(p + j);
+        VecType y1 = LoadToReg(q + j);
+        VecType u1 = LoadToReg(r + j);
+        VecType v1 = LoadToReg(s + j);
 
         // BUTTERFLY_3_test(c1, &x1, &y1, &u1, &v1, card);
         BUTTERFLY_CT(r1p1, c1, &x1, &y1, card);
@@ -366,14 +366,14 @@ inline void butterfly_gs_step(
 
         size_t j = 0;
         for (; j < end; j += 4) {
-            x1 = LOAD(p + j);
-            x2 = LOAD(p + j + 1);
-            x3 = LOAD(p + j + 2);
-            x4 = LOAD(p + j + 3);
-            y1 = LOAD(q + j);
-            y2 = LOAD(q + j + 1);
-            y3 = LOAD(q + j + 2);
-            y4 = LOAD(q + j + 3);
+            x1 = LoadToReg(p + j);
+            x2 = LoadToReg(p + j + 1);
+            x3 = LoadToReg(p + j + 2);
+            x4 = LoadToReg(p + j + 3);
+            y1 = LoadToReg(q + j);
+            y2 = LoadToReg(q + j + 1);
+            y3 = LoadToReg(q + j + 2);
+            y4 = LoadToReg(q + j + 3);
 
             BUTTERFLY_GS(rp1, c, &x1, &y1, card);
             BUTTERFLY_GS(rp1, c, &x2, &y2, card);
@@ -391,8 +391,8 @@ inline void butterfly_gs_step(
             STORE(q + j + 3, y4);
         }
         for (; j < len; ++j) {
-            x1 = LOAD(p + j);
-            y1 = LOAD(q + j);
+            x1 = LoadToReg(p + j);
+            y1 = LoadToReg(q + j);
 
             BUTTERFLY_GS(rp1, c, &x1, &y1, card);
 
@@ -443,8 +443,8 @@ inline void butterfly_gs_step_simple(
 
         size_t j = 0;
         for (; j < end; j += 2) {
-            x1 = LOAD(p + j);
-            x2 = LOAD(p + j + 1);
+            x1 = LoadToReg(p + j);
+            x2 = LoadToReg(p + j + 1);
 
             y1 = BUTTERFLY_GS_SIMPLE(rp1, c, x1, card);
             y2 = BUTTERFLY_GS_SIMPLE(rp1, c, x2, card);
@@ -454,7 +454,7 @@ inline void butterfly_gs_step_simple(
             STORE(q + j + 1, y2);
         }
         for (; j < len; ++j) {
-            x1 = LOAD(p + j);
+            x1 = LoadToReg(p + j);
 
             y1 = BUTTERFLY_GS_SIMPLE(rp1, c, x1, card);
 
@@ -486,10 +486,10 @@ inline void encode_post_process(
         size_t vec_id = 0;
         size_t end = (vecs_nb > 3) ? vecs_nb - 3 : 0;
         for (; vec_id < end; vec_id += 4) {
-            VecType a1 = LOAD(buf + vec_id);
-            VecType a2 = LOAD(buf + vec_id + 1);
-            VecType a3 = LOAD(buf + vec_id + 2);
-            VecType a4 = LOAD(buf + vec_id + 3);
+            VecType a1 = LoadToReg(buf + vec_id);
+            VecType a2 = LoadToReg(buf + vec_id + 1);
+            VecType a3 = LoadToReg(buf + vec_id + 2);
+            VecType a4 = LoadToReg(buf + vec_id + 3);
 
             if (TESTZ(a1, _threshold) == 0) {
                 const off_t curr_offset = offset + vec_id * vec_size;
@@ -513,7 +513,7 @@ inline void encode_post_process(
             }
         }
         for (; vec_id < vecs_nb; ++vec_id) {
-            VecType a = LOAD(buf + vec_id);
+            VecType a = LoadToReg(buf + vec_id);
             uint32_t c = TESTZ(a, _threshold);
             if (c == 0) {
                 const off_t curr_offset = offset + vec_id * vec_size;

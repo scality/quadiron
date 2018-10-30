@@ -69,7 +69,7 @@ typedef __m128i HalfVecType;
 
 /* ============= Essential Operations for AVX2 w/ both u16 & u32 ============ */
 
-inline VecType LOAD(VecType* address)
+inline VecType LoadToReg(VecType* address)
 {
     return _mm256_load_si256(address);
 }
