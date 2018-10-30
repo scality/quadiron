@@ -181,7 +181,7 @@ inline void ADD_PROPS(
 template <typename T>
 inline void mul_coef_to_buf(const T a, T* src, T* dest, size_t len, T card)
 {
-    const VecType coef = SET1(a);
+    const VecType coef = SetOne(a);
 
     VecType* __restrict _src = reinterpret_cast<VecType*>(src);
     VecType* __restrict _dest = reinterpret_cast<VecType*>(dest);

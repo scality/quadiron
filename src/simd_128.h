@@ -93,14 +93,14 @@ inline int IsZero(VecType x)
 /* ================= Essential Operations for SSE ================= */
 
 template <typename T>
-inline VecType SET1(T val);
+inline VecType SetOne(T val);
 template <>
-inline VecType SET1(uint32_t val)
+inline VecType SetOne(uint32_t val)
 {
     return _mm_set1_epi32(val);
 }
 template <>
-inline VecType SET1(uint16_t val)
+inline VecType SetOne(uint16_t val)
 {
     return _mm_set1_epi16(val);
 }

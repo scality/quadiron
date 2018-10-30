@@ -143,7 +143,7 @@ inline void butterfly_ct_step(
         return;
     }
     const T rp1 = r + 1;
-    VecType c = SET1(r);
+    VecType c = SetOne(r);
 
     const size_t end = (len > 1) ? len - 1 : 0;
     const unsigned bufs_nb = buf.get_n();
@@ -200,9 +200,9 @@ inline static void do_butterfly_ct_2_layers(
     const T r2p1 = r2 + 1;
     const T r3p1 = r3 + 1;
 
-    VecType c1 = SET1(r1);
-    VecType c2 = SET1(r2);
-    VecType c3 = SET1(r3);
+    VecType c1 = SetOne(r1);
+    VecType c2 = SetOne(r2);
+    VecType c3 = SetOne(r3);
 
     VecType* __restrict p = reinterpret_cast<VecType*>(mem[start]);
     VecType* __restrict q = reinterpret_cast<VecType*>(mem[start + m]);
@@ -353,7 +353,7 @@ inline void butterfly_gs_step(
     }
     const unsigned step = m << 1;
     const T rp1 = r + 1;
-    VecType c = SET1(r);
+    VecType c = SetOne(r);
 
     const size_t end = (len > 3) ? len - 3 : 0;
     const unsigned bufs_nb = buf.get_n();
@@ -430,7 +430,7 @@ inline void butterfly_gs_step_simple(
     }
     const unsigned step = m << 1;
     const T rp1 = r + 1;
-    VecType c = SET1(r);
+    VecType c = SetOne(r);
 
     const size_t end = (len > 1) ? len - 1 : 0;
     const unsigned bufs_nb = buf.get_n();
@@ -476,8 +476,8 @@ inline void encode_post_process(
     const unsigned element_size = sizeof(T);
     const unsigned vec_size = countof<T>();
     const T max = 1 << (element_size * 8 - 1);
-    const VecType _threshold = SET1(threshold);
-    const VecType mask_hi = SET1(max);
+    const VecType _threshold = SetOne(threshold);
+    const VecType mask_hi = SetOne(max);
 
     const std::vector<T*>& mem = output.get_mem();
     for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
