@@ -112,6 +112,11 @@ class Radix2 : public FourierTransform<T> {
         unsigned step);
 
     // Only used for non-vectorized elements
+    void butterfly_ct_two_layers_step_slow(
+        vec::Buffers<T>& buf,
+        unsigned start,
+        unsigned m,
+        size_t offset = 0);
     void butterfly_ct_step_slow(
         vec::Buffers<T>& buf,
         T coef,
@@ -141,6 +146,11 @@ class Radix2 : public FourierTransform<T> {
     T inv_w;
     size_t pkt_size;
     size_t buf_size;
+
+    // Indices used for accelerated functions
+    size_t simd_vec_len;
+    size_t simd_trailing_len;
+    size_t simd_offset;
 
     std::unique_ptr<T[]> rev = nullptr;
     std::unique_ptr<vec::Vector<T>> W = nullptr;
@@ -181,6 +191,12 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
 
     rev = std::unique_ptr<T[]>(new T[n]);
     init_bitrev();
+
+    // Indices used for accelerated functions
+    const unsigned ratio = simd::countof<T>();
+    simd_vec_len = this->pkt_size / ratio;
+    simd_trailing_len = this->pkt_size - simd_vec_len * ratio;
+    simd_offset = simd_vec_len * ratio;
 }
 
 template <typename T>
@@ -421,24 +437,34 @@ void Radix2<T>::butterfly_ct_two_layers_step(
     unsigned start,
     unsigned m)
 {
+    butterfly_ct_two_layers_step_slow(buf, start, m);
+}
+
+template <typename T>
+void Radix2<T>::butterfly_ct_two_layers_step_slow(
+    vec::Buffers<T>& buf,
+    unsigned start,
+    unsigned m,
+    size_t offset)
+{
     const unsigned step = m << 2;
     //  ---------
     // First layer
     //  ---------
     const T r1 = W->get(start * this->n / m / 2);
     // first pair
-    butterfly_ct_step(buf, r1, start, m, step);
+    butterfly_ct_step_slow(buf, r1, start, m, step, offset);
     // second pair
-    butterfly_ct_step(buf, r1, start + 2 * m, m, step);
+    butterfly_ct_step_slow(buf, r1, start + 2 * m, m, step, offset);
     //  ---------
     // Second layer
     //  ---------
     // first pair
     const T r2 = W->get(start * this->n / m / 4);
-    butterfly_ct_step(buf, r2, start, 2 * m, step);
+    butterfly_ct_step_slow(buf, r2, start, 2 * m, step, offset);
     // second pair
     const T r3 = W->get((start + m) * this->n / m / 4);
-    butterfly_ct_step(buf, r3, start + m, 2 * m, step);
+    butterfly_ct_step_slow(buf, r3, start + m, 2 * m, step, offset);
 }
 
 template <typename T>

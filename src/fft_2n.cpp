@@ -48,10 +48,6 @@ void Radix2<uint16_t>::butterfly_ct_two_layers_step(
     unsigned start,
     unsigned m)
 {
-    const unsigned ratio = simd::countof<uint16_t>();
-    const size_t len = this->pkt_size;
-    const size_t vec_len = len / ratio;
-    const size_t last_len = len - vec_len * ratio;
     const unsigned coefIndex = start * this->n / m / 2;
     const uint16_t r1 = vec_W[coefIndex];
     const uint16_t r2 = vec_W[coefIndex / 2];
@@ -59,29 +55,11 @@ void Radix2<uint16_t>::butterfly_ct_two_layers_step(
 
     // perform vector operations
     simd::butterfly_ct_two_layers_step(
-        buf, r1, r2, r3, start, m, vec_len, card);
+        buf, r1, r2, r3, start, m, simd_vec_len, card);
 
     // for last elements, perform as non-SIMD method
-    if (last_len > 0) {
-        const unsigned step = m << 2;
-        size_t offset = vec_len * ratio;
-        //  ---------
-        // First layer
-        //  ---------
-        const uint16_t r1 = W->get(start * this->n / m / 2);
-        // first pair
-        butterfly_ct_step_slow(buf, r1, start, m, step, offset);
-        // second pair
-        butterfly_ct_step_slow(buf, r1, start + 2 * m, m, step, offset);
-        //  ---------
-        // Second layer
-        //  ---------
-        // first pair
-        const uint16_t r2 = W->get(start * this->n / m / 4);
-        butterfly_ct_step_slow(buf, r2, start, 2 * m, step, offset);
-        // second pair
-        const uint16_t r3 = W->get((start + m) * this->n / m / 4);
-        butterfly_ct_step_slow(buf, r3, start + m, 2 * m, step, offset);
+    if (simd_trailing_len > 0) {
+        butterfly_ct_two_layers_step_slow(buf, start, m, simd_offset);
     }
 }
 
@@ -93,18 +71,12 @@ void Radix2<uint16_t>::butterfly_ct_step(
     unsigned m,
     unsigned step)
 {
-    const unsigned ratio = simd::countof<uint16_t>();
-    const size_t len = this->pkt_size;
-    const size_t vec_len = len / ratio;
-    const size_t last_len = len - vec_len * ratio;
-
     // perform vector operations
-    simd::butterfly_ct_step(buf, r, start, m, step, vec_len, card);
+    simd::butterfly_ct_step(buf, r, start, m, step, simd_vec_len, card);
 
     // for last elements, perform as non-SIMD method
-    if (last_len > 0) {
-        size_t offset = vec_len * ratio;
-        butterfly_ct_step_slow(buf, r, start, m, step, offset);
+    if (simd_trailing_len > 0) {
+        butterfly_ct_step_slow(buf, r, start, m, step, simd_offset);
     }
 }
 
@@ -116,18 +88,12 @@ void Radix2<uint16_t>::butterfly_gs_step(
     unsigned m,
     unsigned step)
 {
-    const unsigned ratio = simd::countof<uint16_t>();
-    const size_t len = this->pkt_size;
-    const size_t vec_len = len / ratio;
-    const size_t last_len = len - vec_len * ratio;
-
     // perform vector operations
-    simd::butterfly_gs_step(buf, coef, start, m, vec_len, card);
+    simd::butterfly_gs_step(buf, coef, start, m, simd_vec_len, card);
 
     // for last elements, perform as non-SIMD method
-    if (last_len > 0) {
-        size_t offset = vec_len * ratio;
-        butterfly_gs_step_slow(buf, coef, start, m, step, offset);
+    if (simd_trailing_len > 0) {
+        butterfly_gs_step_slow(buf, coef, start, m, step, simd_offset);
     }
 }
 
@@ -139,18 +105,12 @@ void Radix2<uint16_t>::butterfly_gs_step_simple(
     unsigned m,
     unsigned step)
 {
-    const unsigned ratio = simd::countof<uint16_t>();
-    const size_t len = this->pkt_size;
-    const size_t vec_len = len / ratio;
-    const size_t last_len = len - vec_len * ratio;
-
     // perform vector operations
-    simd::butterfly_gs_step_simple(buf, coef, start, m, vec_len, card);
+    simd::butterfly_gs_step_simple(buf, coef, start, m, simd_vec_len, card);
 
     // for last elements, perform as non-SIMD method
-    if (last_len > 0) {
-        size_t offset = vec_len * ratio;
-        butterfly_gs_step_simple_slow(buf, coef, start, m, step, offset);
+    if (simd_trailing_len > 0) {
+        butterfly_gs_step_simple_slow(buf, coef, start, m, step, simd_offset);
     }
 }
 
@@ -160,10 +120,6 @@ void Radix2<uint32_t>::butterfly_ct_two_layers_step(
     unsigned start,
     unsigned m)
 {
-    const unsigned ratio = simd::countof<uint32_t>();
-    const size_t len = this->pkt_size;
-    const size_t vec_len = len / ratio;
-    const size_t last_len = len - vec_len * ratio;
     const unsigned coefIndex = start * this->n / m / 2;
     const uint32_t r1 = vec_W[coefIndex];
     const uint32_t r2 = vec_W[coefIndex / 2];
@@ -171,29 +127,11 @@ void Radix2<uint32_t>::butterfly_ct_two_layers_step(
 
     // perform vector operations
     simd::butterfly_ct_two_layers_step(
-        buf, r1, r2, r3, start, m, vec_len, card);
+        buf, r1, r2, r3, start, m, simd_vec_len, card);
 
     // for last elements, perform as non-SIMD method
-    if (last_len > 0) {
-        const unsigned step = m << 2;
-        size_t offset = vec_len * ratio;
-        //  ---------
-        // First layer
-        //  ---------
-        const uint32_t r1 = W->get(start * this->n / m / 2);
-        // first pair
-        butterfly_ct_step_slow(buf, r1, start, m, step, offset);
-        // second pair
-        butterfly_ct_step_slow(buf, r1, start + 2 * m, m, step, offset);
-        //  ---------
-        // Second layer
-        //  ---------
-        // first pair
-        const uint32_t r2 = W->get(start * this->n / m / 4);
-        butterfly_ct_step_slow(buf, r2, start, 2 * m, step, offset);
-        // second pair
-        const uint32_t r3 = W->get((start + m) * this->n / m / 4);
-        butterfly_ct_step_slow(buf, r3, start + m, 2 * m, step, offset);
+    if (simd_trailing_len > 0) {
+        butterfly_ct_two_layers_step_slow(buf, start, m, simd_offset);
     }
 }
 
@@ -205,18 +143,12 @@ void Radix2<uint32_t>::butterfly_ct_step(
     unsigned m,
     unsigned step)
 {
-    const unsigned ratio = simd::countof<uint32_t>();
-    const size_t len = this->pkt_size;
-    const size_t vec_len = len / ratio;
-    const size_t last_len = len - vec_len * ratio;
-
     // perform vector operations
-    simd::butterfly_ct_step(buf, r, start, m, step, vec_len, card);
+    simd::butterfly_ct_step(buf, r, start, m, step, simd_vec_len, card);
 
     // for last elements, perform as non-SIMD method
-    if (last_len > 0) {
-        size_t offset = vec_len * ratio;
-        butterfly_ct_step_slow(buf, r, start, m, step, offset);
+    if (simd_trailing_len > 0) {
+        butterfly_ct_step_slow(buf, r, start, m, step, simd_offset);
     }
 }
 
@@ -228,18 +160,12 @@ void Radix2<uint32_t>::butterfly_gs_step(
     unsigned m,
     unsigned step)
 {
-    const unsigned ratio = simd::countof<uint32_t>();
-    const size_t len = this->pkt_size;
-    const size_t vec_len = len / ratio;
-    const size_t last_len = len - vec_len * ratio;
-
     // perform vector operations
-    simd::butterfly_gs_step(buf, coef, start, m, vec_len, card);
+    simd::butterfly_gs_step(buf, coef, start, m, simd_vec_len, card);
 
     // for last elements, perform as non-SIMD method
-    if (last_len > 0) {
-        size_t offset = vec_len * ratio;
-        butterfly_gs_step_slow(buf, coef, start, m, step, offset);
+    if (simd_trailing_len > 0) {
+        butterfly_gs_step_slow(buf, coef, start, m, step, simd_offset);
     }
 }
 
@@ -251,18 +177,12 @@ void Radix2<uint32_t>::butterfly_gs_step_simple(
     unsigned m,
     unsigned step)
 {
-    const unsigned ratio = simd::countof<uint32_t>();
-    const size_t len = this->pkt_size;
-    const size_t vec_len = len / ratio;
-    const size_t last_len = len - vec_len * ratio;
-
     // perform vector operations
-    simd::butterfly_gs_step_simple(buf, coef, start, m, vec_len, card);
+    simd::butterfly_gs_step_simple(buf, coef, start, m, simd_vec_len, card);
 
     // for last elements, perform as non-SIMD method
-    if (last_len > 0) {
-        size_t offset = vec_len * ratio;
-        butterfly_gs_step_simple_slow(buf, coef, start, m, step, offset);
+    if (simd_trailing_len > 0) {
+        butterfly_gs_step_simple_slow(buf, coef, start, m, step, simd_offset);
     }
 }
 
