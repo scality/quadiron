@@ -82,7 +82,7 @@ inline VecType And(VecType x, VecType y)
 {
     return _mm256_and_si256(x, y);
 }
-inline VecType XOR(VecType x, VecType y)
+inline VecType Xor(VecType x, VecType y)
 {
     return _mm256_xor_si256(x, y);
 }

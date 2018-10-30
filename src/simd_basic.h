@@ -137,7 +137,7 @@ inline VecType MULFULL_MOD(VecType x, VecType y, T q)
     if (is_all_zeros(cmp) == 1) {
         return res;
     }
-    return (q == F3) ? XOR(res, And(F4_u32, cmp))
+    return (q == F3) ? Xor(res, And(F4_u32, cmp))
                      : ADD<T>(res, And(ONE32, cmp));
 }
 
