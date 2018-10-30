@@ -112,7 +112,7 @@ inline VecType MUL_MOD(VecType x, VecType y, T q)
     const VecType lo =
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
     const VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
-                           : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
+                                 : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
     return SUB_MOD(lo, hi, q);
 }
 
@@ -137,8 +137,8 @@ inline VecType MULFULL_MOD(VecType x, VecType y, T q)
     if (is_all_zeros(cmp) == 1) {
         return res;
     }
-    return (q == F3) ? XOR(res, AND(F4_u32, cmp)) :
-                       ADD<T>(res, AND(ONE32, cmp));
+    return (q == F3) ? XOR(res, AND(F4_u32, cmp))
+                     : ADD<T>(res, AND(ONE32, cmp));
 }
 
 /**
