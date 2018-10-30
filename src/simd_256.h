@@ -158,14 +158,14 @@ inline VecType Mul<uint16_t>(VecType x, VecType y)
 }
 
 template <typename T>
-inline VecType CMPEQ(VecType x, VecType y);
+inline VecType CompareEq(VecType x, VecType y);
 template <>
-inline VecType CMPEQ<uint32_t>(VecType x, VecType y)
+inline VecType CompareEq<uint32_t>(VecType x, VecType y)
 {
     return _mm256_cmpeq_epi32(x, y);
 }
 template <>
-inline VecType CMPEQ<uint16_t>(VecType x, VecType y)
+inline VecType CompareEq<uint16_t>(VecType x, VecType y)
 {
     return _mm256_cmpeq_epi16(x, y);
 }

@@ -132,7 +132,8 @@ inline VecType MULFULL_MOD(VecType x, VecType y, T q)
     const VecType res = MUL_MOD(x, y, q);
 
     // filter elements of both of a & b = card-1
-    const VecType cmp = And(CMPEQ<T>(x, CARD_M_1(q)), CMPEQ<T>(y, CARD_M_1(q)));
+    const VecType cmp =
+        And(CompareEq<T>(x, CARD_M_1(q)), CompareEq<T>(y, CARD_M_1(q)));
 
     if (IsZero(cmp) == 1) {
         return res;
@@ -160,7 +161,7 @@ inline void ADD_PROPS(
     off_t offset,
     T max)
 {
-    const VecType b = CMPEQ<T>(threshold, symb);
+    const VecType b = CompareEq<T>(threshold, symb);
     const VecType c = And(mask, b);
     auto d = Msb8Mask(c);
     const unsigned element_size = sizeof(T);
