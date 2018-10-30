@@ -211,8 +211,11 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     return reinterpret_cast<__uint128_t>(res);
 }
 
-inline void
-add_buf_to_two_bufs_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint128_t* y)
+inline void add_buf_to_two_bufs_rem(
+    unsigned n,
+    __uint128_t* x,
+    __uint128_t* x_half,
+    __uint128_t* y)
 {
     // add last _y[] to x and x_next
     HalfVecType* _x = reinterpret_cast<HalfVecType*>(x);
@@ -240,8 +243,11 @@ inline void hadamard_mul_rem(unsigned n, __uint128_t* x, __uint128_t* y)
     }
 }
 
-inline void
-hadamard_mul_doubled_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint128_t* y)
+inline void hadamard_mul_doubled_rem(
+    unsigned n,
+    __uint128_t* x,
+    __uint128_t* x_half,
+    __uint128_t* y)
 {
     HalfVecType* _x = reinterpret_cast<HalfVecType*>(x);
     HalfVecType* _x_half = reinterpret_cast<HalfVecType*>(x_half);
@@ -291,8 +297,11 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     return reinterpret_cast<__uint128_t>(res);
 }
 
-inline void
-add_buf_to_two_bufs_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint128_t* y)
+inline void add_buf_to_two_bufs_rem(
+    unsigned n,
+    __uint128_t* x,
+    __uint128_t* x_half,
+    __uint128_t* y)
 {
     // do nothing
 }
@@ -302,8 +311,11 @@ inline void hadamard_mul_rem(unsigned n, __uint128_t* x, __uint128_t* y)
     // do nothing
 }
 
-inline void
-hadamard_mul_doubled_rem(unsigned n, __uint128_t* x, __uint128_t* x_half, __uint128_t* y)
+inline void hadamard_mul_doubled_rem(
+    unsigned n,
+    __uint128_t* x,
+    __uint128_t* x_half,
+    __uint128_t* y)
 {
     // do nothing
 }
