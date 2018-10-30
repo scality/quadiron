@@ -62,7 +62,7 @@ template <typename T>
 inline VecType ADD_MOD(VecType x, VecType y, T q)
 {
     const VecType res = Add<T>(x, y);
-    return MIN<T>(res, SUB<T>(res, CARD(q)));
+    return MIN<T>(res, Sub<T>(res, CARD(q)));
 }
 
 /**
@@ -76,7 +76,7 @@ inline VecType ADD_MOD(VecType x, VecType y, T q)
 template <typename T>
 inline VecType SUB_MOD(VecType x, VecType y, T q)
 {
-    const VecType res = SUB<T>(x, y);
+    const VecType res = Sub<T>(x, y);
     return MIN<T>(res, Add<T>(res, CARD(q)));
 }
 
@@ -90,8 +90,8 @@ inline VecType SUB_MOD(VecType x, VecType y, T q)
 template <typename T>
 inline VecType NEG_MOD(VecType x, T q)
 {
-    const VecType res = SUB<T>(CARD(q), x);
-    return MIN<T>(res, SUB<T>(res, CARD(q)));
+    const VecType res = Sub<T>(CARD(q), x);
+    return MIN<T>(res, Sub<T>(res, CARD(q)));
 }
 
 /**

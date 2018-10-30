@@ -119,14 +119,14 @@ inline VecType Add<uint16_t>(VecType x, VecType y)
 }
 
 template <typename T>
-inline VecType SUB(VecType x, VecType y);
+inline VecType Sub(VecType x, VecType y);
 template <>
-inline VecType SUB<uint32_t>(VecType x, VecType y)
+inline VecType Sub<uint32_t>(VecType x, VecType y)
 {
     return _mm_sub_epi32(x, y);
 }
 template <>
-inline VecType SUB<uint16_t>(VecType x, VecType y)
+inline VecType Sub<uint16_t>(VecType x, VecType y)
 {
     return _mm_sub_epi16(x, y);
 }
