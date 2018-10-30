@@ -59,24 +59,7 @@ void Radix2<uint16_t>::butterfly_ct_two_layers_step(
 
     // for last elements, perform as non-SIMD method
     if (simd_trailing_len > 0) {
-        const unsigned step = m << 2;
-        //  ---------
-        // First layer
-        //  ---------
-        const uint16_t r1 = W->get(start * this->n / m / 2);
-        // first pair
-        butterfly_ct_step_slow(buf, r1, start, m, step, simd_offset);
-        // second pair
-        butterfly_ct_step_slow(buf, r1, start + 2 * m, m, step, simd_offset);
-        //  ---------
-        // Second layer
-        //  ---------
-        // first pair
-        const uint16_t r2 = W->get(start * this->n / m / 4);
-        butterfly_ct_step_slow(buf, r2, start, 2 * m, step, simd_offset);
-        // second pair
-        const uint16_t r3 = W->get((start + m) * this->n / m / 4);
-        butterfly_ct_step_slow(buf, r3, start + m, 2 * m, step, simd_offset);
+        butterfly_ct_two_layers_step_slow(buf, start, m, simd_offset);
     }
 }
 
@@ -148,24 +131,7 @@ void Radix2<uint32_t>::butterfly_ct_two_layers_step(
 
     // for last elements, perform as non-SIMD method
     if (simd_trailing_len > 0) {
-        const unsigned step = m << 2;
-        //  ---------
-        // First layer
-        //  ---------
-        const uint32_t r1 = W->get(start * this->n / m / 2);
-        // first pair
-        butterfly_ct_step_slow(buf, r1, start, m, step, simd_offset);
-        // second pair
-        butterfly_ct_step_slow(buf, r1, start + 2 * m, m, step, simd_offset);
-        //  ---------
-        // Second layer
-        //  ---------
-        // first pair
-        const uint32_t r2 = W->get(start * this->n / m / 4);
-        butterfly_ct_step_slow(buf, r2, start, 2 * m, step, simd_offset);
-        // second pair
-        const uint32_t r3 = W->get((start + m) * this->n / m / 4);
-        butterfly_ct_step_slow(buf, r3, start + m, 2 * m, step, simd_offset);
+        butterfly_ct_two_layers_step_slow(buf, start, m, simd_offset);
     }
 }
 
