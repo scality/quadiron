@@ -90,7 +90,7 @@ inline uint32_t Msb8Mask(VecType x)
 {
     return _mm256_movemask_epi8(x);
 }
-inline uint32_t TESTZ(VecType x, VecType y)
+inline uint32_t AndIsZero(VecType x, VecType y)
 {
     return _mm256_testz_si256(x, y);
 }

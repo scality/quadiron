@@ -491,22 +491,22 @@ inline void encode_post_process(
             VecType a3 = LoadToReg(buf + vec_id + 2);
             VecType a4 = LoadToReg(buf + vec_id + 3);
 
-            if (TESTZ(a1, _threshold) == 0) {
+            if (AndIsZero(a1, _threshold) == 0) {
                 const off_t curr_offset = offset + vec_id * vec_size;
                 ADD_PROPS(
                     props[frag_id], _threshold, mask_hi, a1, curr_offset, max);
             }
-            if (TESTZ(a2, _threshold) == 0) {
+            if (AndIsZero(a2, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 1) * vec_size;
                 ADD_PROPS(
                     props[frag_id], _threshold, mask_hi, a2, curr_offset, max);
             }
-            if (TESTZ(a3, _threshold) == 0) {
+            if (AndIsZero(a3, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 2) * vec_size;
                 ADD_PROPS(
                     props[frag_id], _threshold, mask_hi, a3, curr_offset, max);
             }
-            if (TESTZ(a4, _threshold) == 0) {
+            if (AndIsZero(a4, _threshold) == 0) {
                 const off_t curr_offset = offset + (vec_id + 3) * vec_size;
                 ADD_PROPS(
                     props[frag_id], _threshold, mask_hi, a4, curr_offset, max);
@@ -514,7 +514,7 @@ inline void encode_post_process(
         }
         for (; vec_id < vecs_nb; ++vec_id) {
             VecType a = LoadToReg(buf + vec_id);
-            uint32_t c = TESTZ(a, _threshold);
+            uint32_t c = AndIsZero(a, _threshold);
             if (c == 0) {
                 const off_t curr_offset = offset + vec_id * vec_size;
                 ADD_PROPS(

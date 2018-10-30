@@ -77,7 +77,7 @@ inline uint16_t Msb8Mask(VecType x)
 {
     return _mm_movemask_epi8(x);
 }
-inline uint16_t TESTZ(VecType x, VecType y)
+inline uint16_t AndIsZero(VecType x, VecType y)
 {
     return _mm_testz_si128(x, y);
 }
