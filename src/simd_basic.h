@@ -37,13 +37,13 @@ namespace quadiron {
 namespace simd {
 
 template <typename T>
-inline VecType CARD(T q)
+inline VecType Card(T q)
 {
     return (q == F3) ? F3_u32 : F4_u32;
 }
 
 template <typename T>
-inline VecType CARD_M_1(T q)
+inline VecType CardMinusOne(T q)
 {
     return (q == F3) ? F3m1_u32 : F4m1_u32;
 }
@@ -62,7 +62,7 @@ template <typename T>
 inline VecType ADD_MOD(VecType x, VecType y, T q)
 {
     const VecType res = Add<T>(x, y);
-    return Min<T>(res, Sub<T>(res, CARD(q)));
+    return Min<T>(res, Sub<T>(res, Card(q)));
 }
 
 /**
@@ -77,7 +77,7 @@ template <typename T>
 inline VecType SUB_MOD(VecType x, VecType y, T q)
 {
     const VecType res = Sub<T>(x, y);
-    return Min<T>(res, Add<T>(res, CARD(q)));
+    return Min<T>(res, Add<T>(res, Card(q)));
 }
 
 /**
@@ -90,8 +90,8 @@ inline VecType SUB_MOD(VecType x, VecType y, T q)
 template <typename T>
 inline VecType NEG_MOD(VecType x, T q)
 {
-    const VecType res = Sub<T>(CARD(q), x);
-    return Min<T>(res, Sub<T>(res, CARD(q)));
+    const VecType res = Sub<T>(Card(q), x);
+    return Min<T>(res, Sub<T>(res, Card(q)));
 }
 
 /**
@@ -133,7 +133,7 @@ inline VecType MULFULL_MOD(VecType x, VecType y, T q)
 
     // filter elements of both of a & b = card-1
     const VecType cmp =
-        And(CompareEq<T>(x, CARD_M_1(q)), CompareEq<T>(y, CARD_M_1(q)));
+        And(CompareEq<T>(x, CardMinusOne(q)), CompareEq<T>(y, CardMinusOne(q)));
 
     if (IsZero(cmp) == 1) {
         return res;
