@@ -76,7 +76,7 @@ inline void ButterflyCT(T rp1, VecType c, VecType* x, VecType* y, T q)
  * @param q modular
  */
 template <typename T>
-inline void BUTTERFLY_GS(T rp1, VecType c, VecType* x, VecType* y, T q)
+inline void ButterflyGS(T rp1, VecType c, VecType* x, VecType* y, T q)
 {
     VecType add = ModAdd(*x, *y, q);
     if (rp1 == 2) {
@@ -375,10 +375,10 @@ inline void butterfly_gs_step(
             y3 = LoadToReg(q + j + 2);
             y4 = LoadToReg(q + j + 3);
 
-            BUTTERFLY_GS(rp1, c, &x1, &y1, card);
-            BUTTERFLY_GS(rp1, c, &x2, &y2, card);
-            BUTTERFLY_GS(rp1, c, &x3, &y3, card);
-            BUTTERFLY_GS(rp1, c, &x4, &y4, card);
+            ButterflyGS(rp1, c, &x1, &y1, card);
+            ButterflyGS(rp1, c, &x2, &y2, card);
+            ButterflyGS(rp1, c, &x3, &y3, card);
+            ButterflyGS(rp1, c, &x4, &y4, card);
 
             // Store back to memory
             StoreToMem(p + j, x1);
@@ -394,7 +394,7 @@ inline void butterfly_gs_step(
             x1 = LoadToReg(p + j);
             y1 = LoadToReg(q + j);
 
-            BUTTERFLY_GS(rp1, c, &x1, &y1, card);
+            ButterflyGS(rp1, c, &x1, &y1, card);
 
             // Store back to memory
             StoreToMem(p + j, x1);
