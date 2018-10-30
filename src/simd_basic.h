@@ -74,7 +74,7 @@ inline VecType ModAdd(VecType x, VecType y, T q)
  * @return (x - y) mod q
  */
 template <typename T>
-inline VecType SUB_MOD(VecType x, VecType y, T q)
+inline VecType ModSub(VecType x, VecType y, T q)
 {
     const VecType res = Sub<T>(x, y);
     return Min<T>(res, Add<T>(res, Card(q)));
@@ -113,7 +113,7 @@ inline VecType MUL_MOD(VecType x, VecType y, T q)
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
     const VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)
                                  : BLEND16(ZERO, SHIFTR(res, 2), 0x55);
-    return SUB_MOD(lo, hi, q);
+    return ModSub(lo, hi, q);
 }
 
 /**
@@ -244,7 +244,7 @@ inline void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len, T card)
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform subtraction
-        _res[i] = SUB_MOD(_bufa[i], _bufb[i], card);
+        _res[i] = ModSub(_bufa[i], _bufb[i], card);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
