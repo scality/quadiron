@@ -171,14 +171,14 @@ inline VecType CompareEq<uint16_t>(VecType x, VecType y)
 }
 
 template <typename T>
-inline VecType MIN(VecType x, VecType y);
+inline VecType Min(VecType x, VecType y);
 template <>
-inline VecType MIN<uint32_t>(VecType x, VecType y)
+inline VecType Min<uint32_t>(VecType x, VecType y)
 {
     return _mm256_min_epu32(x, y);
 }
 template <>
-inline VecType MIN<uint16_t>(VecType x, VecType y)
+inline VecType Min<uint16_t>(VecType x, VecType y)
 {
     return _mm256_min_epu16(x, y);
 }
