@@ -110,7 +110,7 @@ inline VecType BUTTERFLY_GS_SIMPLE(T rp1, VecType c, VecType x, T q)
     } else if (rp1 < q) {
         return MUL_MOD(c, x, q);
     } else {
-        return NEG_MOD(x, q);
+        return ModNeg(x, q);
     }
 }
 

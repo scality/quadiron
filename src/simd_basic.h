@@ -88,7 +88,7 @@ inline VecType ModSub(VecType x, VecType y, T q)
  * @return (-x) mod q
  */
 template <typename T>
-inline VecType NEG_MOD(VecType x, T q)
+inline VecType ModNeg(VecType x, T q)
 {
     const VecType res = Sub<T>(Card(q), x);
     return Min<T>(res, Sub<T>(res, Card(q)));
@@ -292,7 +292,7 @@ inline void neg(size_t len, T* buf, T card)
 
     size_t i;
     for (i = 0; i < _len; i++) {
-        _buf[i] = NEG_MOD(_buf[i], card);
+        _buf[i] = ModNeg(_buf[i], card);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
