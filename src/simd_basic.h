@@ -37,13 +37,27 @@ namespace quadiron {
 namespace simd {
 
 template <typename T>
-inline VecType Card(T q)
+inline VecType Card(T q);
+template <>
+inline VecType Card<uint16_t>(uint16_t q)
+{
+    return F3_U16;
+}
+template <>
+inline VecType Card<uint32_t>(uint32_t q)
 {
     return (q == F3) ? F3_U32 : F4_U32;
 }
 
 template <typename T>
-inline VecType CardMinusOne(T q)
+inline VecType CardMinusOne(T q);
+template <>
+inline VecType CardMinusOne<uint16_t>(uint16_t q)
+{
+    return F3_MINUS_ONE_U16;
+}
+template <>
+inline VecType CardMinusOne<uint32_t>(uint32_t q)
 {
     return (q == F3) ? F3_MINUS_ONE_U32 : F4_MINUS_ONE_U32;
 }
