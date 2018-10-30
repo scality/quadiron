@@ -106,14 +106,14 @@ inline VecType SetOne(uint16_t val)
 }
 
 template <typename T>
-inline VecType ADD(VecType x, VecType y);
+inline VecType Add(VecType x, VecType y);
 template <>
-inline VecType ADD<uint32_t>(VecType x, VecType y)
+inline VecType Add<uint32_t>(VecType x, VecType y)
 {
     return _mm_add_epi32(x, y);
 }
 template <>
-inline VecType ADD<uint16_t>(VecType x, VecType y)
+inline VecType Add<uint16_t>(VecType x, VecType y)
 {
     return _mm_add_epi16(x, y);
 }

@@ -61,7 +61,7 @@ inline VecType CARD_M_1(T q)
 template <typename T>
 inline VecType ADD_MOD(VecType x, VecType y, T q)
 {
-    const VecType res = ADD<T>(x, y);
+    const VecType res = Add<T>(x, y);
     return MIN<T>(res, SUB<T>(res, CARD(q)));
 }
 
@@ -77,7 +77,7 @@ template <typename T>
 inline VecType SUB_MOD(VecType x, VecType y, T q)
 {
     const VecType res = SUB<T>(x, y);
-    return MIN<T>(res, ADD<T>(res, CARD(q)));
+    return MIN<T>(res, Add<T>(res, CARD(q)));
 }
 
 /**
@@ -138,7 +138,7 @@ inline VecType MULFULL_MOD(VecType x, VecType y, T q)
         return res;
     }
     return (q == F3) ? Xor(res, And(F4_u32, cmp))
-                     : ADD<T>(res, And(ONE32, cmp));
+                     : Add<T>(res, And(ONE32, cmp));
 }
 
 /**
