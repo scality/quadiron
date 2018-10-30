@@ -108,7 +108,7 @@ inline VecType NEG_MOD(VecType x, T q)
 template <typename T>
 inline VecType MUL_MOD(VecType x, VecType y, T q)
 {
-    const VecType res = MUL<T>(x, y);
+    const VecType res = Mul<T>(x, y);
     const VecType lo =
         (q == F3) ? BLEND8(ZERO, res, MASK8_LO) : BLEND16(ZERO, res, 0x55);
     const VecType hi = (q == F3) ? BLEND8(ZERO, SHIFTR(res, 1), MASK8_LO)

@@ -132,14 +132,14 @@ inline VecType Sub<uint16_t>(VecType x, VecType y)
 }
 
 template <typename T>
-inline VecType MUL(VecType x, VecType y);
+inline VecType Mul(VecType x, VecType y);
 template <>
-inline VecType MUL<uint32_t>(VecType x, VecType y)
+inline VecType Mul<uint32_t>(VecType x, VecType y)
 {
     return _mm_mullo_epi32(x, y);
 }
 template <>
-inline VecType MUL<uint16_t>(VecType x, VecType y)
+inline VecType Mul<uint16_t>(VecType x, VecType y)
 {
     return _mm_mullo_epi16(x, y);
 }
