@@ -207,7 +207,7 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     HalfVecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    STORE_LOW(&res, MULFULL_MOD(_a, _b, F4));
+    STORE_LOW(&res, ModMulSafe(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -239,7 +239,7 @@ inline void hadamard_mul_rem(unsigned n, __uint128_t* x, __uint128_t* y)
         VecType _x_p = LoadToReg(_x[i]);
         VecType _y_p = LoadToReg(_y[i]);
 
-        STORE_LOW(_x + i, MULFULL_MOD(_x_p, _y_p, F4));
+        STORE_LOW(_x + i, ModMulSafe(_x_p, _y_p, F4));
     }
 }
 
@@ -257,8 +257,8 @@ inline void hadamard_mul_doubled_rem(
         VecType _x_next_p = LoadToReg(_x_half[i]);
         VecType _y_p = LoadToReg(_y[i]);
 
-        STORE_LOW(_x + i, MULFULL_MOD(_x_p, _y_p, F4));
-        STORE_LOW(_x_half + i, MULFULL_MOD(_x_next_p, _y_p, F4));
+        STORE_LOW(_x + i, ModMulSafe(_x_p, _y_p, F4));
+        STORE_LOW(_x_half + i, ModMulSafe(_x_next_p, _y_p, F4));
     }
 }
 
@@ -293,7 +293,7 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     VecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    StoreToMem(&res, MULFULL_MOD(_a, _b, F4));
+    StoreToMem(&res, ModMulSafe(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -369,7 +369,7 @@ inline void hadamard_mul(unsigned n, __uint128_t* _x, __uint128_t* _y)
 
     // multiply y to the first half of `x`
     for (i = 0; i < vec_len; ++i) {
-        x[i] = MULFULL_MOD(x[i], y[i], F4);
+        x[i] = ModMulSafe(x[i], y[i], F4);
     }
 
     if (rem_len > 0) {

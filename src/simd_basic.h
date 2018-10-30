@@ -127,7 +127,7 @@ inline VecType ModMul(VecType x, VecType y, T q)
  * @return (x * y) mod q
  */
 template <typename T>
-inline VecType MULFULL_MOD(VecType x, VecType y, T q)
+inline VecType ModMulSafe(VecType x, VecType y, T q)
 {
     const VecType res = ModMul(x, y, q);
 
@@ -270,7 +270,7 @@ inline void mul_two_bufs(T* src, T* dest, size_t len, T card)
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform multiplicaton
-        _dest[i] = MULFULL_MOD(_src[i], _dest[i], card);
+        _dest[i] = ModMulSafe(_src[i], _dest[i], card);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
