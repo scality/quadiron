@@ -53,17 +53,17 @@ typedef __m128i HalfVecType;
 
 /* ============= Constant variable  ============ */
 
-#define F4_u32 _mm256_set1_epi32(65537)
-#define F4m1_u32 _mm256_set1_epi32(65536)
-#define F3_u32 _mm256_set1_epi32(257)
-#define F3m1_u32 _mm256_set1_epi32(256)
+#define F4_U32 _mm256_set1_epi32(65537)
+#define F4_MINUS_ONE_U32 _mm256_set1_epi32(65536)
+#define F3_U32 _mm256_set1_epi32(257)
+#define F3_MINUS_ONE_U32 _mm256_set1_epi32(256)
 
-#define F3_u16 _mm256_set1_epi16(257)
-#define F3m1_u16 _mm256_set1_epi16(256)
+#define F3_U16 _mm256_set1_epi16(257)
+#define F3_MINUS_ONE_U16 _mm256_set1_epi16(256)
 
 #define ZERO (_mm256_setzero_si256())
-#define ONE16 (_mm256_set1_epi16(1))
-#define ONE32 (_mm256_set1_epi32(1))
+#define ONE_U16 (_mm256_set1_epi16(1))
+#define ONE_U32 (_mm256_set1_epi32(1))
 
 #define MASK8_LO (_mm256_set1_epi16(0x80))
 

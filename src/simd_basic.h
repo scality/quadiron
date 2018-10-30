@@ -39,13 +39,13 @@ namespace simd {
 template <typename T>
 inline VecType Card(T q)
 {
-    return (q == F3) ? F3_u32 : F4_u32;
+    return (q == F3) ? F3_U32 : F4_U32;
 }
 
 template <typename T>
 inline VecType CardMinusOne(T q)
 {
-    return (q == F3) ? F3m1_u32 : F4m1_u32;
+    return (q == F3) ? F3_MINUS_ONE_U32 : F4_MINUS_ONE_U32;
 }
 
 /* ================= Basic Operations ================= */
@@ -138,8 +138,8 @@ inline VecType ModMulSafe(VecType x, VecType y, T q)
     if (IsZero(cmp) == 1) {
         return res;
     }
-    return (q == F3) ? Xor(res, And(F4_u32, cmp))
-                     : Add<T>(res, And(ONE32, cmp));
+    return (q == F3) ? Xor(res, And(F4_U32, cmp))
+                     : Add<T>(res, And(ONE_U32, cmp));
 }
 
 /**
