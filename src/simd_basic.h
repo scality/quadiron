@@ -132,13 +132,13 @@ inline VecType MULFULL_MOD(VecType x, VecType y, T q)
     const VecType res = MUL_MOD(x, y, q);
 
     // filter elements of both of a & b = card-1
-    const VecType cmp = AND(CMPEQ<T>(x, CARD_M_1(q)), CMPEQ<T>(y, CARD_M_1(q)));
+    const VecType cmp = And(CMPEQ<T>(x, CARD_M_1(q)), CMPEQ<T>(y, CARD_M_1(q)));
 
     if (is_all_zeros(cmp) == 1) {
         return res;
     }
-    return (q == F3) ? XOR(res, AND(F4_u32, cmp))
-                     : ADD<T>(res, AND(ONE32, cmp));
+    return (q == F3) ? XOR(res, And(F4_u32, cmp))
+                     : ADD<T>(res, And(ONE32, cmp));
 }
 
 /**
@@ -161,7 +161,7 @@ inline void ADD_PROPS(
     T max)
 {
     const VecType b = CMPEQ<T>(threshold, symb);
-    const VecType c = AND(mask, b);
+    const VecType c = And(mask, b);
     auto d = MVMSK8(c);
     const unsigned element_size = sizeof(T);
     while (d > 0) {

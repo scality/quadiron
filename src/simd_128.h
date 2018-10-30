@@ -65,7 +65,7 @@ inline void StoreToMem(VecType* address, VecType reg)
     _mm_store_si128(address, reg);
 }
 
-inline VecType AND(VecType x, VecType y)
+inline VecType And(VecType x, VecType y)
 {
     return _mm_and_si128(x, y);
 }

@@ -78,7 +78,7 @@ inline void StoreToMem(VecType* address, VecType reg)
     _mm256_store_si256(address, reg);
 }
 
-inline VecType AND(VecType x, VecType y)
+inline VecType And(VecType x, VecType y)
 {
     return _mm256_and_si256(x, y);
 }
