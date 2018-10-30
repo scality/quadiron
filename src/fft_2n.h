@@ -142,6 +142,11 @@ class Radix2 : public FourierTransform<T> {
     size_t pkt_size;
     size_t buf_size;
 
+    // Indices used for accelerated functions
+    size_t simd_vec_len;
+    size_t simd_trailing_len;
+    size_t simd_offset;
+
     std::unique_ptr<T[]> rev = nullptr;
     std::unique_ptr<vec::Vector<T>> W = nullptr;
     std::unique_ptr<vec::Vector<T>> inv_W = nullptr;
@@ -182,6 +187,12 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
 
     rev = std::unique_ptr<T[]>(new T[n]);
     init_bitrev();
+
+    // Indices used for accelerated functions
+    const unsigned ratio = simd::countof<T>();
+    simd_vec_len = this->pkt_size / ratio;
+    simd_trailing_len = this->pkt_size - simd_vec_len * ratio;
+    simd_offset = simd_vec_len * ratio;
 }
 
 template <typename T>
