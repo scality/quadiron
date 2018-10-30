@@ -60,7 +60,7 @@ inline VecType LoadToReg(VecType* address)
 {
     return _mm_load_si128(address);
 }
-inline void STORE(VecType* address, VecType reg)
+inline void StoreToMem(VecType* address, VecType reg)
 {
     _mm_store_si128(address, reg);
 }

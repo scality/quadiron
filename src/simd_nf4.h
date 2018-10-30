@@ -275,7 +275,7 @@ inline __uint128_t add(__uint128_t a, __uint128_t b)
     VecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    STORE(&res, ADD_MOD(_a, _b, F4));
+    StoreToMem(&res, ADD_MOD(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -284,7 +284,7 @@ inline __uint128_t sub(__uint128_t a, __uint128_t b)
     VecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    STORE(&res, SUB_MOD(_a, _b, F4));
+    StoreToMem(&res, SUB_MOD(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -293,7 +293,7 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     VecType res;
     VecType _a = LoadToReg(a);
     VecType _b = LoadToReg(b);
-    STORE(&res, MULFULL_MOD(_a, _b, F4));
+    StoreToMem(&res, MULFULL_MOD(_a, _b, F4));
     return reinterpret_cast<__uint128_t>(res);
 }
 

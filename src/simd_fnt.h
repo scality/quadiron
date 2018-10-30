@@ -167,10 +167,10 @@ inline void butterfly_ct_step(
             BUTTERFLY_CT(rp1, c, &x2, &y2, card);
 
             // Store back to memory
-            STORE(p + j, x1);
-            STORE(p + j + 1, x2);
-            STORE(q + j, y1);
-            STORE(q + j + 1, y2);
+            StoreToMem(p + j, x1);
+            StoreToMem(p + j + 1, x2);
+            StoreToMem(q + j, y1);
+            StoreToMem(q + j + 1, y2);
         }
         for (; j < len; ++j) {
             x1 = LoadToReg(p + j);
@@ -179,8 +179,8 @@ inline void butterfly_ct_step(
             BUTTERFLY_CT(rp1, c, &x1, &y1, card);
 
             // Store back to memory
-            STORE(p + j, x1);
-            STORE(q + j, y1);
+            StoreToMem(p + j, x1);
+            StoreToMem(q + j, y1);
         }
     }
 }
@@ -237,15 +237,15 @@ inline static void do_butterfly_ct_2_layers(
         BUTTERFLY_CT(r3p1, c3, &y2, &v2, card);
 
         // Store back to memory
-        STORE(p, x1);
-        STORE(p + 1, x2);
-        STORE(q, y1);
-        STORE(q + 1, y2);
+        StoreToMem(p, x1);
+        StoreToMem(p + 1, x2);
+        StoreToMem(q, y1);
+        StoreToMem(q + 1, y2);
 
-        STORE(r, u1);
-        STORE(r + 1, u2);
-        STORE(s, v1);
-        STORE(s + 1, v2);
+        StoreToMem(r, u1);
+        StoreToMem(r + 1, u2);
+        StoreToMem(s, v1);
+        StoreToMem(s + 1, v2);
         p = p + 2;
         q = q + 2;
         r = r + 2;
@@ -267,10 +267,10 @@ inline static void do_butterfly_ct_2_layers(
         BUTTERFLY_CT(r3p1, c3, &y1, &v1, card);
 
         // Store back to memory
-        STORE(p + j, x1);
-        STORE(q + j, y1);
-        STORE(r + j, u1);
-        STORE(s + j, v1);
+        StoreToMem(p + j, x1);
+        StoreToMem(q + j, y1);
+        StoreToMem(r + j, u1);
+        StoreToMem(s + j, v1);
     }
 }
 
@@ -381,14 +381,14 @@ inline void butterfly_gs_step(
             BUTTERFLY_GS(rp1, c, &x4, &y4, card);
 
             // Store back to memory
-            STORE(p + j, x1);
-            STORE(p + j + 1, x2);
-            STORE(p + j + 2, x3);
-            STORE(p + j + 3, x4);
-            STORE(q + j, y1);
-            STORE(q + j + 1, y2);
-            STORE(q + j + 2, y3);
-            STORE(q + j + 3, y4);
+            StoreToMem(p + j, x1);
+            StoreToMem(p + j + 1, x2);
+            StoreToMem(p + j + 2, x3);
+            StoreToMem(p + j + 3, x4);
+            StoreToMem(q + j, y1);
+            StoreToMem(q + j + 1, y2);
+            StoreToMem(q + j + 2, y3);
+            StoreToMem(q + j + 3, y4);
         }
         for (; j < len; ++j) {
             x1 = LoadToReg(p + j);
@@ -397,8 +397,8 @@ inline void butterfly_gs_step(
             BUTTERFLY_GS(rp1, c, &x1, &y1, card);
 
             // Store back to memory
-            STORE(p + j, x1);
-            STORE(q + j, y1);
+            StoreToMem(p + j, x1);
+            StoreToMem(q + j, y1);
         }
     }
 }
@@ -450,8 +450,8 @@ inline void butterfly_gs_step_simple(
             y2 = BUTTERFLY_GS_SIMPLE(rp1, c, x2, card);
 
             // Store back to memory
-            STORE(q + j, y1);
-            STORE(q + j + 1, y2);
+            StoreToMem(q + j, y1);
+            StoreToMem(q + j + 1, y2);
         }
         for (; j < len; ++j) {
             x1 = LoadToReg(p + j);
@@ -459,7 +459,7 @@ inline void butterfly_gs_step_simple(
             y1 = BUTTERFLY_GS_SIMPLE(rp1, c, x1, card);
 
             // Store back to memory
-            STORE(q + j, y1);
+            StoreToMem(q + j, y1);
         }
     }
 }

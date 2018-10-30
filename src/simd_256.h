@@ -73,7 +73,7 @@ inline VecType LoadToReg(VecType* address)
 {
     return _mm256_load_si256(address);
 }
-inline void STORE(VecType* address, VecType reg)
+inline void StoreToMem(VecType* address, VecType reg)
 {
     _mm256_store_si256(address, reg);
 }
