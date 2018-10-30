@@ -103,7 +103,7 @@ inline void ButterflyGS(T rp1, VecType c, VecType* x, VecType* y, T q)
  * @return r * x
  */
 template <typename T>
-inline VecType BUTTERFLY_GS_SIMPLE(T rp1, VecType c, VecType x, T q)
+inline VecType ButterflySimpleGS(T rp1, VecType c, VecType x, T q)
 {
     if (rp1 == 2) {
         return x;
@@ -446,8 +446,8 @@ inline void butterfly_gs_step_simple(
             x1 = LoadToReg(p + j);
             x2 = LoadToReg(p + j + 1);
 
-            y1 = BUTTERFLY_GS_SIMPLE(rp1, c, x1, card);
-            y2 = BUTTERFLY_GS_SIMPLE(rp1, c, x2, card);
+            y1 = ButterflySimpleGS(rp1, c, x1, card);
+            y2 = ButterflySimpleGS(rp1, c, x2, card);
 
             // Store back to memory
             StoreToMem(q + j, y1);
@@ -456,7 +456,7 @@ inline void butterfly_gs_step_simple(
         for (; j < len; ++j) {
             x1 = LoadToReg(p + j);
 
-            y1 = BUTTERFLY_GS_SIMPLE(rp1, c, x1, card);
+            y1 = ButterflySimpleGS(rp1, c, x1, card);
 
             // Store back to memory
             StoreToMem(q + j, y1);
