@@ -31,7 +31,9 @@
 #ifndef __QUAD_SIMD_SIMD_H__
 #define __QUAD_SIMD_SIMD_H__
 
+#include "core.h"
 #include "property.h"
+#include "vec_buffers.h"
 
 #include "simd/allocator.h"
 #include "simd/definitions.h"
