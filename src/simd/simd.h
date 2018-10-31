@@ -31,6 +31,8 @@
 #ifndef __QUAD_SIMD_SIMD_H__
 #define __QUAD_SIMD_SIMD_H__
 
+#include "property.h"
+
 #include "simd/allocator.h"
 #include "simd/definitions.h"
 
@@ -56,5 +58,32 @@ static constexpr std::size_t countof()
 
 } // namespace simd
 } // namespace quadiron
+
+#ifdef QUADIRON_USE_SIMD
+
+const unsigned F4 = 65537;
+const unsigned F3 = 257;
+
+// Include essential operations that use SIMD functions
+#if defined(__AVX2__)
+
+#include "simd_256.h"
+
+#elif defined(__SSE4_1__)
+
+#include "simd_128.h"
+
+#endif
+
+// Include basic operations
+#include "simd_basic.h"
+
+// Include accelerated operations dedicated for FNT
+#include "simd_fnt.h"
+
+// Include accelerated operations dedicated for NF4
+#include "simd_nf4.h"
+
+#endif // #ifdef QUADIRON_USE_SIMD
 
 #endif
