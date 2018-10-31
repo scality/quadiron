@@ -38,7 +38,7 @@
 #include <vector>
 
 #include "core.h"
-#include "simd/simd.h"
+#include "simd/allocator.h"
 
 namespace quadiron {
 namespace vec {
