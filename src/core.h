@@ -34,7 +34,7 @@
 #include <random>
 
 #include "big_int.h"
-#include "simd/simd.h"
+#include "simd/allocator.h"
 
 namespace quadiron {
 
@@ -77,6 +77,12 @@ template <>
 struct SignedDoubleSize<__uint128_t> {
     typedef Int256 T;
 };
+
+template <typename T>
+using DoubleSizeVal = typename DoubleSize<T>::T;
+
+template <typename T>
+using SignedDoubleSizeVal = typename SignedDoubleSize<T>::T;
 
 /** A group of values stored as one.
  *
