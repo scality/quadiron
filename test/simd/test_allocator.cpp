@@ -32,7 +32,7 @@
 
 #include <gtest/gtest.h>
 
-#include "simd/simd.h"
+#include "simd/allocator.h"
 
 namespace simd = quadiron::simd;
 

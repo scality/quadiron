@@ -29,7 +29,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "simd/simd.h"
+#include "simd/definitions.h"
 
 namespace simd = quadiron::simd;
 
