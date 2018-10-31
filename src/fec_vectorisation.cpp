@@ -37,7 +37,6 @@
 
 #ifdef QUADIRON_USE_SIMD
 
-#include "simd.h"
 #include "simd/simd.h"
 
 namespace quadiron {
