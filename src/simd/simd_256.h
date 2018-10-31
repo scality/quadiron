@@ -31,8 +31,6 @@
 #ifndef __QUAD_SIMD_256_H__
 #define __QUAD_SIMD_256_H__
 
-#include <x86intrin.h>
-
 /* GCC doesn't include the split store intrinsics so define them here. */
 #if defined(__GNUC__) && !defined(__clang__)
 

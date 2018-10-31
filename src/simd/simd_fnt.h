@@ -31,8 +31,6 @@
 #ifndef __QUAD_SIMD_FNT_H__
 #define __QUAD_SIMD_FNT_H__
 
-#include <x86intrin.h>
-
 namespace quadiron {
 namespace simd {
 
