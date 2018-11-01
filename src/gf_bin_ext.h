@@ -45,17 +45,16 @@ class BinExtension : public gf::Field<T> {
   public:
     ~BinExtension();
     void find_primitive_root();
-    const T card(void) const override;
-    const T card_minus_one(void) const override;
+    T card(void) const override;
+    T card_minus_one(void) const override;
     bool check(T a) const override;
-    const T neg(T a) const override;
-    const T add(T a, T b) const override;
-    const T sub(T a, T b) const override;
-    const T mul(T a, T b) const override;
-    const T div(T a, T b) const override;
-    const T inv(T a) const override;
-    const T exp(T a, T b) const override;
-    const T log(T a, T b) const override;
+    T add(T a, T b) const override;
+    T sub(T a, T b) const override;
+    T mul(T a, T b) const override;
+    T div(T a, T b) const override;
+    T inv(T a) const override;
+    T exp(T a, T b) const override;
+    T log(T a, T b) const override;
     void hadamard_mul(int n, T* x, T* y) const override;
 
     BinExtension(BinExtension&&) = default;
@@ -72,15 +71,15 @@ class BinExtension : public gf::Field<T> {
     T*** gfsplit = nullptr; // (n/4-1)*256*256 elements
     T* mask = nullptr;
     bool restricted = false;
-    const T _mul_log(T a, T b) const;
-    const T _mul_split(T a, T b) const;
-    const T _mul_by_two(T x) const;
-    const T _shift_left(T x, T shift) const;
-    const T _deg_of(T x, T max_deg) const;
-    const T _div_log(T a, T b) const;
-    const T _div_by_inv(T a, T b) const;
-    const T _inv_by_div(T a) const;
-    const T _inv_ext_gcd(T a) const;
+    T _mul_log(T a, T b) const;
+    T _mul_split(T a, T b) const;
+    T _mul_by_two(T x) const;
+    T _shift_left(T x, T shift) const;
+    T _deg_of(T x, T max_deg) const;
+    T _div_log(T a, T b) const;
+    T _div_by_inv(T a, T b) const;
+    T _inv_by_div(T a) const;
+    T _inv_ext_gcd(T a) const;
     int mul_type;
     int div_type;
     int inv_type;
@@ -267,7 +266,7 @@ void BinExtension<T>::setup_tables(void)
 }
 
 template <typename T>
-inline const T BinExtension<T>::_mul_by_two(T x) const
+inline T BinExtension<T>::_mul_by_two(T x) const
 {
     if ((x & first_bit) > 0) {
         return ((x ^ first_bit) * 2) ^ primitive_poly;
@@ -276,7 +275,7 @@ inline const T BinExtension<T>::_mul_by_two(T x) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::_shift_left(T x, T shift) const
+inline T BinExtension<T>::_shift_left(T x, T shift) const
 {
     if (shift == 0) {
         return x;
@@ -348,13 +347,13 @@ void BinExtension<T>::setup_split_tables(void)
 }
 
 template <typename T>
-inline const T BinExtension<T>::card(void) const
+inline T BinExtension<T>::card(void) const
 {
     return my_card;
 }
 
 template <typename T>
-inline const T BinExtension<T>::card_minus_one(void) const
+inline T BinExtension<T>::card_minus_one(void) const
 {
     if (this->restricted)
         return this->my_card;
@@ -370,15 +369,7 @@ bool BinExtension<T>::check(T a) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::neg(T a) const
-{
-    assert(check(a));
-
-    return sub(0, a);
-}
-
-template <typename T>
-inline const T BinExtension<T>::add(T a, T b) const
+inline T BinExtension<T>::add(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -388,7 +379,7 @@ inline const T BinExtension<T>::add(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::sub(T a, T b) const
+inline T BinExtension<T>::sub(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -397,7 +388,7 @@ inline const T BinExtension<T>::sub(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::mul(T a, T b) const
+inline T BinExtension<T>::mul(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -412,7 +403,7 @@ inline const T BinExtension<T>::mul(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::_mul_log(T a, T b) const
+inline T BinExtension<T>::_mul_log(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -429,7 +420,7 @@ inline const T BinExtension<T>::_mul_log(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::_mul_split(T a, T b) const
+inline T BinExtension<T>::_mul_split(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -452,7 +443,7 @@ inline const T BinExtension<T>::_mul_split(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::div(T a, T b) const
+inline T BinExtension<T>::div(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -467,7 +458,7 @@ inline const T BinExtension<T>::div(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::_div_by_inv(T a, T b) const
+inline T BinExtension<T>::_div_by_inv(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -477,7 +468,7 @@ inline const T BinExtension<T>::_div_by_inv(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::_div_log(T a, T b) const
+inline T BinExtension<T>::_div_log(T a, T b) const
 {
     assert(check(a));
     assert(check(b));
@@ -496,7 +487,7 @@ inline const T BinExtension<T>::_div_log(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::inv(T a) const
+inline T BinExtension<T>::inv(T a) const
 {
     assert(check(a));
 
@@ -510,7 +501,7 @@ inline const T BinExtension<T>::inv(T a) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::_inv_by_div(T a) const
+inline T BinExtension<T>::_inv_by_div(T a) const
 {
     assert(check(a));
 
@@ -518,7 +509,7 @@ inline const T BinExtension<T>::_inv_by_div(T a) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::exp(T a, T b) const
+inline T BinExtension<T>::exp(T a, T b) const
 {
     assert(BinExtension<T>::check(a));
     assert(BinExtension<T>::check(b));
@@ -527,7 +518,7 @@ inline const T BinExtension<T>::exp(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::log(T a, T b) const
+inline T BinExtension<T>::log(T a, T b) const
 {
     assert(check(a));
 
@@ -545,7 +536,7 @@ inline const T BinExtension<T>::log(T a, T b) const
 }
 
 template <typename T>
-inline const T BinExtension<T>::_deg_of(T a, T max_deg) const
+inline T BinExtension<T>::_deg_of(T a, T max_deg) const
 {
     T deg = max_deg;
     while ((mask[deg] & a) == 0)
@@ -558,7 +549,7 @@ inline const T BinExtension<T>::_deg_of(T a, T max_deg) const
  *  Darrel Hankerson, Scott Vanstone, Alfred Menezes
  */
 template <typename T>
-inline const T BinExtension<T>::_inv_ext_gcd(T x) const
+inline T BinExtension<T>::_inv_ext_gcd(T x) const
 {
     T uv[2];
     T g[2];

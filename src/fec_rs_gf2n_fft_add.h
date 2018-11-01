@@ -45,6 +45,10 @@ namespace fec {
 template <typename T>
 class RsGf2nFftAdd : public FecCode<T> {
   public:
+    using FecCode<T>::decode_apply;
+    using FecCode<T>::decode_prepare;
+    using FecCode<T>::encode;
+
     // NOTE: only NON_SYSTEMATIC is supported now
     RsGf2nFftAdd(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
@@ -68,8 +72,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     {
         // with this encoder we cannot exactly satisfy users request, we need to
         // pad n = smallest power of 2 and at least (n_parities + n_data)
-        this->n =
-            arith::get_smallest_power_of_2<T>(this->n_data + this->n_parities);
+        this->n = arith::ceil2<T>(this->n_data + this->n_parities);
 
         T m = arith::log2<T>(this->n);
 
@@ -90,38 +93,25 @@ class RsGf2nFftAdd : public FecCode<T> {
         return this->n;
     }
 
-    /**
-     * Encode vector
+    /** Encode vector.
      *
      * @param output must be n
-     * @param props special values dictionary must be exactly n_data
-     * @param offset used to locate special values
      * @param words must be n_data
      */
     void encode(
         vec::Vector<T>& output,
-        std::vector<Properties>& props,
-        off_t offset,
+        std::vector<Properties>&,
+        off_t,
         vec::Vector<T>& words) override
     {
         vec::ZeroExtended<T> vwords(words, this->n);
         this->fft->fft(output, vwords);
     }
 
-    void decode_add_data(int fragment_index, int row) override
+    void decode_add_data(int, int) override
     {
         // not applicable
         assert(false);
-    }
-
-    void decode_add_parities(int fragment_index, int row) override
-    {
-        // we can't anticipate here
-    }
-
-    void decode_build() override
-    {
-        // nothing to do
     }
 
   private:
@@ -130,8 +120,8 @@ class RsGf2nFftAdd : public FecCode<T> {
   protected:
     std::unique_ptr<DecodeContext<T>> init_context_dec(
         vec::Vector<T>& fragments_ids,
-        size_t size,
-        vec::Buffers<T>* output) override
+        size_t,
+        vec::Buffers<T>*) override
     {
         if (this->betas == nullptr) {
             throw LogicError("FEC FFT ADD: vector 'betas' must be initialized");
@@ -168,10 +158,10 @@ class RsGf2nFftAdd : public FecCode<T> {
     }
 
     void decode_prepare(
-        const DecodeContext<T>& context,
-        const std::vector<Properties>& props,
-        off_t offset,
-        vec::Vector<T>& words) override
+        const DecodeContext<T>&,
+        const std::vector<Properties>&,
+        off_t,
+        vec::Vector<T>&) override
     {
         // nothing to do
     }

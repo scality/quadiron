@@ -53,13 +53,16 @@ class FourierTransform {
     const gf::Field<T>& get_gf();
     /** Compute the Fourier Transform. */
     virtual void fft(vec::Vector<T>& output, vec::Vector<T>& input) = 0;
-    virtual void fft(vec::Buffers<T>& output, vec::Buffers<T>& input){};
+    virtual void
+    fft(vec::Buffers<T>& /* output */, vec::Buffers<T>& /* input */){};
     /** Compute the Inverse Fourier Transform. */
     virtual void ifft(vec::Vector<T>& output, vec::Vector<T>& input) = 0;
-    virtual void ifft(vec::Buffers<T>& output, vec::Buffers<T>& input){};
+    virtual void
+    ifft(vec::Buffers<T>& /* output */, vec::Buffers<T>& /* input */){};
     /** Compute the summation for the inverse FFT formula. */
     virtual void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) = 0;
-    virtual void fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input){};
+    virtual void
+    fft_inv(vec::Buffers<T>& /* output */, vec::Buffers<T>& /* input */){};
 
   protected:
     const gf::Field<T>* gf;

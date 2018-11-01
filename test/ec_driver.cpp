@@ -41,7 +41,8 @@ int data_zpad = -1;
 int coding_zpad = -1;
 char* prefix = nullptr;
 
-void xusage()
+[[noreturn]]
+static void xusage()
 {
     std::cerr << std::string("Usage: ") +
     "ec [-e rs-gf2n-v|rs-gf2n-c|rs-gf2n-fft|rs-gf2n-fft-add|rs-gfp-fft|rs-fnt|rs-fnt-sys|rs-nf4]" +
@@ -50,13 +51,14 @@ void xusage()
     std::exit(EXIT_FAILURE);
 }
 
-void xperror(const char* str)
+[[noreturn]]
+static void xperror(const char* str)
 {
     std::cerr << str << "\n";
     std::exit(EXIT_FAILURE);
 }
 
-char* xstrdup(const char* str)
+static char* xstrdup(const char* str)
 {
     char* n;
 
@@ -481,7 +483,7 @@ enum ec_type {
     EC_TYPE_RS_NF4,
 };
 
-bool check(int n, int word_size, ec_type eflag)
+static bool check(int n, int word_size, ec_type eflag)
 {
     // we suppose that code length is not too long, i.e. > 2^32
     if (word_size >= 4)

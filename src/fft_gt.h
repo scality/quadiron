@@ -93,13 +93,17 @@ namespace fft {
  * - Step1: calculate DFT of the inner parenthese, i.e. \f$\sum_{i_2}\f$
  * - Step2: calculate DFT of the outer parenthese, i.e. \f$\sum_{i_1}\f$
  *
- * @see <a
- * href="https://en.wikipedia.org/wiki/Prime-factor_FFT_algorithm">Prime-factor
- * FFT algorithm</a>
+ * @see <a href="https://en.wikipedia.org/wiki/Prime-factor_FFT_algorithm">
+ * Prime-factor FFT algorithm
+ * </a>
  */
 template <typename T>
 class GoodThomas : public FourierTransform<T> {
   public:
+    using FourierTransform<T>::fft;
+    using FourierTransform<T>::ifft;
+    using FourierTransform<T>::fft_inv;
+
     GoodThomas(
         const gf::Field<T>& gf,
         T n,
@@ -132,11 +136,7 @@ class GoodThomas : public FourierTransform<T> {
 /**
  * n-th root will be constructed with primitive root
  *
- * @param gf
- * @param n
- * @param id: index in the list of factors of n
- *
- * @return
+ * @param id index in the list of factors of n
  */
 template <typename T>
 GoodThomas<T>::GoodThomas(

@@ -73,6 +73,10 @@ namespace fec {
 template <typename T>
 class RsGfpFft : public FecCode<T> {
   public:
+    using FecCode<T>::decode_prepare;
+    using FecCode<T>::encode_post_process;
+    using FecCode<T>::encode;
+
     RsGfpFft(unsigned word_size, unsigned n_data, unsigned n_parities)
         : FecCode<T>(FecType::NON_SYSTEMATIC, word_size, n_data, n_parities)
     {
@@ -89,8 +93,8 @@ class RsGfpFft : public FecCode<T> {
             gf_p = (1ULL << (8 * this->word_size)) + 1;
             this->limit_value = (1ULL << (8 * this->word_size));
         } else if (this->word_size == 4) {
-            gf_p = (T)4294991873ULL;              // p-1=2^13 29^1 101^1 179^1
-            this->limit_value = (T)4294967296ULL; // 2^32
+            gf_p = static_cast<T>(4294991873ULL); // p-1=2^13 29^1 101^1 179^1
+            this->limit_value = static_cast<T>(4294967296ULL); // 2^32
         } else {
             assert(false); // not support yet
             exit(1);
@@ -190,20 +194,10 @@ class RsGfpFft : public FecCode<T> {
         }
     }
 
-    void decode_add_data(int fragment_index, int row) override
+    void decode_add_data(int, int) override
     {
         // not applicable
         assert(false);
-    }
-
-    void decode_add_parities(int fragment_index, int row) override
-    {
-        // we can't anticipate here
-    }
-
-    void decode_build() override
-    {
-        // nothing to do
     }
 
   private:

@@ -181,6 +181,8 @@ int Benchmark<T>::init()
         fec = new quadiron::fec::RsFnt<T>(
             quadiron::fec::FecType::SYSTEMATIC, word_size, k, m, pkt_size);
         break;
+    case EC_TYPE_ALL: /* FALLTHROUGH */
+    case EC_TYPE_END: /* FALLTHROUGH */
     default:
         return ERR_FEC_TYPE_NOT_SUPPORTED;
     }
@@ -214,18 +216,18 @@ int Benchmark<T>::init()
     c_ostreambufs = new std::vector<ostreambuf<char>*>(n_c);
     r_ostreambufs = new std::vector<ostreambuf<char>*>(k);
     for (i = 0; i < k; i++) {
-        d_istreambufs->at(i) =
-            new istreambuf<char>((char*)d_chunks->at(i), chunk_size);
+        d_istreambufs->at(i) = new istreambuf<char>(
+            reinterpret_cast<char*>(d_chunks->at(i)), chunk_size);
     }
     for (i = 0; i < n_c; i++) {
-        c_istreambufs->at(i) =
-            new istreambuf<char>((char*)c_chunks->at(i), chunk_size);
-        c_ostreambufs->at(i) =
-            new ostreambuf<char>((char*)c_chunks->at(i), chunk_size);
+        c_istreambufs->at(i) = new istreambuf<char>(
+            reinterpret_cast<char*>(c_chunks->at(i)), chunk_size);
+        c_ostreambufs->at(i) = new ostreambuf<char>(
+            reinterpret_cast<char*>(c_chunks->at(i)), chunk_size);
     }
     for (i = 0; i < k; i++) {
-        r_ostreambufs->at(i) =
-            new ostreambuf<char>((char*)r_chunks->at(i), chunk_size);
+        r_ostreambufs->at(i) = new ostreambuf<char>(
+            reinterpret_cast<char*>(r_chunks->at(i)), chunk_size);
     }
 
     // Allocate memory for streams
@@ -632,7 +634,7 @@ bool Benchmark<T>::enc_dec()
     return true;
 }
 
-void xusage()
+[[noreturn]] static void xusage()
 {
     std::cerr << "Usage: benchmark [options]\n"
               << "Options:\n"
@@ -661,7 +663,7 @@ void xusage()
               << "2, 4, 8, 16 for uint16_t, uint32_t, uint64_t, __uint128_t\n"
               << "\t-g \tNumber of threads\n"
               << "\t-x \tExtra parameter\n\n";
-    exit(1);
+    std::exit(EXIT_FAILURE);
 }
 
 template <typename T>
@@ -686,12 +688,12 @@ void init_run_bench(Params_t* params)
     try {
         Benchmark<T> bench(params);
         run<T>(&bench, params);
-    } catch (const std::exception& e) {
+    } catch (const std::exception&) {
         return;
     }
 }
 
-void run_scenario(Params_t* params)
+static void run_scenario(Params_t* params)
 {
     // get sizeof_T if necessary
     params->get_sizeof_T();
@@ -716,11 +718,11 @@ void run_scenario(Params_t* params)
     }
 }
 
-void run_benchmark(Params_t* params)
+static void run_benchmark(Params_t* params)
 {
     if (params->fec_type == EC_TYPE_ALL) {
         for (int type = EC_TYPE_ALL + 1; type < EC_TYPE_END; type++) {
-            params->fec_type = (ec_type)type;
+            params->fec_type = static_cast<ec_type>(type);
             run_scenario(params);
         }
     } else {
@@ -728,7 +730,7 @@ void run_benchmark(Params_t* params)
     }
 }
 
-void do_join(std::thread& t)
+static void do_join(std::thread& t)
 {
     t.join();
 }

@@ -123,11 +123,10 @@ class FecCode {
         size_t pkt_size = 8);
     virtual ~FecCode() = default;
 
-    /**
-     * Return the number actual parities for SYSTEMATIC it is exactly
-     * n_parities, for NON_SYSTEMATIC it maybe at least n_data+n_parities (but
-     * sometimes more).
-     * @return
+    /** Return the number of output parts.
+     *
+     * @return `n_parities` for SYSTEMATIC and at least `n_data + n_parities`
+     * for NON_SYSTEMATIC
      */
     virtual int get_n_outputs() = 0;
 
@@ -136,30 +135,26 @@ class FecCode {
         std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>& words) = 0;
-    virtual void encode_post_process(
-        vec::Vector<T>& output,
-        std::vector<Properties>& props,
-        off_t offset){};
+    virtual void
+    encode_post_process(vec::Vector<T>&, std::vector<Properties>&, off_t){};
     virtual void encode(
-        vec::Buffers<T>& output,
-        std::vector<Properties>& props,
-        off_t offset,
-        vec::Buffers<T>& words){};
-    virtual void encode_post_process(
-        vec::Buffers<T>& output,
-        std::vector<Properties>& props,
-        off_t offset){};
-    virtual void decode_add_data(int fragment_index, int row) = 0;
-    virtual void decode_add_parities(int fragment_index, int row) = 0;
-    virtual void decode_build(void) = 0;
+        vec::Buffers<T>&,
+        std::vector<Properties>&,
+        off_t,
+        vec::Buffers<T>&){};
+    virtual void
+    encode_post_process(vec::Buffers<T>&, std::vector<Properties>&, off_t){};
+    virtual void decode_add_data(int /* fragment_index */, int /* row */){};
+    virtual void decode_add_parities(int /* fragment_index */, int /* row */){};
+    virtual void decode_build(void){};
 
     /**
      * Decode a vector of words
      *
+     * @param context decoding context
+     * @param output original data (must be of n_data length)
      * @param props properties bound to parity fragments
      * @param offset offset in the data fragments
-     * @param output original data (must be of n_data length)
-     * @param fragments_ids identifiers of available fragments
      * @param words input words if SYSTEMATIC must be n_data,
      *  if NON_SYSTEMATIC get_n_outputs()
      */
@@ -284,13 +279,7 @@ class FecCode {
         vec::Buffers<T>& words);
 };
 
-/**
- * Create an encoder
- *
- * @param word_size in bytes
- * @param n_data
- * @param n_parities
- */
+/// Create an encoder.
 template <typename T>
 FecCode<T>::FecCode(
     FecType type,
@@ -317,31 +306,31 @@ inline bool FecCode<T>::readw(T* ptr, std::istream* stream)
 {
     if (word_size == 1) {
         uint8_t c;
-        if (stream->read((char*)&c, 1)) {
+        if (stream->read(reinterpret_cast<char*>(&c), sizeof(c))) {
             *ptr = c;
             return true;
         }
     } else if (word_size == 2) {
         uint16_t s;
-        if (stream->read((char*)&s, 2)) {
+        if (stream->read(reinterpret_cast<char*>(&s), sizeof(s))) {
             *ptr = s;
             return true;
         }
     } else if (word_size == 4) {
         uint32_t s;
-        if (stream->read((char*)&s, 4)) {
+        if (stream->read(reinterpret_cast<char*>(&s), sizeof(s))) {
             *ptr = s;
             return true;
         }
     } else if (word_size == 8) {
         uint64_t s;
-        if (stream->read((char*)&s, 8)) {
+        if (stream->read(reinterpret_cast<char*>(&s), sizeof(s))) {
             *ptr = s;
             return true;
         }
     } else if (word_size == 16) {
         __uint128_t s;
-        if (stream->read((char*)&s, 16)) {
+        if (stream->read(reinterpret_cast<char*>(&s), sizeof(s))) {
             *ptr = s;
             return true;
         }
@@ -356,23 +345,23 @@ inline bool FecCode<T>::writew(T val, std::ostream* stream)
 {
     if (word_size == 1) {
         uint8_t c = val;
-        if (stream->write((char*)&c, 1))
+        if (stream->write(reinterpret_cast<char*>(&c), sizeof(c)))
             return true;
     } else if (word_size == 2) {
         uint16_t s = val;
-        if (stream->write((char*)&s, 2))
+        if (stream->write(reinterpret_cast<char*>(&s), sizeof(s)))
             return true;
     } else if (word_size == 4) {
         uint32_t s = val;
-        if (stream->write((char*)&s, 4))
+        if (stream->write(reinterpret_cast<char*>(&s), sizeof(s)))
             return true;
     } else if (word_size == 8) {
         uint64_t s = val;
-        if (stream->write((char*)&s, 8))
+        if (stream->write(reinterpret_cast<char*>(&s), sizeof(s)))
             return true;
     } else if (word_size == 16) {
         __uint128_t s = val;
-        if (stream->write((char*)&s, 16))
+        if (stream->write(reinterpret_cast<char*>(&s), sizeof(s)))
             return true;
     } else {
         assert(false && "no such size");
@@ -383,18 +372,13 @@ inline bool FecCode<T>::writew(T val, std::ostream* stream)
 template <typename T>
 inline bool FecCode<T>::read_pkt(char* pkt, std::istream& stream)
 {
-    if (stream.read(pkt, buf_size)) {
-        return true;
-    }
-    return false;
+    return static_cast<bool>(stream.read(pkt, buf_size));
 }
 
 template <typename T>
 inline bool FecCode<T>::write_pkt(char* pkt, std::ostream& stream)
 {
-    if (stream.write(pkt, buf_size))
-        return true;
-    return false;
+    return static_cast<bool>(stream.write(pkt, buf_size));
 }
 
 /**
@@ -506,7 +490,8 @@ void FecCode<T>::encode_packet(
         // TODO: get number of read bytes -> true buf size
         for (unsigned i = 0; i < n_data; i++) {
             if (!read_pkt(
-                    (char*)(words_mem_char.at(i)), *(input_data_bufs[i]))) {
+                    reinterpret_cast<char*>(words_mem_char.at(i)),
+                    *(input_data_bufs[i]))) {
                 cont = false;
                 break;
             }
@@ -532,7 +517,8 @@ void FecCode<T>::encode_packet(
 
         for (unsigned i = 0; i < n_outputs; i++) {
             write_pkt(
-                (char*)(output_mem_char.at(i)), *(output_parities_bufs[i]));
+                reinterpret_cast<char*>(output_mem_char.at(i)),
+                *(output_parities_bufs[i]));
         }
         offset += pkt_size;
     }
@@ -809,7 +795,8 @@ void FecCode<T>::decode_prepare(
  *
  * @param context calculated for given indices of received fragments
  * @param output must be exactly n_data
- * @param words \f$v=(v_0, v_1, ..., v_{k-1})\f$ \f$k\f$ must be exactly n_data
+ * @param words vector \f$v=(v_0, v_1, ..., v_{k-1})\f$, \f$k\f$ must be exactly
+ * n_data
  */
 template <typename T>
 void FecCode<T>::decode_apply(
@@ -970,7 +957,7 @@ bool FecCode<T>::decode_packet(
             for (unsigned i = 0; i < avail_data_nb; i++) {
                 unsigned data_idx = fragments_ids.get(i);
                 if (!read_pkt(
-                        (char*)(words_mem_char.at(i)),
+                        reinterpret_cast<char*>(words_mem_char.at(i)),
                         *(input_data_bufs[data_idx]))) {
                     cont = false;
                     break;
@@ -980,7 +967,8 @@ bool FecCode<T>::decode_packet(
         for (unsigned i = 0; i < n_data - avail_data_nb; ++i) {
             unsigned parity_idx = avail_parity_ids.get(i);
             if (!read_pkt(
-                    (char*)(words_mem_char.at(avail_data_nb + i)),
+                    reinterpret_cast<char*>(
+                        words_mem_char.at(avail_data_nb + i)),
                     *(input_parities_bufs[parity_idx]))) {
                 cont = false;
                 break;
@@ -1009,7 +997,8 @@ bool FecCode<T>::decode_packet(
         for (unsigned i = 0; i < n_data; i++) {
             if (output_data_bufs[i] != nullptr) {
                 write_pkt(
-                    (char*)(output_mem_char.at(i)), *(output_data_bufs[i]));
+                    reinterpret_cast<char*>(output_mem_char.at(i)),
+                    *(output_data_bufs[i]));
             }
         }
         offset += pkt_size;
@@ -1024,11 +1013,12 @@ bool FecCode<T>::decode_packet(
  *
  * @note If all fragments are available ifft(words) is enough
  *
+ * @param context decoding context
  * @param output must be exactly n_data
  * @param props special values dictionary must be exactly n_data
  * @param offset used to locate special values
- * @param fragments_ids unused
- * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
+ * @param words vector \f$v=(v_0, v_1, ..., v_{k-1})\f$, \f$k\f$ must be exactly
+ * n_data
  */
 template <typename T>
 void FecCode<T>::decode(
@@ -1104,11 +1094,10 @@ void FecCode<T>::decode_prepare(
  *
  * @note If all fragments are available ifft(words) is enough
  *
+ * @param context decoding context
  * @param output must be exactly n_data
- * @param props special values dictionary must be exactly n_data
- * @param offset used to locate special values
- * @param fragments_ids unused
- * @param words v=(v_0, v_1, ..., v_k-1) k must be exactly n_data
+ * @param words vector \f$v=(v_0, v_1, ..., v_{k-1})\f$, \f$k\f$ must be exactly
+ * n_data
  */
 template <typename T>
 void FecCode<T>::decode_apply(

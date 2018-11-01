@@ -47,6 +47,9 @@ enum class RsMatrixType { VANDERMONDE, CAUCHY };
 template <typename T>
 class RsGf2n : public FecCode<T> {
   public:
+    using FecCode<T>::decode;
+    using FecCode<T>::encode;
+
     RsMatrixType mat_type;
 
     RsGf2n(
@@ -100,8 +103,8 @@ class RsGf2n : public FecCode<T> {
 
     void encode(
         vec::Vector<T>& output,
-        std::vector<Properties>& props,
-        off_t offset,
+        std::vector<Properties>&,
+        off_t,
         vec::Vector<T>& words) override
     {
         mat->mul(&output, &words);
@@ -132,19 +135,17 @@ class RsGf2n : public FecCode<T> {
     }
 
     void decode(
-        const DecodeContext<T>& context,
+        const DecodeContext<T>&,
         vec::Vector<T>& output,
-        const std::vector<Properties>& props,
-        off_t offset,
+        const std::vector<Properties>&,
+        off_t,
         vec::Vector<T>& words) override
     {
         decode_mat->mul(&output, &words);
     }
 
-    std::unique_ptr<DecodeContext<T>> init_context_dec(
-        vec::Vector<T>& fragments_ids,
-        size_t size,
-        vec::Buffers<T>* output) override
+    std::unique_ptr<DecodeContext<T>>
+    init_context_dec(vec::Vector<T>&, size_t, vec::Buffers<T>*) override
     {
         std::unique_ptr<DecodeContext<T>> context;
         return context;

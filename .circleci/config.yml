@@ -6,28 +6,40 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Compile with Clang 6 (Debug mode)
+          name: Compile with Clang 6 (Debug mode/No SIMD)
           command: >
             rm -rf build && mkdir build && cd build &&
-            CXX=/usr/bin/clang++-6.0 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug .. &&
+            CXX=/usr/bin/clang++-6.0 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug -DUSE_SIMD=OFF .. &&
             make
       - run:
-          name: Compile with Clang 6 (Release+SIMD mode)
+          name: Compile with Clang 6 (Debug mode/SSE)
           command: >
             rm -rf build && mkdir build && cd build &&
-            CXX=/usr/bin/clang++-6.0 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_SIMD=ON .. &&
+            CXX=/usr/bin/clang++-6.0 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug -DUSE_SIMD=SSE .. &&
             make
       - run:
-          name: Compile with GCC 8 (Debug mode)
+          name: Compile with Clang 6 (Debug mode/SSE)
           command: >
             rm -rf build && mkdir build && cd build &&
-            CXX=/usr/bin/g++-8 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug .. &&
+            CXX=/usr/bin/clang++-6.0 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug -DUSE_SIMD=AVX .. &&
             make
       - run:
-          name: Compile with GCC 8 (Release+SIMD mode)
+          name: Compile with GCC 8 (Debug mode/No SIMD)
           command: >
             rm -rf build && mkdir build && cd build &&
-            CXX=/usr/bin/g++-8 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DUSE_SIMD=ON .. &&
+            CXX=/usr/bin/g++-8 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug -DUSE_SIMD=OFF .. &&
+            make
+      - run:
+          name: Compile with GCC 8 (Debug mode/SSE)
+          command: >
+            rm -rf build && mkdir build && cd build &&
+            CXX=/usr/bin/g++-8 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug -DUSE_SIMD=SSE .. &&
+            make
+      - run:
+          name: Compile with GCC 8 (Debug mode/AVX)
+          command: >
+            rm -rf build && mkdir build && cd build &&
+            CXX=/usr/bin/g++-8 cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Debug -DUSE_SIMD=AVX .. &&
             make
   android:
     docker:

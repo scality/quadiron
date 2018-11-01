@@ -231,10 +231,10 @@ inline void mul_coef_to_buf(
         _dest[i] = mul(coef, _src[i], card);
     }
     if (_last_len > 0) {
-        uint64_t coef_64 = (uint64_t)a;
+        uint64_t coef_64 = a;
         for (i = _len * ratio; i < len; i++) {
             // perform multiplication
-            dest[i] = (aint32)((coef_64 * src[i]) % card);
+            dest[i] = narrow_cast<aint32>((coef_64 * src[i]) % card);
         }
     }
 }
@@ -369,7 +369,7 @@ inline void encode_post_process(
     const unsigned vec_size = simd::countof<uint32_t>();
 
     const m256i _threshold = _mm256_set1_epi32(threshold);
-    const uint32_t max = 1 << (sizeof(uint32_t) * 8 - 1);
+    const uint32_t max = 1U << (sizeof(uint32_t) * 8 - 1);
     const m256i mask_hi = _mm256_set1_epi32(max);
     const unsigned element_size = sizeof(uint32_t);
 
@@ -400,30 +400,31 @@ typedef __m128i m128i;
 inline aint128 m256i_to_uint128(m256i v)
 {
     aint128 hi, lo;
-    _mm256_storeu2_m128i((m128i*)&hi, (m128i*)&lo, v);
+    _mm256_storeu2_m128i(
+        reinterpret_cast<m128i*>(&hi), reinterpret_cast<m128i*>(&lo), v);
     return lo; // NOLINT(clang-analyzer-core.uninitialized.UndefReturn)
 }
 
 inline __uint128_t add(__uint128_t a, __uint128_t b)
 {
-    m256i _a = _mm256_castsi128_si256((m128i)a);
-    m256i _b = _mm256_castsi128_si256((m128i)b);
+    m256i _a = _mm256_castsi128_si256(reinterpret_cast<m128i>(a));
+    m256i _b = _mm256_castsi128_si256(reinterpret_cast<m128i>(b));
     m256i res = add(_a, _b, F4);
     return m256i_to_uint128(res);
 }
 
 inline __uint128_t sub(__uint128_t a, __uint128_t b)
 {
-    m256i _a = _mm256_castsi128_si256((m128i)a);
-    m256i _b = _mm256_castsi128_si256((m128i)b);
+    m256i _a = _mm256_castsi128_si256(reinterpret_cast<m128i>(a));
+    m256i _b = _mm256_castsi128_si256(reinterpret_cast<m128i>(b));
     m256i res = sub(_a, _b, F4);
     return m256i_to_uint128(res);
 }
 
 inline __uint128_t mul(__uint128_t a, __uint128_t b)
 {
-    m256i _a = _mm256_castsi128_si256((m128i)a);
-    m256i _b = _mm256_castsi128_si256((m128i)b);
+    m256i _a = _mm256_castsi128_si256(reinterpret_cast<m128i>(a));
+    m256i _b = _mm256_castsi128_si256(reinterpret_cast<m128i>(b));
     m256i res = mul(_a, _b, F4);
     return m256i_to_uint128(res);
 }
@@ -431,7 +432,8 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
 /** Store low 128-bit part of `reg` to memory */
 inline void store_low(aint128* address, m256i reg)
 {
-    _mm_store_si128((m128i*)address, _mm256_castsi256_si128(reg));
+    _mm_store_si128(
+        reinterpret_cast<m128i*>(address), _mm256_castsi256_si128(reg));
 }
 
 inline void hadamard_mul(int n, aint128* _x, aint128* _y)
@@ -452,8 +454,8 @@ inline void hadamard_mul(int n, aint128* _x, aint128* _y)
     if (last_len > 0) {
         // add last _y[] to x
         for (i = len_256 * ratio; i < n; i++) {
-            m256i _x_p = _mm256_castsi128_si256((m128i)_x[i]);
-            m256i _y_p = _mm256_castsi128_si256((m128i)_y[i]);
+            m256i _x_p = _mm256_castsi128_si256(reinterpret_cast<m128i>(_x[i]));
+            m256i _y_p = _mm256_castsi128_si256(reinterpret_cast<m128i>(_y[i]));
 
             store_low(_x + i, mul(_x_p, _y_p, F4));
         }

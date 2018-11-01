@@ -75,9 +75,9 @@ class PRNG {
 
     void gen_chunk(void* chunk, size_t size)
     {
-        uint8_t* buffer = (uint8_t*)chunk;
+        uint8_t* buffer = static_cast<uint8_t*>(chunk);
         if (size < 4) {
-            buffer[0] = (uint8_t)_rand();
+            buffer[0] = static_cast<uint8_t>(_rand()); // narrow_cast
             for (size_t i = 1; i < size; i++) {
                 buffer[i] = buffer[0];
             }
@@ -85,13 +85,13 @@ class PRNG {
             uint32_t crc = 0;
             crc = ~crc;
             for (size_t i = 4; i < size; i++) {
-                uint8_t val = (uint8_t)_rand();
+                uint8_t val = static_cast<uint8_t>(_rand()); // narrow_cast
                 buffer[i] = val;
                 crc ^= val;
                 for (int k = 0; k < 8; k++)
                     crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
             }
-            *(uint32_t*)buffer = ~crc;
+            *reinterpret_cast<uint32_t*>(buffer) = ~crc;
         }
     }
 
@@ -99,12 +99,12 @@ class PRNG {
     {
         if (size < 4)
             return 0;
-        return *(uint32_t*)chunk;
+        return *static_cast<uint32_t*>(chunk);
     }
 
     bool check_chunk(void* chunk, size_t size)
     {
-        uint8_t* buffer = (uint8_t*)chunk;
+        uint8_t* buffer = static_cast<uint8_t*>(chunk);
         if (size < 4) {
             uint8_t val = buffer[0];
             for (size_t i = 1; i < size; i++) {
@@ -119,7 +119,7 @@ class PRNG {
                 for (int k = 0; k < 8; k++)
                     crc = crc & 1 ? (crc >> 1) ^ POLY : crc >> 1;
             }
-            uint32_t _crc = *(uint32_t*)buffer;
+            uint32_t _crc = *reinterpret_cast<uint32_t*>(buffer);
             if (_crc != ~crc)
                 return false;
         }

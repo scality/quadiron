@@ -49,7 +49,7 @@ class Poly : public Vector<T> {
   public:
     Poly(const gf::Field<T>& field, int n);
     Poly(const Poly<T>& a);
-    const int get_deg() const;
+    int get_deg() const;
     void set_deg(int exponent);
     const T& get(int exponent) const override;
     void set(int exponent, T coef) override;
@@ -81,7 +81,7 @@ Poly<T>::Poly(const gf::Field<T>& field, int n) : Vector<T>(field, n)
 template <typename T>
 Poly<T>::Poly(const Poly<T>& a) : Vector<T>(a.get_gf(), a.get_n())
 {
-    this->field = (gf::Field<T>*)this->rn;
+    this->field = dynamic_cast<const gf::Field<T>*>(this->rn);
     this->buf = this->get_mem();
     this->field_characteristic = field->get_p();
 
@@ -90,7 +90,7 @@ Poly<T>::Poly(const Poly<T>& a) : Vector<T>(a.get_gf(), a.get_n())
 }
 
 template <typename T>
-const int Poly<T>::get_deg() const
+int Poly<T>::get_deg() const
 {
     return degree;
 }
