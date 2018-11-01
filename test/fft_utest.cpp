@@ -54,7 +54,7 @@ class FftTest : public ::testing::Test {
         vec.zero_fill();
 
         for (unsigned i = 0; i < to_init; i++) {
-            vec.set(i, gf.weak_rand());
+            vec.set(i, gf.rand());
         }
 
         return vec;
@@ -64,8 +64,8 @@ class FftTest : public ::testing::Test {
     void test_taylor_expand(const gf::Field<T>& gf, fft::Additive<T>* fft)
     {
         for (int i = 0; i < 1000; i++) {
-            const int t = 2 + gf.weak_rand() % (fft->get_n() - 1);
-            const int n = t + gf.weak_rand() % (fft->get_n() - t + 1);
+            const int t = 2 + gf.rand() % (fft->get_n() - 1);
+            const int n = t + gf.rand() % (fft->get_n() - t + 1);
 
             quadiron::vec::Vector<T> v1(this->random_vec(gf, n, n));
 
@@ -152,7 +152,7 @@ TYPED_TEST(FftTest, TestGcd) // NOLINT
 
     ASSERT_EQ(gf.inv(20), 34);
     for (int i = 0; i < 100; i++) {
-        const TypeParam x = gf.weak_rand();
+        const TypeParam x = gf.rand();
 
         ASSERT_EQ(
             quadiron::arith::extended_gcd<TypeParam>(97, x, bezout, nullptr),
@@ -276,7 +276,7 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
                 for (unsigned i = 0; i < len; i++) {
                     TypeParam* mem = v.get(i);
                     for (size_t u = 0; u < size; u++) {
-                        mem[u] = gf.weak_rand();
+                        mem[u] = gf.rand();
                     }
                 }
                 fft.fft(v2, v);
@@ -318,7 +318,7 @@ TYPED_TEST(FftTest, TestNaiveVsFft2kVecp) // NOLINT
         for (unsigned i = 0; i < n; i++) {
             TypeParam* mem = v.get(i);
             for (size_t u = 0; u < size; u++) {
-                mem[u] = gf.weak_rand();
+                mem[u] = gf.rand();
             }
         }
 
@@ -369,7 +369,7 @@ TYPED_TEST(FftTest, TestFftCtGf2n) // NOLINT
 
         unsigned len = this->code_len;
         if (gf.card_minus_one() <= this->code_len) {
-            len = gf.weak_rand();
+            len = gf.rand();
         }
 
         // With this encoder we cannot exactly satisfy users request,
@@ -469,7 +469,7 @@ TYPED_TEST(FftTest, TestFftGf2n) // NOLINT
 
         unsigned len = this->code_len;
         if (gf.card_minus_one() <= this->code_len) {
-            len = gf.weak_rand();
+            len = gf.rand();
         }
 
         // With this encoder we cannot exactly satisfy users request,

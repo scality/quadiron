@@ -113,7 +113,7 @@ class RingModN {
     bool is_quadratic_residue(T q) const;
     virtual void compute_omegas(vec::Vector<T>& W, int n, T w) const;
     void compute_omegas_cached(vec::Vector<T>& W, int n, T w) const;
-    virtual T weak_rand(void) const;
+    virtual T rand(void) const;
     bool is_primitive_root(T nb) const;
     T get_root() const;
     T get_primitive_root() const;
@@ -575,7 +575,7 @@ void RingModN<T>::compute_omegas_cached(vec::Vector<T>& W, int n, T w) const
 }
 
 template <typename T>
-T RingModN<T>::weak_rand(void) const
+T RingModN<T>::rand(void) const
 {
     std::uniform_int_distribution<uint32_t> dis(1, this->card() - 1);
     return dis(prng());

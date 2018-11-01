@@ -70,7 +70,7 @@ class FecTestCommon : public ::testing::Test {
 
             // gen_data(gf, data_frags, is_nf4);
             for (unsigned i = 0; i < n_data; i++) {
-                const T v = is_nf4 ? nf4.unpacked_weak_rand() : gf.weak_rand();
+                const T v = is_nf4 ? nf4.unpacked_rand() : gf.rand();
                 data_frags.set(i, v);
             }
             // FIXME: ngff4 will modify v after encode
