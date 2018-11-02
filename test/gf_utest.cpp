@@ -40,7 +40,7 @@ class GfTestCommon : public ::testing::Test {
     void test_negation(const gf::Field<T>& gf)
     {
         for (int i = 0; i < 100; i++) {
-            const T x = gf.weak_rand();
+            const T x = gf.rand();
             const T y = gf.neg(x);
             ASSERT_EQ(gf.add(x, y), 0);
         }
@@ -51,7 +51,7 @@ class GfTestCommon : public ::testing::Test {
         int n_found = 0;
 
         for (int i = 0; i < 100; i++) {
-            const T x = gf.weak_rand();
+            const T x = gf.rand();
             try {
                 const T y = gf.inv(x);
                 ASSERT_EQ(gf.mul(x, y), gf.get_unit());
@@ -68,8 +68,8 @@ class GfTestCommon : public ::testing::Test {
         int n_found = 0;
 
         for (int i = 0; i < 1000; i++) {
-            const T x = gf.weak_rand();
-            const T y = gf.weak_rand();
+            const T x = gf.rand();
+            const T y = gf.rand();
             try {
                 const T z = gf.log(x, y);
                 const T t = gf.exp(x, z);
@@ -94,7 +94,7 @@ class GfTestCommon : public ::testing::Test {
         const T h = gf.card_minus_one();
 
         for (int i = 0; i < 1000; i++) {
-            const T x = gf.weak_rand();
+            const T x = gf.rand();
             const T order = gf.get_order(x);
 
             ASSERT_EQ(gf.exp(x, order), 1);
@@ -105,7 +105,7 @@ class GfTestCommon : public ::testing::Test {
     void test_get_nth_root(const gf::Field<T>& gf)
     {
         for (int i = 0; i < 1000; i++) {
-            const T x = gf.weak_rand();
+            const T x = gf.rand();
             const T nth_root = gf.get_nth_root(x);
 
             ASSERT_EQ(gf.exp(nth_root, x), 1);
@@ -123,11 +123,11 @@ TYPED_TEST(GfTestCommon, TestGfNf4) // NOLINT
 
         auto gf(gf::create<gf::NF4<TypeParam>>(n));
         this->test_negation(gf);
-        this->test_negation(gf);
+        this->test_reciprocal(gf);
 
         // Test pack/unpack.
         for (int i = 0; i < 100; i++) {
-            const TypeParam x = gf.weak_rand_tuple();
+            const TypeParam x = gf.rand();
             const quadiron::GroupedValues<TypeParam> z = gf.unpack(x);
             const TypeParam y = gf.pack(z.values, z.flag);
             ASSERT_EQ(x, y);

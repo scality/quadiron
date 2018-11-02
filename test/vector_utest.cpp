@@ -55,7 +55,7 @@ TYPED_TEST(VectorTest, TestSlices) // NOLINT
     vec::Vector<TypeParam> base_vec(gfp, len);
 
     for (int i = 0; i < len; i++) {
-        base_vec.set(i, gfp.weak_rand());
+        base_vec.set(i, gfp.rand());
     }
     // vmvec1 = base_vec[offset1, .., offset1 + len1 - 1]
     vec::Slice<TypeParam> vmvec1(&base_vec, len1, offset1);
