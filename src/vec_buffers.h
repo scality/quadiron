@@ -172,6 +172,8 @@ Buffers<T>::Buffers(int n, size_t size, unsigned words_per_element)
     bmap.reserve(n);
     for (int i = 0; i < n; i++) {
         bmap.push_back(this->bmap_allocator.allocate(bmap_size));
+        // init bit-map as zeros
+        std::memset(bmap[i], 0, bmap_size);
     }
 }
 
