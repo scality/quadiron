@@ -106,6 +106,7 @@ class Buffers final {
     Buffers(const Buffers<T>& vec, int begin, int end);
     Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2);
     Buffers(const Buffers<T>& vec, const Vector<T>& map, unsigned n);
+    Buffers(const Buffers<char>& vec);
     ~Buffers();
     int get_n(void) const;
     size_t get_size(void) const;
@@ -323,6 +324,34 @@ Buffers<T>::Buffers(
     }
     for (unsigned i = 0; i < map_len; ++i) {
         mem[map.get(i)] = vec_mem[i];
+    }
+}
+
+/**
+ * Constructor of Buffers by casting from a given Buffers<char>
+ *
+ * @param vec - a given Buffers<char> instance
+ * @param n - number of buffers pointed by the constructed vector
+ */
+template <typename T>
+Buffers<T>::Buffers(const Buffers<char>& vec)
+{
+    int i;
+    int vec_n = vec.get_n();
+    size_t vec_size = vec.get_size();
+
+    assert(vec_size % sizeof(T) == 0);
+
+    this->size = vec_size / sizeof(T);
+    this->n = vec_n;
+    this->mem_len = n * size;
+    this->mem_alloc_case = BufMemAlloc::SLICE;
+
+    const std::vector<char*> vec_mem = vec.get_mem();
+
+    mem.reserve(n);
+    for (i = 0; i < this->n; i++) {
+        mem.push_back(reinterpret_cast<T*>(vec_mem[i]));
     }
 }
 
