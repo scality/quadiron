@@ -393,6 +393,7 @@ inline void RingModN<T>::mul_vec_to_vecp(
     size_t len = src.get_size();
     T h = this->card_minus_one();
     const std::vector<T*>& src_mem = src.get_mem();
+    const std::vector<char*>& src_bmap = src.get_bmap();
     const std::vector<T*>& dest_mem = dest.get_mem();
     T* coef_vec = u.get_mem();
     for (i = 0; i < n; i++) {
@@ -400,11 +401,11 @@ inline void RingModN<T>::mul_vec_to_vecp(
         if (coef > 1 && coef < h) {
             this->mul_coef_to_buf(coef, src_mem[i], dest_mem[i], len);
         } else if (coef == 1) {
-            dest.copy(i, src_mem[i]);
+            dest.copy(i, src_mem[i], src_bmap[i]);
         } else if (coef == 0) {
             dest.fill(i, 0);
         } else if (coef == h) {
-            dest.copy(i, src_mem[i]);
+            dest.copy(i, src_mem[i], src_bmap[i]);
             this->neg(len, dest_mem[i]);
         }
     }
