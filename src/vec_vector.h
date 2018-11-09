@@ -41,7 +41,6 @@
 #include "core.h"
 #include "gf_ring.h"
 #include "simd/simd.h"
-#include "vec_cast.h"
 
 namespace quadiron {
 
