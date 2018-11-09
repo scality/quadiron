@@ -28,6 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <random>
+#include <math.h>
+#include <limits>
 
 #include <gtest/gtest.h>
 
@@ -38,28 +40,68 @@ namespace vec = quadiron::vec;
 namespace gf = quadiron::gf;
 
 template <typename T>
+bool is_equal(const T* buf1, const T* buf2, size_t len)
+{
+    return memcmp(buf1, buf2, len * sizeof(T)) == 0;
+}
+
+template <typename T>
+bool is_all_zeros(const T* buf, size_t len)
+{
+    for (size_t i = 0; i < len; ++i) {
+        if (buf[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <typename T>
+std::unique_ptr<vec::Buffers<T>> help_gen_buffers_rand_data(
+    quadiron::simd::AlignedAllocator<T>& allocator,
+    quadiron::simd::AlignedAllocator<char>& char_allocator,
+    int n,
+    int size,
+    int _max = 0)
+{
+    std::mt19937 prng;
+    T max_val = std::numeric_limits<T>::max();
+    const int max = (_max == 0) ? max_val : _max;
+    std::uniform_int_distribution<uint32_t> dis(0, max - 1);
+    auto vec = std::make_unique<vec::Buffers<T>>(n, size);
+
+    // by default, each element refers to two words
+    const int words_per_element = 2;
+    const size_t bmap_size = ceil(size * words_per_element / 8);
+    std::uniform_int_distribution<char> bmap_dis(-128, 127);
+
+    for (int i = 0; i < n; i++) {
+        T* buf = allocator.allocate(size);
+        for (int j = 0; j < size; j++) {
+            buf[j] = dis(prng);
+        }
+        vec->set(i, buf);
+        char* bit_map = char_allocator.allocate(bmap_size);
+        for (int j = 0; j < bmap_size; j++) {
+            bit_map[j] = bmap_dis(prng);
+        }
+        vec->set_bit(i, bit_map);
+    }
+
+    return vec;
+}
+
+template <typename T>
 class BuffersTest : public ::testing::Test {
   public:
     quadiron::simd::AlignedAllocator<T> allocator;
+    quadiron::simd::AlignedAllocator<char> bmap_allocator;
 
     std::unique_ptr<vec::Buffers<T>>
     gen_buffers_rand_data(int n, int size, int _max = 0)
     {
-        std::mt19937 prng;
-        T max_val = 65537;
-        const int max = (_max == 0) ? max_val : _max;
-        std::uniform_int_distribution<uint32_t> dis(0, max - 1);
-        auto vec = std::make_unique<vec::Buffers<T>>(n, size);
-
-        for (int i = 0; i < n; i++) {
-            T* buf = this->allocator.allocate(size);
-            for (int j = 0; j < size; j++) {
-                buf[j] = dis(prng);
-            }
-            vec->set(i, buf);
-        }
-
-        return vec;
+        return help_gen_buffers_rand_data(
+            allocator, bmap_allocator, n, size, _max);
     }
 
     std::unique_ptr<vec::Vector<T>>
@@ -80,21 +122,6 @@ class BuffersTest : public ::testing::Test {
         return vec;
     }
 
-    bool check_eq(const T* buf1, const T* buf2, size_t len)
-    {
-        return memcmp(buf1, buf2, len * sizeof(T)) == 0;
-    }
-
-    bool check_all_zeros(const T* buf, size_t len)
-    {
-        for (size_t i = 0; i < len; ++i) {
-            if (buf[i] != 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     bool check_shuffled_bufs(
         const vec::Buffers<T>& input,
         const vec::Buffers<T>& output,
@@ -105,11 +132,16 @@ class BuffersTest : public ::testing::Test {
         const size_t map_len = map.get_n();
 
         const size_t size = input.get_size();
+        const size_t bmap_size = input.get_bmap_size();
 
         std::vector<bool> check(output.get_n(), false);
 
         for (unsigned i = 0; i < map_len; ++i) {
-            if (!check_eq(input.get(i), output.get(map.get(i)), size)) {
+            if (!is_equal(input.get(i), output.get(map.get(i)), size)
+                || !is_equal(
+                       input.get_bit(i),
+                       output.get_bit(map.get(i)),
+                       bmap_size)) {
                 return false;
             }
             check[map.get(i)] = true;
@@ -119,7 +151,8 @@ class BuffersTest : public ::testing::Test {
         if (output_len > input_len) {
             for (size_t i = 0; i < output_len; ++i) {
                 if (!check[i]) {
-                    if (!check_all_zeros(output.get(i), size)) {
+                    if (!is_all_zeros(output.get(i), size)
+                        || !is_all_zeros(output.get_bit(i), bmap_size)) {
                         return false;
                     }
                 }
@@ -133,162 +166,114 @@ class BuffersTest : public ::testing::Test {
 using TestedTypes = ::testing::Types<uint32_t, uint64_t>;
 TYPED_TEST_CASE(BuffersTest, TestedTypes);
 
-TYPED_TEST(BuffersTest, TestConstructors) // NOLINT
+TYPED_TEST(BuffersTest, TestSliceConstructor) // NOLINT
 {
     const int n = 16;
     const int begin = 5;
-    const int end = 12;
+    const int end = 20;
     const int size = 4;
 
+    // a Buffers with random data
     auto vec1 = this->gen_buffers_rand_data(n, size);
+    const size_t bmap_size = vec1->get_bmap_size();
+
+    // sliced Buffers
     vec::Buffers<TypeParam> vec2(*vec1, begin, end);
 
     const std::vector<TypeParam*> mem1 = vec1->get_mem();
     const std::vector<TypeParam*> mem2 = vec2.get_mem();
 
+    const std::vector<char*> bmap1 = vec1->get_bmap();
+    const std::vector<char*> bmap2 = vec2.get_bmap();
+
+
     ASSERT_EQ(vec2.get_n(), end - begin);
     ASSERT_EQ(vec2.get_size(), vec1->get_size());
+    ASSERT_EQ(vec2.get_bmap_size(), vec1->get_bmap_size());
 
-    for (int i = 0; i < end - begin; i++) {
-        for (int j = 0; j < size; j++) {
-            mem2.at(i)[j] = mem1.at(i + begin)[j];
-        }
+    // check common parts
+    int i;
+    for (i = 0; i < n - begin; ++i) {
+        ASSERT_TRUE(
+            is_equal(mem1[i + begin], mem2[i], size)
+            && is_equal(bmap1[i + begin], bmap2[i], bmap_size));
     }
-
-    std::vector<TypeParam*> mem3(end - begin, nullptr);
-    for (int i = 0; i < end - begin; i++) {
-        mem3[i] = mem1.at(i + begin);
+    // check padding parts
+    for (; i < end - begin; ++i) {
+        ASSERT_TRUE(
+            is_all_zeros(mem2[i], size) && is_all_zeros(bmap2[i], bmap_size));
     }
-    vec::Buffers<TypeParam> vec3(end - begin, size, mem3);
+}
 
-    ASSERT_EQ(vec2, vec3);
+TYPED_TEST(BuffersTest, TestCombinedConstructor) // NOLINT
+{
+    const int n1 = 16;
+    const int n2 = 8;
+    const int size = 4;
+
+    // first Buffers with random data of length n1
+    auto vec1 = this->gen_buffers_rand_data(n1, size);
+
+    // second Buffers with random data of length n2
+    auto vec2 = this->gen_buffers_rand_data(n2, size);
+    // a Buffers combined from vec1 & vec2
+    vec::Buffers<TypeParam> vec3(*vec1, *vec2);
+
+    // a Buffers sliced of vec3 corresponding to vec1
+    vec::Buffers<TypeParam> _vec1(vec3, 0, n1);
+    ASSERT_EQ(*vec1, _vec1);
+
+    // a Buffers sliced of vec3 corresponding to vec2
+    vec::Buffers<TypeParam> _vec2(vec3, n1, n1 + n2);
+    ASSERT_EQ(*vec2, _vec2);
+}
+
+TYPED_TEST(BuffersTest, TestMapConstructor) // NOLINT
+{
+    const int n = 16;
+    const int size = 4;
+
+    // a Buffers with random data of length n
+    auto vec = this->gen_buffers_rand_data(n, size);
 
     auto gf(gf::create<gf::Prime<TypeParam>>(65537));
 
     // no-extension
     const int out_n_1 = n - 5;
     auto map_1 = this->gen_rand_vector(gf, out_n_1, out_n_1);
-    vec::Buffers<TypeParam> vec4(*vec1, *map_1, out_n_1);
-    ASSERT_TRUE(this->check_shuffled_bufs(*vec1, vec4, *map_1));
+    vec::Buffers<TypeParam> vec1(*vec, *map_1, out_n_1);
+    ASSERT_TRUE(this->check_shuffled_bufs(*vec, vec1, *map_1));
 
     // extension
     const int out_n_2 = n + 10;
     auto map_2 = this->gen_rand_vector(gf, n, out_n_2);
-    vec::Buffers<TypeParam> vec5(*vec1, *map_2, out_n_2);
-    ASSERT_TRUE(this->check_shuffled_bufs(*vec1, vec5, *map_2));
+    vec::Buffers<TypeParam> vec2(*vec, *map_2, out_n_2);
+    ASSERT_TRUE(this->check_shuffled_bufs(*vec, vec2, *map_2));
 }
 
-TYPED_TEST(BuffersTest, TestEvenOddSeparation) // NOLINT
+TYPED_TEST(BuffersTest, TestCastConstructor) // NOLINT
 {
     const int n = 8;
     const int size = 32;
-    const int half = n / 2;
-    auto vec1 = this->gen_buffers_rand_data(n, size);
-    vec::Buffers<TypeParam> vec2(n, size);
+    const int size_T = size / sizeof(TypeParam);
 
-    vec2.copy(*vec1);
+    auto vec1 =
+        help_gen_buffers_rand_data(this->bmap_allocator, this->bmap_allocator, n, size);
+    const size_t bmap_size = vec1->get_bmap_size();
 
-    std::vector<TypeParam*>* even_mem =
-        new std::vector<TypeParam*>(half, nullptr);
-    std::vector<TypeParam*>* odd_mem =
-        new std::vector<TypeParam*>(half, nullptr);
-    vec::Buffers<TypeParam> i_even(half, size, *even_mem);
-    vec::Buffers<TypeParam> i_odd(half, size, *odd_mem);
-    vec1->separate_even_odd(i_even, i_odd);
+    vec::Buffers<TypeParam> vec2(*vec1);
 
-    vec1->separate_even_odd();
-
-    vec::Buffers<TypeParam> _i_even(*vec1, 0, half);
-    vec::Buffers<TypeParam> _i_odd(*vec1, half, n);
-    ASSERT_EQ(i_even, _i_even);
-    ASSERT_EQ(i_odd, _i_odd);
-
-    const std::vector<TypeParam*> mem1 = vec1->get_mem();
+    const std::vector<char*> mem1 = vec1->get_mem();
     const std::vector<TypeParam*> mem2 = vec2.get_mem();
 
-    bool ok = true;
-    for (int i = 0; i < n / 2; i += 2) {
-        TypeParam* even1 = mem1.at(i);
-        TypeParam* even2 = mem2.at(i * 2);
-        TypeParam* odd1 = mem1.at(i + n / 2);
-        TypeParam* odd2 = mem2.at(i * 2 + 1);
-        for (int j = 0; j < size; j++) {
-            if (even1[j] != even2[j] || odd1[j] != odd2[j]) {
-                ok = false;
-                i = n;
-                break;
-            }
-        }
-    }
-    ASSERT_TRUE(ok);
-}
+    const std::vector<char*> bmap1 = vec1->get_bmap();
+    const std::vector<char*> bmap2 = vec2.get_bmap();
 
-TYPED_TEST(BuffersTest, TestZeroExtented) // NOLINT
-{
-    const int n = 8;
-    const int size = 32;
-    const int n1 = 4;
-    const int n2 = 10;
+    for (int i = 0; i < n; ++i) {
+        TypeParam* _mem1_at_i = reinterpret_cast<TypeParam*>(mem1[i]);
 
-    auto vec = this->gen_buffers_rand_data(n, size);
-    vec::Buffers<TypeParam> vec1(*vec, n1);
-    vec::Buffers<TypeParam> vec2(*vec, n2);
-
-    vec::Buffers<TypeParam> _vec1(*vec, 0, n1);
-    vec::Buffers<TypeParam> _vec2(*vec, n2);
-
-    ASSERT_EQ(vec1, _vec1);
-    ASSERT_EQ(vec2, _vec2);
-
-    vec::Buffers<TypeParam> vec3(vec2, n1);
-    ASSERT_EQ(vec3, vec1);
-}
-
-TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
-{
-    const int iter_count = quadiron::arith::log2<TypeParam>(sizeof(TypeParam));
-
-    for (int i = 0; i <= iter_count; i++) {
-        const int word_size = quadiron::arith::exp2<TypeParam>(i);
-        const int n = 8;
-        const int size = 32;
-        const int bytes_size = size * word_size;
-        const TypeParam max = (static_cast<TypeParam>(1) << word_size) + 1;
-        auto words = this->gen_buffers_rand_data(n, size, max);
-        const std::vector<TypeParam*> mem_T = words->get_mem();
-
-        // Pack manually from TypeParam to uint8_t.
-        vec::Buffers<uint8_t> vec_char(n, bytes_size);
-        const std::vector<uint8_t*> mem_char = vec_char.get_mem();
-        for (int j = 0; j < n; j++) {
-            int t = 0;
-            TypeParam* buf_T = mem_T.at(j);
-            uint8_t* buf_char = mem_char.at(j);
-
-            for (int k = 0; k < size; k++) {
-                TypeParam symb = buf_T[k];
-                buf_char[t] = static_cast<uint8_t>(symb & 0xFF);
-
-                t++;
-                for (int u = 1; u < word_size; u++) {
-                    symb >>= 8;
-                    buf_char[t] = static_cast<uint8_t>(symb & 0xFF);
-                    t++;
-                }
-            }
-        }
-
-        // Pack bufs of type uint8_t to bufs of type TypeParam.
-        vec::Buffers<TypeParam> vec_T_tmp(n, size);
-        const std::vector<TypeParam*> mem_T_tmp = vec_T_tmp.get_mem();
-        vec::pack<uint8_t, TypeParam>(mem_char, mem_T_tmp, n, size, word_size);
-        ASSERT_EQ(vec_T_tmp, *words);
-
-        // Unpack bufs of type TypeParam to bufs of type uint8_t.
-        vec::Buffers<uint8_t> vec_char_tmp(n, bytes_size);
-        const std::vector<uint8_t*> mem_char_tmp = vec_char_tmp.get_mem();
-        vec::unpack<TypeParam, uint8_t>(
-            mem_T_tmp, mem_char_tmp, n, size, word_size);
-        ASSERT_EQ(vec_char_tmp, vec_char);
+        ASSERT_TRUE(
+            is_equal(_mem1_at_i, mem2[i], size_T)
+            && is_equal(bmap1[i], bmap2[i], bmap_size));
     }
 }
