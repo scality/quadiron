@@ -35,6 +35,7 @@ set(LIB_SRC
   ${SOURCE_DIR}/gf_nf4.cpp
   ${SOURCE_DIR}/gf_ring.cpp
   ${SOURCE_DIR}/property.cpp
+  ${SOURCE_DIR}/quadiron_c.cpp
 
   CACHE
   INTERNAL

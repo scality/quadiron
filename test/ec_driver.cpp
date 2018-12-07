@@ -144,9 +144,9 @@ void create_coding_files(
     }
 
     if (operation_on_packet) {
-        fec->encode_packet(d_files, c_files, c_props);
+        fec->encode_streams_vertical(d_files, c_files, c_props);
     } else {
-        fec->encode_bufs(d_files, c_files, c_props);
+        fec->encode_streams_horizontal(d_files, c_files, c_props);
     }
 
     for (unsigned i = 0; i < fec->n_data; i++) {
@@ -244,9 +244,9 @@ bool repair_data_files(
     }
 
     if (operation_on_packet) {
-        fec->decode_packet(d_files, c_files, c_props, r_files);
+        fec->decode_streams_vertical(d_files, c_files, c_props, r_files);
     } else {
-        fec->decode_bufs(d_files, c_files, c_props, r_files);
+        fec->decode_streams_horizontal(d_files, c_files, c_props, r_files);
     }
 
     for (unsigned i = 0; i < fec->n_data; i++) {

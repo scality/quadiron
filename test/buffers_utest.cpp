@@ -42,10 +42,15 @@ class BuffersTest : public ::testing::Test {
   public:
     quadiron::simd::AlignedAllocator<T> allocator;
 
+    BuffersTest()
+    {
+        quadiron::prng().seed(time(0));
+    }
+    ~BuffersTest() = default;
+
     std::unique_ptr<vec::Buffers<T>>
     gen_buffers_rand_data(int n, int size, int _max = 0)
     {
-        std::mt19937 prng;
         T max_val = 65537;
         const int max = (_max == 0) ? max_val : _max;
         std::uniform_int_distribution<uint32_t> dis(0, max - 1);
@@ -54,7 +59,7 @@ class BuffersTest : public ::testing::Test {
         for (int i = 0; i < n; i++) {
             T* buf = this->allocator.allocate(size);
             for (int j = 0; j < size; j++) {
-                buf[j] = dis(prng);
+                buf[j] = dis(quadiron::prng());
             }
             vec->set(i, buf);
         }

@@ -80,6 +80,12 @@ static inline uint64_t hw_timer()
     return x;
 }
 
+std::ostream& hex_dump(
+    std::ostream& os,
+    const void* buffer,
+    std::size_t bufsize,
+    bool showPrintableChars);
+
 } // namespace quadiron
 
 #endif

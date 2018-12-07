@@ -32,10 +32,12 @@
 #define __QUAD_PROPERTY_H__
 
 #include <cstdint>
+#include <cstring>
 #include <iosfwd>
 #include <string>
 #include <unordered_map>
 
+#include <netinet/in.h>
 #include <sys/types.h>
 
 namespace quadiron {
@@ -54,6 +56,8 @@ static constexpr unsigned OOR_MARK = 1;
  */
 class Properties {
   public:
+    enum { FNT1 = 0x464E5431 };
+
     inline void add(const off_t loc, const uint32_t data)
     {
         props[loc] = data;
@@ -75,11 +79,61 @@ class Properties {
         return props;
     }
 
+    /**
+     * Serialize properties into a buffer (FNT)
+     *
+     * @return 0 if OK, else -1
+     */
+    inline int fnt_serialize(uint32_t* dwords, unsigned n_dwords)
+    {
+        if ((2 + props.size()) > n_dwords) {
+            return -1;
+        }
+        dwords[0] = htonl(FNT1);
+        unsigned i = 2;
+        for (auto& kv : props) {
+            dwords[i++] = htonl(static_cast<uint32_t>(kv.first));
+        }
+        dwords[1] = htonl(i - 2);
+        for (; i < n_dwords; i++) {
+            dwords[i] = htonl(0);
+        }
+        return 0;
+    }
+
+    /**
+     * Deserialize properties from a buffer (FNT)
+     *
+     * @return 0 if OK, else -1
+     */
+    inline int fnt_deserialize(const uint32_t* dwords, unsigned n_dwords)
+    {
+        if (n_dwords < 2) {
+            return -1;
+        }
+        uint32_t magic = ntohl(dwords[0]);
+        if (magic != FNT1) {
+            return -1;
+        }
+        uint32_t _n_dwords = ntohl(dwords[1]);
+        if ((2 + _n_dwords) > n_dwords) {
+            return -1;
+        }
+        for (unsigned i = 0; i < _n_dwords; i++) {
+            add(static_cast<off_t>(ntohl(dwords[i + 2])), 1);
+        }
+        return 0;
+    }
+
   private:
     std::unordered_map<off_t, uint32_t> props;
 
     friend std::istream& operator>>(std::istream& is, Properties& props);
     friend std::ostream& operator<<(std::ostream& os, const Properties& props);
+};
+
+class FntProperties : public Properties {
+  public:
 };
 
 } // namespace quadiron
