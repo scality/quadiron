@@ -151,8 +151,8 @@ inline void butterfly_ct_step(
     for (unsigned i = start; i < bufs_nb; i += step) {
         VecType x1, y1;
         VecType x2, y2;
-        VecType* __restrict p = reinterpret_cast<VecType*>(mem[i]);
-        VecType* __restrict q = reinterpret_cast<VecType*>(mem[i + m]);
+        VecType* p = reinterpret_cast<VecType*>(mem[i]);
+        VecType* q = reinterpret_cast<VecType*>(mem[i + m]);
 
         size_t j = 0;
         for (; j < end; j += 2) {
@@ -204,10 +204,10 @@ inline static void do_butterfly_ct_2_layers(
     VecType c2 = set_one(r2);
     VecType c3 = set_one(r3);
 
-    VecType* __restrict p = reinterpret_cast<VecType*>(mem[start]);
-    VecType* __restrict q = reinterpret_cast<VecType*>(mem[start + m]);
-    VecType* __restrict r = reinterpret_cast<VecType*>(mem[start + 2 * m]);
-    VecType* __restrict s = reinterpret_cast<VecType*>(mem[start + 3 * m]);
+    VecType* p = reinterpret_cast<VecType*>(mem[start]);
+    VecType* q = reinterpret_cast<VecType*>(mem[start + m]);
+    VecType* r = reinterpret_cast<VecType*>(mem[start + 2 * m]);
+    VecType* s = reinterpret_cast<VecType*>(mem[start + 3 * m]);
 
     size_t j = 0;
     const size_t end = (len > 1) ? len - 1 : 0;
@@ -361,8 +361,8 @@ inline void butterfly_gs_step(
     for (unsigned i = start; i < bufs_nb; i += step) {
         VecType x1, x2, x3, x4;
         VecType y1, y2, y3, y4;
-        VecType* __restrict p = reinterpret_cast<VecType*>(mem[i]);
-        VecType* __restrict q = reinterpret_cast<VecType*>(mem[i + m]);
+        VecType* p = reinterpret_cast<VecType*>(mem[i]);
+        VecType* q = reinterpret_cast<VecType*>(mem[i + m]);
 
         size_t j = 0;
         for (; j < end; j += 4) {
@@ -438,8 +438,8 @@ inline void butterfly_gs_step_simple(
     for (unsigned i = start; i < bufs_nb; i += step) {
         VecType x1, y1;
         VecType x2, y2;
-        VecType* __restrict p = reinterpret_cast<VecType*>(mem[i]);
-        VecType* __restrict q = reinterpret_cast<VecType*>(mem[i + m]);
+        VecType* p = reinterpret_cast<VecType*>(mem[i]);
+        VecType* q = reinterpret_cast<VecType*>(mem[i + m]);
 
         size_t j = 0;
         for (; j < end; j += 2) {
@@ -481,7 +481,7 @@ inline void encode_post_process(
 
     const std::vector<T*>& mem = output.get_mem();
     for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
-        VecType* __restrict buf = reinterpret_cast<VecType*>(mem[frag_id]);
+        VecType* buf = reinterpret_cast<VecType*>(mem[frag_id]);
 
         size_t vec_id = 0;
         size_t end = (vecs_nb > 3) ? vecs_nb - 3 : 0;
