@@ -210,8 +210,8 @@ inline void mul_coef_to_buf(const T a, T* src, T* dest, size_t len, T card)
 {
     const VecType coef = set_one(a);
 
-    VecType* __restrict _src = reinterpret_cast<VecType*>(src);
-    VecType* __restrict _dest = reinterpret_cast<VecType*>(dest);
+    VecType* _src = reinterpret_cast<VecType*>(src);
+    VecType* _dest = reinterpret_cast<VecType*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -239,8 +239,8 @@ inline void mul_coef_to_buf(const T a, T* src, T* dest, size_t len, T card)
 template <typename T>
 inline void add_two_bufs(T* src, T* dest, size_t len, T card)
 {
-    VecType* __restrict _src = reinterpret_cast<VecType*>(src);
-    VecType* __restrict _dest = reinterpret_cast<VecType*>(dest);
+    VecType* _src = reinterpret_cast<VecType*>(src);
+    VecType* _dest = reinterpret_cast<VecType*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -260,9 +260,9 @@ inline void add_two_bufs(T* src, T* dest, size_t len, T card)
 template <typename T>
 inline void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len, T card)
 {
-    VecType* __restrict _bufa = reinterpret_cast<VecType*>(bufa);
-    VecType* __restrict _bufb = reinterpret_cast<VecType*>(bufb);
-    VecType* __restrict _res = reinterpret_cast<VecType*>(res);
+    VecType* _bufa = reinterpret_cast<VecType*>(bufa);
+    VecType* _bufb = reinterpret_cast<VecType*>(bufb);
+    VecType* _res = reinterpret_cast<VecType*>(res);
     const unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
@@ -287,8 +287,8 @@ inline void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len, T card)
 template <typename T>
 inline void mul_two_bufs(T* src, T* dest, size_t len, T card)
 {
-    VecType* __restrict _src = reinterpret_cast<VecType*>(src);
-    VecType* __restrict _dest = reinterpret_cast<VecType*>(dest);
+    VecType* _src = reinterpret_cast<VecType*>(src);
+    VecType* _dest = reinterpret_cast<VecType*>(dest);
     const unsigned ratio = sizeof(*_src) / sizeof(*src);
     const size_t _len = len / ratio;
     const size_t _last_len = len - _len * ratio;
