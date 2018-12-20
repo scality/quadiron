@@ -40,6 +40,8 @@
 
 namespace quadiron {
 
+static constexpr unsigned OOR_MARK = 1;
+
 /** Ancillary data attached to values.
  *
  * A property carries extra-information (whose interpretation is left to the

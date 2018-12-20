@@ -60,6 +60,11 @@ class RsFnt : public FecCode<T> {
     // decoding context used in encoding of systematic FNT
     std::unique_ptr<DecodeContext<T>> enc_context;
 
+    // Indices used for accelerated functions
+    size_t simd_vec_len;
+    size_t simd_trailing_len;
+    size_t simd_offset;
+
   public:
     RsFnt(
         FecType type,
@@ -70,6 +75,12 @@ class RsFnt : public FecCode<T> {
         : FecCode<T>(type, word_size, n_data, n_parities, pkt_size)
     {
         this->fec_init();
+
+        // Indices used for accelerated functions
+        const unsigned ratio = simd::countof<T>();
+        simd_vec_len = this->pkt_size / ratio;
+        simd_trailing_len = this->pkt_size - simd_vec_len * ratio;
+        simd_offset = simd_vec_len * ratio;
     }
 
     inline void check_params() override
