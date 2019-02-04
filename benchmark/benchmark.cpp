@@ -478,9 +478,9 @@ bool Benchmark<T>::encode()
     reset_c_streams();
 
     if (operation_on_packet)
-        fec->encode_packet(*d_streams, *c_streams, c_props);
+        fec->encode_streams_vertical(*d_streams, *c_streams, c_props);
     else
-        fec->encode_bufs(*d_streams, *c_streams, c_props);
+        fec->encode_streams_horizontal(*d_streams, *c_streams, c_props);
 
     // update stats
     enc_stats->add(fec->total_enc_usec);
@@ -506,14 +506,14 @@ bool Benchmark<T>::decode()
     reset_r_streams();
 
     if (operation_on_packet) {
-        if (!fec->decode_packet(
+        if (!fec->decode_streams_vertical(
                 d_streams_shuffled,
                 c_streams_shuffled,
                 c_props_shuffled,
                 *r_streams))
             return false;
     } else {
-        if (!fec->decode_bufs(
+        if (!fec->decode_streams_horizontal(
                 d_streams_shuffled,
                 c_streams_shuffled,
                 c_props_shuffled,
