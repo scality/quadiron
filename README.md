@@ -63,11 +63,11 @@ with GCC seems more reliable (not surprising as we are using gcov).
 
 ### SIMD vectorization
 
-QuadIron can be accelerated using SIMD vectorization. This is controled by the
+QuadIron can be accelerated using SIMD vectorization. This is controlled by the
 `USE_SIMD` parameter, that can have one of the following values:
-- **OFF** (default value): no SIMD vectorisation (except the one done by the
+- **OFF** (default value): no SIMD vectorization (except the one done by the
   compiler)
-- **ON**: select the best SIMD instructions set supported QuadIron and the
+- **ON**: select the best SIMD instructions set supported by QuadIron and the
   machine
 - **SSE**: use SSE4.1 SIMD instructions
 - **AVX**: use AVX2 SIMD instructions
