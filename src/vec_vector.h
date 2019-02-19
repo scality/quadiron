@@ -46,7 +46,7 @@
 namespace quadiron {
 
 template <typename T>
-class Polynomial;
+class Poly;
 
 /** Low-level wrappers/helpers around memory buffer. */
 namespace vec {
@@ -100,7 +100,8 @@ class Vector {
     void copy(Vector<T>* v, int n, int dest_offset, int src_offset);
     friend bool operator==<T>(const Vector<T>& lhs, const Vector<T>& rhs);
     virtual void neg();
-    void to_poly(Polynomial<T>* poly);
+    void to_poly(Poly<T>* poly);
+    void rand();
     virtual void dump(void) const;
     void sort();
     void swap(unsigned i, unsigned j);
@@ -438,7 +439,7 @@ void Vector<T>::neg()
 }
 
 template <typename T>
-void Vector<T>::to_poly(Polynomial<T>* poly)
+void Vector<T>::to_poly(Poly<T>* poly)
 {
     poly->clear();
     for (int i = 0; i < this->n; i++) {
@@ -457,6 +458,14 @@ void Vector<T>::swap(unsigned i, unsigned j)
 {
     using std::swap;
     swap(mem[i], mem[j]);
+}
+
+template <typename T>
+void Vector<T>::rand()
+{
+    for (int i = 0; i < this->n; i++) {
+        set(i, rn->rand());
+    }
 }
 
 template <typename T>

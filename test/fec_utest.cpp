@@ -32,6 +32,8 @@
 #include "quadiron.h"
 
 namespace fec = quadiron::fec;
+namespace arith = quadiron::arith;
+namespace vec = quadiron::vec;
 
 template <typename T>
 class FecTestCommon : public ::testing::Test {
@@ -48,13 +50,13 @@ class FecTestCommon : public ::testing::Test {
         const quadiron::gf::NF4<T>& nf4 =
             static_cast<const quadiron::gf::NF4<T>&>(gf);
 
-        quadiron::vec::Vector<T> data_frags(gf, n_data);
-        quadiron::vec::Vector<T> copied_data_frags(gf, n_data);
-        quadiron::vec::Vector<T> encoded_frags(gf, fec.n);
-        quadiron::vec::Vector<T> received_frags(gf, n_data);
-        quadiron::vec::Vector<T> decoded_frags(gf, n_data);
+        vec::Vector<T> data_frags(gf, n_data);
+        vec::Vector<T> copied_data_frags(gf, n_data);
+        vec::Vector<T> encoded_frags(gf, fec.n);
+        vec::Vector<T> received_frags(gf, n_data);
+        vec::Vector<T> decoded_frags(gf, n_data);
         std::vector<int> ids;
-        quadiron::vec::Vector<T> fragments_ids(gf, n_data);
+        vec::Vector<T> fragments_ids(gf, n_data);
 
         for (int i = 0; i < code_len; i++) {
             ids.push_back(i);
@@ -98,7 +100,7 @@ TYPED_TEST_CASE(FecTestCommon, AllTypes);
 
 TYPED_TEST(FecTestCommon, TestNf4) // NOLINT
 {
-    const int iter_count = quadiron::arith::log2<TypeParam>(sizeof(TypeParam));
+    const int iter_count = arith::log2<TypeParam>(sizeof(TypeParam));
 
     for (int i = 1; i < iter_count; i++) {
         const unsigned word_size = 1 << i;

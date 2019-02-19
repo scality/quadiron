@@ -77,7 +77,7 @@ int jacobi(SignedDoubleSizeVal<T> n, SignedDoubleSizeVal<T> m);
 template <typename T>
 bool solovay_strassen1(T a, T n);
 template <typename T>
-bool solovay_strassen(T n);
+bool solovay_strassen(T n, T (*rand_func)(T n));
 template <typename T>
 bool is_prime(T n);
 template <typename T>
@@ -435,24 +435,27 @@ bool solovay_strassen1(T a, T n)
 {
     const T exponent = (n - 1) / 2;
     const T res = exp_mod(a, exponent, n);
-    int j = jacobi(a, n);
+    int j = jacobi<T>(a, n);
+    T _res;
     if (j < 0) {
-        res = res - n;
+        _res = res - n;
+    } else {
+        _res = res;
     }
-    return j == res;
+    return j == _res;
 }
 
 /** Perform the Solovay–Strassen primality test.
  *
  * @param n check if `n` is prime
+ * @param rand_func return a random number between 0 and n-1
  * @return true if `n` is (probably) prime else false.
  */
 template <typename T>
-bool solovay_strassen(T n)
+bool solovay_strassen(T n, T (*rand_func)(T n))
 {
-    std::uniform_int_distribution<uint32_t> dis(1, n - 1);
     for (int i = 0; i < 100; i++) {
-        T a = dis(prng());
+        T a = rand_func(n);
         if (!solovay_strassen1(a, n))
             return false;
     }
@@ -499,7 +502,7 @@ std::vector<T> factor_distinct_prime(T nb)
         nb = nb / 2;
     }
     // `nb` must be odd at this point => we can skip one element.
-    assert(nb & 1);
+    assert((nb & 1) == 1);
     for (T i = 3; i <= sqrt<T>(nb); i = i + 2) {
         // While `i` divides `nb`, get `i` and divide `nb`.
         while (nb % i == 0) {
@@ -563,7 +566,7 @@ void factor_prime(T nb, std::vector<T>* primes, std::vector<int>* exponent)
         occurence = 0;
     }
     // `nb` must be odd at this point => we can skip one element.
-    assert(nb & 1);
+    assert((nb & 1) == 1);
     for (T i = 3; i <= sqrt<T>(nb); i = i + 2) {
         // While `i` divides `nb`, get `i` and divide `nb`.
         while (nb % i == 0) {

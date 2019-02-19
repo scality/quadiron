@@ -48,10 +48,12 @@ template <typename T>
 class Large : public FourierTransform<T> {
   public:
     Large(const gf::Field<T>& gf, int l, T w);
-    ~Large();
     void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
     void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
     void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
+    void fft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
+    void ifft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
+    void fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
 
   private:
     void
@@ -60,12 +62,12 @@ class Large : public FourierTransform<T> {
     int l;
     T w;
     T inv_w;
-    vec::Vector<T>* W;
-    vec::Vector<T>* inv_W;
-    vec::Matrix<T>* tmp2;
-    vec::Matrix<T>* tmp3;
-    vec::Matrix<T>* tmp4;
-    vec::Vector<T>& tmp5;
+    std::unique_ptr<vec::Vector<T>> W = nullptr;
+    std::unique_ptr<vec::Vector<T>> inv_W = nullptr;
+    std::unique_ptr<vec::Matrix<T>> tmp2 = nullptr;
+    std::unique_ptr<vec::Matrix<T>> tmp3 = nullptr;
+    std::unique_ptr<vec::Matrix<T>> tmp4 = nullptr;
+    std::unique_ptr<vec::Vector<T>> tmp5 = nullptr;
     int _get_p(int i, int j);
     int _get_p0(int i, int j, int s);
     int _get_p1(int i, int j, int s);
@@ -78,34 +80,16 @@ Large<T>::Large(const gf::Field<T>& gf, int l, T w)
 {
     this->l = l;
     this->w = w;
-    this->inv_w = gf->inv(w);
+    this->inv_w = gf.inv(w);
 
-    this->W = new vec::Vector<T>(gf, this->n + 1);
-    this->inv_W = new vec::Vector<T>(gf, this->n + 1);
-    gf->compute_omegas_cached(W, this->n, w);
-    gf->compute_omegas_cached(inv_W, this->n, inv_w);
+    this->W = std::make_unique<vec::Vector<T>>(gf, this->n + 1);
+    this->inv_W = std::make_unique<vec::Vector<T>>(gf, this->n + 1);
+    gf.compute_omegas(*W, this->n, w);
+    gf.compute_omegas(*inv_W, this->n, inv_w);
 
     _pre_compute_consts();
 }
 
-template <typename T>
-Large<T>::~Large()
-{
-    delete this->inv_W;
-    delete this->W;
-    delete this->tmp2;
-    delete this->tmp3;
-    delete this->tmp4;
-    delete this->tmp5;
-}
-
-/**
- * Representing powers of root as a vector is more practical than a
- * matrix (e.g. (n+k=2^15) => would be 1 billion entries !)
- *
- * @param _W vector of powers of roots
- * @param _w Nth root of unity
- */
 /**
  * Simulate the bit matrix
  *
@@ -120,7 +104,7 @@ Large<T>::~Large()
  * @param i 0 <= i <= N-1
  * @param j 1 <= j <= n
  *
- * @return
+ * @return the bit at (i, j)
  */
 template <typename T>
 int Large<T>::_get_p(int i, int j)
@@ -171,10 +155,10 @@ int Large<T>::_get_p1(int i, int j, int s)
 template <typename T>
 void Large<T>::_pre_compute_consts()
 {
-    tmp2 = new vec::Matrix<T>(this->gf, this->l + 1, this->n);
-    tmp3 = new vec::Matrix<T>(this->gf, this->l + 1, this->n);
-    tmp4 = new vec::Matrix<T>(this->gf, this->l + 1, this->n);
-    tmp5 = new vec::Vector<T>(this->gf, this->n);
+    tmp2 = std::make_unique<vec::Matrix<T>>(*this->gf, this->l + 1, this->n);
+    tmp3 = std::make_unique<vec::Matrix<T>>(*this->gf, this->l + 1, this->n);
+    tmp4 = std::make_unique<vec::Matrix<T>>(*this->gf, this->l + 1, this->n);
+    tmp5 = std::make_unique<vec::Vector<T>>(*this->gf, this->n);
 
     tmp2->zero_fill();
     tmp3->zero_fill();
@@ -216,15 +200,15 @@ void Large<T>::_fft(
     vec::Vector<T>& input,
     vec::Vector<T>& _W)
 {
-    vec::Matrix<T> phi(this->gf, this->l + 1, this->n);
+    vec::Matrix<T> phi(*this->gf, this->l + 1, this->n);
 
     // compute phi[0][i]
     for (int i = 0; i <= this->n - 1; i++)
-        phi.set(0, i, input->get(i));
+        phi.set(0, i, input.get(i));
 
     for (int i = 1; i <= this->l; i++) {
         for (int j = 0; j <= this->n - 1; j++) {
-            DoubleSizeVal<T> val = DoubleSizeVal<T>(_W->get(tmp4->get(i, j)))
+            DoubleSizeVal<T> val = DoubleSizeVal<T>(_W.get(tmp4->get(i, j)))
                                        * phi.get(i - 1, tmp3->get(i, j))
                                    + phi.get(i - 1, tmp2->get(i, j));
 
@@ -240,13 +224,13 @@ void Large<T>::_fft(
 template <typename T>
 void Large<T>::fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
-    _fft(output, input, W);
+    _fft(output, input, *W);
 }
 
 template <typename T>
 void Large<T>::fft_inv(vec::Vector<T>& output, vec::Vector<T>& input)
 {
-    _fft(output, input, inv_W);
+    _fft(output, input, *inv_W);
 }
 
 template <typename T>
@@ -255,6 +239,24 @@ void Large<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
     fft_inv(output, input);
     if (this->inv_n_mod_p > 1)
         output.mul_scalar(this->inv_n_mod_p);
+}
+
+template <typename T>
+void Large<T>::fft(vec::Buffers<T>&, vec::Buffers<T>&)
+{
+    // TBD
+}
+
+template <typename T>
+void Large<T>::ifft(vec::Buffers<T>&, vec::Buffers<T>&)
+{
+    // TBD
+}
+
+template <typename T>
+void Large<T>::fft_inv(vec::Buffers<T>&, vec::Buffers<T>&)
+{
+    // TBD
 }
 
 } // namespace fft
