@@ -209,7 +209,7 @@ class RsGfpFft : public FecCode<T> {
      * It supports for FEC using multiplicative FFT over FNT
      */
     void decode_prepare(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>& words) override
@@ -218,13 +218,14 @@ class RsGfpFft : public FecCode<T> {
         int k = this->n_data; // number of fragments received
         for (int i = 0; i < k; ++i) {
             const int j = fragments_ids.get(i);
-            auto data = props[j].get(offset);
-
-            // Check if the symbol is a special case whick is marked by
-            // `OOR_MARK`. In encoded data, its value was subtracted by the
-            // predefined limite_value. This operation restore its value.
-            if (data == OOR_MARK) {
-                words.set(i, words.get(i) + limit_value);
+            if (props[j].is_marked(context.props_indices[j], offset)) {
+                // Check if the symbol is a special case whick is marked by
+                // `OOR_MARK`. In encoded data, its value was subtracted by the
+                // predefined limite_value. This operation restore its value.
+                if (props[j].marker(context.props_indices[j]) == OOR_MARK) {
+                    words.set(i, words.get(i) + limit_value);
+                }
+                context.props_indices.at(j)++;
             }
         }
     }
