@@ -31,14 +31,18 @@
 #ifndef __QUAD_PROPERTY_H__
 #define __QUAD_PROPERTY_H__
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <iosfwd>
 #include <string>
-#include <unordered_map>
+#include <vector>
+#include <assert.h>
 
 #include <netinet/in.h>
 #include <sys/types.h>
+
+#include "core.h"
 
 namespace quadiron {
 
@@ -55,18 +59,23 @@ static constexpr unsigned OOR_MARK = 1;
  * For NF4, value is an uint32_t integer.
  */
 class Properties {
+  private:
+    std::vector<std::pair<size_t, uint32_t>> props;
+    size_t m_default_key = 0;
+    uint32_t m_default_val = 0;
+
+    friend std::istream& operator>>(std::istream& is, Properties& props);
+    friend std::ostream& operator<<(std::ostream& os, const Properties& props);
+
   public:
     enum { FNT1 = 0x464E5431 };
 
-    inline void add(const off_t loc, const uint32_t data)
+    /**
+     * Add a pair of location and marker
+     */
+    inline void add(const size_t location, const uint32_t marker)
     {
-        props[loc] = data;
-    }
-
-    inline uint32_t get(const off_t loc) const
-    {
-        auto it = props.find(loc);
-        return it != props.end() ? it->second : 0;
+        props.push_back(std::make_pair(location, marker));
     }
 
     inline void clear()
@@ -74,9 +83,17 @@ class Properties {
         props.clear();
     }
 
-    std::unordered_map<off_t, uint32_t> const get_map() const
+    const std::vector<std::pair<size_t, uint32_t>>& get_map() const
     {
         return props;
+    }
+
+    /**
+     * Sort `props` on the basis of location in ascending order
+     */
+    inline void sort()
+    {
+        std::sort(props.begin(), props.end());
     }
 
     /**
@@ -91,13 +108,12 @@ class Properties {
         }
         dwords[0] = htonl(FNT1);
         unsigned i = 2;
-        for (auto& kv : props) {
-            dwords[i++] = htonl(static_cast<uint32_t>(kv.first));
+        for (auto const& item : props) {
+            dwords[i++] = htonl(narrow_cast<uint32_t>(item.first));
         }
         dwords[1] = htonl(i - 2);
-        for (; i < n_dwords; i++) {
-            dwords[i] = htonl(0);
-        }
+        std::fill(dwords + i, dwords + n_dwords - 1, htonl(0));
+
         return 0;
     }
 
@@ -120,16 +136,65 @@ class Properties {
             return -1;
         }
         for (unsigned i = 0; i < _n_dwords; i++) {
-            add(static_cast<off_t>(ntohl(dwords[i + 2])), 1);
+            add(static_cast<size_t>(ntohl(dwords[i + 2])), OOR_MARK);
         }
         return 0;
     }
 
-  private:
-    std::unordered_map<off_t, uint32_t> props;
+    /**
+     * Get location at a given index
+     *
+     * @param index - index of element
+     *
+     * @returns location of the element if the element is found, otherwise a
+     * default value is return
+     */
+    inline const size_t& location(size_t index) const
+    {
+        return (index < props.size()) ? props[index].first : m_default_key;
+    }
 
-    friend std::istream& operator>>(std::istream& is, Properties& props);
-    friend std::ostream& operator<<(std::ostream& os, const Properties& props);
+    /**
+     * Get marker at a given index
+     *
+     * @param index - index of element
+     *
+     * @returns marker of the element if the element is found, otherwise a
+     * default value is return
+     */
+    inline const uint32_t& marker(size_t index) const
+    {
+        return (index < props.size()) ? props[index].second : m_default_val;
+    }
+
+    /**
+     * Check if a given location is the location of the `index`th element
+     *
+     * @param index - index of element
+     * @param loc - a location
+     *
+     * @returns true if it matches, false otherwise
+     */
+    inline bool is_marked(size_t index, const size_t loc) const
+    {
+        return (index < props.size()) ? (props[index].first == loc) : false;
+    }
+
+    /**
+     * Check if the location of the `index`th element is within a range
+     *
+     * @param index - index of element
+     * @param min - lower bound of the range (inclusive)
+     * @param max - upper bound of the range (exclusive)
+     *
+     * @returns true if it matches, false otherwise
+     */
+    inline bool in_range(size_t index, const size_t min, const size_t max) const
+    {
+        return (index < props.size())
+                   ? (props[index].first >= min && props[index].first < max)
+                   : false;
+    }
 };
 
 class FntProperties : public Properties {
