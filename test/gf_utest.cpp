@@ -116,6 +116,38 @@ class GfTestCommon : public ::testing::Test {
 using AllTypes = ::testing::Types<uint32_t, uint64_t, __uint128_t>;
 TYPED_TEST_CASE(GfTestCommon, AllTypes);
 
+TYPED_TEST(GfTestCommon, TestGfRing) // NOLINT
+{
+    std::vector<TypeParam> cards = {
+        257,        // Fermat 2^8 + 1
+        65537,      // Fermat 2^16 + 1
+        2147483647, // Mersenne 2^31 - 1
+    };
+
+    if (sizeof(TypeParam) >= sizeof(uint64_t)) {
+        // 9th Mersenne 2^61 - 1
+        cards.push_back((static_cast<TypeParam>(1) << 61) - 1);
+    } else if (sizeof(TypeParam) >= sizeof(__uint128_t)) {
+        // Mersenne 2^89 - 1
+        cards.push_back((static_cast<TypeParam>(1) << 89) - 1);
+    }
+
+    for (auto& card : cards) {
+        auto gf(gf::create<gf::Field<TypeParam>>(card, 1));
+        this->test_negation(gf);
+        this->test_find_primitive_root(&gf);
+        // NOTE: Following tests does not work for __uint128_t as in `mul` it
+        // use DoubleSizeVal<TypeParam> this->test_log(gf);
+        if (sizeof(TypeParam) < 16) {
+            this->test_reciprocal(gf);
+            this->test_get_order(gf);
+            this->test_get_nth_root(gf);
+            // The following test passes but slowly due to naive log operation
+            // this->test_log(gf);
+        }
+    }
+}
+
 TYPED_TEST(GfTestCommon, TestGfNf4) // NOLINT
 {
     for (unsigned n = 1; n <= sizeof(TypeParam) / 4; n++) {
