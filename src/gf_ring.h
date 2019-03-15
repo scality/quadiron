@@ -148,12 +148,30 @@ class RingModN {
     std::vector<int> exponents;
     std::vector<T> all_primes_factors;
     std::vector<T> proper_divisors;
+    // random number engine with a seed as a random number
+    mutable std::uniform_int_distribution<uint64_t> distribution;
+    // random number engine for the __uint128_t case
+    mutable std::uniform_int_distribution<uint64_t> distribution_leading;
+
+  private:
+    static constexpr uint64_t rand_upper_bound(T card)
+    {
+        return (card > std::numeric_limits<uint64_t>::max())
+                   ? std::numeric_limits<uint64_t>::max()
+                   : card - 1;
+    }
+    static constexpr uint64_t rand_leading_bound(T card)
+    {
+        return (card > std::numeric_limits<uint64_t>::max())
+                   ? card - std::numeric_limits<uint64_t>::max() - 1
+                   : 0;
+    }
 };
 template <typename T>
 RingModN<T>::RingModN(T card)
+    : _card(card), root(0), distribution(1, rand_upper_bound(card)),
+      distribution_leading(0, rand_leading_bound(card))
 {
-    this->_card = card;
-    this->root = 0;
 }
 
 template <typename T>
@@ -520,8 +538,17 @@ void RingModN<T>::compute_omegas_cached(vec::Vector<T>& W, int n, T w) const
 template <typename T>
 T RingModN<T>::rand(void) const
 {
-    std::uniform_int_distribution<uint32_t> dis(1, this->card() - 1);
-    return dis(prng());
+    return distribution(prng());
+}
+
+template <>
+inline __uint128_t RingModN<__uint128_t>::rand(void) const
+{
+    __uint128_t c = distribution(prng());
+    if (_card > std::numeric_limits<uint64_t>::max()) {
+        c |= (static_cast<__uint128_t>(distribution_leading(prng())) << 64);
+    }
+    return c;
 }
 
 /** Check if a number is primitive root or not.
