@@ -157,14 +157,14 @@ class FecCode {
      *  if NON_SYSTEMATIC get_n_outputs()
      */
     virtual void decode(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         vec::Vector<T>& output,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>& words);
 
     virtual void decode(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         vec::Buffers<T>& output,
         const std::vector<Properties>& props,
         off_t offset,
@@ -189,18 +189,19 @@ class FecCode {
     bool decode_streams_horizontal(
         std::vector<std::istream*> input_data_bufs,
         std::vector<std::istream*> input_parities_bufs,
-        const std::vector<Properties>& input_parities_props,
+        std::vector<Properties>& input_parities_props,
         std::vector<std::ostream*> output_data_bufs);
 
     virtual std::unique_ptr<DecodeContext<T>> init_context_dec(
         vec::Vector<T>& fragments_ids,
+        std::vector<Properties>& input_props,
         size_t size = 0,
         vec::Buffers<T>* output = nullptr);
 
     bool decode_streams_vertical(
         std::vector<std::istream*> input_data_bufs,
         std::vector<std::istream*> input_parities_bufs,
-        const std::vector<Properties>& input_parities_props,
+        std::vector<Properties>& input_parities_props,
         std::vector<std::ostream*> output_data_bufs);
 
     void encode_blocks_vertical(
@@ -213,7 +214,7 @@ class FecCode {
     bool decode_blocks_vertical(
         std::vector<uint8_t*> data_bufs,
         std::vector<uint8_t*> parities_bufs,
-        const std::vector<Properties>& parities_props,
+        std::vector<Properties>& parities_props,
         std::vector<int> missing_idxs,
         std::vector<bool> wanted_idxs,
         size_t block_size_bytes);
@@ -270,24 +271,24 @@ class FecCode {
     }
 
     virtual void decode_prepare(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>& words);
 
     virtual void decode_apply(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         vec::Vector<T>& output,
         vec::Vector<T>& words);
 
     virtual void decode_prepare(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Buffers<T>& words);
 
     virtual void decode_apply(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         vec::Buffers<T>& output,
         vec::Buffers<T>& words);
 };
@@ -440,15 +441,11 @@ void FecCode<T>::encode_streams_horizontal(
         if (!cont)
             break;
 
-        // std::cout << "words at " << offset << ": "; words.dump();
-
         timeval t1 = tick();
         uint64_t start = hw_timer();
         encode(output, output_parities_props, offset, words);
         uint64_t end = hw_timer();
         uint64_t t2 = hrtime_usec(t1);
-
-        // std::cout << "output: "; output.dump();
 
         total_enc_usec += t2;
         total_encode_cycles += (end - start) / word_size;
@@ -563,7 +560,7 @@ template <typename T>
 bool FecCode<T>::decode_streams_horizontal(
     std::vector<std::istream*> input_data_bufs,
     std::vector<std::istream*> input_parities_bufs,
-    const std::vector<Properties>& input_parities_props,
+    std::vector<Properties>& input_parities_props,
     std::vector<std::ostream*> output_data_bufs)
 {
     off_t offset = 0;
@@ -630,7 +627,8 @@ bool FecCode<T>::decode_streams_horizontal(
     vec::Vector<T> words(*(this->gf), n_words);
     vec::Vector<T> output(*(this->gf), n_data);
 
-    std::unique_ptr<DecodeContext<T>> context = init_context_dec(fragments_ids);
+    std::unique_ptr<DecodeContext<T>> context =
+        init_context_dec(fragments_ids, input_parities_props);
     while (true) {
         words.zero_fill();
         if (type == FecType::SYSTEMATIC) {
@@ -740,7 +738,7 @@ bool FecCode<T>::decode_streams_horizontal(
  */
 template <typename T>
 void FecCode<T>::decode(
-    const DecodeContext<T>& context,
+    DecodeContext<T>& context,
     vec::Vector<T>& output,
     const std::vector<Properties>& props,
     off_t offset,
@@ -759,6 +757,7 @@ void FecCode<T>::decode(
 template <typename T>
 std::unique_ptr<DecodeContext<T>> FecCode<T>::init_context_dec(
     vec::Vector<T>& fragments_ids,
+    std::vector<Properties>& input_props,
     size_t size,
     vec::Buffers<T>* output)
 {
@@ -780,7 +779,17 @@ std::unique_ptr<DecodeContext<T>> FecCode<T>::init_context_dec(
     }
 
     return std::make_unique<DecodeContext<T>>(
-        *gf, *fft, *fft_2k, fragments_ids, vx, n_data, n, -1, size, output);
+        *gf,
+        *fft,
+        *fft_2k,
+        fragments_ids,
+        input_props,
+        vx,
+        n_data,
+        n,
+        -1,
+        size,
+        output);
 }
 
 /* Prepare for decoding
@@ -788,7 +797,7 @@ std::unique_ptr<DecodeContext<T>> FecCode<T>::init_context_dec(
  */
 template <typename T>
 void FecCode<T>::decode_prepare(
-    const DecodeContext<T>& context,
+    DecodeContext<T>& context,
     const std::vector<Properties>& props,
     off_t offset,
     vec::Vector<T>& words)
@@ -796,14 +805,16 @@ void FecCode<T>::decode_prepare(
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
     for (unsigned i = 0; i < this->n_data; ++i) {
         const int j = fragments_ids.get(i);
-        auto data = props[j].get(offset);
-
-        // Check if the symbol is a special case whick is marked by `OOR_MARK`,
-        // i.e. true. Note: this check is necessary when word_size is not large
-        // enough to cover all symbols of the field. Following check is used for
-        // FFT over FNT where the single special case symbol equals card - 1
-        if (data == OOR_MARK) {
-            words.set(i, this->gf->card() - 1);
+        if (props[j].is_marked(context.props_indices[j], offset)) {
+            // Check if the symbol is a special case whick is marked by
+            // `OOR_MARK`, i.e. true. Note: this check is necessary when
+            // word_size is not large enough to cover all symbols of the field.
+            // Following check is used for FFT over FNT where the single special
+            // case symbol equals card - 1
+            if (props[j].marker(context.props_indices[j]) == OOR_MARK) {
+                words.set(i, this->gf->card() - 1);
+            }
+            context.props_indices.at(j)++;
         }
     }
 }
@@ -818,7 +829,7 @@ void FecCode<T>::decode_prepare(
  */
 template <typename T>
 void FecCode<T>::decode_apply(
-    const DecodeContext<T>& context,
+    DecodeContext<T>& context,
     vec::Vector<T>& output,
     vec::Vector<T>& words)
 {
@@ -887,7 +898,7 @@ template <typename T>
 bool FecCode<T>::decode_streams_vertical(
     std::vector<std::istream*> input_data_bufs,
     std::vector<std::istream*> input_parities_bufs,
-    const std::vector<Properties>& input_parities_props,
+    std::vector<Properties>& input_parities_props,
     std::vector<std::ostream*> output_data_bufs)
 {
     bool cont = true;
@@ -962,8 +973,8 @@ bool FecCode<T>::decode_streams_vertical(
     vec::Buffers<char> output_char(output_len, buf_size);
     const std::vector<char*> output_mem_char = output_char.get_mem();
 
-    std::unique_ptr<DecodeContext<T>> context =
-        init_context_dec(fragments_ids, pkt_size, &output);
+    std::unique_ptr<DecodeContext<T>> context = init_context_dec(
+        fragments_ids, input_parities_props, pkt_size, &output);
 
     reset_stats_dec();
 
@@ -1166,7 +1177,7 @@ template <typename T>
 bool FecCode<T>::decode_blocks_vertical(
     std::vector<uint8_t*> data_bufs,
     std::vector<uint8_t*> parities_bufs,
-    const std::vector<Properties>& parities_props,
+    std::vector<Properties>& parities_props,
     std::vector<int> missing_idxs,
     std::vector<bool> wanted_idxs,
     size_t block_size_bytes)
@@ -1243,7 +1254,7 @@ bool FecCode<T>::decode_blocks_vertical(
     const std::vector<uint8_t*> output_mem_char = output_char.get_mem();
 
     std::unique_ptr<DecodeContext<T>> context =
-        init_context_dec(fragments_ids, pkt_size, &output);
+        init_context_dec(fragments_ids, parities_props, pkt_size, &output);
 
     reset_stats_dec();
 
@@ -1317,14 +1328,13 @@ bool FecCode<T>::decode_blocks_vertical(
  *
  * @param context decoding context
  * @param output must be exactly n_data
- * @param props special values dictionary must be exactly n_data
  * @param offset used to locate special values
  * @param words vector \f$v=(v_0, v_1, ..., v_{k-1})\f$, \f$k\f$ must be exactly
  * n_data
  */
 template <typename T>
 void FecCode<T>::decode(
-    const DecodeContext<T>& context,
+    DecodeContext<T>& context,
     vec::Buffers<T>& output,
     const std::vector<Properties>& props,
     off_t offset,
@@ -1349,7 +1359,7 @@ void FecCode<T>::decode(
  */
 template <typename T>
 void FecCode<T>::decode_prepare(
-    const DecodeContext<T>& context,
+    DecodeContext<T>& context,
     const std::vector<Properties>& props,
     off_t offset,
     vec::Buffers<T>& words)
@@ -1369,23 +1379,26 @@ void FecCode<T>::decode_prepare(
         if (type == FecType::SYSTEMATIC) {
             frag_id -= this->n_data;
         }
-        // loop over marked symbols
-        for (auto const& data : props[frag_id].get_map()) {
-            off_t loc_offset = data.first;
-            if (loc_offset >= offset && loc_offset < offset_max) {
-                // As loc.offset := offset + j
-                const size_t j = (loc_offset - offset);
 
-                // Check if the symbol is a special case whick is marked by
-                // `OOR_MARK`.
-                // Note: this check is necessary when word_size is not large
-                // enough to cover all symbols of the field. Following check is
-                // used for FFT over FNT where the single special case symbol
-                // equals card - 1
-                if (data.second == OOR_MARK) {
-                    chunk[j] = thres;
-                }
+        // loop over marked symbols
+        while (props[frag_id].in_range(
+            context.props_indices.at(frag_id), offset, offset_max)) {
+            const size_t loc_offset =
+                props[frag_id].location(context.props_indices.at(frag_id));
+            // As loc.offset := offset + j
+            const size_t j = (loc_offset - offset);
+
+            // Check if the symbol is a special case whick is marked by
+            // `OOR_MARK`.
+            // Note: this check is necessary when word_size is not large
+            // enough to cover all symbols of the field. Following check is
+            // used for FFT over FNT where the single special case symbol
+            // equals card - 1
+            if (props[frag_id].marker(context.props_indices.at(frag_id))
+                == OOR_MARK) {
+                chunk[j] = thres;
             }
+            context.props_indices.at(frag_id)++;
         }
     }
 }
@@ -1403,7 +1416,7 @@ void FecCode<T>::decode_prepare(
  */
 template <typename T>
 void FecCode<T>::decode_apply(
-    const DecodeContext<T>& context,
+    DecodeContext<T>& context,
     vec::Buffers<T>& output,
     vec::Buffers<T>& words)
 {

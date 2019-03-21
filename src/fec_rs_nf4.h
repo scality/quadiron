@@ -175,6 +175,7 @@ class RsNf4 : public FecCode<T> {
   protected:
     std::unique_ptr<DecodeContext<T>> init_context_dec(
         vec::Vector<T>& fragments_ids,
+        std::vector<Properties>& input_props,
         size_t size,
         vec::Buffers<T>* output) override
     {
@@ -203,6 +204,7 @@ class RsNf4 : public FecCode<T> {
                 *(this->fft),
                 *(this->fft_2k),
                 fragments_ids,
+                input_props,
                 vx,
                 k,
                 this->n,
@@ -214,21 +216,20 @@ class RsNf4 : public FecCode<T> {
     }
 
     void decode_prepare(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Vector<T>& words) override
     {
         T true_val;
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
-        // std::cout << "fragments_ids:"; fragments_ids->dump();
         int k = this->n_data; // number of fragments received
         for (int i = 0; i < k; ++i) {
             const int j = fragments_ids.get(i);
-            auto data = props[j].get(offset);
-
-            if (data) {
-                true_val = ngff4->pack(words.get(i), data);
+            if (props[j].is_marked(context.props_indices[j], offset)) {
+                true_val = ngff4->pack(
+                    words.get(i), props[j].marker(context.props_indices[j]));
+                context.props_indices.at(j)++;
             } else {
                 true_val = ngff4->pack(words.get(i));
             }
@@ -237,7 +238,7 @@ class RsNf4 : public FecCode<T> {
     }
 
     void decode_apply(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         vec::Vector<T>& output,
         vec::Vector<T>& words) override
     {
@@ -288,54 +289,35 @@ class RsNf4 : public FecCode<T> {
     }
 
     void decode_prepare(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         const std::vector<Properties>& props,
         off_t offset,
         vec::Buffers<T>& words) override
     {
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
-        off_t offset_max = offset + this->pkt_size;
         for (unsigned i = 0; i < this->n_data; ++i) {
             const int frag_id = fragments_ids.get(i);
             T* chunk = words.get(i);
 
-            // the vector will contain marked symbols that will be packed
-            // firstly. Since locations are stored in unordered map, the vector
-            // will be sorted later to facilitate packing un-marked symbols
-            std::vector<size_t> packed_symbs;
             // pack marked symbols
-            for (auto const& data : props[frag_id].get_map()) {
-                const off_t loc_offset = data.first;
-                if (loc_offset >= offset && loc_offset < offset_max) {
-                    // As loc.offset := offset + j
-                    const size_t j = loc_offset - offset;
-                    packed_symbs.push_back(j);
-                    // pack symbol at index `j`
-                    chunk[j] = ngff4->pack(chunk[j], data.second);
+            for (size_t index = 0; index < this->pkt_size; ++index) {
+                if (props[frag_id].is_marked(
+                        context.props_indices[frag_id], offset + index)) {
+                    // pack marked symbol
+                    chunk[index] = ngff4->pack(
+                        chunk[index],
+                        props[frag_id].marker(context.props_indices[frag_id]));
+                    context.props_indices.at(frag_id)++;
+                } else {
+                    // pack un-marked symbol
+                    chunk[index] = ngff4->pack(chunk[index]);
                 }
-            }
-            // sort the list of packed symbols
-            std::sort(packed_symbs.begin(), packed_symbs.end());
-
-            // pack un-marked symbols
-            size_t curr_frag_index = 0;
-            for (auto const& done_id : packed_symbs) {
-                // pack symbols from `curr_frag_index` to `j-1`
-                for (; curr_frag_index < done_id; ++curr_frag_index) {
-                    chunk[curr_frag_index] =
-                        ngff4->pack(chunk[curr_frag_index]);
-                }
-                curr_frag_index++;
-            }
-            // pack last symbols from `curr_frag_index` to `this->pkt_size-1`
-            for (; curr_frag_index < this->pkt_size; ++curr_frag_index) {
-                chunk[curr_frag_index] = ngff4->pack(chunk[curr_frag_index]);
             }
         }
     }
 
     void decode_apply(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         vec::Buffers<T>& output,
         vec::Buffers<T>& words) override
     {

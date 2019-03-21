@@ -84,7 +84,7 @@ class FecTestCommon : public ::testing::Test {
                 received_frags.set(i, encoded_frags.get(ids.at(i)));
             }
             std::unique_ptr<fec::DecodeContext<T>> context =
-                fec.init_context_dec(fragments_ids);
+                fec.init_context_dec(fragments_ids, props);
 
             fec.decode(*context, decoded_frags, props, 0, received_frags);
 

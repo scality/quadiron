@@ -120,6 +120,7 @@ class RsGf2nFftAdd : public FecCode<T> {
   protected:
     std::unique_ptr<DecodeContext<T>> init_context_dec(
         vec::Vector<T>& fragments_ids,
+        std::vector<Properties>& input_props,
         size_t,
         vec::Buffers<T>*) override
     {
@@ -149,6 +150,7 @@ class RsGf2nFftAdd : public FecCode<T> {
                 *fft,
                 *(this->fft_2k),
                 fragments_ids,
+                input_props,
                 vx,
                 this->n_data,
                 this->n,
@@ -158,7 +160,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     }
 
     void decode_prepare(
-        const DecodeContext<T>&,
+        DecodeContext<T>&,
         const std::vector<Properties>&,
         off_t,
         vec::Vector<T>&) override
@@ -167,7 +169,7 @@ class RsGf2nFftAdd : public FecCode<T> {
     }
 
     void decode_apply(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         vec::Vector<T>& output,
         vec::Vector<T>& words) override
     {

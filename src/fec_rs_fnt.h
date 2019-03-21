@@ -148,8 +148,9 @@ class RsFnt : public FecCode<T> {
             suffix_words = std::make_unique<vec::Buffers<T>>(
                 this->n - this->n_data - this->n_outputs, this->pkt_size);
 
+            std::vector<Properties> dummy_props;
             enc_context = this->init_context_dec(
-                *enc_frag_ids, this->pkt_size, inter_words.get());
+                *enc_frag_ids, dummy_props, this->pkt_size, inter_words.get());
 
             // for decoding
             this->dec_inter_codeword =
@@ -197,7 +198,7 @@ class RsFnt : public FecCode<T> {
     }
 
     void decode_data(
-        const DecodeContext<T>& context,
+        DecodeContext<T>& context,
         vec::Buffers<T>& output,
         vec::Buffers<T>& words)
     {

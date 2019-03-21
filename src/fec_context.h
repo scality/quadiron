@@ -41,6 +41,7 @@
 #include "fft_base.h"
 #include "gf_base.h"
 #include "gf_nf4.h"
+#include "property.h"
 #include "vec_poly.h"
 #include "vec_zero_ext.h"
 
@@ -67,12 +68,14 @@ class DecodeContext {
         fft::FourierTransform<T>& fft,
         fft::FourierTransform<T>& fft_2k,
         const vec::Vector<T>& fragments_ids,
+        std::vector<Properties>& input_props,
         const vec::Vector<T>& vx,
         const int k,
         const int n,
         int vx_zero = -1,
         const size_t size = 0,
         vec::Buffers<T>* output = nullptr)
+        : props_indices(input_props.size(), 0)
     {
         this->k = k;
         this->n = n;
@@ -86,6 +89,12 @@ class DecodeContext {
         this->max_n_2k = (this->n > this->len_2k) ? this->n : this->len_2k;
 
         this->fragments_ids = &fragments_ids;
+
+        for (auto& props : input_props) {
+            // Sort properties on the basis of location of pairs in ascending
+            // order.
+            props.sort();
+        }
 
         A = std::make_unique<vec::Poly<T>>(gf, n);
         A_fft_2k = std::make_unique<vec::Vector<T>>(gf, len_2k);
@@ -266,6 +275,7 @@ class DecodeContext {
 
   public:
     int vx_zero;
+    std::vector<size_t> props_indices;
 
   private:
     unsigned k;
