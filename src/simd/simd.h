@@ -31,8 +31,8 @@
 #ifndef __QUAD_SIMD_SIMD_H__
 #define __QUAD_SIMD_SIMD_H__
 
-#include "simd/allocator.h"
-#include "simd/definitions.h"
+#include "allocator.h"
+#include "definitions.h"
 
 namespace quadiron {
 

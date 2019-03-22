@@ -43,7 +43,7 @@
 #include <cstdint>
 #include <limits>
 
-#include "simd/definitions.h"
+#include "definitions.h"
 
 namespace quadiron {
 namespace simd {

@@ -173,6 +173,9 @@ template <typename T>
 Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
     : FourierTransform<T>(gf, n)
 {
+    if ((gf.get_p() - 1) % n != 0) {
+        throw InvalidArgument("Radix2: card-1 not divisible by n");
+    }
     w = gf.get_nth_root(n);
     inv_w = gf.inv(w);
     this->pkt_size = pkt_size;

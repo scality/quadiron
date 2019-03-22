@@ -33,13 +33,18 @@
 #include "fft_add.h"
 #include "fft_ct.h"
 #include "fft_gt.h"
+#include "fft_large.h"
 #include "fft_naive.h"
 #include "fft_single.h"
 #include "gf_bin_ext.h"
 #include "gf_prime.h"
+#include "misc.h"
+#include "vec_poly.h"
 
 namespace fft = quadiron::fft;
 namespace gf = quadiron::gf;
+namespace arith = quadiron::arith;
+namespace vec = quadiron::vec;
 
 template <typename T>
 class FftTest : public ::testing::Test {
@@ -47,10 +52,10 @@ class FftTest : public ::testing::Test {
     const unsigned q = 65537;
     const unsigned code_len = 32;
 
-    quadiron::vec::Vector<T>
+    vec::Vector<T>
     random_vec(const gf::Field<T>& gf, int size, unsigned to_init)
     {
-        quadiron::vec::Vector<T> vec(gf, size);
+        vec::Vector<T> vec(gf, size);
         vec.zero_fill();
 
         for (unsigned i = 0; i < to_init; i++) {
@@ -67,16 +72,16 @@ class FftTest : public ::testing::Test {
             const int t = 2 + gf.rand() % (fft->get_n() - 1);
             const int n = t + gf.rand() % (fft->get_n() - t + 1);
 
-            quadiron::vec::Vector<T> v1(this->random_vec(gf, n, n));
+            vec::Vector<T> v1(this->random_vec(gf, n, n));
 
             int m = n / t;
             while (m * t < n) {
                 m++;
             }
-            quadiron::vec::Vector<T> v2(gf, t * m);
+            vec::Vector<T> v2(gf, t * m);
 
             fft->taylor_expand(v2, v1, n, t);
-            quadiron::vec::Vector<T> _v1(gf, n);
+            vec::Vector<T> _v1(gf, n);
             fft->inv_taylor_expand(_v1, v2, t);
             ASSERT_EQ(_v1, v1);
         }
@@ -87,10 +92,10 @@ class FftTest : public ::testing::Test {
     {
         for (int i = 0; i < 1000; i++) {
             const int n = fft->get_n();
-            quadiron::vec::Vector<T> v1(this->random_vec(gf, n, n));
+            vec::Vector<T> v1(this->random_vec(gf, n, n));
 
             fft->taylor_expand_t2(v1, n, true);
-            quadiron::vec::Vector<T> _v1(gf, n);
+            vec::Vector<T> _v1(gf, n);
             fft->inv_taylor_expand_t2(_v1);
             ASSERT_EQ(_v1, v1);
         }
@@ -101,11 +106,10 @@ class FftTest : public ::testing::Test {
         fft::FourierTransform<T>* fft,
         int n_data)
     {
-        quadiron::vec::Vector<T> _v(gf, fft->get_n());
-        quadiron::vec::Vector<T> v2(gf, fft->get_n());
+        vec::Vector<T> _v(gf, fft->get_n());
+        vec::Vector<T> v2(gf, fft->get_n());
         for (int j = 0; j < 1000; j++) {
-            quadiron::vec::Vector<T> v(
-                this->random_vec(gf, fft->get_n(), n_data));
+            vec::Vector<T> v(this->random_vec(gf, fft->get_n(), n_data));
 
             fft->fft(_v, v);
             fft->ifft(v2, _v);
@@ -121,13 +125,12 @@ class FftTest : public ::testing::Test {
     {
         ASSERT_EQ(fft1->get_n(), fft2->get_n());
 
-        quadiron::vec::Vector<T> fft_1(gf, fft1->get_n());
-        quadiron::vec::Vector<T> fft_2(gf, fft1->get_n());
-        quadiron::vec::Vector<T> ifft_1(gf, fft1->get_n());
-        quadiron::vec::Vector<T> ifft_2(gf, fft1->get_n());
+        vec::Vector<T> fft_1(gf, fft1->get_n());
+        vec::Vector<T> fft_2(gf, fft1->get_n());
+        vec::Vector<T> ifft_1(gf, fft1->get_n());
+        vec::Vector<T> ifft_2(gf, fft1->get_n());
         for (int j = 0; j < 100; j++) {
-            quadiron::vec::Vector<T> v(
-                this->random_vec(gf, fft1->get_n(), n_data));
+            vec::Vector<T> v(this->random_vec(gf, fft1->get_n(), n_data));
 
             fft1->fft(fft_1, v);
             fft2->fft(fft_2, v);
@@ -139,6 +142,67 @@ class FftTest : public ::testing::Test {
             ASSERT_EQ(ifft_1, ifft_2);
             ASSERT_EQ(ifft_1, v);
         }
+    }
+
+    /** Convert a number into a vector of digits padded with zeros
+     *
+     * @param vec destination vector
+     * @param n vector size
+     * @param num number in string representation
+     */
+    void big_num_to_vec(vec::Vector<T>& vec, size_t n, std::string num)
+    {
+        size_t i;
+        const size_t len = num.length();
+        for (i = 0; i < len; i++) {
+            vec.set(i, num[len - i - 1] - '0');
+        }
+        for (; i < n; i++) {
+            vec.set(i, 0);
+        }
+    }
+
+    /** Compute sum of 2 large numbers in string representation
+     *
+     * @param str1 first string
+     * @param str2 second string
+     *
+     * @return the sum string
+     */
+    std::string big_num_add(std::string str1, std::string str2)
+    {
+        if (str1.length() > str2.length()) {
+            std::swap(str1, str2);
+        }
+
+        std::string str;
+
+        size_t n1 = str1.length();
+        size_t n2 = str2.length();
+
+        std::reverse(str1.begin(), str1.end());
+        std::reverse(str2.begin(), str2.end());
+
+        int carry = 0;
+        for (size_t i = 0; i < n1; i++) {
+            int sum = ((str1[i] - '0') + (str2[i] - '0') + carry);
+            str.push_back(sum % 10 + '0');
+            carry = sum / 10;
+        }
+
+        for (size_t i = n1; i < n2; i++) {
+            int sum = ((str2[i] - '0') + carry);
+            str.push_back(sum % 10 + '0');
+            carry = sum / 10;
+        }
+
+        if (carry) {
+            str.push_back(carry + '0');
+        }
+
+        std::reverse(str.begin(), str.end());
+
+        return str;
     }
 };
 
@@ -154,9 +218,7 @@ TYPED_TEST(FftTest, TestGcd) // NOLINT
     for (int i = 0; i < 100; i++) {
         const TypeParam x = gf.rand();
 
-        ASSERT_EQ(
-            quadiron::arith::extended_gcd<TypeParam>(97, x, bezout, nullptr),
-            1);
+        ASSERT_EQ(arith::extended_gcd<TypeParam>(97, x, bezout, nullptr), 1);
         TypeParam y = gf.inv(x);
         if (bezout[1] < 0) {
             bezout[1] = bezout[1] + gf.card();
@@ -186,7 +248,7 @@ TYPED_TEST(FftTest, TestFftNaive) // NOLINT
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
 
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
@@ -205,7 +267,7 @@ TYPED_TEST(FftTest, TestNaiveVsFft2kVec) // NOLINT
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
 
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
@@ -225,7 +287,7 @@ TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
 
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
@@ -234,16 +296,15 @@ TYPED_TEST(FftTest, TestFft2kVec) // NOLINT
 
     for (unsigned data_len = 2; data_len <= n; data_len *= 2) {
         fft::Radix2<TypeParam> fft(gf, n, data_len);
-        quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-        quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
+        vec::Vector<TypeParam> _v(gf, fft.get_n());
+        vec::Vector<TypeParam> v2(gf, fft.get_n());
         for (unsigned len = 2; len < n; len *= 2) {
             for (int j = 0; j < 100; j++) {
-                quadiron::vec::Vector<TypeParam> v(
-                    this->random_vec(gf, len, len));
+                vec::Vector<TypeParam> v(this->random_vec(gf, len, len));
 
                 fft.fft(_v, v);
                 fft.ifft(v2, _v);
-                quadiron::vec::Slice<TypeParam> _v2(&v2, len);
+                vec::Slice<TypeParam> _v2(&v2, len);
                 ASSERT_EQ(v, _v2);
             }
         }
@@ -256,7 +317,7 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
     const unsigned R = gf.get_primitive_root();
     const size_t size = 4;
 
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
@@ -267,11 +328,11 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
         fft::Radix2<TypeParam> fft(gf, n, data_len, size);
 
         const int vec_n = fft.get_n();
-        quadiron::vec::Buffers<TypeParam> v2(vec_n, size);
-        quadiron::vec::Buffers<TypeParam> _v2(vec_n, size);
+        vec::Buffers<TypeParam> v2(vec_n, size);
+        vec::Buffers<TypeParam> _v2(vec_n, size);
         for (unsigned len = 2; len <= n; len *= 2) {
-            quadiron::vec::Buffers<TypeParam> v(len, size);
-            quadiron::vec::Buffers<TypeParam> _v(_v2, 0, len);
+            vec::Buffers<TypeParam> v(len, size);
+            vec::Buffers<TypeParam> _v(_v2, 0, len);
             for (int j = 0; j < 100; j++) {
                 for (unsigned i = 0; i < len; i++) {
                     TypeParam* mem = v.get(i);
@@ -294,7 +355,7 @@ TYPED_TEST(FftTest, TestNaiveVsFft2kVecp) // NOLINT
     const unsigned R = gf.get_primitive_root();
     const size_t size = 2;
 
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
     // With this encoder we cannot exactly satisfy users request,
     // we need to pad n = minimal divisor of (q-1)
@@ -309,11 +370,11 @@ TYPED_TEST(FftTest, TestNaiveVsFft2kVecp) // NOLINT
 
     ASSERT_EQ(fft_naive.get_n(), fft_2n.get_n());
 
-    quadiron::vec::Buffers<TypeParam> v(n, size);
-    quadiron::vec::Buffers<TypeParam> fft1(n, size);
-    quadiron::vec::Buffers<TypeParam> fft2(n, size);
-    quadiron::vec::Buffers<TypeParam> ifft1(n, size);
-    quadiron::vec::Buffers<TypeParam> ifft2(n, size);
+    vec::Buffers<TypeParam> v(n, size);
+    vec::Buffers<TypeParam> fft1(n, size);
+    vec::Buffers<TypeParam> fft2(n, size);
+    vec::Buffers<TypeParam> ifft1(n, size);
+    vec::Buffers<TypeParam> ifft2(n, size);
     for (int j = 0; j < 100; j++) {
         for (unsigned i = 0; i < n; i++) {
             TypeParam* mem = v.get(i);
@@ -394,8 +455,8 @@ TYPED_TEST(FftTest, TestFftAdd) // NOLINT
         }
 
         // n is power of 2 and at least n_data + n_parities.
-        const int n = quadiron::arith::ceil2<TypeParam>(len);
-        const int m = quadiron::arith::log2<TypeParam>(n);
+        const int n = arith::ceil2<TypeParam>(len);
+        const int m = arith::log2<TypeParam>(n);
         fft::Additive<TypeParam> fft(gf, m);
 
         this->test_taylor_expand(gf, &fft);
@@ -409,7 +470,7 @@ TYPED_TEST(FftTest, TestFftNaive2) // NOLINT
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
 
-    ASSERT_EQ(quadiron::arith::jacobi<TypeParam>(R, this->q), -1);
+    ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
     // The test is spefically for length-8 FFT
     const unsigned n = 8;
@@ -419,9 +480,9 @@ TYPED_TEST(FftTest, TestFftNaive2) // NOLINT
 
     fft::Naive<TypeParam> fft(gf, n, r);
 
-    quadiron::vec::Vector<TypeParam> v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> _v(gf, fft.get_n());
-    quadiron::vec::Vector<TypeParam> v2(gf, fft.get_n());
+    vec::Vector<TypeParam> v(gf, fft.get_n());
+    vec::Vector<TypeParam> _v(gf, fft.get_n());
+    vec::Vector<TypeParam> v2(gf, fft.get_n());
     v.zero_fill();
     v.set(0, 27746);
     v.set(1, 871);
@@ -452,7 +513,7 @@ TYPED_TEST(FftTest, TestFft2Gfp) // NOLINT
 TYPED_TEST(FftTest, TestFftSingleGfp) // NOLINT
 {
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
-    const int n = quadiron::arith::ceil2<TypeParam>(this->code_len);
+    const int n = arith::ceil2<TypeParam>(this->code_len);
     fft::Single<TypeParam> fft(gf, n);
 
     this->test_fft_codec(gf, &fft, 1);
@@ -482,4 +543,206 @@ TYPED_TEST(FftTest, TestFftGf2n) // NOLINT
         fft::Naive<TypeParam> fft(gf, n, r);
         this->test_fft_codec(gf, &fft, len);
     }
+}
+
+TYPED_TEST(FftTest, TestFftLarge) // NOLINT
+{
+    const unsigned n = 256;
+    const unsigned q = 7681;
+
+    std::unique_ptr<gf::Field<TypeParam>> gf = nullptr;
+    std::unique_ptr<vec::Vector<TypeParam>> a = nullptr;
+    std::unique_ptr<vec::Vector<TypeParam>> _a1 = nullptr;
+    std::unique_ptr<vec::Vector<TypeParam>> _a2 = nullptr;
+    std::unique_ptr<fft::FourierTransform<TypeParam>> fft = nullptr;
+    std::unique_ptr<fft::FourierTransform<TypeParam>> fft2 = nullptr;
+
+    gf = gf::alloc<gf::Field<TypeParam>, gf::Prime<TypeParam>>(q);
+
+    TypeParam r = gf->get_nth_root(n);
+    int l = arith::log2<TypeParam>(n);
+    fft = std::make_unique<fft::Naive<TypeParam>>(*gf, n, r);
+    fft2 = std::make_unique<fft::Large<TypeParam>>(*gf, l, r);
+
+    a = std::make_unique<vec::Vector<TypeParam>>(*gf, n);
+    _a1 = std::make_unique<vec::Vector<TypeParam>>(*gf, n);
+    _a2 = std::make_unique<vec::Vector<TypeParam>>(*gf, n);
+    a->rand();
+
+    fft->fft(*_a1, *a);
+    fft2->fft(*_a2, *a);
+
+    ASSERT_EQ(*_a1 == *_a2, true);
+}
+
+TYPED_TEST(FftTest, TestFftEquivalence) // NOLINT
+{
+    std::vector<uint64_t> qs({7681, 12289, 65537});
+    std::vector<uint64_t> ns({256, 512, 1024});
+
+    for (auto q : qs) {
+        for (auto n : ns) {
+            ASSERT_EQ(arith::is_prime(q), true);
+
+            std::unique_ptr<gf::Field<TypeParam>> gf = nullptr;
+            std::unique_ptr<vec::Vector<TypeParam>> a = nullptr;
+            std::unique_ptr<vec::Vector<TypeParam>> _a1 = nullptr;
+            std::unique_ptr<vec::Vector<TypeParam>> _a2 = nullptr;
+            std::unique_ptr<vec::Vector<TypeParam>> _a3 = nullptr;
+            std::unique_ptr<fft::FourierTransform<TypeParam>> fft = nullptr;
+            std::unique_ptr<fft::FourierTransform<TypeParam>> fft2 = nullptr;
+            std::unique_ptr<fft::FourierTransform<TypeParam>> fft3 = nullptr;
+
+            gf = gf::alloc<gf::Field<TypeParam>, gf::Prime<TypeParam>>(q);
+
+            TypeParam r = gf->get_nth_root(n);
+            int l = arith::log2<TypeParam>(n);
+            fft = std::make_unique<fft::Naive<TypeParam>>(*gf, n, r);
+            try {
+                fft2 = std::make_unique<fft::Large<TypeParam>>(*gf, l, r);
+            } catch (quadiron::Exception&) {
+                fft2 = nullptr;
+            }
+            try {
+                fft3 =
+                    std::make_unique<fft::Radix2<TypeParam>>(*gf, n, n, 1024);
+            } catch (quadiron::Exception&) {
+                fft3 = nullptr;
+            }
+
+            a = std::make_unique<vec::Vector<TypeParam>>(*gf, n);
+            _a1 = std::make_unique<vec::Vector<TypeParam>>(*gf, n);
+            _a2 = std::make_unique<vec::Vector<TypeParam>>(*gf, n);
+            _a3 = std::make_unique<vec::Vector<TypeParam>>(*gf, n);
+            a->rand();
+
+            uint64_t t1 = 0;
+            uint64_t t2 = 0;
+            uint64_t t3 = 0;
+
+            t1 = quadiron::hw_timer();
+            fft->fft(*_a1, *a);
+            t1 = quadiron::hw_timer() - t1;
+            if (fft2) {
+                t2 = quadiron::hw_timer();
+                fft2->fft(*_a2, *a);
+                t2 = quadiron::hw_timer() - t2;
+            }
+            if (fft3) {
+                t3 = quadiron::hw_timer();
+                fft3->fft(*_a3, *a);
+                t3 = quadiron::hw_timer() - t3;
+            }
+            if (fft2) {
+                ASSERT_EQ(*_a1 == *_a2, true);
+            }
+            if (fft3) {
+                ASSERT_EQ(*_a1 == *_a3, true);
+            }
+        }
+    }
+}
+
+TYPED_TEST(FftTest, TestFftLarge2) // NOLINT
+{
+    // Schönhage-Strassen algorithm
+    // Example taken from Pierre Meunier's book
+    if (sizeof(TypeParam) < 8)
+        return;
+
+    const int base = 10;
+    const int p = 14; // we could multiply integers of 2^p digits
+
+    uint64_t l = p + 1;
+
+    // choose 2 prime numbers of the form p=a.2^n+1
+    // because if x is not a quadratic residue then w=x^a is
+    // a 2^n-th principal root of unity in GF_p
+    uint64_t a1 = 2;
+    uint64_t a2 = 5;
+    uint64_t p1 = a1 * arith::exp<TypeParam>(2, 15) + 1;
+    uint64_t p2 = a2 * arith::exp<TypeParam>(2, 15) + 1;
+    ASSERT_EQ(arith::is_prime<TypeParam>(p1), true);
+    ASSERT_EQ(arith::is_prime<TypeParam>(p2), true);
+
+    // ensure their product is bounded (b-1)^2*2^(n-1) < m
+    uint64_t m = p1 * p2;
+    // check overflow
+    assert(m / p1 == p2);
+    assert(
+        arith::exp<TypeParam>((base - 1), 2) * arith::exp<TypeParam>(p, 2) < m);
+
+    // find x so it is not a quadratic residue in GF_p1 and GF_p2
+    assert(arith::jacobi<TypeParam>(3, p1) == arith::jacobi<TypeParam>(p1, 3));
+    assert(arith::jacobi<TypeParam>(p1, 3) == arith::jacobi<TypeParam>(2, 3));
+    assert(arith::jacobi<TypeParam>(3, p2) == arith::jacobi<TypeParam>(p2, 3));
+    assert(arith::jacobi<TypeParam>(p2, 3) == arith::jacobi<TypeParam>(2, 3));
+    assert(arith::jacobi<TypeParam>(2, 3) == -1);
+    // which means x=3 is not a quadratic residue in GF_p1 and GF_p2
+
+    // therefore we can compute 2^n-th roots of unity in GF_p1 and GF_p2
+    uint64_t w1 = arith::exp<TypeParam>(3, a1);
+    uint64_t w2 = arith::exp<TypeParam>(3, a2);
+    assert(w1 == 9);
+    assert(w2 == 243);
+
+    // find root of unity in GF_p1p2
+    uint64_t _a[2];
+    uint64_t _n[2];
+    _a[0] = w1;
+    _n[0] = p1;
+    _a[1] = w2;
+    _n[1] = p2;
+    uint64_t w = arith::chinese_remainder<uint64_t>(2, _a, _n);
+    ASSERT_EQ(w, 25559439);
+
+    std::unique_ptr<gf::Field<TypeParam>> gf_m =
+        gf::alloc<gf::Field<TypeParam>, gf::Prime<TypeParam>>(m);
+    fft::Large<TypeParam> fft(*gf_m, l, 25559439);
+
+    // parse the big numbers
+    std::string X = "1236548787985654354598651354984132468";
+    std::string Y = "745211515185321545554545854598651354984132468";
+
+    std::unique_ptr<vec::Vector<TypeParam>> _X = nullptr;
+    _X = std::make_unique<vec::Vector<TypeParam>>(*gf_m, fft.get_n());
+    this->big_num_to_vec(*_X, fft.get_n(), X);
+    std::unique_ptr<vec::Vector<TypeParam>> _Y = nullptr;
+    _Y = std::make_unique<vec::Vector<TypeParam>>(*gf_m, fft.get_n());
+    this->big_num_to_vec(*_Y, fft.get_n(), Y);
+
+    std::unique_ptr<vec::Vector<TypeParam>> sfX = nullptr;
+    sfX = std::make_unique<vec::Vector<TypeParam>>(*gf_m, fft.get_n());
+    std::unique_ptr<vec::Vector<TypeParam>> sfY = nullptr;
+    sfY = std::make_unique<vec::Vector<TypeParam>>(*gf_m, fft.get_n());
+    std::unique_ptr<vec::Vector<TypeParam>> _XY = nullptr;
+    _XY = std::make_unique<vec::Vector<TypeParam>>(*gf_m, fft.get_n());
+    std::unique_ptr<vec::Vector<TypeParam>> sfXY = nullptr;
+    sfXY = std::make_unique<vec::Vector<TypeParam>>(*gf_m, fft.get_n());
+
+    fft.fft(*sfX, *_X);
+    fft.fft(*sfY, *_Y);
+
+    for (int i = 0; i <= fft.get_n() - 1; i++) {
+        quadiron::DoubleSizeVal<TypeParam> val =
+            quadiron::DoubleSizeVal<TypeParam>(sfX->get(i)) * sfY->get(i);
+        _XY->set(i, val % m);
+    }
+
+    fft.ifft(*sfXY, *_XY);
+
+    // carry propagation
+    std::string z("0");
+    for (int i = 0; i <= fft.get_n() - 1; i++) {
+        std::string b(std::to_string(sfXY->get(i)));
+        if (b != std::string("0")) {
+            b.append(i, '0');
+            z = this->big_num_add(z, b);
+        }
+    }
+
+    ASSERT_EQ(
+        z,
+        std::string("921490395895362412399910100421159322")
+            + "712298564831565484737491129935640058571771024");
 }

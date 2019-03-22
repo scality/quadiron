@@ -114,15 +114,15 @@ endfunction()
 
 # Source files.
 set(TEST_SRC
-  ${CMAKE_CURRENT_SOURCE_DIR}/arith_utest.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/fec_utest.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/fft_utest.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/gf_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mat_utest.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/rs_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/arith_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/gf_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/buffers_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/vector_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mat_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/fft_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/rs_utest.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/fec_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/quadiron_c_utest.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_allocator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_definitions.cpp
