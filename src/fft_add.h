@@ -124,9 +124,12 @@ Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
 
     this->beta_m_powers = new vec::Vector<T>(gf, this->n);
     this->compute_beta_m_powers();
-    if (m > 1) {
-        this->m_k = arith::exp2<T>(m - 1);
 
+    this->m_k = arith::exp2<T>(m - 1);
+    this->g0 = new vec::Vector<T>(gf, this->m_k);
+    this->g1 = new vec::Vector<T>(gf, this->m_k);
+
+    if (m > 1) {
         // compute gammas and deltas
         this->gammas = new vec::Vector<T>(gf, m - 1);
         this->deltas = new vec::Vector<T>(gf, m - 1);
@@ -135,8 +138,6 @@ Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
 
         this->u = new vec::Vector<T>(gf, this->m_k);
         this->v = new vec::Vector<T>(gf, this->m_k);
-        this->g0 = new vec::Vector<T>(gf, this->m_k);
-        this->g1 = new vec::Vector<T>(gf, this->m_k);
 
         this->mem = new vec::Vector<T>(gf, this->n);
         this->fft_add = new Additive(gf, m - 1, this->deltas);
@@ -428,6 +429,17 @@ void Additive<T>::taylor_expand_t2(vec::Vector<T>& input, int n, bool do_copy)
     assert(g0 != nullptr);
     assert(n >= 1);
     assert(input.get_n() <= n);
+    assert(arith::is_power_of_2<int>(n));
+
+    if (n <= 2) {
+        g0->set(0, input.get(0));
+
+        if (n == 2) {
+            g1->set(0, input.get(1));
+        }
+
+        return;
+    }
 
     // find k s.t. t2^k < n <= 2 *t2^k
     int k = find_k(n, 2);
@@ -436,13 +448,14 @@ void Additive<T>::taylor_expand_t2(vec::Vector<T>& input, int n, bool do_copy)
     if (do_copy) {
         _input = new vec::Vector<T>(*(this->gf), input.get_n());
         _input->copy(&input, input.get_n());
-    } else
+    } else {
         _input = &input;
+    }
 
     _taylor_expand_t2(*_input, n, k, 0);
 
     // get g0, g1 from mem
-    for (int i = 0; i < this->n; i += 2) {
+    for (int i = 0; i < n; i += 2) {
         g0->set(i / 2, _input->get(i));
         g1->set(i / 2, _input->get(i + 1));
     }
@@ -508,9 +521,23 @@ void Additive<T>::inv_taylor_expand_t2(vec::Vector<T>& output)
 {
     assert(g0 != nullptr);
     assert(g0->get_n() == g1->get_n());
+
+    const int o_len = output.get_n();
+    assert(arith::is_power_of_2<int>(o_len));
+
+    if (o_len <= 2) {
+        output.set(0, g0->get(0));
+
+        if (o_len == 2) {
+            output.set(1, g1->get(0));
+        }
+
+        return;
+    }
+
     output.zero_fill();
 
-    int i = output.get_n() / 2 - 1;
+    int i = o_len / 2 - 1;
     output.set(0, g0->get(i));
     output.set(1, g1->get(i));
     while (--i >= 0) {
@@ -548,6 +575,8 @@ void Additive<T>::mul_xt_x(vec::Vector<T>& vec, int t)
 template <typename T>
 inline int Additive<T>::find_k(int n, int t)
 {
+    assert(t < n);
+
     int k;
     int t2k = t; // init for t*2^k with k = 0
     for (k = 0; k < n; k++) {
@@ -586,7 +615,10 @@ void Additive<T>::taylor_expand(
 
     // set output as input
     output.copy(&input);
-    _taylor_expand(output, n, t);
+
+    if (n > t) {
+        _taylor_expand(output, n, t);
+    }
 }
 
 template <typename T>
@@ -640,18 +672,29 @@ void Additive<T>::inv_taylor_expand(
     vec::Vector<T>& input,
     int t)
 {
-    output.zero_fill();
+    const int i_len = input.get_n();
+    const int o_len = output.get_n();
 
-    int i = input.get_n() - t;
+    assert(o_len <= this->n);
+    assert(i_len >= o_len);
+
+    // A temporary vector storing result
+    vec::Vector<T> tmp(input.get_gf(), i_len);
+    tmp.zero_fill();
+
+    int i = i_len - t;
     vec::Slice<T> hi(&input, t, i);
-    output.add_mutual(&hi);
+    tmp.add_mutual(&hi);
     while (i >= t) {
         i -= t;
         // multiply output to (x^t - x)
-        mul_xt_x(output, t);
+        mul_xt_x(tmp, t);
         hi.set_map(i);
-        output.add_mutual(&hi);
+        tmp.add_mutual(&hi);
     }
+
+    // copy only first `n` coefficients to output
+    output.copy(&tmp, o_len);
 }
 
 } // namespace fft
