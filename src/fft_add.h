@@ -65,7 +65,7 @@ class Additive : public FourierTransform<T> {
     void fft(vec::Vector<T>& output, vec::Vector<T>& input) override;
     void ifft(vec::Vector<T>& output, vec::Vector<T>& input) override;
     void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) override;
-    void taylor_expand_t2(vec::Vector<T>& input, int n, bool do_copy = false);
+    void taylor_expand_t2(vec::Vector<T>& input, int n);
     void
     taylor_expand(vec::Vector<T>& output, vec::Vector<T>& input, int n, int t);
     void inv_taylor_expand_t2(vec::Vector<T>& output);
@@ -398,12 +398,11 @@ void Additive<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
  *
  * This function is used for FFT over n=2^m, hence n must be power of 2
  *
+ * @param input input vector that would be modified by the function
  * @param n a power of 2
- * @param do_copy flag to do a copy of input or not since this function will
- *  modify input vector
  */
 template <typename T>
-void Additive<T>::taylor_expand_t2(vec::Vector<T>& input, int n, bool do_copy)
+void Additive<T>::taylor_expand_t2(vec::Vector<T>& input, int n)
 {
     assert(g0 != nullptr);
     assert(n >= 1);
@@ -423,24 +422,13 @@ void Additive<T>::taylor_expand_t2(vec::Vector<T>& input, int n, bool do_copy)
     // find k s.t. t2^k < n <= 2 *t2^k
     int k = find_k(n, 2);
 
-    vec::Vector<T>* _input;
-    if (do_copy) {
-        _input = new vec::Vector<T>(*(this->gf), input.get_n());
-        _input->copy(&input, input.get_n());
-    } else {
-        _input = &input;
-    }
-
-    _taylor_expand_t2(*_input, n, k, 0);
+    _taylor_expand_t2(input, n, k, 0);
 
     // get g0, g1 from mem
     for (int i = 0; i < n; i += 2) {
-        g0->set(i / 2, _input->get(i));
-        g1->set(i / 2, _input->get(i + 1));
+        g0->set(i / 2, input.get(i));
+        g1->set(i / 2, input.get(i + 1));
     }
-
-    if (do_copy)
-        delete _input;
 }
 
 /**

@@ -106,11 +106,11 @@ class FftTest : public ::testing::Test {
                 }
 
                 vec::Vector<T> v1(this->random_vec(gf, n, n));
-
-                fft->taylor_expand_t2(v1, n, true);
+                vec::Vector<T> v1_copy(v1);
+                fft->taylor_expand_t2(v1, n);
                 vec::Vector<T> _v1(gf, n);
                 fft->inv_taylor_expand_t2(_v1);
-                ASSERT_EQ(_v1, v1);
+                ASSERT_EQ(_v1, v1_copy);
             }
         }
     }
