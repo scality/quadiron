@@ -53,8 +53,10 @@ class Additive : public FourierTransform<T> {
     using FourierTransform<T>::ifft;
     using FourierTransform<T>::fft_inv;
 
-    Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas = nullptr);
-    ~Additive();
+    Additive(
+        const gf::Field<T>& gf,
+        T m,
+        std::shared_ptr<vec::Vector<T>> betas = nullptr);
     void compute_basis();
     void compute_beta_m_powers();
     void compute_G();
@@ -83,21 +85,24 @@ class Additive : public FourierTransform<T> {
     T m_k, deg0, deg1, deg2;
     T beta_1, inv_beta_1;
     T beta_m, inv_beta_m;
-    vec::Vector<T>* betas = nullptr;
-    vec::Vector<T>* gammas = nullptr;
-    vec::Vector<T>* deltas = nullptr;
-    vec::Vector<T>* beta_m_powers = nullptr;
-    vec::Vector<T>* G = nullptr;
-    vec::Vector<T>* g0 = nullptr;
-    vec::Vector<T>* g1 = nullptr;
-    vec::Vector<T>* u = nullptr;
-    vec::Vector<T>* v = nullptr;
-    vec::Vector<T>* mem = nullptr;
-    Additive<T>* fft_add = nullptr;
+    std::shared_ptr<vec::Vector<T>> betas = nullptr;
+    std::unique_ptr<vec::Vector<T>> gammas = nullptr;
+    std::shared_ptr<vec::Vector<T>> deltas = nullptr;
+    std::unique_ptr<vec::Vector<T>> beta_m_powers = nullptr;
+    std::unique_ptr<vec::Vector<T>> G = nullptr;
+    std::unique_ptr<vec::Vector<T>> g0 = nullptr;
+    std::unique_ptr<vec::Vector<T>> g1 = nullptr;
+    std::unique_ptr<vec::Vector<T>> u = nullptr;
+    std::unique_ptr<vec::Vector<T>> v = nullptr;
+    std::unique_ptr<vec::Vector<T>> mem = nullptr;
+    std::unique_ptr<Additive<T>> fft_add = nullptr;
 };
 
 template <typename T>
-Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
+Additive<T>::Additive(
+    const gf::Field<T>& gf,
+    T m,
+    std::shared_ptr<vec::Vector<T>> betas)
     : FourierTransform<T>(gf, arith::exp2<T>(m), true)
 {
     assert(m >= 1);
@@ -108,7 +113,7 @@ Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
         assert(gf.get_sub_field().card() == 2);
 
         create_betas = true;
-        betas = new vec::Vector<T>(gf, m);
+        betas = std::make_shared<vec::Vector<T>>(gf, m);
         T beta = this->gf->get_primitive_root();
         betas->set(0, beta);
         for (T i = 1; i < m - 1; i++) {
@@ -122,53 +127,26 @@ Additive<T>::Additive(const gf::Field<T>& gf, T m, vec::Vector<T>* betas)
     this->beta_m = betas->get(m - 1);
     this->inv_beta_m = this->gf->inv(this->beta_m);
 
-    this->beta_m_powers = new vec::Vector<T>(gf, this->n);
+    this->beta_m_powers = std::make_unique<vec::Vector<T>>(gf, this->n);
     this->compute_beta_m_powers();
 
     this->m_k = arith::exp2<T>(m - 1);
-    this->g0 = new vec::Vector<T>(gf, this->m_k);
-    this->g1 = new vec::Vector<T>(gf, this->m_k);
+    this->g0 = std::make_unique<vec::Vector<T>>(gf, this->m_k);
+    this->g1 = std::make_unique<vec::Vector<T>>(gf, this->m_k);
 
     if (m > 1) {
         // compute gammas and deltas
-        this->gammas = new vec::Vector<T>(gf, m - 1);
-        this->deltas = new vec::Vector<T>(gf, m - 1);
-        this->G = new vec::Vector<T>(gf, this->m_k);
+        this->gammas = std::make_unique<vec::Vector<T>>(gf, m - 1);
+        this->deltas = std::make_shared<vec::Vector<T>>(gf, m - 1);
+        this->G = std::make_unique<vec::Vector<T>>(gf, this->m_k);
         this->compute_basis();
 
-        this->u = new vec::Vector<T>(gf, this->m_k);
-        this->v = new vec::Vector<T>(gf, this->m_k);
+        this->u = std::make_unique<vec::Vector<T>>(gf, this->m_k);
+        this->v = std::make_unique<vec::Vector<T>>(gf, this->m_k);
 
-        this->mem = new vec::Vector<T>(gf, this->n);
-        this->fft_add = new Additive(gf, m - 1, this->deltas);
+        this->mem = std::make_unique<vec::Vector<T>>(gf, this->n);
+        this->fft_add = std::make_unique<Additive>(gf, m - 1, this->deltas);
     }
-}
-
-template <typename T>
-Additive<T>::~Additive()
-{
-    if (create_betas && betas)
-        delete betas;
-    if (gammas)
-        delete gammas;
-    if (deltas)
-        delete deltas;
-    if (beta_m_powers)
-        delete beta_m_powers;
-    if (G)
-        delete G;
-    if (u)
-        delete u;
-    if (v)
-        delete v;
-    if (g0)
-        delete g0;
-    if (g1)
-        delete g1;
-    if (mem)
-        delete mem;
-    if (fft_add)
-        delete fft_add;
 }
 
 template <typename T>
@@ -262,8 +240,9 @@ template <typename T>
 void Additive<T>::_fft(vec::Vector<T>& output, vec::Vector<T>& input)
 {
     mem->copy(&input, this->n);
-    if (beta_m > 1)
-        mem->hadamard_mul(beta_m_powers);
+    if (beta_m > 1) {
+        mem->hadamard_mul(beta_m_powers.get());
+    }
 
     // compute taylor expansion of g(x) at (x^2 - x)
     // outputs are this->g0 and this->g1
@@ -273,15 +252,15 @@ void Additive<T>::_fft(vec::Vector<T>& output, vec::Vector<T>& input)
     this->fft_add->fft(*v, *g1);
 
     // copy output = (undefined, v)
-    output.copy(v, m_k, m_k);
+    output.copy(v.get(), m_k, m_k);
     // perform G * v hadamard multiplication
-    v->hadamard_mul(G);
+    v->hadamard_mul(G.get());
     // v += u
-    v->add(u);
+    v->add(u.get());
     // output = (u + G*v, v)
-    output.copy(v, m_k);
+    output.copy(v.get(), m_k);
     // output = (u + G*v, (u + G*v) + v)
-    output.add(v, m_k);
+    output.add(v.get(), m_k);
 }
 
 template <typename T>
@@ -298,9 +277,9 @@ void Additive<T>::_ifft(vec::Vector<T>& output, vec::Vector<T>& input)
     // v = w0 + w1
     v->add(&w0);
     // u = v
-    u->copy(v);
+    u->copy(v.get());
     // u = G * v
-    u->hadamard_mul(G);
+    u->hadamard_mul(G.get());
     // u = w0 + G * v;
     u->add(&w0);
 
