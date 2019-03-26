@@ -167,7 +167,7 @@ Vector<T>::Vector(Vector const& other)
 {
     if (new_mem) {
         this->mem = this->allocator.allocate(other.mem_len);
-        std::copy_n(this->mem, other.mem_len, other.mem);
+        std::copy_n(other.mem, other.mem_len, this->mem);
     } else {
         this->mem = other.mem;
     }
