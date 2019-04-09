@@ -50,7 +50,7 @@ jobs:
           name: Compile on ARM64 with the NDK
           command: >
             rm -rf build && mkdir build && cd build &&
-            cmake -G 'Unix Makefiles' -DCMAKE_AR=/arm64/bin/aarch64-linux-android-ar -DCMAKE_BUILD_TYPE=Debug .. &&
+            cmake -G 'Unix Makefiles' -DCMAKE_AR=/arm64/bin/aarch64-linux-android-ar -DCMAKE_BUILD_TYPE=Debug -DUSE_SIMD=OFF .. &&
             make
   test:
     docker:
