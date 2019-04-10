@@ -83,7 +83,7 @@ file(MAKE_DIRECTORY ${GENERATE_DIR})
 ##################
 # Setting for SIMD
 ##################
-set(USE_SIMD "OFF" CACHE STRING "SIMD vectorization")
+set(USE_SIMD "ON" CACHE STRING "SIMD vectorization")
 set_property(CACHE USE_SIMD PROPERTY STRINGS OFF ON SSE AVX)
 
 ####################
@@ -95,7 +95,7 @@ set_property(CACHE USE_SIMD PROPERTY STRINGS OFF ON SSE AVX)
 # Set a default build type if none was specified.
 set(default_build_type "Release")
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
-  set(default_build_type "Debug")
+  set(default_build_type "Release")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
