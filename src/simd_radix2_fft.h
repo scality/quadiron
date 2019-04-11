@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __QUAD_SIMD_FNT_H__
-#define __QUAD_SIMD_FNT_H__
+#ifndef __QUAD_SIMD_RADIX2_FFT_H__
+#define __QUAD_SIMD_RADIX2_FFT_H__
 
 #include <x86intrin.h>
 
