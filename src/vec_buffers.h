@@ -109,25 +109,22 @@ class Buffers final {
     ~Buffers();
     int get_n(void) const;
     size_t get_size(void) const;
-    int get_mem_len(void);
+    size_t get_mem_len(void);
     void zero_fill(void);
     void fill(int i, T value);
-    void set(int i, T* buf);
     T* get(int i);
     const T* get(int i) const;
     const std::vector<T*>& get_mem() const;
     void set_mem(std::vector<T*>* mem);
     void copy(const Buffers<T>& v);
     void copy(int i, T* buf);
-    void separate_even_odd();
-    void separate_even_odd(Buffers<T>& even, Buffers<T>& odd);
     friend bool operator==<T>(const Buffers<T>& lhs, const Buffers<T>& rhs);
     void dump(void);
     void swap(unsigned i, unsigned j);
 
   protected:
     std::vector<T*> mem;
-    int mem_len;
+    size_t mem_len;
     size_t size;
     int n;
 
@@ -353,7 +350,7 @@ inline size_t Buffers<T>::get_size(void) const
 }
 
 template <typename T>
-inline int Buffers<T>::get_mem_len(void)
+inline size_t Buffers<T>::get_mem_len(void)
 {
     return mem_len;
 }
@@ -369,17 +366,6 @@ template <typename T>
 void Buffers<T>::fill(int i, T value)
 {
     std::fill_n(mem[i], size, value);
-}
-
-template <typename T>
-inline void Buffers<T>::set(int i, T* buf)
-{
-    assert(i >= 0 && i < n);
-
-    if ((mem_alloc_case == BufMemAlloc::NONE) && (mem[i] != nullptr))
-        this->allocator.deallocate(mem[i], size);
-
-    mem[i] = buf;
 }
 
 template <typename T>
@@ -422,33 +408,6 @@ template <typename T>
 void Buffers<T>::copy(int i, T* buf)
 {
     std::copy_n(buf, this->size, mem[i]);
-}
-
-template <typename T>
-void Buffers<T>::separate_even_odd()
-{
-    std::vector<T*> _mem(n, nullptr);
-    int half = n / 2;
-    int j = 0;
-    int i;
-    for (i = 0; i < n; i += 2) {
-        _mem[j] = get(i);            // even
-        _mem[j + half] = get(i + 1); // odd
-        j++;
-    }
-    for (i = 0; i < n; i++) {
-        mem[i] = _mem[i];
-    }
-    _mem.shrink_to_fit();
-}
-
-template <typename T>
-void Buffers<T>::separate_even_odd(Buffers<T>& even, Buffers<T>& odd)
-{
-    for (int i = 0, j = 0; i < n; i += 2, ++j) {
-        even.set(j, get(i));
-        odd.set(j, get(i + 1));
-    }
 }
 
 template <typename T>
