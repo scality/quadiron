@@ -59,11 +59,14 @@ namespace simd {
 #include "simd_128.h"
 #endif
 
-// Include basic operations
-#include "simd_basic.h"
-
 // Include accelerated operations dedicated for FNT
 #include "simd_fnt.h"
+
+// Include accelerated operations dedicated for RingModN
+#include "simd_ring.h"
+
+// Include accelerated operations dedicated for radix-2 FFT
+#include "simd_radix2_fft.h"
 
 // Include accelerated operations dedicated for NF4
 #include "simd_nf4.h"
