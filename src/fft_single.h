@@ -89,9 +89,9 @@ void Single<T>::ifft(vec::Vector<T>& output, vec::Vector<T>& input)
 template <typename T>
 void Single<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
-    T* buf = input.get(0);
-    for (int i = 0; i < this->n; i++)
-        output.copy(i, buf);
+    for (int i = 0; i < this->n; i++) {
+        output.copy(input, 0, i);
+    }
 }
 
 /*
@@ -109,7 +109,7 @@ template <typename T>
 void Single<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     output.zero_fill();
-    output.copy(0, input.get(0));
+    output.copy(input, 0, 0);
 }
 
 } // namespace fft

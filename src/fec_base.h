@@ -1349,7 +1349,7 @@ void FecCode<T>::decode(
     if (type == FecType::SYSTEMATIC) {
         this->fft->fft(*dec_inter_codeword, output);
         for (unsigned i = 0; i < this->n_data; i++) {
-            output.copy(i, dec_inter_codeword->get(i));
+            output.copy(*dec_inter_codeword, i, i);
         }
     }
 }
