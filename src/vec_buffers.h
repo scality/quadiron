@@ -153,9 +153,88 @@ class Buffers final {
         unsigned data_len,
         unsigned group_len);
     void radix2_fft_inv_prepare(const Buffers<T>& input);
+    void reset_meta();
     friend bool operator==<T>(const Buffers<T>& lhs, const Buffers<T>& rhs);
     void dump(void);
     void swap(unsigned i, unsigned j);
+
+    /** Calculate meta size given a buffer size
+     *  meta size := ceil(size * sizeof(T) / CHAR_BIT)
+     *
+     * @param s - given size, in words
+     * @return meta size, in bytes
+     */
+    static size_t compute_meta_size(size_t s)
+    {
+        assert(s > 0);
+
+        const size_t bytes = s * sizeof(T);
+        size_t r = bytes / CHAR_BIT;
+        while (r * CHAR_BIT < bytes) {
+            r++;
+        }
+        return r;
+    };
+
+    /** Calculate buffer size given a meta_size
+     *  buffer size := ceil(meta_size * CHAR_BIT / sizeof(T))
+     *
+     * @param m_size - given meta size, in bytes
+     * @return meta size
+     */
+    static size_t compute_size(size_t m_size)
+    {
+        assert(m_size > 0);
+
+        const size_t bytes = m_size * CHAR_BIT;
+        size_t r = bytes / sizeof(T);
+        while (r * sizeof(T) < bytes) {
+            r++;
+        }
+        return r;
+    };
+
+    /** Calculate conventional size of buffers
+     * Conentional size is the lowest number of words that is at least a given
+     * `s` and satisfy the following conditions:
+     *  - its bytes is multiple of `size_alignment`
+     *  - the correspondent `meta_size` is multiple of `meta_size_alignment`
+     *
+     * @param s - given size, in words
+     * @param size_alignment - alignment number of output size, in bytes
+     * @param meta_size_alignment - alignment number of meta size according to
+     * the out size, in byte
+     * @return conventional size, in words
+     */
+    static size_t get_conv_size(
+        size_t s,
+        size_t size_alignment = 0,
+        size_t meta_size_alignment = 0)
+    {
+        assert(s > 0);
+
+        if (size_alignment == 0) {
+            size_alignment = simd::ALIGNMENT;
+        }
+
+        if (meta_size_alignment == 0) {
+            // it's the `meta_size` for a single element fitting a Register
+            meta_size_alignment = simd::ALIGNMENT / CHAR_BIT;
+        }
+
+        // calculate meta_size
+        size_t m_size = Buffers<T>::compute_meta_size(s);
+        // calculate new size according to `m_size`
+        size_t c_size = Buffers<T>::compute_size(m_size);
+
+        while (c_size * sizeof(T) % size_alignment != 0
+               || m_size % meta_size_alignment != 0) {
+            m_size++;
+            c_size = Buffers<T>::compute_size(m_size);
+        }
+
+        return c_size;
+    };
 
   protected:
     std::vector<T*> mem;
@@ -173,7 +252,7 @@ class Buffers final {
     uint8_t* zeros_meta = nullptr;
     bool m_meta = false;
 
-    void compute_meta_size();
+    void init_meta();
     void allocate_meta(bool init_zero = false);
 };
 
@@ -198,7 +277,7 @@ Buffers<T>::Buffers(int n, size_t size, bool has_meta)
 
     if (has_meta) {
         this->m_meta = has_meta;
-        this->compute_meta_size();
+        this->init_meta();
         this->allocate_meta(true);
     }
 }
@@ -225,7 +304,7 @@ Buffers<T>::Buffers(
 
     if (meta) {
         this->m_meta = true;
-        this->compute_meta_size();
+        this->init_meta();
         this->meta = *meta;
     }
 }
@@ -267,7 +346,7 @@ Buffers<T>::Buffers(const Buffers<T>& vec, int n)
 
     this->m_meta = vec.has_meta();
     if (this->m_meta) {
-        this->compute_meta_size();
+        this->init_meta();
         this->allocate_meta();
 
         for (i = 0; i < copy_len; i++) {
@@ -322,7 +401,7 @@ Buffers<T>::Buffers(const Buffers<T>& vec, int begin, int end)
     this->m_meta = vec.has_meta();
     if (this->m_meta) {
         const std::vector<uint8_t*> vec_meta = vec.get_meta();
-        this->compute_meta_size();
+        this->init_meta();
         meta.reserve(this->n);
         // slice from input buffers
         if (end <= vec.get_n()) {
@@ -362,7 +441,7 @@ Buffers<T>::Buffers(const Buffers<T>& vec1, const Buffers<T>& vec2)
 
     this->m_meta = vec1.has_meta();
     if (this->m_meta) {
-        this->compute_meta_size();
+        this->init_meta();
         meta.reserve(this->n);
         meta.insert(meta.end(), vec1.get_meta().begin(), vec1.get_meta().end());
         meta.insert(meta.end(), vec2.get_meta().begin(), vec2.get_meta().end());
@@ -423,7 +502,7 @@ Buffers<T>::Buffers(
 
     this->m_meta = vec.has_meta();
     if (this->m_meta) {
-        this->compute_meta_size();
+        this->init_meta();
 
         const std::vector<uint8_t*> vec_meta = vec.get_meta();
         // output is sliced & shuffled from `vec`
@@ -465,12 +544,16 @@ Buffers<T>::~Buffers()
 }
 
 template <typename T>
-inline void Buffers<T>::compute_meta_size()
+inline void Buffers<T>::init_meta()
 {
-    const size_t bytes = size * sizeof(T);
-    meta_size = bytes / CHAR_BIT;
-    while (meta_size * CHAR_BIT < bytes) {
-        meta_size++;
+    meta_size = Buffers<T>::compute_meta_size(size);
+    meta_bits_nb = sizeof(T);
+    threshold = (static_cast<T>(1) << meta_bits_nb) - 1;
+
+    half_element_mask = (static_cast<T>(1) << (CHAR_BIT * sizeof(T) / 2)) - 1;
+    half_meta_mask = (static_cast<T>(1) << (meta_bits_nb / 2)) - 1;
+    if (half_meta_mask == 0) {
+        half_meta_mask = 1;
     }
 }
 
@@ -483,9 +566,7 @@ inline void Buffers<T>::allocate_meta(bool init_zero)
     }
 
     if (init_zero) {
-        for (int i = 0; i < n; i++) {
-            std::fill_n(meta[i], meta_size, 0);
-        }
+        reset_meta();
     }
 }
 
@@ -716,6 +797,17 @@ void Buffers<T>::radix2_fft_inv_prepare(const Buffers<T>& input)
         for (; i < input_len_power_2; ++i) {
             std::fill_n(mem[i], size, 0);
             m_meta ? std::fill_n(meta[i], meta_size, 0) : nullptr;
+        }
+    }
+}
+
+/// Reset meta buffers
+template <typename T>
+inline void Buffers<T>::reset_meta()
+{
+    if (m_meta) {
+        for (int i = 0; i < n; i++) {
+            std::fill_n(meta[i], meta_size, 0);
         }
     }
 }
