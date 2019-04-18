@@ -330,3 +330,35 @@ TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
         }
     }
 }
+
+TYPED_TEST(BuffersTest, TestCalculateSize) // NOLINT
+{
+    // Convential size depends on type of word, i.e. TypeParam, hence we use an
+    // array for expected values.
+    typedef struct tuple {
+        size_t size;                // in TypeParam words
+        size_t size_alignment;      // in bytes
+        size_t meta_size_alignment; // in bytes
+        size_t expected[4]; // 4 values for 4 TypeParams [uint8_t, uint16_t,
+                            // uint32_t, uint64_t]
+    } tuple;
+
+    std::vector<tuple> cases = {
+        // sse
+        {12, 16, 2, {16, 16, 12, 12}},
+        {25, 16, 2, {32, 32, 28, 26}},
+        // avx
+        {12, 32, 4, {32, 16, 16, 12}},
+        {25, 32, 4, {32, 32, 32, 28}},
+        // whatever
+        {11, 15, 6, {240, 120, 60, 30}},
+    };
+
+    for (auto const& t : cases) {
+        const size_t new_size = vec::Buffers<TypeParam>::get_conv_size(
+            t.size, t.size_alignment, t.meta_size_alignment);
+        const size_t id = quadiron::arith::log2<TypeParam>(sizeof(TypeParam));
+
+        ASSERT_EQ(t.expected[id], new_size);
+    }
+}
