@@ -147,6 +147,12 @@ class Buffers final {
     void set_mem(std::vector<T*>* mem);
     void copy(const Buffers<T>& v);
     void copy(const Buffers<T>& v, int src_id, int dest_id);
+    void radix2_fft_prepare(
+        const Buffers<T>& input,
+        const std::vector<T>& scrambler,
+        unsigned data_len,
+        unsigned group_len);
+    void radix2_fft_inv_prepare(const Buffers<T>& input);
     friend bool operator==<T>(const Buffers<T>& lhs, const Buffers<T>& rhs);
     void dump(void);
     void swap(unsigned i, unsigned j);
@@ -648,6 +654,69 @@ void Buffers<T>::swap(unsigned i, unsigned j)
     swap(mem[i], mem[j]);
     if (m_meta) {
         swap(meta[i], meta[j]);
+    }
+}
+
+/** Perform a preparatiion in radix-2 FFT algorithm
+ *
+ * @param input - input buffers
+ * @param scrambler - a vector stores bit-reversed values
+ * @param data_len - a conven length
+ * @param group_len - number of elements in which a same operations will be
+ * performed
+ */
+template <typename T>
+void Buffers<T>::radix2_fft_prepare(
+    const Buffers<T>& input,
+    const std::vector<T>& scrambler,
+    unsigned data_len,
+    unsigned group_len)
+{
+    const unsigned input_len = input.get_n();
+    const std::vector<T*>& i_mem = input.get_mem();
+    const std::vector<uint8_t*>& i_meta = input.get_meta();
+
+    for (unsigned idx = 0; idx < input_len; ++idx) {
+        // set output  = scramble(input), i.e. bit reversal ordering
+        for (unsigned i = scrambler[idx]; i < scrambler[idx] + group_len; ++i) {
+            std::copy_n(i_mem[idx], size, mem[i]);
+            m_meta ? std::copy_n(i_meta[idx], meta_size, meta[i]) : nullptr;
+        }
+    }
+    for (unsigned idx = input_len; idx < data_len; ++idx) {
+        // set output  = scramble(input), i.e. bit reversal ordering
+        for (unsigned i = scrambler[idx]; i < scrambler[idx] + group_len; ++i) {
+            std::fill_n(mem[i], size, 0);
+            m_meta ? std::fill_n(meta[i], meta_size, 0) : nullptr;
+        }
+    }
+}
+
+/** Perform a preparatiion in radix-2 inverse FFT algorithm
+ *
+ * @param input - input buffers
+ * performed
+ */
+template <typename T>
+void Buffers<T>::radix2_fft_inv_prepare(const Buffers<T>& input)
+{
+    const unsigned len = this->n;
+    const unsigned input_len = input.get_n();
+    const std::vector<T*>& i_mem = input.get_mem();
+    const std::vector<uint8_t*>& i_meta = input.get_meta();
+
+    unsigned i;
+    for (i = 0; i < input_len; ++i) {
+        std::copy_n(i_mem[i], size, mem[i]);
+        m_meta ? std::copy_n(i_meta[i], meta_size, meta[i]) : nullptr;
+    }
+
+    if (input_len < len) {
+        const unsigned input_len_power_2 = arith::ceil2<unsigned>(input_len);
+        for (; i < input_len_power_2; ++i) {
+            std::fill_n(mem[i], size, 0);
+            m_meta ? std::fill_n(meta[i], meta_size, 0) : nullptr;
+        }
     }
 }
 
