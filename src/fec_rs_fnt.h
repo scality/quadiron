@@ -72,7 +72,7 @@ class RsFnt : public FecCode<T> {
         unsigned n_data,
         unsigned n_parities,
         size_t pkt_size = 8)
-        : FecCode<T>(type, word_size, n_data, n_parities, pkt_size)
+        : FecCode<T>(type, word_size, n_data, n_parities, pkt_size, true)
     {
         this->fec_init();
 
@@ -143,18 +143,18 @@ class RsFnt : public FecCode<T> {
                 enc_frag_ids->set(i, i);
             }
 
-            inter_words =
-                std::make_unique<vec::Buffers<T>>(this->n_data, this->pkt_size);
+            inter_words = std::make_unique<vec::Buffers<T>>(
+                this->n_data, this->pkt_size, true);
             suffix_words = std::make_unique<vec::Buffers<T>>(
-                this->n - this->n_data - this->n_outputs, this->pkt_size);
+                this->n - this->n_data - this->n_outputs, this->pkt_size, true);
 
             std::vector<Properties> dummy_props;
             enc_context = this->init_context_dec(
                 *enc_frag_ids, dummy_props, this->pkt_size, inter_words.get());
 
             // for decoding
-            this->dec_inter_codeword =
-                std::make_unique<vec::Buffers<T>>(this->n, this->pkt_size);
+            this->dec_inter_codeword = std::make_unique<vec::Buffers<T>>(
+                this->n, this->pkt_size, true);
         }
     }
 
@@ -251,14 +251,26 @@ class RsFnt : public FecCode<T> {
         std::vector<Properties>& props,
         off_t offset) override
     {
-        // check for out of range value in output
         unsigned size = output.get_size();
-        T thres = (this->gf->card() - 1);
-        for (unsigned i = 0; i < this->n_outputs; ++i) {
-            T* chunk = output.get(i);
-            for (unsigned j = 0; j < size; ++j) {
-                if (chunk[j] & thres) {
-                    props[i].add(offset + j, OOR_MARK);
+        if (output.has_meta()) {
+            // check meta of elements
+            for (unsigned i = 0; i < this->n_outputs; ++i) {
+                for (unsigned j = 0; j < size; ++j) {
+                    T meta = output.get_meta(i, j);
+                    if (meta) {
+                        props[i].add(offset + j, meta);
+                    }
+                }
+            }
+        } else {
+            // check for out of range value in output
+            T thres = (this->gf->card() - 1);
+            for (unsigned i = 0; i < this->n_outputs; ++i) {
+                T* chunk = output.get(i);
+                for (unsigned j = 0; j < size; ++j) {
+                    if (chunk[j] & thres) {
+                        props[i].add(offset + j, OOR_MARK);
+                    }
                 }
             }
         }
