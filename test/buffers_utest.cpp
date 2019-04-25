@@ -363,7 +363,7 @@ TYPED_TEST(BuffersTest, TestCalculateSize) // NOLINT
     }
 }
 
-TYPED_TEST(BuffersTest, TestGetValueAndMeta) // NOLINT
+TYPED_TEST(BuffersTest, TestGetSetValueAndMeta) // NOLINT
 {
     const int n = 2;
     const size_t size = 4;
@@ -374,7 +374,7 @@ TYPED_TEST(BuffersTest, TestGetValueAndMeta) // NOLINT
         (sizeof(TypeParam) == 1) ? 1 : size * sizeof(TypeParam) / CHAR_BIT);
 
     // vector of meta buffers, as `meta_size` depends on TypeParam
-    std::vector<std::vector<uint8_t>> metas = {
+    std::vector<std::vector<uint8_t>> compacted_metas = {
         // for TypeParam = uint8_t
         {0b1010, 0b1111},
         // for TypeParam = uint16_t
@@ -394,7 +394,7 @@ TYPED_TEST(BuffersTest, TestGetValueAndMeta) // NOLINT
 
     // vector stores expected meta per elements. These values are respect to
     // `metas`
-    std::vector<std::vector<uint8_t>> expected_metas = {
+    std::vector<std::vector<TypeParam>> expanded_metas = {
         // for TypeParam = uint8_t: each element has a meta of 1 bit
         {0b0, 0b1, 0b0, 0b1, 0b1, 0b1, 0b1, 0b1},
         // for TypeParam = uint16_t: each element has a meta of 2 bits
@@ -413,7 +413,7 @@ TYPED_TEST(BuffersTest, TestGetValueAndMeta) // NOLINT
     };
 
     // data buffers
-    std::vector<std::vector<TypeParam>> values = {
+    std::vector<std::vector<TypeParam>> packed_values = {
         // for TypeParam = uint8_t
         {0x42, 0x51, 0x19, 0x3a, 0xab, 0xdf, 0x1c, 0xa1},
         // for TypeParam = uint16_t
@@ -451,7 +451,7 @@ TYPED_TEST(BuffersTest, TestGetValueAndMeta) // NOLINT
     } unpack;
 
     // vector stores expected unpacked elements
-    std::vector<std::vector<unpack>> expected_unpacked_values = {
+    std::vector<std::vector<unpack>> unpacked_values = {
         // for TypeParam = uint8_t: for each half part
         //  - first 4 bits from meta
         //  - last 4 bits from data
@@ -508,18 +508,19 @@ TYPED_TEST(BuffersTest, TestGetValueAndMeta) // NOLINT
 
     const size_t id = quadiron::arith::log2<TypeParam>(sizeof(TypeParam));
 
-    const std::vector<TypeParam*> mem = {values[id].data(),
-                                         values[id].data() + size};
-    const std::vector<uint8_t*> meta = {metas[id].data(),
-                                        metas[id].data() + meta_size};
+    const std::vector<TypeParam*> mem = {packed_values[id].data(),
+                                         packed_values[id].data() + size};
+    const std::vector<uint8_t*> meta = {compacted_metas[id].data(),
+                                        compacted_metas[id].data() + meta_size};
 
-    vec::Buffers<TypeParam> buf(n, size, mem, &meta);
+    // For checking get functions
+    vec::Buffers<TypeParam> buf1(n, size, mem, &meta);
 
     // check get_meta
     for (int i = 0; i < n; ++i) {
         for (size_t j = 0; j < size; ++j) {
-            const TypeParam got = buf.get_meta(i, j);
-            const TypeParam expected = expected_metas[id][i * size + j];
+            const TypeParam got = buf1.get_meta(i, j);
+            const TypeParam expected = expanded_metas[id][i * size + j];
             ASSERT_EQ(expected, got);
         }
     }
@@ -528,10 +529,41 @@ TYPED_TEST(BuffersTest, TestGetValueAndMeta) // NOLINT
     for (int i = 0; i < n; ++i) {
         for (size_t j = 0; j < size; ++j) {
             TypeParam hi, lo;
-            buf.get(i, j, hi, lo);
-            const unpack expected = expected_unpacked_values[id][i * size + j];
+            buf1.get(i, j, hi, lo);
+            const unpack expected = unpacked_values[id][i * size + j];
             ASSERT_EQ(expected.hi, hi);
             ASSERT_EQ(expected.lo, lo);
         }
+    }
+
+    // For checking set functions
+    vec::Buffers<TypeParam> buf2(n, size, true);
+
+    // set meta & check
+    for (int i = 0; i < n; ++i) {
+        for (size_t j = 0; j < size; ++j) {
+            const TypeParam m_val = expanded_metas[id][i * size + j];
+            buf2.set_meta(i, j, m_val);
+            ASSERT_EQ(m_val, buf2.get_meta(i, j));
+        }
+        const uint8_t* got = buf2.get_meta(i);
+        const uint8_t* expected = compacted_metas[id].data();
+        ASSERT_EQ(compacted_metas[id].size(), n * meta_size);
+        ASSERT_TRUE(std::equal(got, got + meta_size, expected + i * meta_size));
+    }
+
+    // set unpack element & check
+    for (int i = 0; i < n; ++i) {
+        for (size_t j = 0; j < size; ++j) {
+            unpack p = unpacked_values[id][i * size + j];
+            buf2.set(i, j, p.hi, p.lo);
+            TypeParam hi, lo;
+            buf2.get(i, j, hi, lo);
+            ASSERT_EQ(p.hi, hi);
+            ASSERT_EQ(p.lo, lo);
+        }
+        const TypeParam* got = buf2.get(i);
+        const TypeParam* expected = packed_values[id].data();
+        ASSERT_TRUE(std::equal(got, got + size, expected + i * size));
     }
 }
