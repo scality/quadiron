@@ -362,3 +362,176 @@ TYPED_TEST(BuffersTest, TestCalculateSize) // NOLINT
         ASSERT_EQ(t.expected[id], new_size);
     }
 }
+
+TYPED_TEST(BuffersTest, TestGetValueAndMeta) // NOLINT
+{
+    const int n = 2;
+    const size_t size = 4;
+    const size_t meta_size = vec::Buffers<TypeParam>::compute_meta_size(size);
+
+    ASSERT_EQ(
+        meta_size,
+        (sizeof(TypeParam) == 1) ? 1 : size * sizeof(TypeParam) / CHAR_BIT);
+
+    // vector of meta buffers, as `meta_size` depends on TypeParam
+    std::vector<std::vector<uint8_t>> metas = {
+        // for TypeParam = uint8_t
+        {0b1010, 0b1111},
+        // for TypeParam = uint16_t
+        {0b10101111, 0b11111010},
+        // for TypeParam = uint32_t
+        {0b10101111, 0b11111010, 0b10101111, 0b11111010},
+        // for TypeParam = uint64_t
+        {0b10101111,
+         0b11111010,
+         0b10101111,
+         0b11111010,
+         0b10101111,
+         0b11111010,
+         0b10101111,
+         0b11111010},
+    };
+
+    // vector stores expected meta per elements. These values are respect to
+    // `metas`
+    std::vector<std::vector<uint8_t>> expected_metas = {
+        // for TypeParam = uint8_t: each element has a meta of 1 bit
+        {0b0, 0b1, 0b0, 0b1, 0b1, 0b1, 0b1, 0b1},
+        // for TypeParam = uint16_t: each element has a meta of 2 bits
+        {0b11, 0b11, 0b10, 0b10, 0b10, 0b10, 0b11, 0b11},
+        // for TypeParam = uint32_t: each element has a meta of 4 bits
+        {0b1111, 0b1010, 0b1010, 0b1111, 0b1111, 0b1010, 0b1010, 0b1111},
+        // for TypeParam = uint64_t: each element has a meta of 8 bits
+        {0b10101111,
+         0b11111010,
+         0b10101111,
+         0b11111010,
+         0b10101111,
+         0b11111010,
+         0b10101111,
+         0b11111010},
+    };
+
+    // data buffers
+    std::vector<std::vector<TypeParam>> values = {
+        // for TypeParam = uint8_t
+        {0x42, 0x51, 0x19, 0x3a, 0xab, 0xdf, 0x1c, 0xa1},
+        // for TypeParam = uint16_t
+        {static_cast<TypeParam>(0x4142),
+         static_cast<TypeParam>(0x5051),
+         static_cast<TypeParam>(0x1819),
+         static_cast<TypeParam>(0x393a),
+         static_cast<TypeParam>(0xaaab),
+         static_cast<TypeParam>(0xdedf),
+         static_cast<TypeParam>(0x1b1c),
+         static_cast<TypeParam>(0xa0a1)},
+        // for TypeParam = uint32_t
+        {static_cast<TypeParam>(0x41414242),
+         static_cast<TypeParam>(0x50505151),
+         static_cast<TypeParam>(0x18181919),
+         static_cast<TypeParam>(0x39393a3a),
+         static_cast<TypeParam>(0xaaaaabab),
+         static_cast<TypeParam>(0xdededfdf),
+         static_cast<TypeParam>(0x1b1b1c1c),
+         static_cast<TypeParam>(0xa0a0a1a1)},
+        // for TypeParam = uint64_t
+        {static_cast<TypeParam>(0x4141414142424242),
+         static_cast<TypeParam>(0x1414141451515151),
+         static_cast<TypeParam>(0x1818181819191919),
+         static_cast<TypeParam>(0x393939393a3a3a3a),
+         static_cast<TypeParam>(0xb9b9b9b9abababab),
+         static_cast<TypeParam>(0xdededededfdfdfdf),
+         static_cast<TypeParam>(0x1b1b1b1b1c1c1c1c),
+         static_cast<TypeParam>(0xa1a0a0a0a1a1a1a1)},
+    };
+
+    typedef struct unpack {
+        TypeParam hi;
+        TypeParam lo;
+    } unpack;
+
+    // vector stores expected unpacked elements
+    std::vector<std::vector<unpack>> expected_unpacked_values = {
+        // for TypeParam = uint8_t: for each half part
+        //  - first 4 bits from meta
+        //  - last 4 bits from data
+        {{0x04, 0x02},
+         {0x15, 0x11},
+         {0x01, 0x09},
+         {0x13, 0x1a},
+         {0x1a, 0x1b},
+         {0x1d, 0x1f},
+         {0x11, 0x1c},
+         {0x1a, 0x11}},
+        // for TypeParam = uint16_t: for each half part
+        //  - first 8 bits from meta
+        //  - last 8 bits from data
+        {{static_cast<TypeParam>(0x0141), static_cast<TypeParam>(0x0142)},
+         {static_cast<TypeParam>(0x0150), static_cast<TypeParam>(0x0151)},
+         {static_cast<TypeParam>(0x0118), static_cast<TypeParam>(0x0019)},
+         {static_cast<TypeParam>(0x0139), static_cast<TypeParam>(0x003a)},
+         {static_cast<TypeParam>(0x01aa), static_cast<TypeParam>(0x00ab)},
+         {static_cast<TypeParam>(0x01de), static_cast<TypeParam>(0x00df)},
+         {static_cast<TypeParam>(0x011b), static_cast<TypeParam>(0x011c)},
+         {static_cast<TypeParam>(0x01a0), static_cast<TypeParam>(0x01a1)}},
+        // for TypeParam = uint32_t: for each half part
+        //  - first 16 bits from meta
+        //  - last 16 bits from data
+        {{static_cast<TypeParam>(0x34141), static_cast<TypeParam>(0x34242)},
+         {static_cast<TypeParam>(0x25050), static_cast<TypeParam>(0x25151)},
+         {static_cast<TypeParam>(0x21818), static_cast<TypeParam>(0x21919)},
+         {static_cast<TypeParam>(0x33939), static_cast<TypeParam>(0x33a3a)},
+         {static_cast<TypeParam>(0x3aaaa), static_cast<TypeParam>(0x3abab)},
+         {static_cast<TypeParam>(0x2dede), static_cast<TypeParam>(0x2dfdf)},
+         {static_cast<TypeParam>(0x21b1b), static_cast<TypeParam>(0x21c1c)},
+         {static_cast<TypeParam>(0x3a0a0), static_cast<TypeParam>(0x3a1a1)}},
+        // for TypeParam = uint64_t: for each half part
+        //  - first 32 bits from meta
+        //  - last 32 bits from data
+        {{static_cast<TypeParam>(0xa41414141),
+          static_cast<TypeParam>(0xf42424242)},
+         {static_cast<TypeParam>(0xf14141414),
+          static_cast<TypeParam>(0xa51515151)},
+         {static_cast<TypeParam>(0xa18181818),
+          static_cast<TypeParam>(0xf19191919)},
+         {static_cast<TypeParam>(0xf39393939),
+          static_cast<TypeParam>(0xa3a3a3a3a)},
+         {static_cast<TypeParam>(0xab9b9b9b9),
+          static_cast<TypeParam>(0xfabababab)},
+         {static_cast<TypeParam>(0xfdededede),
+          static_cast<TypeParam>(0xadfdfdfdf)},
+         {static_cast<TypeParam>(0xa1b1b1b1b),
+          static_cast<TypeParam>(0xf1c1c1c1c)},
+         {static_cast<TypeParam>(0xfa1a0a0a0),
+          static_cast<TypeParam>(0xaa1a1a1a1)}},
+    };
+
+    const size_t id = quadiron::arith::log2<TypeParam>(sizeof(TypeParam));
+
+    const std::vector<TypeParam*> mem = {values[id].data(),
+                                         values[id].data() + size};
+    const std::vector<uint8_t*> meta = {metas[id].data(),
+                                        metas[id].data() + meta_size};
+
+    vec::Buffers<TypeParam> buf(n, size, mem, &meta);
+
+    // check get_meta
+    for (int i = 0; i < n; ++i) {
+        for (size_t j = 0; j < size; ++j) {
+            const TypeParam got = buf.get_meta(i, j);
+            const TypeParam expected = expected_metas[id][i * size + j];
+            ASSERT_EQ(expected, got);
+        }
+    }
+
+    // check get unpacked elements
+    for (int i = 0; i < n; ++i) {
+        for (size_t j = 0; j < size; ++j) {
+            TypeParam hi, lo;
+            buf.get(i, j, hi, lo);
+            const unpack expected = expected_unpacked_values[id][i * size + j];
+            ASSERT_EQ(expected.hi, hi);
+            ASSERT_EQ(expected.lo, lo);
+        }
+    }
+}
