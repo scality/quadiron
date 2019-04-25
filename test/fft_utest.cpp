@@ -335,7 +335,8 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
 {
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
-    const size_t size = 4;
+    const size_t size = 128;
+    const std::vector<bool> tests = {true, false};
 
     ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
@@ -349,22 +350,25 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
             fft::Radix2<TypeParam> fft(gf, n, data_len, size);
 
             const int vec_n = fft.get_n();
-            vec::Buffers<TypeParam> v2(vec_n, size);
-            vec::Buffers<TypeParam> _v2(vec_n, size);
-            for (unsigned len = 2; len <= n; len *= 2) {
-                vec::Buffers<TypeParam> v(len, size);
-                vec::Buffers<TypeParam> _v(_v2, 0, len);
-                for (int j = 0; j < 100; j++) {
-                    for (unsigned i = 0; i < len; i++) {
-                        TypeParam* mem = v.get(i);
-                        for (size_t u = 0; u < size; u++) {
-                            mem[u] = gf.rand();
-                        }
-                    }
-                    fft.fft(v2, v);
-                    fft.ifft(_v2, v2);
 
-                    ASSERT_EQ(v, _v);
+            for (bool const& has_meta : tests) {
+                vec::Buffers<TypeParam> v2(vec_n, size, has_meta);
+                vec::Buffers<TypeParam> _v2(vec_n, size, has_meta);
+                for (unsigned len = 2; len <= n; len *= 2) {
+                    vec::Buffers<TypeParam> v(len, size, has_meta);
+                    vec::Buffers<TypeParam> _v(_v2, 0, len);
+                    for (int j = 0; j < 100; j++) {
+                        for (unsigned i = 0; i < len; i++) {
+                            TypeParam* mem = v.get(i);
+                            for (size_t u = 0; u < size; u++) {
+                                mem[u] = gf.rand();
+                            }
+                        }
+                        fft.fft(v2, v);
+                        fft.ifft(_v2, v2);
+
+                        ASSERT_EQ(v, _v);
+                    }
                 }
             }
         }
@@ -375,7 +379,8 @@ TYPED_TEST(FftTest, TestNaiveVsFft2kVecp) // NOLINT
 {
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
-    const size_t size = 2;
+    const size_t size = 128;
+    const std::vector<bool> tests = {true, false};
 
     ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
@@ -393,29 +398,31 @@ TYPED_TEST(FftTest, TestNaiveVsFft2kVecp) // NOLINT
 
         ASSERT_EQ(fft_naive.get_n(), fft_2n.get_n());
 
-        vec::Buffers<TypeParam> v(n, size);
-        vec::Buffers<TypeParam> fft1(n, size);
-        vec::Buffers<TypeParam> fft2(n, size);
-        vec::Buffers<TypeParam> ifft1(n, size);
-        vec::Buffers<TypeParam> ifft2(n, size);
-        for (int j = 0; j < 100; j++) {
-            for (unsigned i = 0; i < n; i++) {
-                TypeParam* mem = v.get(i);
-                for (size_t u = 0; u < size; u++) {
-                    mem[u] = gf.rand();
+        for (bool const& has_meta : tests) {
+            vec::Buffers<TypeParam> v(n, size, has_meta);
+            vec::Buffers<TypeParam> fft1(n, size, has_meta);
+            vec::Buffers<TypeParam> fft2(n, size, has_meta);
+            vec::Buffers<TypeParam> ifft1(n, size, has_meta);
+            vec::Buffers<TypeParam> ifft2(n, size, has_meta);
+            for (int j = 0; j < 100; j++) {
+                for (unsigned i = 0; i < n; i++) {
+                    TypeParam* mem = v.get(i);
+                    for (size_t u = 0; u < size; u++) {
+                        mem[u] = gf.rand();
+                    }
                 }
+
+                fft_naive.fft(fft1, v);
+                fft_2n.fft(fft2, v);
+
+                ASSERT_EQ(fft1, fft2);
+
+                fft_naive.ifft(ifft1, fft1);
+                fft_2n.ifft(ifft2, fft2);
+
+                ASSERT_EQ(ifft1, ifft2);
+                ASSERT_EQ(ifft1, v);
             }
-
-            fft_naive.fft(fft1, v);
-            fft_2n.fft(fft2, v);
-
-            ASSERT_EQ(fft1, fft2);
-
-            fft_naive.ifft(ifft1, fft1);
-            fft_2n.ifft(ifft2, fft2);
-
-            ASSERT_EQ(ifft1, ifft2);
-            ASSERT_EQ(ifft1, v);
         }
     }
 }
