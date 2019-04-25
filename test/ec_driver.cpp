@@ -582,15 +582,15 @@ int main(int argc, char** argv)
     data_zpad = count_digits(n_data - 1);
 
     if (eflag == EC_TYPE_RS_FNT) {
-        if (word_size <= 4) {
-            run_fec_rs_fnt<uint32_t>(
+        if (word_size == 1) {
+            run_fec_rs_fnt<uint16_t>(
                 word_size,
                 n_data,
                 n_parities,
                 rflag,
                 quadiron::fec::FecType::NON_SYSTEMATIC);
-        } else if (word_size <= 8) {
-            run_fec_rs_fnt<uint64_t>(
+        } else if (word_size == 2) {
+            run_fec_rs_fnt<uint32_t>(
                 word_size,
                 n_data,
                 n_parities,
@@ -598,15 +598,15 @@ int main(int argc, char** argv)
                 quadiron::fec::FecType::NON_SYSTEMATIC);
         }
     } else if (eflag == EC_TYPE_RS_FNT_SYS) {
-        if (word_size <= 4) {
-            run_fec_rs_fnt<uint32_t>(
+        if (word_size == 1) {
+            run_fec_rs_fnt<uint16_t>(
                 word_size,
                 n_data,
                 n_parities,
                 rflag,
                 quadiron::fec::FecType::SYSTEMATIC);
-        } else if (word_size <= 8) {
-            run_fec_rs_fnt<uint64_t>(
+        } else if (word_size == 2) {
+            run_fec_rs_fnt<uint32_t>(
                 word_size,
                 n_data,
                 n_parities,
