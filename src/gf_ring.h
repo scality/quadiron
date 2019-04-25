@@ -388,14 +388,30 @@ inline void RingModN<T>::mul_vec_to_vecp(
     for (i = 0; i < n; i++) {
         T coef = coef_vec[i];
         if (coef > 1 && coef < h) {
-            this->mul_coef_to_buf(coef, src_mem[i], dest_mem[i], len);
+            if (dest.has_meta()) {
+                for (size_t j = 0; j < len; ++j) {
+                    T lo = 0, hi = 0;
+                    src.get(i, j, hi, lo);
+                    dest.set(i, j, mul(coef, hi), mul(coef, lo));
+                }
+            } else {
+                this->mul_coef_to_buf(coef, src_mem[i], dest_mem[i], len);
+            }
         } else if (coef == 1) {
             dest.copy(src, i, i);
         } else if (coef == 0) {
             dest.fill(i, 0);
         } else if (coef == h) {
-            dest.copy(src, i, i);
-            this->neg(len, dest_mem[i]);
+            if (dest.has_meta()) {
+                for (size_t j = 0; j < len; ++j) {
+                    T lo = 0, hi = 0;
+                    src.get(i, j, hi, lo);
+                    dest.set(i, j, neg(hi), neg(lo));
+                }
+            } else {
+                dest.copy(src, i, i);
+                this->neg(len, dest_mem[i]);
+            }
         }
     }
 }
@@ -842,8 +858,18 @@ template <typename T>
 inline void RingModN<T>::neg(vec::Buffers<T>& buf) const
 {
     size_t size = buf.get_size();
-    for (int i = 0; i < buf.get_n(); i++) {
-        neg(size, buf.get(i));
+    if (buf.has_meta()) {
+        for (int i = 0; i < buf.get_n(); i++) {
+            for (size_t j = 0; j < size; ++j) {
+                T hi = 0, lo = 0;
+                buf.get(i, j, hi, lo);
+                buf.set(i, j, neg(hi), neg(lo));
+            }
+        }
+    } else {
+        for (int i = 0; i < buf.get_n(); i++) {
+            neg(size, buf.get(i));
+        }
     }
 }
 
