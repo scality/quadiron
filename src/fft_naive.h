@@ -148,16 +148,35 @@ void Naive<T>::_fft(
     vec::Buffers<T>& input,
     vec::Matrix<T>* _W)
 {
+    assert(output.has_meta() == input.has_meta());
     const unsigned len = this->n;
     const unsigned size = this->pkt_size;
-    for (unsigned i = 0; i < len; ++i) {
-        output.fill(i, 0);
-        T* buf = output.get(i);
-        for (unsigned j = 0; j < len; ++j) {
-            T* ibuf = input.get(j);
-            T r = _W->get(i, j);
-            for (unsigned u = 0; u < size; ++u) {
-                buf[u] = this->gf->add(buf[u], this->gf->mul(r, ibuf[u]));
+
+    if (output.has_meta()) {
+        for (unsigned i = 0; i < len; ++i) {
+            output.fill(i, 0);
+            for (unsigned j = 0; j < len; ++j) {
+                T r = _W->get(i, j);
+                for (unsigned u = 0; u < size; ++u) {
+                    T o_hi = 0, o_lo = 0, i_hi = 0, i_lo = 0;
+                    output.get(i, u, o_hi, o_lo);
+                    input.get(j, u, i_hi, i_lo);
+                    o_hi = this->gf->add(o_hi, this->gf->mul(r, i_hi));
+                    o_lo = this->gf->add(o_lo, this->gf->mul(r, i_lo));
+                    output.set(i, u, o_hi, o_lo);
+                }
+            }
+        }
+    } else {
+        for (unsigned i = 0; i < len; ++i) {
+            output.fill(i, 0);
+            T* buf = output.get(i);
+            for (unsigned j = 0; j < len; ++j) {
+                T* ibuf = input.get(j);
+                T r = _W->get(i, j);
+                for (unsigned u = 0; u < size; ++u) {
+                    buf[u] = this->gf->add(buf[u], this->gf->mul(r, ibuf[u]));
+                }
             }
         }
     }
