@@ -52,6 +52,24 @@ class Buffers;
 template <typename T>
 bool operator==(const Buffers<T>& lhs, const Buffers<T>& rhs);
 
+// Return a mask of `len` ones
+template <typename T>
+inline T mask(size_t len)
+{
+    return ((static_cast<T>(1) << len) - 1);
+}
+
+// Set a range of bits of `dest` according to bits of `src`
+template <typename T>
+inline void set_bits(T src, uint8_t& dest, size_t bits_nb, size_t d_begin = 0)
+{
+    uint8_t m = mask<uint8_t>(bits_nb);
+    // reset dest
+    dest &= ~(m << d_begin);
+    // set dest
+    dest |= (static_cast<uint8_t>(src & m) << d_begin);
+}
+
 /// Available cases of allocating memory
 enum class BufMemAlloc {
     /// Do not allocate any memory
@@ -141,9 +159,11 @@ class Buffers final {
     T* get(int i);
     const T* get(int i) const;
     void get(int buf_id, size_t ele_id, T& hi, T& lo) const;
+    void set(int buf_id, size_t ele_id, T hi, T lo);
     uint8_t* get_meta(int i);
     const uint8_t* get_meta(int i) const;
     T get_meta(int buf_id, size_t ele_id) const;
+    void set_meta(int buf_id, size_t ele_id, T val);
     const std::vector<T*>& get_mem() const;
     const std::vector<uint8_t*>& get_meta() const;
     void set_mem(std::vector<T*>* mem);
@@ -555,10 +575,10 @@ inline void Buffers<T>::init_meta()
 {
     meta_size = Buffers<T>::compute_meta_size(size);
     meta_bits_nb = sizeof(T);
-    threshold = (static_cast<T>(1) << meta_bits_nb) - 1;
+    threshold = mask<T>(meta_bits_nb);
 
-    half_element_mask = (static_cast<T>(1) << (CHAR_BIT * sizeof(T) / 2)) - 1;
-    half_meta_mask = (static_cast<T>(1) << (meta_bits_nb / 2)) - 1;
+    half_element_mask = mask<T>(CHAR_BIT * sizeof(T) / 2);
+    half_meta_mask = mask<T>(meta_bits_nb / 2);
     if (half_meta_mask == 0) {
         half_meta_mask = 1;
     }
@@ -667,6 +687,33 @@ void Buffers<T>::get(int buf_id, size_t ele_id, T& hi, T& lo) const
     hi = (value & half_element_mask) | ((m_value & half_meta_mask) << half);
 }
 
+/** Set `j`th element and its meta, given its unpacked value `lo` (`hi`) whose
+ * - low half part is the low (or high) part of the `j`th element
+ * - high half part is the low (or high) part of the meta of the `j`th element
+ *
+ * @param buf_id - index of buffer
+ * @param ele_id - index of element in the ith buffer
+ * @param hi - high half part of the unpacked element
+ * @param lo - low half part of the unpacked element
+ */
+template <typename T>
+void Buffers<T>::set(int buf_id, size_t ele_id, T hi, T lo)
+{
+    assert(buf_id >= 0 && buf_id < n);
+    assert(ele_id >= 0 && ele_id < size);
+
+    const T half = CHAR_BIT * sizeof(T) / 2;
+    mem[buf_id][ele_id] =
+        (lo & half_element_mask) | ((hi & half_element_mask) << half);
+
+    lo = static_cast<T>(lo) >> half;
+    hi = static_cast<T>(hi) >> half;
+    T m_value =
+        (lo & half_meta_mask) | ((hi & half_meta_mask) << (meta_bits_nb / 2));
+
+    set_meta(buf_id, ele_id, m_value);
+}
+
 template <typename T>
 inline uint8_t* Buffers<T>::get_meta(int i)
 {
@@ -726,12 +773,55 @@ T Buffers<T>::get_meta(int buf_id, size_t ele_id) const
     }
     // get from the last meta
     if (end_id > begin_id) {
-        const size_t end_offset = (begin_offset + meta_bits_nb) % CHAR_BIT;
-        const T mask_end = (static_cast<T>(1) << (end_offset + 1)) - 1;
-        val |= mask_end & meta_arr[end_id];
+        const size_t end = (begin_offset + meta_bits_nb) % CHAR_BIT;
+        val |= mask<T>(end) & meta_arr[end_id];
     }
 
     return val;
+}
+
+/** Set meta value of the `j`th element at the `i`th buffer
+ *
+ * @param buf_id - index of buffer
+ * @param ele_id - index of element in the ith buffer
+ * @param val - meta value
+ */
+template <typename T>
+void Buffers<T>::set_meta(int buf_id, size_t ele_id, T val)
+{
+    assert(buf_id >= 0 && buf_id < n);
+    assert(ele_id >= 0 && ele_id < size);
+
+    uint8_t* meta_arr = meta[buf_id];
+
+    const size_t bits_nb = ele_id * meta_bits_nb;
+    // begin meta
+    const size_t begin_id = bits_nb / CHAR_BIT;
+    // end meta, inclusively
+    const size_t end_id = (bits_nb + meta_bits_nb - 1) / CHAR_BIT;
+    // bit offset at the first meta
+    const size_t begin_offset = bits_nb % CHAR_BIT;
+
+    // set bits of the 1st meta
+    size_t nb = CHAR_BIT > meta_bits_nb + begin_offset
+                    ? meta_bits_nb
+                    : CHAR_BIT - begin_offset;
+    set_bits(val, meta_arr[begin_id], nb, begin_offset);
+
+    val = static_cast<T>(val) >> nb;
+
+    // set bits of next metas, before the last one
+    for (size_t i = 1; i < end_id - begin_id; ++i) {
+        const size_t j = i + begin_id;
+        set_bits(val, meta_arr[j], CHAR_BIT);
+        val = static_cast<T>(val) >> CHAR_BIT;
+    }
+
+    // get from the last meta
+    if (end_id > begin_id) {
+        const size_t end = (begin_offset + meta_bits_nb) % CHAR_BIT;
+        set_bits(val, meta_arr[end_id], end);
+    }
 }
 
 template <typename T>
