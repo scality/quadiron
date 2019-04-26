@@ -40,7 +40,7 @@ class FecTestCommon : public ::testing::Test {
   public:
     const unsigned n_data = 3;
     const unsigned n_parities = 3;
-    const size_t pkt_size = 16;
+    const size_t pkt_size = 9;
 
     void run_test_horizontal(
         fec::FecCode<T>& fec,
@@ -55,7 +55,7 @@ class FecTestCommon : public ::testing::Test {
 
         vec::Vector<T> data_frags(gf, n_data);
         vec::Vector<T> copied_data_frags(gf, n_data);
-        vec::Vector<T> encoded_frags(gf, fec.n);
+        vec::Vector<T> encoded_frags(gf, fec.get_n_outputs());
         vec::Vector<T> received_frags(gf, n_data);
         vec::Vector<T> decoded_frags(gf, n_data);
         std::vector<int> ids;
@@ -65,10 +65,10 @@ class FecTestCommon : public ::testing::Test {
             ids.push_back(i);
         }
 
-        std::vector<quadiron::Properties> props(code_len);
+        std::vector<quadiron::Properties> props(fec.get_n_outputs());
         for (int j = 0; j < 1000; j++) {
             if (props_flag) {
-                for (int i = 0; i < code_len; i++) {
+                for (int i = 0; i < fec.get_n_outputs(); i++) {
                     props[i] = quadiron::Properties();
                 }
             }
@@ -86,8 +86,25 @@ class FecTestCommon : public ::testing::Test {
             std::random_shuffle(ids.begin(), ids.end());
             for (unsigned i = 0; i < n_data; i++) {
                 fragments_ids.set(i, ids.at(i));
-                received_frags.set(i, encoded_frags.get(ids.at(i)));
             }
+            if (fec.type == fec::FecType::SYSTEMATIC) {
+                for (unsigned i = 0; i < n_data; i++) {
+                    if (fragments_ids.get(i) < n_data) {
+                        received_frags.set(
+                            i, data_frags.get(fragments_ids.get(i)));
+                    } else {
+                        received_frags.set(
+                            i,
+                            encoded_frags.get(fragments_ids.get(i) - n_data));
+                    }
+                }
+            } else {
+                for (unsigned i = 0; i < n_data; i++) {
+                    received_frags.set(
+                        i, encoded_frags.get(fragments_ids.get(i)));
+                }
+            }
+
             std::unique_ptr<fec::DecodeContext<T>> context =
                 fec.init_context_dec(fragments_ids, props);
 
@@ -100,68 +117,74 @@ class FecTestCommon : public ::testing::Test {
     void run_test_vertical(
         fec::FecCode<T>& fec,
         bool props_flag = false,
-        bool is_nf4 = false,
         bool has_meta = false)
     {
         const int code_len = n_data + n_parities;
 
         const quadiron::gf::Field<T>& gf = fec.get_gf();
-        const quadiron::gf::NF4<T>& nf4 =
-            static_cast<const quadiron::gf::NF4<T>&>(gf);
 
         vec::Buffers<T> data_frags(n_data, pkt_size, has_meta);
-        vec::Buffers<T> copied_data_frags(n_data, pkt_size, has_meta);
-        vec::Buffers<T> encoded_frags(fec.n, pkt_size, has_meta);
+        vec::Buffers<T> encoded_frags(fec.get_n_outputs(), pkt_size, has_meta);
         vec::Buffers<T> received_frags(n_data, pkt_size, has_meta);
         vec::Buffers<T> decoded_frags(n_data, pkt_size, has_meta);
         std::vector<int> ids;
         vec::Vector<T> fragments_ids(gf, n_data);
 
+        // It's necessary to set `data_frags` all zeros for `RsNf4` as
+        // `data_frags` has not meta
+        data_frags.zero_fill();
+
         for (int i = 0; i < code_len; i++) {
             ids.push_back(i);
         }
 
-        std::vector<quadiron::Properties> props(code_len);
-        for (int j = 0; j < 1000; j++) {
+        std::vector<quadiron::Properties> props(fec.get_n_outputs());
+        for (int j = 0; j < 1; j++) {
             if (props_flag) {
-                for (int i = 0; i < code_len; i++) {
+                for (int i = 0; i < fec.get_n_outputs(); i++) {
                     props[i] = quadiron::Properties();
                 }
             }
-
             const std::vector<T*> mem = data_frags.get_mem();
             for (unsigned i = 0; i < n_data; i++) {
-                for (size_t j = 0; j < pkt_size; ++j) {
-                    if (has_meta) {
-                        const T hi = is_nf4 ? nf4.unpacked_rand() : gf.rand();
-                        const T lo = is_nf4 ? nf4.unpacked_rand() : gf.rand();
-                        data_frags.set(i, j, hi, lo);
-                    } else {
-                        mem[i][j] = is_nf4 ? nf4.unpacked_rand() : gf.rand();
-                    }
+                char* buf = reinterpret_cast<char*>(mem[i]);
+                for (size_t j = 0; j < fec.buf_size; ++j) {
+                    buf[j] = static_cast<char>(gf.rand());
                 }
             }
             if (has_meta) {
                 data_frags.reset_meta();
             }
 
-            // FIXME: ngff4 will modify v after encode
-            copied_data_frags.copy(data_frags);
-
             fec.encode(encoded_frags, props, 0, data_frags);
 
             std::random_shuffle(ids.begin(), ids.end());
             for (unsigned i = 0; i < n_data; i++) {
                 fragments_ids.set(i, ids.at(i));
-                received_frags.copy(encoded_frags, ids.at(i), i);
             }
+            if (fec.type == fec::FecType::SYSTEMATIC) {
+                for (unsigned i = 0; i < n_data; i++) {
+                    if (fragments_ids.get(i) < n_data) {
+                        received_frags.copy(
+                            data_frags, fragments_ids.get(i), i);
+                    } else {
+                        received_frags.copy(
+                            encoded_frags, fragments_ids.get(i) - n_data, i);
+                    }
+                }
+            } else {
+                for (unsigned i = 0; i < n_data; i++) {
+                    received_frags.copy(encoded_frags, fragments_ids.get(i), i);
+                }
+            }
+
             std::unique_ptr<fec::DecodeContext<T>> context =
                 fec.init_context_dec(
                     fragments_ids, props, pkt_size, &decoded_frags);
 
             fec.decode(*context, decoded_frags, props, 0, received_frags);
 
-            ASSERT_EQ(copied_data_frags, decoded_frags);
+            ASSERT_EQ(data_frags, decoded_frags);
         }
     }
 
@@ -169,17 +192,17 @@ class FecTestCommon : public ::testing::Test {
         fec::FecCode<T>& fec,
         bool props_flag = false,
         bool is_nf4 = false,
-        size_t pkt_size = 0,
+        bool vertical_support = false,
         bool has_meta = false)
     {
         run_test_horizontal(fec, props_flag, is_nf4);
-        if (pkt_size > 0) {
-            run_test_vertical(fec, props_flag, is_nf4, has_meta);
+        if (vertical_support) {
+            run_test_vertical(fec, props_flag, has_meta);
         }
     }
 };
 
-using AllTypes = ::testing::Types<uint32_t, uint64_t, __uint128_t>;
+using AllTypes = ::testing::Types<uint32_t, uint64_t>;
 TYPED_TEST_CASE(FecTestCommon, AllTypes);
 
 TYPED_TEST(FecTestCommon, TestNf4) // NOLINT
@@ -188,9 +211,10 @@ TYPED_TEST(FecTestCommon, TestNf4) // NOLINT
 
     for (int i = 1; i < iter_count; i++) {
         const unsigned word_size = 1 << i;
-        fec::RsNf4<TypeParam> fec(word_size, this->n_data, this->n_parities);
+        fec::RsNf4<TypeParam> fec(
+            word_size, this->n_data, this->n_parities, this->pkt_size);
 
-        this->run_test(fec, true, true);
+        this->run_test(fec, true, true, true);
     }
 }
 
@@ -214,37 +238,43 @@ TYPED_TEST(FecTestCommon, TestGf2nFftAdd) // NOLINT
 }
 
 template <typename T>
+class FecTestFnt : public FecTestCommon<T> {
+};
+
+using FntType = ::testing::Types<uint16_t, uint32_t>;
+TYPED_TEST_CASE(FecTestFnt, FntType);
+
+TYPED_TEST(FecTestFnt, TestFnt) // NOLINT
+{
+    const unsigned word_size = sizeof(TypeParam) / 2;
+    fec::RsFnt<TypeParam> fec(
+        fec::FecType::NON_SYSTEMATIC,
+        word_size,
+        this->n_data,
+        this->n_parities,
+        this->pkt_size);
+
+    this->run_test(fec, true, false, true, true);
+}
+
+TYPED_TEST(FecTestFnt, TestFntSys) // NOLINT
+{
+    const unsigned word_size = sizeof(TypeParam) / 2;
+    fec::RsFnt<TypeParam> fec(
+        fec::FecType::SYSTEMATIC,
+        word_size,
+        this->n_data,
+        this->n_parities,
+        this->pkt_size);
+    this->run_test(fec, true, false, true, true);
+}
+
+template <typename T>
 class FecTestNo128 : public FecTestCommon<T> {
 };
 
 using No128 = ::testing::Types<uint32_t, uint64_t>;
 TYPED_TEST_CASE(FecTestNo128, No128);
-
-TYPED_TEST(FecTestNo128, TestFnt) // NOLINT
-{
-    for (unsigned word_size = 1; word_size <= 2; ++word_size) {
-        fec::RsFnt<TypeParam> fec(
-            fec::FecType::NON_SYSTEMATIC,
-            word_size,
-            this->n_data,
-            this->n_parities,
-            this->pkt_size);
-        this->run_test(fec, true, false, this->pkt_size, true);
-    }
-}
-
-TYPED_TEST(FecTestNo128, TestFntSys) // NOLINT
-{
-    for (unsigned word_size = 1; word_size <= 2; ++word_size) {
-        fec::RsFnt<TypeParam> fec(
-            fec::FecType::SYSTEMATIC,
-            word_size,
-            this->n_data,
-            this->n_parities,
-            this->pkt_size);
-        this->run_test(fec, true, false);
-    }
-}
 
 TYPED_TEST(FecTestNo128, TestGfpFft) // NOLINT
 {
