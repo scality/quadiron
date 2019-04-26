@@ -60,6 +60,13 @@ class RsFnt : public FecCode<T> {
     // decoding context used in encoding of systematic FNT
     std::unique_ptr<DecodeContext<T>> enc_context;
 
+    // vector for intermediate symbols used for systematic FNT
+    std::unique_ptr<vec::Vector<T>> vec_inter_words;
+    // vector of `n` symbols used for systematic FNT
+    std::unique_ptr<vec::Vector<T>> vec_inter_codeword;
+    // decoding context used in horizontal encoding of systematic FNT
+    std::unique_ptr<DecodeContext<T>> vec_enc_context;
+
     // Indices used for accelerated functions
     size_t simd_vec_len;
     size_t simd_trailing_len;
@@ -155,6 +162,17 @@ class RsFnt : public FecCode<T> {
             // for decoding
             this->dec_inter_codeword = std::make_unique<vec::Buffers<T>>(
                 this->n, this->pkt_size, true);
+
+            vec_inter_words =
+                std::make_unique<vec::Vector<T>>(*(this->gf), this->n_data);
+            vec_inter_codeword =
+                std::make_unique<vec::Vector<T>>(*(this->gf), this->n);
+            vec_enc_context =
+                this->init_context_dec(*enc_frag_ids, dummy_props);
+
+            // for decoding
+            this->vec_dec_inter_codeword =
+                std::make_unique<vec::Vector<T>>(*(this->gf), this->n);
         }
     }
 
@@ -177,7 +195,14 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Vector<T>& words) override
     {
-        this->fft->fft(output, words);
+        if (this->type == FecType::SYSTEMATIC) {
+            this->decode_apply(*vec_enc_context, *vec_inter_words, words);
+            this->fft->fft(*vec_inter_codeword, *vec_inter_words);
+            output.copy(
+                vec_inter_codeword.get(), this->n_parities, 0, this->n_data);
+        } else {
+            this->fft->fft(output, words);
+        }
         encode_post_process(output, props, offset);
     }
 
@@ -237,6 +262,7 @@ class RsFnt : public FecCode<T> {
     {
         if (this->type == FecType::SYSTEMATIC) {
             decode_data(*enc_context, *inter_words, words);
+            // this->decode_apply(*enc_context, *inter_words, words);
             vec::Buffers<T> _tmp(words, output);
             vec::Buffers<T> _output(_tmp, *suffix_words);
             this->fft->fft(_output, *inter_words);
