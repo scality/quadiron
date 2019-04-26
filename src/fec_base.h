@@ -251,6 +251,8 @@ class FecCode {
     std::unique_ptr<vec::Vector<T>> r_powers = nullptr;
     // buffers for intermediate symbols used for systematic FNT
     std::unique_ptr<vec::Buffers<T>> dec_inter_codeword;
+    // vector for intermediate symbols used for systematic FNT
+    std::unique_ptr<vec::Vector<T>> vec_dec_inter_codeword;
     bool use_meta_buf = false;
 
     // pure abstract methods that will be defined in derived class
@@ -749,6 +751,11 @@ void FecCode<T>::decode(
 
     // Lagrange interpolation
     decode_apply(context, output, words);
+
+    if (type == FecType::SYSTEMATIC) {
+        this->fft->fft(*vec_dec_inter_codeword, output);
+        output.copy(vec_dec_inter_codeword.get(), n_data);
+    }
 }
 
 /* Initialize context for decoding
@@ -804,7 +811,13 @@ void FecCode<T>::decode_prepare(
 {
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
     for (unsigned i = 0; i < this->n_data; ++i) {
-        const int j = fragments_ids.get(i);
+        unsigned j = fragments_ids.get(i);
+        if (type == FecType::SYSTEMATIC && j < this->n_data) {
+            continue;
+        }
+        if (type == FecType::SYSTEMATIC) {
+            j -= this->n_data;
+        }
         if (props[j].is_marked(context.props_indices[j], offset)) {
             // Check if the symbol is a special case whick is marked by
             // `OOR_MARK`, i.e. true. Note: this check is necessary when
