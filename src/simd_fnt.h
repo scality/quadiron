@@ -198,6 +198,64 @@ inline void add_props(
     }
 }
 
+template <typename T>
+inline void encode_post_process(
+    vec::Buffers<T>& output,
+    std::vector<Properties>& props,
+    off_t offset,
+    unsigned code_len,
+    T threshold,
+    size_t vecs_nb)
+{
+    const unsigned vec_size = countof<T>();
+    const T max = 1U << (sizeof(T) * CHAR_BIT - 1);
+    const VecType _threshold = set_one(threshold);
+    const VecType mask_hi = set_one(max);
+
+    const std::vector<T*>& mem = output.get_mem();
+    for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
+        VecType* buf = reinterpret_cast<VecType*>(mem[frag_id]);
+
+        size_t vec_id = 0;
+        size_t end = (vecs_nb > 3) ? vecs_nb - 3 : 0;
+        for (; vec_id < end; vec_id += 4) {
+            VecType a1 = load_to_reg(buf + vec_id);
+            VecType a2 = load_to_reg(buf + vec_id + 1);
+            VecType a3 = load_to_reg(buf + vec_id + 2);
+            VecType a4 = load_to_reg(buf + vec_id + 3);
+
+            if (!and_is_zero(a1, _threshold)) {
+                const off_t curr_offset = offset + vec_id * vec_size;
+                add_props(
+                    props[frag_id], _threshold, mask_hi, a1, curr_offset, max);
+            }
+            if (!and_is_zero(a2, _threshold)) {
+                const off_t curr_offset = offset + (vec_id + 1) * vec_size;
+                add_props(
+                    props[frag_id], _threshold, mask_hi, a2, curr_offset, max);
+            }
+            if (!and_is_zero(a3, _threshold)) {
+                const off_t curr_offset = offset + (vec_id + 2) * vec_size;
+                add_props(
+                    props[frag_id], _threshold, mask_hi, a3, curr_offset, max);
+            }
+            if (!and_is_zero(a4, _threshold)) {
+                const off_t curr_offset = offset + (vec_id + 3) * vec_size;
+                add_props(
+                    props[frag_id], _threshold, mask_hi, a4, curr_offset, max);
+            }
+        }
+        for (; vec_id < vecs_nb; ++vec_id) {
+            VecType a = load_to_reg(buf + vec_id);
+            if (!and_is_zero(a, _threshold)) {
+                const off_t curr_offset = offset + vec_id * vec_size;
+                add_props(
+                    props[frag_id], _threshold, mask_hi, a, curr_offset, max);
+            }
+        }
+    }
+}
+
 } // namespace simd
 } // namespace quadiron
 
