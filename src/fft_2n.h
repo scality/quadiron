@@ -640,7 +640,6 @@ void Radix2<T>::butterfly_gs_step_simple_slow(
                 b_lo = this->gf->mul(coef, a_lo);
                 b_hi = this->gf->mul(coef, a_hi);
 
-                buf.set(i, j, a_hi, a_lo);
                 buf.set(i + m, j, b_hi, b_lo);
             }
         }
