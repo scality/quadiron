@@ -140,8 +140,10 @@ class Buffers final {
     void fill(int i, T value);
     T* get(int i);
     const T* get(int i) const;
+    void get(int buf_id, size_t ele_id, T& hi, T& lo) const;
     uint8_t* get_meta(int i);
     const uint8_t* get_meta(int i) const;
+    T get_meta(int buf_id, size_t ele_id) const;
     const std::vector<T*>& get_mem() const;
     const std::vector<uint8_t*>& get_meta() const;
     void set_mem(std::vector<T*>* mem);
@@ -251,6 +253,11 @@ class Buffers final {
     T* zeros = nullptr;
     uint8_t* zeros_meta = nullptr;
     bool m_meta = false;
+
+    unsigned meta_bits_nb = 0;
+    T threshold = 0;
+    T half_element_mask;
+    T half_meta_mask;
 
     void init_meta();
     void allocate_meta(bool init_zero = false);
@@ -632,6 +639,34 @@ inline const T* Buffers<T>::get(int i) const
     return mem[i];
 }
 
+/** Get unpacked `j`th element at the `i`th buffer
+ * Return two integers `lo` (`hi`) whose
+ * - low half part is the low (or high) part of the `j`th element
+ * - high half part is the low (or high) part of the meta of the `j`th element
+ *
+ * @param buf_id - index of buffer
+ * @param ele_id - index of element in the ith buffer
+ * @param hi - high half part of the unpacked element
+ * @param lo - low half part of the unpacked element
+ */
+template <typename T>
+void Buffers<T>::get(int buf_id, size_t ele_id, T& hi, T& lo) const
+{
+    assert(buf_id >= 0 && buf_id < n);
+    assert(ele_id >= 0 && ele_id < size);
+
+    T m_value = get_meta(buf_id, ele_id);
+    T value = mem[buf_id][ele_id];
+    const T half = CHAR_BIT * sizeof(T) / 2;
+
+    lo = (value & half_element_mask) | ((m_value & half_meta_mask) << half);
+
+    value = static_cast<T>(value) >> half;
+    m_value = static_cast<T>(m_value) >> (meta_bits_nb / 2);
+
+    hi = (value & half_element_mask) | ((m_value & half_meta_mask) << half);
+}
+
 template <typename T>
 inline uint8_t* Buffers<T>::get_meta(int i)
 {
@@ -656,6 +691,47 @@ template <typename T>
 inline const std::vector<uint8_t*>& Buffers<T>::get_meta() const
 {
     return meta;
+}
+
+/** Get meta value of the `j`th element at the `i`th buffer
+ *
+ * @param buf_id - index of buffer
+ * @param ele_id - index of element in the ith buffer
+ * @return meta value
+ */
+template <typename T>
+T Buffers<T>::get_meta(int buf_id, size_t ele_id) const
+{
+    assert(buf_id >= 0 && buf_id < n);
+    assert(ele_id >= 0 && ele_id < size);
+
+    const uint8_t* meta_arr = meta[buf_id];
+
+    const size_t bits_nb = ele_id * meta_bits_nb;
+    // begin meta
+    const size_t begin_id = bits_nb / CHAR_BIT;
+    // end meta, inclusively
+    const size_t end_id = (bits_nb + meta_bits_nb - 1) / CHAR_BIT;
+    // bit offset at the first meta
+    const size_t begin_offset = bits_nb % CHAR_BIT;
+
+    // get from the 1st meta
+    T val = threshold & (static_cast<T>(meta_arr[begin_id]) >> begin_offset);
+
+    // get from next metas, before the last one
+    for (size_t i = 1; i < end_id - begin_id; ++i) {
+        const size_t j = i + begin_id;
+        val |= static_cast<T>(meta_arr[j])
+               << (CHAR_BIT - begin_offset + i * CHAR_BIT);
+    }
+    // get from the last meta
+    if (end_id > begin_id) {
+        const size_t end_offset = (begin_offset + meta_bits_nb) % CHAR_BIT;
+        const T mask_end = (static_cast<T>(1) << (end_offset + 1)) - 1;
+        val |= mask_end & meta_arr[end_id];
+    }
+
+    return val;
 }
 
 template <typename T>
