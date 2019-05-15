@@ -336,7 +336,9 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
     const size_t size = 128;
-    const std::vector<bool> tests = {true, false};
+    const std::vector<bool> tests = {true};
+
+    const unsigned half_elelemnt_in_bits = sizeof(TypeParam) * CHAR_BIT / 2;
 
     ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
@@ -355,13 +357,21 @@ TYPED_TEST(FftTest, TestFft2kVecp) // NOLINT
                 vec::Buffers<TypeParam> v2(vec_n, size, has_meta);
                 vec::Buffers<TypeParam> _v2(vec_n, size, has_meta);
                 for (unsigned len = 2; len <= n; len *= 2) {
-                    vec::Buffers<TypeParam> v(len, size, has_meta);
-                    vec::Buffers<TypeParam> _v(_v2, 0, len);
                     for (int j = 0; j < 100; j++) {
+                        vec::Buffers<TypeParam> v(len, size, has_meta);
+                        vec::Buffers<TypeParam> _v(_v2, 0, len);
                         for (unsigned i = 0; i < len; i++) {
                             TypeParam* mem = v.get(i);
-                            for (size_t u = 0; u < size; u++) {
-                                mem[u] = gf.rand();
+                            if (has_meta) {
+                                for (size_t u = 0; u < size; u++) {
+                                    mem[u] =
+                                        (gf.rand() << half_elelemnt_in_bits)
+                                        | gf.rand();
+                                }
+                            } else {
+                                for (size_t u = 0; u < size; u++) {
+                                    mem[u] = gf.rand();
+                                }
                             }
                         }
                         fft.fft(v2, v);
