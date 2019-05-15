@@ -127,6 +127,7 @@ set(TEST_SRC
   ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_allocator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_definitions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_simd.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_simd_fnt.cpp
 
   CACHE
   INTERNAL
