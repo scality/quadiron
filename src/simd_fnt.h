@@ -37,42 +37,55 @@ namespace quadiron {
 namespace simd {
 
 template <typename T>
-inline VecType card(T q);
+inline VecType card();
 template <>
-inline VecType card<uint16_t>(uint16_t)
+inline VecType card<uint16_t>()
 {
-    return F3_U16;
+    return set_one<uint16_t>(257);
 }
 template <>
-inline VecType card<uint32_t>(uint32_t q)
+inline VecType card<uint32_t>()
 {
-    return (q == F3) ? F3_U32 : F4_U32;
+    return set_one<uint32_t>(65537);
 }
 
 template <typename T>
-inline VecType card_minus_one(T q);
+inline VecType card_minus_one();
 template <>
-inline VecType card_minus_one<uint16_t>(uint16_t)
+inline VecType card_minus_one<uint16_t>()
 {
-    return F3_MINUS_ONE_U16;
+    return set_one<uint16_t>(256);
 }
 template <>
-inline VecType card_minus_one<uint32_t>(uint32_t q)
+inline VecType card_minus_one<uint32_t>()
 {
-    return (q == F3) ? F3_MINUS_ONE_U32 : F4_MINUS_ONE_U32;
+    return set_one<uint32_t>(65536);
 }
 
 template <typename T>
-inline VecType get_low_half(VecType x, T q)
+inline VecType get_low_half(const VecType& x);
+template <>
+inline VecType get_low_half<uint16_t>(const VecType& x)
 {
-    return (q == F3) ? BLEND8(ZERO, x, MASK8_LO) : BLEND16(ZERO, x, 0x55);
+    return BLEND8(zero(), x, MASK8_LO);
+}
+template <>
+inline VecType get_low_half<uint32_t>(const VecType& x)
+{
+    return BLEND16(zero(), x, 0x55);
 }
 
 template <typename T>
-inline VecType get_high_half(VecType x, T q)
+inline VecType get_high_half(const VecType& x);
+template <>
+inline VecType get_high_half<uint16_t>(const VecType& x)
 {
-    return (q == F3) ? BLEND8(ZERO, SHIFTR(x, 1), MASK8_LO)
-                     : BLEND16(ZERO, SHIFTR(x, 2), 0x55);
+    return BLEND8(zero(), SHIFTR(x, 1), MASK8_LO);
+}
+template <>
+inline VecType get_high_half<uint32_t>(const VecType& x)
+{
+    return BLEND16(zero(), SHIFTR(x, 2), 0x55);
 }
 
 /* ================= Basic Operations ================= */
@@ -82,14 +95,13 @@ inline VecType get_high_half(VecType x, T q)
  *
  * @param x input register
  * @param y input register
- * @param q modulo
  * @return (x + y) mod q
  */
 template <typename T>
-inline VecType mod_add(VecType x, VecType y, T q)
+inline VecType mod_add(const VecType& x, const VecType& y)
 {
     const VecType res = add<T>(x, y);
-    return min<T>(res, sub<T>(res, card(q)));
+    return min<T>(res, sub<T>(res, card<T>()));
 }
 
 /**
@@ -97,28 +109,26 @@ inline VecType mod_add(VecType x, VecType y, T q)
  *
  * @param x input register
  * @param y input register
- * @param q modulo
  * @return (x - y) mod q
  */
 template <typename T>
-inline VecType mod_sub(VecType x, VecType y, T q)
+inline VecType mod_sub(const VecType& x, const VecType& y)
 {
     const VecType res = sub<T>(x, y);
-    return min<T>(res, add<T>(res, card(q)));
+    return min<T>(res, add<T>(res, card<T>()));
 }
 
 /**
  * Modular negation for packed unsigned 32-bit integers
  *
  * @param x input register
- * @param q modulo
  * @return (-x) mod q
  */
 template <typename T>
-inline VecType mod_neg(VecType x, T q)
+inline VecType mod_neg(const VecType& x)
 {
-    const VecType res = sub<T>(card(q), x);
-    return min<T>(res, sub<T>(res, card(q)));
+    const VecType res = sub<T>(card<T>(), x);
+    return min<T>(res, sub<T>(res, card<T>()));
 }
 
 /**
@@ -129,16 +139,15 @@ inline VecType mod_neg(VecType x, T q)
  *
  * @param x input register
  * @param y input register
- * @param q modulo
  * @return (x * y) mod q
  */
 template <typename T>
-inline VecType mod_mul(VecType x, VecType y, T q)
+inline VecType mod_mul(const VecType& x, const VecType& y)
 {
     const VecType res = mul<T>(x, y);
-    const VecType lo = get_low_half(res, q);
-    const VecType hi = get_high_half(res, q);
-    return mod_sub(lo, hi, q);
+    const VecType lo = get_low_half<T>(res);
+    const VecType hi = get_high_half<T>(res);
+    return mod_sub<T>(lo, hi);
 }
 
 /**
@@ -148,109 +157,66 @@ inline VecType mod_mul(VecType x, VecType y, T q)
  *
  * @param x input register
  * @param y input register
- * @param q modulo
  * @return (x * y) mod q
  */
 template <typename T>
-inline VecType mod_mul_safe(VecType x, VecType y, T q)
+inline VecType mod_mul_safe(const VecType& x, const VecType& y)
 {
-    const VecType res = mod_mul(x, y, q);
+    const VecType res = mod_mul<T>(x, y);
 
     // filter elements of both of a & b = card-1
     const VecType cmp = bit_and(
-        compare_eq<T>(x, card_minus_one(q)),
-        compare_eq<T>(y, card_minus_one(q)));
+        compare_eq<T>(x, card_minus_one<T>()),
+        compare_eq<T>(y, card_minus_one<T>()));
 
     if (is_zero(cmp)) {
         return res;
     }
-    return (q == F3) ? bit_xor(res, bit_and(F4_U32, cmp))
-                     : add<T>(res, bit_and(ONE_U32, cmp));
+    return add<T>(res, bit_and(one<T>(), cmp));
 }
 
 /**
- * Update property for a given register for packed unsigned 32-bit integers
+ * Update property given an output Buffers
  *
+ * @param output output Buffers
  * @param props properties bound to fragments
- * @param threshold register storing max value in its elements
- * @param mask a specific mask
- * @param symb input register
  * @param offset offset in the data fragments
+ * @param code_len erasure codes' length
+ * @param vecs_nb number of vectors corresponding to the data
  */
-template <typename T>
-inline void add_props(
-    Properties& props,
-    VecType threshold,
-    VecType mask,
-    VecType symb,
-    off_t offset,
-    T)
-{
-    const VecType b = compare_eq<T>(threshold, symb);
-    const VecType c = bit_and(mask, b);
-    auto d = msb8_mask(c);
-    const unsigned element_size = sizeof(T);
-    while (d > 0) {
-        const unsigned byte_idx = __builtin_ctz(d);
-        const size_t _offset = offset + byte_idx / element_size;
-        props.add(_offset, OOR_MARK);
-        d ^= 1 << byte_idx;
-    }
-}
-
 template <typename T>
 inline void encode_post_process(
     vec::Buffers<T>& output,
     std::vector<Properties>& props,
     off_t offset,
     unsigned code_len,
-    T threshold,
     size_t vecs_nb)
 {
+    // nb of elements per vector
     const unsigned vec_size = countof<T>();
-    const T max = 1U << (sizeof(T) * CHAR_BIT - 1);
-    const VecType _threshold = set_one(threshold);
-    const VecType mask_hi = set_one(max);
+    // size of meta element in bits
+    const unsigned ele_size_in_bits = sizeof(MetaType) * CHAR_BIT / vec_size;
+    // mask to get meta
+    const T mask = ((static_cast<T>(1) << ele_size_in_bits) - 1);
 
-    const std::vector<T*>& mem = output.get_mem();
+    const std::vector<uint8_t*>& meta = output.get_meta();
     for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
-        VecType* buf = reinterpret_cast<VecType*>(mem[frag_id]);
-
-        size_t vec_id = 0;
-        size_t end = (vecs_nb > 3) ? vecs_nb - 3 : 0;
-        for (; vec_id < end; vec_id += 4) {
-            VecType a1 = load_to_reg(buf + vec_id);
-            VecType a2 = load_to_reg(buf + vec_id + 1);
-            VecType a3 = load_to_reg(buf + vec_id + 2);
-            VecType a4 = load_to_reg(buf + vec_id + 3);
-
-            if (!and_is_zero(a1, _threshold)) {
+        const MetaType* meta_frag = reinterpret_cast<MetaType*>(meta[frag_id]);
+        for (size_t vec_id = 0; vec_id < vecs_nb; ++vec_id) {
+            if (meta_frag[vec_id]) {
                 const off_t curr_offset = offset + vec_id * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a1, curr_offset, max);
-            }
-            if (!and_is_zero(a2, _threshold)) {
-                const off_t curr_offset = offset + (vec_id + 1) * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a2, curr_offset, max);
-            }
-            if (!and_is_zero(a3, _threshold)) {
-                const off_t curr_offset = offset + (vec_id + 2) * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a3, curr_offset, max);
-            }
-            if (!and_is_zero(a4, _threshold)) {
-                const off_t curr_offset = offset + (vec_id + 3) * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a4, curr_offset, max);
-            }
-        }
-        for (; vec_id < vecs_nb; ++vec_id) {
-            VecType a = load_to_reg(buf + vec_id);
-            if (!and_is_zero(a, _threshold)) {
-                const off_t curr_offset = offset + vec_id * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a, curr_offset, max);
+                MetaType val = meta_frag[vec_id];
+                unsigned idx = 0;
+                while (val) {
+                    const T m_val = val & mask;
+                    if (m_val) {
+                        const size_t _offset = curr_offset + idx;
+                        props[frag_id].add(_offset, m_val);
+                    }
+
+                    val >>= ele_size_in_bits;
+                    idx++;
+                }
             }
         }
     }
