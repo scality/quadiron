@@ -33,134 +33,93 @@
 
 #include <x86intrin.h>
 
+#include "gf_ring.h"
+
 namespace quadiron {
 namespace simd {
 
 /* ==================== Operations for RingModN =================== */
-/** Perform a multiplication of a coefficient `a` to each element of `src` and
- *  add result to correspondent element of `dest`
+/** Perform a multiplication of a coefficient `c` to each element of `buf_id`th
+ * buffers of `src` and store result to correspondent element of `dest`
  *
+ * @note: Buffers `src` and `dest` have meta
  * @note: 1 < `a` < card - 1
  */
 template <typename T>
-inline void mul_coef_to_buf(const T a, T* src, T* dest, size_t len, T card)
+inline void mul_coef_to_buf(
+    const gf::RingModN<T>& gf,
+    T c,
+    vec::Buffers<T>& src,
+    vec::Buffers<T>& dest,
+    size_t buf_id)
 {
-    const VecType coef = set_one(a);
+    const size_t size = src.get_size();
+    const unsigned ratio = simd::countof<T>();
+    const size_t simd_vec_len = size / ratio;
+    const size_t simd_trailing_len = size - simd_vec_len * ratio;
 
-    VecType* _src = reinterpret_cast<VecType*>(src);
-    VecType* _dest = reinterpret_cast<VecType*>(dest);
-    const unsigned ratio = sizeof(*_src) / sizeof(*src);
-    const size_t _len = len / ratio;
-    const size_t _last_len = len - _len * ratio;
+    const VecType coef = set_one(c);
 
-    size_t i = 0;
-    const size_t end = (_len > 3) ? _len - 3 : 0;
-    for (; i < end; i += 4) {
-        _dest[i] = mod_mul(coef, _src[i], card);
-        _dest[i + 1] = mod_mul(coef, _src[i + 1], card);
-        _dest[i + 2] = mod_mul(coef, _src[i + 2], card);
-        _dest[i + 3] = mod_mul(coef, _src[i + 3], card);
+    VecType* s_data = reinterpret_cast<VecType*>(src.get(buf_id));
+    VecType* d_data = reinterpret_cast<VecType*>(dest.get(buf_id));
+
+    MetaType* s_meta = reinterpret_cast<MetaType*>(src.get_meta(buf_id));
+    MetaType* d_meta = reinterpret_cast<MetaType*>(dest.get_meta(buf_id));
+
+    for (size_t i = 0; i < simd_vec_len; ++i) {
+        VecType lo, hi;
+        VecType x = load_to_reg(&s_data[i]);
+
+        unpack<T>(s_meta[i], x, hi, lo);
+        hi = mod_mul<T>(coef, hi);
+        lo = mod_mul<T>(coef, lo);
+        pack<T>(lo, hi, x, d_meta[i]);
+
+        store_to_mem(&d_data[i], x);
     }
-    for (; i < _len; ++i) {
-        _dest[i] = mod_mul(coef, _src[i], card);
-    }
 
-    if (_last_len > 0) {
-        const DoubleSizeVal<T> coef_double = DoubleSizeVal<T>(a);
-        for (size_t i = _len * ratio; i < len; i++) {
-            dest[i] = static_cast<T>((coef_double * src[i]) % card);
-        }
-    }
-}
-
-template <typename T>
-inline void add_two_bufs(T* src, T* dest, size_t len, T card)
-{
-    VecType* _src = reinterpret_cast<VecType*>(src);
-    VecType* _dest = reinterpret_cast<VecType*>(dest);
-    const unsigned ratio = sizeof(*_src) / sizeof(*src);
-    const size_t _len = len / ratio;
-    const size_t _last_len = len - _len * ratio;
-
-    size_t i;
-    for (i = 0; i < _len; i++) {
-        _dest[i] = mod_add(_src[i], _dest[i], card);
-    }
-    if (_last_len > 0) {
-        for (i = _len * ratio; i < len; i++) {
-            const T tmp = src[i] + dest[i];
-            dest[i] = (tmp >= card) ? (tmp - card) : tmp;
-        }
-    }
-}
-
-template <typename T>
-inline void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len, T card)
-{
-    VecType* _bufa = reinterpret_cast<VecType*>(bufa);
-    VecType* _bufb = reinterpret_cast<VecType*>(bufb);
-    VecType* _res = reinterpret_cast<VecType*>(res);
-    const unsigned ratio = sizeof(*_bufa) / sizeof(*bufa);
-    const size_t _len = len / ratio;
-    const size_t _last_len = len - _len * ratio;
-
-    size_t i;
-    for (i = 0; i < _len; i++) {
-        // perform subtraction
-        _res[i] = mod_sub(_bufa[i], _bufb[i], card);
-    }
-    if (_last_len > 0) {
-        for (i = _len * ratio; i < len; i++) {
-            // perform subtraction
-            if (bufa[i] >= bufb[i]) {
-                res[i] = bufa[i] - bufb[i];
-            } else {
-                res[i] = card - (bufb[i] - bufa[i]);
-            }
-        }
-    }
-}
-
-template <typename T>
-inline void mul_two_bufs(T* src, T* dest, size_t len, T card)
-{
-    VecType* _src = reinterpret_cast<VecType*>(src);
-    VecType* _dest = reinterpret_cast<VecType*>(dest);
-    const unsigned ratio = sizeof(*_src) / sizeof(*src);
-    const size_t _len = len / ratio;
-    const size_t _last_len = len - _len * ratio;
-
-    size_t i;
-    for (i = 0; i < _len; i++) {
-        // perform multiplicaton
-        _dest[i] = mod_mul_safe(_src[i], _dest[i], card);
-    }
-    if (_last_len > 0) {
-        for (i = _len * ratio; i < len; i++) {
-            // perform multiplicaton
-            dest[i] = T((DoubleSizeVal<T>(src[i]) * dest[i]) % card);
+    if (simd_trailing_len) {
+        const size_t simd_offset = simd_vec_len * ratio;
+        for (size_t i = simd_offset; i < size; ++i) {
+            T hi, lo;
+            src.get(buf_id, i, hi, lo);
+            dest.set(buf_id, i, gf.mul(c, hi), gf.mul(c, lo));
         }
     }
 }
 
 /** Apply an element-wise negation to a buffer
+ * @note: Buffers `src` and `dest` have meta
  */
 template <typename T>
-inline void neg(size_t len, T* buf, T card)
+inline void neg(const gf::RingModN<T>& gf, vec::Buffers<T>& buf, size_t buf_id)
 {
-    VecType* _buf = reinterpret_cast<VecType*>(buf);
-    const unsigned ratio = sizeof(*_buf) / sizeof(*buf);
-    const size_t _len = len / ratio;
-    const size_t _last_len = len - _len * ratio;
+    const size_t size = buf.get_size();
+    const unsigned ratio = simd::countof<T>();
+    const size_t simd_vec_len = size / ratio;
+    const size_t simd_trailing_len = size - simd_vec_len * ratio;
 
-    size_t i;
-    for (i = 0; i < _len; i++) {
-        _buf[i] = mod_neg(_buf[i], card);
+    VecType* vec_data = reinterpret_cast<VecType*>(buf.get(buf_id));
+    MetaType* vec_meta = reinterpret_cast<MetaType*>(buf.get_meta(buf_id));
+
+    for (size_t i = 0; i < simd_vec_len; ++i) {
+        VecType lo, hi;
+        VecType x = load_to_reg(&vec_data[i]);
+
+        unpack<T>(vec_meta[i], x, hi, lo);
+        hi = mod_neg<T>(hi);
+        lo = mod_neg<T>(lo);
+        pack<T>(lo, hi, x, vec_meta[i]);
+
+        store_to_mem(&vec_data[i], x);
     }
-    if (_last_len > 0) {
-        for (i = _len * ratio; i < len; i++) {
-            if (buf[i])
-                buf[i] = card - buf[i];
+
+    if (simd_trailing_len) {
+        const size_t simd_offset = simd_vec_len * ratio;
+        for (size_t i = simd_offset; i < size; ++i) {
+            T hi, lo;
+            buf.get(buf_id, i, hi, lo);
+            buf.set(buf_id, i, gf.neg(hi), gf.neg(lo));
         }
     }
 }
