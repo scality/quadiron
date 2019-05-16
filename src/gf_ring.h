@@ -95,7 +95,11 @@ class RingModN {
     T exp_quick(T base, T exponent) const;
     T log_naive(T base, T exponent) const;
     virtual T replicate(T a) const;
-    virtual void mul_coef_to_buf(T a, T* src, T* dest, size_t len) const;
+    virtual void mul_coef_to_buf(
+        T coef,
+        vec::Buffers<T>& src,
+        vec::Buffers<T>& dest,
+        size_t buf_id) const;
     virtual void mul_vec_to_vecp(
         vec::Vector<T>& u,
         vec::Buffers<T>& src,
@@ -127,8 +131,8 @@ class RingModN {
     T get_code_len(T n) const;
     T get_code_len_high_compo(T n) const;
     virtual void hadamard_mul(int n, T* x, T* y) const;
-    virtual void neg(size_t n, T* x) const;
-    virtual void neg(vec::Buffers<T>& buf) const;
+    void neg(vec::Buffers<T>& buf, size_t buf_id) const;
+    void neg(vec::Buffers<T>& buf) const;
 
     RingModN(RingModN&&) = default;
 
@@ -359,15 +363,30 @@ inline T RingModN<T>::replicate(T a) const
     return a;
 }
 
-// For each i, dest[i] = a * src[i]
 template <typename T>
-inline void RingModN<T>::mul_coef_to_buf(T a, T* src, T* dest, size_t len) const
+inline void RingModN<T>::mul_coef_to_buf(
+    T coef,
+    vec::Buffers<T>& src,
+    vec::Buffers<T>& dest,
+    size_t buf_id) const
 {
-    size_t i;
-    DoubleSizeVal<T> coef = DoubleSizeVal<T>(a);
-    for (i = 0; i < len; i++) {
-        // perform multiplication
-        dest[i] = mul(coef, src[i]);
+    assert(buf_id >= 0 && buf_id < static_cast<size_t>(src.get_n()));
+
+    size_t len = src.get_size();
+    if (src.has_meta()) {
+        for (size_t i = 0; i < len; i++) {
+            T lo = 0, hi = 0;
+            src.get(buf_id, i, hi, lo);
+            dest.set(buf_id, i, mul(coef, hi), mul(coef, lo));
+        }
+    } else {
+        T* src_mem = src.get(buf_id);
+        T* dest_mem = dest.get(buf_id);
+        DoubleSizeVal<T> d_coef = DoubleSizeVal<T>(coef);
+
+        for (size_t i = 0; i < len; i++) {
+            dest_mem[i] = mul(d_coef, src_mem[i]);
+        }
     }
 }
 
@@ -378,40 +397,28 @@ inline void RingModN<T>::mul_vec_to_vecp(
     vec::Buffers<T>& dest) const
 {
     assert(u.get_n() == src.get_n());
-    int i;
-    int n = u.get_n();
-    size_t len = src.get_size();
-    T h = this->card_minus_one();
-    const std::vector<T*>& src_mem = src.get_mem();
-    const std::vector<T*>& dest_mem = dest.get_mem();
+
+    const size_t n = src.get_n();
+    const size_t h = this->card_minus_one();
+    const bool same_obj = std::addressof(src) == std::addressof(dest);
     T* coef_vec = u.get_mem();
-    for (i = 0; i < n; i++) {
-        T coef = coef_vec[i];
-        if (coef > 1 && coef < h) {
-            if (dest.has_meta()) {
-                for (size_t j = 0; j < len; ++j) {
-                    T lo = 0, hi = 0;
-                    src.get(i, j, hi, lo);
-                    dest.set(i, j, mul(coef, hi), mul(coef, lo));
-                }
-            } else {
-                this->mul_coef_to_buf(coef, src_mem[i], dest_mem[i], len);
-            }
-        } else if (coef == 1) {
-            dest.copy(src, i, i);
-        } else if (coef == 0) {
+
+    for (size_t i = 0; i < n; ++i) {
+        const T coef = coef_vec[i];
+        if (coef == 0) {
             dest.fill(i, 0);
-        } else if (coef == h) {
-            if (dest.has_meta()) {
-                for (size_t j = 0; j < len; ++j) {
-                    T lo = 0, hi = 0;
-                    src.get(i, j, hi, lo);
-                    dest.set(i, j, neg(hi), neg(lo));
-                }
-            } else {
-                dest.copy(src, i, i);
-                this->neg(len, dest_mem[i]);
+        } else if (coef == 1) {
+            if (same_obj) {
+                continue;
             }
+            dest.copy(src, i, i);
+        } else if (coef < h) {
+            this->mul_coef_to_buf(coef, src, dest, i);
+        } else { // coef == card - 1
+            if (!same_obj) {
+                dest.copy(src, i, i);
+            }
+            this->neg(dest, i);
         }
     }
 }
@@ -846,11 +853,21 @@ inline void RingModN<T>::hadamard_mul(int n, T* x, T* y) const
 }
 
 template <typename T>
-inline void RingModN<T>::neg(size_t n, T* x) const
+inline void RingModN<T>::neg(vec::Buffers<T>& buf, size_t buf_id) const
 {
-    // add y to the first half of `x`
-    for (size_t i = 0; i < n; i++) {
-        x[i] = sub(0, x[i]);
+    size_t size = buf.get_size();
+    if (buf.has_meta()) {
+        for (size_t i = 0; i < size; ++i) {
+            T hi = 0, lo = 0;
+            buf.get(buf_id, i, hi, lo);
+            buf.set(buf_id, i, neg(hi), neg(lo));
+        }
+    } else {
+        T* x = buf.get(buf_id);
+        // add y to the first half of `x`
+        for (size_t i = 0; i < size; ++i) {
+            x[i] = sub(0, x[i]);
+        }
     }
 }
 
@@ -868,7 +885,7 @@ inline void RingModN<T>::neg(vec::Buffers<T>& buf) const
         }
     } else {
         for (int i = 0; i < buf.get_n(); i++) {
-            neg(size, buf.get(i));
+            neg(buf, i);
         }
     }
 }
@@ -877,56 +894,23 @@ inline void RingModN<T>::neg(vec::Buffers<T>& buf) const
 /* Operations are vectorized by SIMD */
 
 template <>
-void RingModN<uint16_t>::neg(size_t n, uint16_t* x) const;
-
+void RingModN<uint16_t>::neg(vec::Buffers<uint16_t>& buf, size_t buf_id) const;
 template <>
-void RingModN<uint32_t>::neg(size_t n, uint32_t* x) const;
+void RingModN<uint32_t>::neg(vec::Buffers<uint32_t>& buf, size_t buf_id) const;
 
 template <>
 void RingModN<uint16_t>::mul_coef_to_buf(
-    uint16_t a,
-    uint16_t* src,
-    uint16_t* dest,
-    size_t len) const;
+    uint16_t coef,
+    vec::Buffers<uint16_t>& src,
+    vec::Buffers<uint16_t>& dest,
+    size_t buf_id) const;
 
 template <>
 void RingModN<uint32_t>::mul_coef_to_buf(
-    uint32_t a,
-    uint32_t* src,
-    uint32_t* dest,
-    size_t len) const;
-
-template <>
-void RingModN<uint16_t>::add_two_bufs(uint16_t* src, uint16_t* dest, size_t len)
-    const;
-
-template <>
-void RingModN<uint32_t>::add_two_bufs(uint32_t* src, uint32_t* dest, size_t len)
-    const;
-
-template <>
-void RingModN<uint16_t>::sub_two_bufs(
-    uint16_t* bufa,
-    uint16_t* bufb,
-    uint16_t* res,
-    size_t len) const;
-
-template <>
-void RingModN<uint32_t>::sub_two_bufs(
-    uint32_t* bufa,
-    uint32_t* bufb,
-    uint32_t* res,
-    size_t len) const;
-
-template <>
-void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x, uint16_t* y) const;
-template <>
-void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x, uint32_t* y) const;
-// template <>
-// void RingModN<uint64_t>::hadamard_mul(int n, uint64_t* x, uint64_t* y) const;
-// template <>
-// void RingModN<__uint128_t>::hadamard_mul(int n, __uint128_t* x, __uint128_t*
-// y) const;
+    uint32_t coef,
+    vec::Buffers<uint32_t>& src,
+    vec::Buffers<uint32_t>& dest,
+    size_t buf_id) const;
 
 #endif // #ifdef QUADIRON_USE_SIMD
 
