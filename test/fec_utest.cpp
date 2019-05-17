@@ -205,19 +205,6 @@ class FecTestCommon : public ::testing::Test {
 using AllTypes = ::testing::Types<uint32_t, uint64_t>;
 TYPED_TEST_CASE(FecTestCommon, AllTypes);
 
-TYPED_TEST(FecTestCommon, TestNf4) // NOLINT
-{
-    const int iter_count = arith::log2<TypeParam>(sizeof(TypeParam));
-
-    for (int i = 1; i < iter_count; i++) {
-        const unsigned word_size = 1 << i;
-        fec::RsNf4<TypeParam> fec(
-            word_size, this->n_data, this->n_parities, this->pkt_size);
-
-        this->run_test(fec, true, true, true);
-    }
-}
-
 TYPED_TEST(FecTestCommon, TestGf2nFft) // NOLINT
 {
     for (size_t wordsize = 1; wordsize <= sizeof(TypeParam); wordsize *= 2) {
@@ -234,6 +221,26 @@ TYPED_TEST(FecTestCommon, TestGf2nFftAdd) // NOLINT
             wordsize, this->n_data, this->n_parities);
 
         this->run_test(fec);
+    }
+}
+
+template <typename T>
+class FecTestNf4 : public FecTestCommon<T> {
+};
+
+using Nf4Type = ::testing::Types<uint64_t>;
+TYPED_TEST_CASE(FecTestNf4, Nf4Type);
+
+TYPED_TEST(FecTestNf4, TestNf4) // NOLINT
+{
+    const int iter_count = arith::log2<TypeParam>(sizeof(TypeParam));
+
+    for (int i = 1; i < iter_count; i++) {
+        const unsigned word_size = 1 << i;
+        fec::RsNf4<TypeParam> fec(
+            word_size, this->n_data, this->n_parities, this->pkt_size);
+
+        this->run_test(fec, true, true, true);
     }
 }
 
