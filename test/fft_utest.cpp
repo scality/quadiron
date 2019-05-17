@@ -380,7 +380,7 @@ TYPED_TEST(FftTest, TestNaiveVsFft2kVecp) // NOLINT
     auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
     const unsigned R = gf.get_primitive_root();
     const size_t size = 128;
-    const std::vector<bool> tests = {true, false};
+    const std::vector<bool> tests = {true};
 
     ASSERT_EQ(arith::jacobi<TypeParam>(R, this->q), -1);
 
