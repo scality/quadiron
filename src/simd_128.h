@@ -43,26 +43,23 @@ typedef __m128i VecType;
 // @note: using const leads to an lint error of initialization of 'variable'
 // with static storage duration may throw an exception that cannot be caught
 
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType F4_U32 = _mm_set1_epi32(65537);
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType F4_MINUS_ONE_U32 = _mm_set1_epi32(65536);
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType F3_U32 = _mm_set1_epi32(257);
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType F3_MINUS_ONE_U32 = _mm_set1_epi32(256);
+template <typename T>
+inline VecType one();
+template <>
+inline VecType one<uint16_t>()
+{
+    return _mm_set1_epi16(1);
+}
+template <>
+inline VecType one<uint32_t>()
+{
+    return _mm_set1_epi32(1);
+}
 
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType F3_U16 = _mm_set1_epi16(257);
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType F3_MINUS_ONE_U16 = _mm_set1_epi16(256);
-
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType ZERO = _mm_setzero_si128();
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType ONE_U16 = _mm_set1_epi16(1);
-// NOLINTNEXTLINE(cert-err58-cpp)
-const VecType ONE_U32 = _mm_set1_epi32(1);
+inline VecType zero()
+{
+    return _mm_setzero_si128();
+}
 
 // NOLINTNEXTLINE(cert-err58-cpp)
 const VecType MASK8_LO = _mm_set1_epi16(0x80);
@@ -78,25 +75,25 @@ inline void store_to_mem(VecType* address, VecType reg)
     _mm_store_si128(address, reg);
 }
 
-inline VecType bit_and(VecType x, VecType y)
+inline VecType bit_and(const VecType& x, const VecType& y)
 {
     return _mm_and_si128(x, y);
 }
-inline VecType bit_xor(VecType x, VecType y)
+inline VecType bit_xor(const VecType& x, const VecType& y)
 {
     return _mm_xor_si128(x, y);
 }
-inline uint16_t msb8_mask(VecType x)
+inline uint16_t msb8_mask(const VecType& x)
 {
     return _mm_movemask_epi8(x);
 }
-inline bool and_is_zero(VecType x, VecType y)
+inline bool and_is_zero(const VecType& x, const VecType& y)
 {
     return _mm_testz_si128(x, y);
 }
-inline bool is_zero(VecType x)
+inline bool is_zero(const VecType& x)
 {
-    return _mm_testc_si128(ZERO, x);
+    return _mm_testc_si128(zero(), x);
 }
 
 #define SHIFTR(x, imm8) (_mm_srli_si128(x, imm8))
@@ -119,68 +116,163 @@ inline VecType set_one(uint16_t val)
 }
 
 template <typename T>
-inline VecType add(VecType x, VecType y);
+inline VecType add(const VecType& x, const VecType& y);
 template <>
-inline VecType add<uint32_t>(VecType x, VecType y)
+inline VecType add<uint32_t>(const VecType& x, const VecType& y)
 {
     return _mm_add_epi32(x, y);
 }
 template <>
-inline VecType add<uint16_t>(VecType x, VecType y)
+inline VecType add<uint16_t>(const VecType& x, const VecType& y)
 {
     return _mm_add_epi16(x, y);
 }
 
 template <typename T>
-inline VecType sub(VecType x, VecType y);
+inline VecType sub(const VecType& x, const VecType& y);
 template <>
-inline VecType sub<uint32_t>(VecType x, VecType y)
+inline VecType sub<uint32_t>(const VecType& x, const VecType& y)
 {
     return _mm_sub_epi32(x, y);
 }
 template <>
-inline VecType sub<uint16_t>(VecType x, VecType y)
+inline VecType sub<uint16_t>(const VecType& x, const VecType& y)
 {
     return _mm_sub_epi16(x, y);
 }
 
 template <typename T>
-inline VecType mul(VecType x, VecType y);
+inline VecType mul(const VecType& x, const VecType& y);
 template <>
-inline VecType mul<uint32_t>(VecType x, VecType y)
+inline VecType mul<uint32_t>(const VecType& x, const VecType& y)
 {
     return _mm_mullo_epi32(x, y);
 }
 template <>
-inline VecType mul<uint16_t>(VecType x, VecType y)
+inline VecType mul<uint16_t>(const VecType& x, const VecType& y)
 {
     return _mm_mullo_epi16(x, y);
 }
 
 template <typename T>
-inline VecType compare_eq(VecType x, VecType y);
+inline VecType compare_eq(const VecType& x, const VecType& y);
 template <>
-inline VecType compare_eq<uint32_t>(VecType x, VecType y)
+inline VecType compare_eq<uint32_t>(const VecType& x, const VecType& y)
 {
     return _mm_cmpeq_epi32(x, y);
 }
 template <>
-inline VecType compare_eq<uint16_t>(VecType x, VecType y)
+inline VecType compare_eq<uint16_t>(const VecType& x, const VecType& y)
 {
     return _mm_cmpeq_epi16(x, y);
 }
 
 template <typename T>
-inline VecType min(VecType x, VecType y);
+inline VecType min(const VecType& x, const VecType& y);
 template <>
-inline VecType min<uint32_t>(VecType x, VecType y)
+inline VecType min<uint32_t>(const VecType& x, const VecType& y)
 {
     return _mm_min_epu32(x, y);
 }
 template <>
-inline VecType min<uint16_t>(VecType x, VecType y)
+inline VecType min<uint16_t>(const VecType& x, const VecType& y)
 {
     return _mm_min_epu16(x, y);
+}
+
+template <typename T>
+void show(simd::VecType val)
+{
+    const size_t n = simd::countof<T>();
+    T buffer[n];
+    simd::store_to_mem(reinterpret_cast<simd::VecType*>(buffer), val);
+    for (unsigned i = 0; i < n; i++) {
+        std::cout << unsigned(buffer[i]) << " ";
+    }
+    std::cout << "\n";
+}
+
+// NOLINTNEXTLINE(cert-err58-cpp)
+const VecType mask1 =
+    _mm_set_epi16(0x0101, 0x0101, 0x0101, 0x0101, 0x0, 0x0, 0x0, 0x0);
+
+// NOLINTNEXTLINE(cert-err58-cpp)
+const VecType mask2 = _mm_set_epi16(
+    static_cast<int16_t>(0x8040),
+    0x2010,
+    0x0804,
+    0x0201,
+    static_cast<int16_t>(0x8040),
+    0x2010,
+    0x0804,
+    0x0201);
+
+// NOLINTNEXTLINE(cert-err58-cpp)
+const VecType mask3 = _mm_set1_epi8(1);
+
+inline VecType from_msb8_mask(MetaType m)
+{
+    // set `m` to all elements
+    VecType x = _mm_set1_epi16(m);
+    // re-arrange byte-by-byte
+    x = _mm_shuffle_epi8(x, mask1);
+    // get appropriated bit per byte
+    x = _mm_and_si128(x, mask2);
+    // generate mask
+    x = _mm_cmpeq_epi8(x, mask2);
+    // result
+    x = _mm_and_si128(x, mask3);
+
+    return x;
+}
+
+template <typename T>
+inline void unpack(MetaType m, const VecType& x, VecType& hi, VecType& lo);
+template <>
+inline void
+unpack<uint32_t>(MetaType m, const VecType& x, VecType& hi, VecType& lo)
+{
+    VecType m_mask = m ? from_msb8_mask(m) : zero();
+    lo = _mm_unpacklo_epi16(x, m_mask);
+    hi = _mm_unpackhi_epi16(x, m_mask);
+}
+template <>
+inline void
+unpack<uint16_t>(MetaType m, const VecType& x, VecType& hi, VecType& lo)
+{
+    VecType m_mask = m ? from_msb8_mask(m) : zero();
+    lo = _mm_unpacklo_epi8(x, m_mask);
+    hi = _mm_unpackhi_epi8(x, m_mask);
+}
+
+template <typename T>
+inline void pack(const VecType& lo, const VecType& hi, VecType& x, MetaType& m);
+template <>
+inline void
+pack<uint32_t>(const VecType& lo, const VecType& hi, VecType& x, MetaType& m)
+{
+    VecType hi_data = BLEND16(zero(), hi, 0x55);
+    VecType hi_meta = BLEND16(zero(), SHIFTR(hi, 2), 0x55);
+    VecType lo_data = BLEND16(zero(), lo, 0x55);
+    VecType lo_meta = BLEND16(zero(), SHIFTR(lo, 2), 0x55);
+
+    x = _mm_packus_epi32(lo_data, hi_data);
+    VecType meta_x = _mm_packus_epi32(lo_meta, hi_meta);
+    meta_x = _mm_cmpgt_epi8(meta_x, zero());
+    m = _mm_movemask_epi8(meta_x);
+}
+template <>
+inline void
+pack<uint16_t>(const VecType& lo, const VecType& hi, VecType& x, MetaType& m)
+{
+    VecType hi_data = BLEND8(zero(), hi, MASK8_LO);
+    VecType hi_meta = BLEND8(hi, zero(), MASK8_LO);
+    VecType lo_data = BLEND8(zero(), lo, MASK8_LO);
+    VecType lo_meta = BLEND8(lo, zero(), MASK8_LO);
+
+    x = _mm_packus_epi16(lo_data, hi_data);
+    VecType meta_x = _mm_packus_epi16(lo_meta, hi_meta);
+    m = _mm_movemask_epi8(meta_x);
 }
 
 } // namespace simd
