@@ -174,8 +174,8 @@ class FecCode {
     bool readw(T* ptr, std::istream* stream);
     bool writew(T val, std::ostream* stream);
 
-    bool read_pkt(char* pkt, std::istream& stream);
-    bool write_pkt(char* pkt, std::ostream& stream, size_t bytes);
+    bool read_pkt(char* pkt, std::istream* stream);
+    bool write_pkt(char* pkt, std::ostream* stream, size_t bytes);
 
     void encode_streams_horizontal(
         std::vector<std::istream*> input_data_bufs,
@@ -390,15 +390,15 @@ inline bool FecCode<T>::writew(T val, std::ostream* stream)
 }
 
 template <typename T>
-inline bool FecCode<T>::read_pkt(char* pkt, std::istream& stream)
+inline bool FecCode<T>::read_pkt(char* pkt, std::istream* stream)
 {
-    return static_cast<bool>(stream.read(pkt, buf_size));
+    return static_cast<bool>(stream->read(pkt, buf_size));
 }
 
 template <typename T>
-inline bool FecCode<T>::write_pkt(char* pkt, std::ostream& stream, size_t bytes)
+inline bool FecCode<T>::write_pkt(char* pkt, std::ostream* stream, size_t bytes)
 {
-    return static_cast<bool>(stream.write(pkt, bytes));
+    return static_cast<bool>(stream->write(pkt, bytes));
 }
 
 /** Encode streams
@@ -485,13 +485,13 @@ void FecCode<T>::encode_streams_vertical(
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> words(n_data, pkt_size, use_meta_buf);
-    std::vector<T*> words_mem = words.get_mem();
+    const std::vector<T*>& words_mem = words.get_mem();
 
     int output_len = get_n_outputs();
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> output(output_len, pkt_size, use_meta_buf);
-    const std::vector<T*> output_mem = output.get_mem();
+    const std::vector<T*>& output_mem = output.get_mem();
 
     reset_stats_enc();
 
@@ -503,7 +503,7 @@ void FecCode<T>::encode_streams_vertical(
         for (unsigned i = 0; i < n_data; i++) {
             if (!read_pkt(
                     reinterpret_cast<char*>(words_mem.at(i)),
-                    *(input_data_bufs[i]))) {
+                    input_data_bufs[i])) {
                 read_bytes = input_data_bufs[i]->gcount();
                 // Zero-out trailing part
                 std::fill_n(
@@ -536,7 +536,7 @@ void FecCode<T>::encode_streams_vertical(
         for (unsigned i = 0; i < n_outputs; i++) {
             write_pkt(
                 reinterpret_cast<char*>(output_mem.at(i)),
-                *(output_parities_bufs[i]),
+                output_parities_bufs[i],
                 read_bytes);
         }
         offset += pkt_size;
@@ -972,13 +972,13 @@ bool FecCode<T>::decode_streams_vertical(
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> words(n_data, pkt_size, use_meta_buf);
-    const std::vector<T*> words_mem = words.get_mem();
+    const std::vector<T*>& words_mem = words.get_mem();
 
     int output_len = n_data;
 
     // vector of buffers storing data that are performed in decoding, i.e. FFT
     vec::Buffers<T> output(output_len, pkt_size, use_meta_buf);
-    const std::vector<T*> output_mem = output.get_mem();
+    const std::vector<T*>& output_mem = output.get_mem();
 
     std::unique_ptr<DecodeContext<T>> context = init_context_dec(
         fragments_ids, input_parities_props, pkt_size, &output);
@@ -995,7 +995,7 @@ bool FecCode<T>::decode_streams_vertical(
                 unsigned data_idx = fragments_ids.get(i);
                 if (!read_pkt(
                         reinterpret_cast<char*>(words_mem.at(i)),
-                        *(input_data_bufs[data_idx]))) {
+                        input_data_bufs[data_idx])) {
                     read_bytes = input_data_bufs[data_idx]->gcount();
                     // Zero-out trailing part
                     std::fill_n(
@@ -1011,7 +1011,7 @@ bool FecCode<T>::decode_streams_vertical(
             unsigned parity_idx = avail_parity_ids.get(i);
             if (!read_pkt(
                     reinterpret_cast<char*>(words_mem.at(avail_data_nb + i)),
-                    *(input_parities_bufs[parity_idx]))) {
+                    input_parities_bufs[parity_idx])) {
                 read_bytes = input_parities_bufs[parity_idx]->gcount();
                 // Zero-out trailing part
                 std::fill_n(
@@ -1046,7 +1046,7 @@ bool FecCode<T>::decode_streams_vertical(
             if (output_data_bufs[i] != nullptr) {
                 write_pkt(
                     reinterpret_cast<char*>(output_mem.at(i)),
-                    *(output_data_bufs[i]),
+                    output_data_bufs[i],
                     read_bytes);
             }
         }
@@ -1094,13 +1094,13 @@ void FecCode<T>::encode_blocks_vertical(
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> words(n_data, pkt_size, use_meta_buf);
-    const std::vector<T*> words_mem = words.get_mem();
+    const std::vector<T*>& words_mem = words.get_mem();
 
     int output_len = get_n_outputs();
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> output(output_len, pkt_size, use_meta_buf);
-    const std::vector<T*> output_mem = output.get_mem();
+    const std::vector<T*>& output_mem = output.get_mem();
 
     reset_stats_enc();
 
@@ -1242,13 +1242,13 @@ bool FecCode<T>::decode_blocks_vertical(
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
     vec::Buffers<T> words(n_data, pkt_size, use_meta_buf);
-    const std::vector<T*> words_mem = words.get_mem();
+    const std::vector<T*>& words_mem = words.get_mem();
 
     int output_len = n_data;
 
     // vector of buffers storing data that are performed in decoding, i.e. FFT
     vec::Buffers<T> output(output_len, pkt_size, use_meta_buf);
-    const std::vector<T*> output_mem = output.get_mem();
+    const std::vector<T*>& output_mem = output.get_mem();
 
     std::unique_ptr<DecodeContext<T>> context =
         init_context_dec(fragments_ids, parities_props, pkt_size, &output);
