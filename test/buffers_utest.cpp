@@ -67,7 +67,7 @@ class BuffersTest : public ::testing::Test {
         std::uniform_int_distribution<T> dis(0, max - 1);
         auto vec = std::make_unique<vec::Buffers<T>>(n, size, has_meta);
 
-        const std::vector<T*> mem = vec->get_mem();
+        const std::vector<T*>& mem = vec->get_mem();
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < size; j++) {
                 mem[i][j] = dis(quadiron::prng());
@@ -75,7 +75,7 @@ class BuffersTest : public ::testing::Test {
         }
 
         if (has_meta) {
-            const std::vector<uint8_t*> meta = vec->get_meta();
+            const std::vector<uint8_t*>& meta = vec->get_meta();
             const size_t meta_size = vec->get_meta_size();
             for (int i = 0; i < n; ++i) {
                 for (size_t j = 0; j < meta_size; ++j) {
@@ -175,8 +175,8 @@ TYPED_TEST(BuffersTest, TestConstructors) // NOLINT
 
         vec::Buffers<TypeParam> vec2(*vec1, begin, end);
 
-        const std::vector<TypeParam*> mem1 = vec1->get_mem();
-        const std::vector<TypeParam*> mem2 = vec2.get_mem();
+        const std::vector<TypeParam*>& mem1 = vec1->get_mem();
+        const std::vector<TypeParam*>& mem2 = vec2.get_mem();
 
         // Check Slice constructor
         ASSERT_EQ(vec2.get_n(), end - begin);
@@ -189,8 +189,8 @@ TYPED_TEST(BuffersTest, TestConstructors) // NOLINT
             ASSERT_EQ(vec2.has_meta(), vec1->has_meta());
             ASSERT_EQ(vec2.get_meta_size(), meta_size);
 
-            const std::vector<uint8_t*> meta1 = vec1->get_meta();
-            const std::vector<uint8_t*> meta2 = vec2.get_meta();
+            const std::vector<uint8_t*>& meta1 = vec1->get_meta();
+            const std::vector<uint8_t*>& meta2 = vec2.get_meta();
 
             for (int i = begin, j = 0; i < end; ++i, ++j) {
                 ASSERT_TRUE(
@@ -206,7 +206,7 @@ TYPED_TEST(BuffersTest, TestConstructors) // NOLINT
         }
 
         if (has_meta) {
-            const std::vector<uint8_t*> meta1 = vec1->get_meta();
+            const std::vector<uint8_t*>& meta1 = vec1->get_meta();
             std::vector<uint8_t*> meta3(end - begin);
             for (int i = 0; i < end - begin; i++) {
                 meta3[i] = this->allocator_meta.allocate(meta_size);
@@ -283,11 +283,11 @@ TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
         for (bool const& has_meta : tests) {
             auto words = this->gen_buffers_rand_data(n, size, has_meta, max);
 
-            const std::vector<TypeParam*> mem_T = words->get_mem();
+            const std::vector<TypeParam*>& mem_T = words->get_mem();
 
             // Pack manually from TypeParam to uint8_t.
             vec::Buffers<uint8_t> vec_char(n, bytes_size);
-            const std::vector<uint8_t*> mem_char = vec_char.get_mem();
+            const std::vector<uint8_t*>& mem_char = vec_char.get_mem();
             for (int j = 0; j < n; j++) {
                 int t = 0;
                 TypeParam* buf_T = mem_T.at(j);
@@ -308,14 +308,14 @@ TYPED_TEST(BuffersTest, TestPackUnpack) // NOLINT
 
             // Pack bufs of type uint8_t to bufs of type TypeParam.
             vec::Buffers<TypeParam> vec_T_tmp(n, size);
-            const std::vector<TypeParam*> mem_T_tmp = vec_T_tmp.get_mem();
+            const std::vector<TypeParam*>& mem_T_tmp = vec_T_tmp.get_mem();
 
             vec::pack<uint8_t, TypeParam>(
                 mem_char, mem_T_tmp, n, size, word_size);
 
             // Unpack bufs of type TypeParam to bufs of type uint8_t.
             vec::Buffers<uint8_t> vec_char_tmp(n, bytes_size);
-            const std::vector<uint8_t*> mem_char_tmp = vec_char_tmp.get_mem();
+            const std::vector<uint8_t*>& mem_char_tmp = vec_char_tmp.get_mem();
             vec::unpack<TypeParam, uint8_t>(
                 mem_T_tmp, mem_char_tmp, n, size, word_size);
 
