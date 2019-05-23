@@ -145,7 +145,7 @@ class FecTestCommon : public ::testing::Test {
                     props[i] = quadiron::Properties();
                 }
             }
-            const std::vector<T*> mem = data_frags.get_mem();
+            const std::vector<T*>& mem = data_frags.get_mem();
             for (unsigned i = 0; i < n_data; i++) {
                 char* buf = reinterpret_cast<char*>(mem[i]);
                 for (size_t j = 0; j < fec.buf_size; ++j) {
