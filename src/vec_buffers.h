@@ -407,7 +407,7 @@ Buffers<T>::Buffers(const Buffers<T>& vec, int begin, int end)
     this->n = end - begin;
     this->size = vec.get_size();
     this->mem_len = this->n * this->size;
-    const std::vector<T*> vec_mem = vec.get_mem();
+    const std::vector<T*>& vec_mem = vec.get_mem();
 
     mem.reserve(this->n);
     // slice from input buffers
@@ -427,7 +427,7 @@ Buffers<T>::Buffers(const Buffers<T>& vec, int begin, int end)
 
     this->m_meta = vec.has_meta();
     if (this->m_meta) {
-        const std::vector<uint8_t*> vec_meta = vec.get_meta();
+        const std::vector<uint8_t*>& vec_meta = vec.get_meta();
         this->init_meta();
         meta.reserve(this->n);
         // slice from input buffers
@@ -531,7 +531,7 @@ Buffers<T>::Buffers(
     if (this->m_meta) {
         this->init_meta();
 
-        const std::vector<uint8_t*> vec_meta = vec.get_meta();
+        const std::vector<uint8_t*>& vec_meta = vec.get_meta();
         // output is sliced & shuffled from `vec`
         meta.reserve(this->n);
         if (vec_n < n) { // output is zero-extended & shuffled from `vec`
