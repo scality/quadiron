@@ -173,7 +173,7 @@ std::vector<Td*>* cast_mem_of_vecp(vec::Buffers<Ts>* s)
 
     // std::cout << "\ninput: "; s->dump();
 
-    const std::vector<Ts*> mem_s = s->get_mem();
+    const std::vector<Ts*>& mem_s = s->get_mem();
     std::vector<Td*>* mem_d = new std::vector<Td*>(n, nullptr);
     for (i = 0; i < n; i++) {
         mem_d->at(i) = reinterpret_cast<Td*>(mem_s.at(i));
