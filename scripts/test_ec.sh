@@ -174,7 +174,6 @@ do
     fec_type=$(echo $i|cut -d_ -f1)
     word_size=$(echo $i|cut -d_ -f2)
 
-    do_test enconly ${fec_type} ${word_size} 50 50 "" ""
     do_test all ${fec_type} ${word_size} 3 3 "" ""
     do_test all ${fec_type} ${word_size} 3 3 "0 1" "0"
     do_test all ${fec_type} ${word_size} 3 5 "0 1" "0"
