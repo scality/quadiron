@@ -34,8 +34,14 @@
 
 #include "arith.h"
 #include "core.h"
+#include "fft_2n.h"
+#include "gf_prime.h"
 #include "misc.h"
 #include "vec_buffers.h"
+
+namespace vec = quadiron::vec;
+namespace gf = quadiron::gf;
+namespace fft = quadiron::fft;
 
 #ifdef QUADIRON_USE_SIMD
 
@@ -82,6 +88,32 @@ class SimdTestFnt : public ::testing::Test {
 
         this->distribution =
             std::make_unique<std::uniform_int_distribution<uint32_t>>(0, q - 1);
+    }
+
+    void
+    buf_rand_data(vec::Buffers<T>& vec, bool has_meta = false, int _max = 0)
+    {
+        const T max = (_max == 0) ? std::numeric_limits<T>::max() : _max;
+        std::uniform_int_distribution<T> dis(0, max - 1);
+
+        const std::vector<T*>& mem = vec.get_mem();
+        const size_t size = vec.get_size();
+        const size_t n = vec.get_n();
+        for (size_t i = 0; i < n; ++i) {
+            for (size_t j = 0; j < size; j++) {
+                mem[i][j] = dis(quadiron::prng());
+            }
+        }
+
+        if (has_meta) {
+            const std::vector<uint8_t*>& meta = vec.get_meta();
+            const size_t meta_size = vec.get_meta_size();
+            for (size_t i = 0; i < n; ++i) {
+                for (size_t j = 0; j < meta_size; ++j) {
+                    meta[i][j] = static_cast<uint8_t>(dis(quadiron::prng()));
+                }
+            }
+        }
     }
 
     simd::VecType rand_vec(T lower = 0, T upper_bound = 0)
@@ -350,11 +382,39 @@ class SimdTestFnt : public ::testing::Test {
             double avg_cycles_nb = static_cast<double>(end - start)
                                    / static_cast<double>(iters_nb)
                                    / static_cast<double>(vec_len);
-            ;
 
             std::cout << "\t" << vec_len << "\t\t" << avg_cycles_nb << "\n";
         }
         std::cout << "\n";
+    }
+
+    template <typename TFunc>
+    void fft_perf(const std::string& text, size_t fft_len, const TFunc& f)
+    {
+        std::cout << text << "\n";
+        std::cout << "\tVectors nb\t\tAverage nb of CPU cycles\n";
+
+        for (auto vec_len : arr_vec_len) {
+            const size_t len = vec_len * simd::countof<T>();
+
+            vec::Buffers<T> input(fft_len, len, true);
+            vec::Buffers<T> output(fft_len, len, true);
+
+            buf_rand_data(input);
+            buf_rand_data(output);
+
+            uint64_t start = quadiron::hw_timer();
+            for (unsigned i = 0; i < iters_nb; ++i) {
+                f(output, input);
+            }
+            uint64_t end = quadiron::hw_timer();
+
+            double avg_cycles_nb = static_cast<double>(end - start)
+                                   / static_cast<double>(iters_nb)
+                                   / static_cast<double>(vec_len);
+
+            std::cout << "\t" << vec_len << "\t\t" << avg_cycles_nb << "\n";
+        }
     }
 
     T q;
@@ -362,6 +422,7 @@ class SimdTestFnt : public ::testing::Test {
     std::vector<size_t> arr_vec_len =
         {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
     size_t iters_nb = 1e3;
+    std::vector<size_t> arr_fft_len = {128};
 };
 
 using AllTypes = ::testing::Types<uint16_t, uint32_t>;
@@ -608,6 +669,22 @@ TYPED_TEST(SimdTestFnt, PerfButterfly) // NOLINT
            simd::VecType& y) {
             simd::butterfly_gs<TypeParam>(ct_case, c, x, y);
         });
+}
+
+TYPED_TEST(SimdTestFnt, PerfFftRadix2) // NOLINT
+{
+    auto gf(gf::create<gf::Prime<TypeParam>>(this->q));
+
+    for (auto fft_len : this->arr_fft_len) {
+        fft::Radix2<TypeParam> fft_2n(gf, fft_len);
+
+        this->fft_perf(
+            "FFT",
+            fft_len,
+            [&fft_2n](
+                vec::Buffers<TypeParam>& output,
+                vec::Buffers<TypeParam>& input) { fft_2n.fft(output, input); });
+    }
 }
 
 #endif
