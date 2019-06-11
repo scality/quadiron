@@ -465,14 +465,36 @@ void Radix2<T>::butterfly_ct_step_slow(
     unsigned step,
     size_t offset)
 {
-    for (int i = start; i < this->n; i += step) {
-        T* a = buf.get(i);
-        T* b = buf.get(i + m);
-        // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = offset; j < this->pkt_size; ++j) {
-            T x = this->gf->mul(coef, b[j]);
-            b[j] = this->gf->sub(a[j], x);
-            a[j] = this->gf->add(a[j], x);
+    if (buf.has_meta()) {
+        for (int i = start; i < this->n; i += step) {
+            // perform butterfly operation for Cooley-Tukey FFT algorithm
+            for (size_t j = offset; j < this->pkt_size; ++j) {
+                T a_lo = 0, a_hi = 0, b_lo = 0, b_hi = 0;
+                buf.get(i, j, a_hi, a_lo);
+                buf.get(i + m, j, b_hi, b_lo);
+
+                T x = this->gf->mul(coef, b_lo);
+                b_lo = this->gf->sub(a_lo, x);
+                a_lo = this->gf->add(a_lo, x);
+
+                x = this->gf->mul(coef, b_hi);
+                b_hi = this->gf->sub(a_hi, x);
+                a_hi = this->gf->add(a_hi, x);
+
+                buf.set(i, j, a_hi, a_lo);
+                buf.set(i + m, j, b_hi, b_lo);
+            }
+        }
+    } else {
+        for (int i = start; i < this->n; i += step) {
+            T* a = buf.get(i);
+            T* b = buf.get(i + m);
+            // perform butterfly operation for Cooley-Tukey FFT algorithm
+            for (size_t j = offset; j < this->pkt_size; ++j) {
+                T x = this->gf->mul(coef, b[j]);
+                b[j] = this->gf->sub(a[j], x);
+                a[j] = this->gf->add(a[j], x);
+            }
         }
     }
 }
@@ -564,14 +586,36 @@ void Radix2<T>::butterfly_gs_step_slow(
     unsigned step,
     size_t offset)
 {
-    for (int i = start; i < this->n; i += step) {
-        T* a = buf.get(i);
-        T* b = buf.get(i + m);
-        // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = offset; j < this->pkt_size; ++j) {
-            T x = this->gf->sub(a[j], b[j]);
-            a[j] = this->gf->add(a[j], b[j]);
-            b[j] = this->gf->mul(coef, x);
+    if (buf.has_meta()) {
+        for (int i = start; i < this->n; i += step) {
+            // perform butterfly operation for Cooley-Tukey FFT algorithm
+            for (size_t j = offset; j < this->pkt_size; ++j) {
+                T a_lo = 0, a_hi = 0, b_lo = 0, b_hi = 0;
+                buf.get(i, j, a_hi, a_lo);
+                buf.get(i + m, j, b_hi, b_lo);
+
+                T x = this->gf->sub(a_lo, b_lo);
+                a_lo = this->gf->add(a_lo, b_lo);
+                b_lo = this->gf->mul(coef, x);
+
+                x = this->gf->sub(a_hi, b_hi);
+                a_hi = this->gf->add(a_hi, b_hi);
+                b_hi = this->gf->mul(coef, x);
+
+                buf.set(i, j, a_hi, a_lo);
+                buf.set(i + m, j, b_hi, b_lo);
+            }
+        }
+    } else {
+        for (int i = start; i < this->n; i += step) {
+            T* a = buf.get(i);
+            T* b = buf.get(i + m);
+            // perform butterfly operation for Cooley-Tukey FFT algorithm
+            for (size_t j = offset; j < this->pkt_size; ++j) {
+                T x = this->gf->sub(a[j], b[j]);
+                a[j] = this->gf->add(a[j], b[j]);
+                b[j] = this->gf->mul(coef, x);
+            }
         }
     }
 }
@@ -585,12 +629,28 @@ void Radix2<T>::butterfly_gs_step_simple_slow(
     unsigned step,
     size_t offset)
 {
-    for (int i = start; i < this->n; i += step) {
-        T* a = buf.get(i);
-        T* b = buf.get(i + m);
-        // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = offset; j < this->pkt_size; ++j) {
-            b[j] = this->gf->mul(coef, a[j]);
+    if (buf.has_meta()) {
+        for (int i = start; i < this->n; i += step) {
+            // perform butterfly operation for Cooley-Tukey FFT algorithm
+            for (size_t j = offset; j < this->pkt_size; ++j) {
+                T a_lo = 0, a_hi = 0, b_lo = 0, b_hi = 0;
+                buf.get(i, j, a_hi, a_lo);
+                buf.get(i + m, j, b_hi, b_lo);
+
+                b_lo = this->gf->mul(coef, a_lo);
+                b_hi = this->gf->mul(coef, a_hi);
+
+                buf.set(i + m, j, b_hi, b_lo);
+            }
+        }
+    } else {
+        for (int i = start; i < this->n; i += step) {
+            T* a = buf.get(i);
+            T* b = buf.get(i + m);
+            // perform butterfly operation for Cooley-Tukey FFT algorithm
+            for (size_t j = offset; j < this->pkt_size; ++j) {
+                b[j] = this->gf->mul(coef, a[j]);
+            }
         }
     }
 }

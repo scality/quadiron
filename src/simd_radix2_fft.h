@@ -36,6 +36,24 @@
 namespace quadiron {
 namespace simd {
 
+enum class CtGsCase {
+    SIMPLE,
+    NORMAL,
+    EXTREME,
+};
+
+template <typename T>
+inline CtGsCase get_case(T r, T q)
+{
+    if (r == 1) {
+        return CtGsCase::SIMPLE;
+    } else if (r < q - 1) {
+        return CtGsCase::NORMAL;
+    } else {
+        return CtGsCase::EXTREME;
+    }
+}
+
 /* ================= Vectorized Operations ================= */
 
 /**
@@ -44,22 +62,31 @@ namespace simd {
  * x <- x + r * y
  * y <- x - r * y
  *
- * @param rp1 coefficient `r` plus one
+ * @param ct_case coefficient case
  * @param c a register stores coefficient `r`
  * @param x working register
  * @param y working register
- * @param q modular
  */
 template <typename T>
-inline void butterfly_ct(T rp1, VecType c, VecType* x, VecType* y, T q)
+inline void
+butterfly_ct(CtGsCase ct_case, const VecType& c, VecType& x, VecType& y)
 {
-    VecType z = (rp1 == 2) ? *y : mod_mul(c, *y, q);
-    if (rp1 < q) {
-        *y = mod_sub(*x, z, q);
-        *x = mod_add(*x, z, q);
-    } else { // i.e. r == q - 1
-        *y = mod_add(*x, z, q);
-        *x = mod_sub(*x, z, q);
+    VecType z = y;
+    switch (ct_case) {
+    case CtGsCase::SIMPLE:
+        y = mod_sub<T>(x, z);
+        x = mod_add<T>(x, z);
+        break;
+    case CtGsCase::EXTREME:
+        y = mod_add<T>(x, z);
+        x = mod_sub<T>(x, z);
+        break;
+    case CtGsCase::NORMAL:
+    default:
+        z = mod_mul<T>(c, y);
+        y = mod_sub<T>(x, z);
+        x = mod_add<T>(x, z);
+        break;
     }
 }
 
@@ -69,25 +96,30 @@ inline void butterfly_ct(T rp1, VecType c, VecType* x, VecType* y, T q)
  * x <- x + y
  * y <- r * (x - y)
  *
- * @param rp1 coefficient `r` plus one
+ * @param gs_case coefficient case
  * @param c a register stores coefficient `r`
  * @param x working register
  * @param y working register
- * @param q modular
  */
 template <typename T>
-inline void butterfly_gs(T rp1, VecType c, VecType* x, VecType* y, T q)
+inline void
+butterfly_gs(CtGsCase gs_case, const VecType& c, VecType& x, VecType& y)
 {
-    VecType add = mod_add(*x, *y, q);
-    if (rp1 == 2) {
-        *y = mod_sub(*x, *y, q);
-    } else if (rp1 < q) {
-        VecType sub = mod_sub(*x, *y, q);
-        *y = mod_mul(c, sub, q);
-    } else { // i.e. r == q - 1
-        *y = mod_sub(*y, *x, q);
+    VecType add = mod_add<T>(x, y);
+    switch (gs_case) {
+    case CtGsCase::SIMPLE:
+        y = mod_sub<T>(x, y);
+        break;
+    case CtGsCase::EXTREME:
+        y = mod_sub<T>(y, x);
+        break;
+    case CtGsCase::NORMAL:
+    default:
+        VecType sub = mod_sub<T>(x, y);
+        y = mod_mul<T>(c, sub);
+        break;
     }
-    *x = add;
+    x = add;
 }
 
 /**
@@ -96,24 +128,25 @@ inline void butterfly_gs(T rp1, VecType c, VecType* x, VecType* y, T q)
  * x <- x, i.e. no operation
  * y <- r * x
  *
- * @param rp1 coefficient `r` plus one
+ * @param gs_case coefficient case
  * @param c a register stores coefficient `r`
  * @param x working register
- * @param q modular
- * @return r * x
  */
 template <typename T>
-inline VecType butterfly_simple_gs(T rp1, VecType c, VecType x, T q)
+inline void butterfly_simple_gs(CtGsCase gs_case, const VecType& c, VecType& x)
 {
-    if (rp1 == 2) {
-        return x;
-    } else if (rp1 < q) {
-        return mod_mul(c, x, q);
-    } else {
-        return mod_neg(x, q);
+    switch (gs_case) {
+    case CtGsCase::EXTREME:
+        x = mod_neg<T>(x);
+        break;
+    case CtGsCase::NORMAL:
+        x = mod_mul<T>(c, x);
+        break;
+    case CtGsCase::SIMPLE:
+    default:
+        break;
     }
 }
-
 /**
  * Vectorized butterfly CT step
  *
@@ -139,55 +172,45 @@ inline void butterfly_ct_step(
     size_t len,
     T card)
 {
-    if (len == 0) {
-        return;
-    }
-    const T rp1 = r + 1;
-    VecType c = set_one(r);
+    const CtGsCase ct_case = get_case<T>(r, card);
+    const VecType c = set_one(r);
 
-    const size_t end = (len > 1) ? len - 1 : 0;
     const unsigned bufs_nb = buf.get_n();
     const std::vector<T*>& mem = buf.get_mem();
+    const std::vector<uint8_t*>& meta = buf.get_meta();
     for (unsigned i = start; i < bufs_nb; i += step) {
-        VecType x1, y1;
-        VecType x2, y2;
         VecType* p = reinterpret_cast<VecType*>(mem[i]);
         VecType* q = reinterpret_cast<VecType*>(mem[i + m]);
+        MetaType* m_p = reinterpret_cast<MetaType*>(meta[i]);
+        MetaType* m_q = reinterpret_cast<MetaType*>(meta[i + m]);
 
-        size_t j = 0;
-        for (; j < end; j += 2) {
-            x1 = load_to_reg(p + j);
-            y1 = load_to_reg(q + j);
+        for (size_t j = 0; j < len; ++j) {
+            VecType x1 = load_to_reg(p);
+            VecType y1 = load_to_reg(q);
 
-            butterfly_ct(rp1, c, &x1, &y1, card);
+            VecType x1_lo, x1_hi;
+            VecType y1_lo, y1_hi;
 
-            x2 = load_to_reg(p + j + 1);
-            y2 = load_to_reg(q + j + 1);
+            unpack<T>(m_p[j], x1, x1_hi, x1_lo);
+            unpack<T>(m_q[j], y1, y1_hi, y1_lo);
 
-            butterfly_ct(rp1, c, &x2, &y2, card);
+            butterfly_ct<T>(ct_case, c, x1_lo, y1_lo);
+            butterfly_ct<T>(ct_case, c, x1_hi, y1_hi);
 
-            // Store back to memory
-            store_to_mem(p + j, x1);
-            store_to_mem(p + j + 1, x2);
-            store_to_mem(q + j, y1);
-            store_to_mem(q + j + 1, y2);
-        }
-        for (; j < len; ++j) {
-            x1 = load_to_reg(p + j);
-            y1 = load_to_reg(q + j);
-
-            butterfly_ct(rp1, c, &x1, &y1, card);
+            pack<T>(x1_lo, x1_hi, x1, m_p[j]);
+            pack<T>(y1_lo, y1_hi, y1, m_q[j]);
 
             // Store back to memory
-            store_to_mem(p + j, x1);
-            store_to_mem(q + j, y1);
+            store_to_mem(p++, x1);
+            store_to_mem(q++, y1);
         }
     }
 }
 
 template <typename T>
-inline static void do_butterfly_ct_2_layers(
+inline void do_butterfly_ct_2_layers(
     const std::vector<T*>& mem,
+    const std::vector<uint8_t*>& meta,
     T r1,
     T r2,
     T r3,
@@ -196,9 +219,9 @@ inline static void do_butterfly_ct_2_layers(
     size_t len,
     T card)
 {
-    const T r1p1 = r1 + 1;
-    const T r2p1 = r2 + 1;
-    const T r3p1 = r3 + 1;
+    const CtGsCase case1 = get_case<T>(r1, card);
+    const CtGsCase case2 = get_case<T>(r2, card);
+    const CtGsCase case3 = get_case<T>(r3, card);
 
     VecType c1 = set_one(r1);
     VecType c2 = set_one(r2);
@@ -209,68 +232,47 @@ inline static void do_butterfly_ct_2_layers(
     VecType* r = reinterpret_cast<VecType*>(mem[start + 2 * m]);
     VecType* s = reinterpret_cast<VecType*>(mem[start + 3 * m]);
 
-    size_t j = 0;
-    const size_t end = (len > 1) ? len - 1 : 0;
-    while (j < end) {
-        // First layer (c1, x, y) & (c1, u, v)
+    MetaType* m_p = reinterpret_cast<MetaType*>(meta[start]);
+    MetaType* m_q = reinterpret_cast<MetaType*>(meta[start + m]);
+    MetaType* m_r = reinterpret_cast<MetaType*>(meta[start + 2 * m]);
+    MetaType* m_s = reinterpret_cast<MetaType*>(meta[start + 3 * m]);
+
+    for (size_t j = 0; j < len; ++j) {
         VecType x1 = load_to_reg(p);
-        VecType x2 = load_to_reg(p + 1);
         VecType y1 = load_to_reg(q);
-        VecType y2 = load_to_reg(q + 1);
-
-        butterfly_ct(r1p1, c1, &x1, &y1, card);
-        butterfly_ct(r1p1, c1, &x2, &y2, card);
-
         VecType u1 = load_to_reg(r);
-        VecType u2 = load_to_reg(r + 1);
         VecType v1 = load_to_reg(s);
-        VecType v2 = load_to_reg(s + 1);
 
-        butterfly_ct(r1p1, c1, &u1, &v1, card);
-        butterfly_ct(r1p1, c1, &u2, &v2, card);
+        VecType x1_lo, x1_hi;
+        VecType y1_lo, y1_hi;
+        VecType u1_lo, u1_hi;
+        VecType v1_lo, v1_hi;
 
-        // Second layer (c2, x, u) & (c3, y, v)
-        butterfly_ct(r2p1, c2, &x1, &u1, card);
-        butterfly_ct(r2p1, c2, &x2, &u2, card);
+        unpack<T>(m_p[j], x1, x1_hi, x1_lo);
+        unpack<T>(m_q[j], y1, y1_hi, y1_lo);
+        unpack<T>(m_r[j], u1, u1_hi, u1_lo);
+        unpack<T>(m_s[j], v1, v1_hi, v1_lo);
 
-        butterfly_ct(r3p1, c3, &y1, &v1, card);
-        butterfly_ct(r3p1, c3, &y2, &v2, card);
+        butterfly_ct<T>(case1, c1, x1_lo, y1_lo);
+        butterfly_ct<T>(case1, c1, x1_hi, y1_hi);
+        butterfly_ct<T>(case1, c1, u1_lo, v1_lo);
+        butterfly_ct<T>(case1, c1, u1_hi, v1_hi);
 
-        // Store back to memory
-        store_to_mem(p, x1);
-        store_to_mem(p + 1, x2);
-        store_to_mem(q, y1);
-        store_to_mem(q + 1, y2);
+        butterfly_ct<T>(case2, c2, x1_lo, u1_lo);
+        butterfly_ct<T>(case2, c2, x1_hi, u1_hi);
 
-        store_to_mem(r, u1);
-        store_to_mem(r + 1, u2);
-        store_to_mem(s, v1);
-        store_to_mem(s + 1, v2);
-        p = p + 2;
-        q = q + 2;
-        r = r + 2;
-        s = s + 2;
-        j = j + 2;
-    };
+        butterfly_ct<T>(case3, c3, y1_lo, v1_lo);
+        butterfly_ct<T>(case3, c3, y1_hi, v1_hi);
 
-    for (; j < len; ++j) {
-        // First layer (c1, x, y) & (c1, u, v)
-        VecType x1 = load_to_reg(p + j);
-        VecType y1 = load_to_reg(q + j);
-        VecType u1 = load_to_reg(r + j);
-        VecType v1 = load_to_reg(s + j);
+        pack<T>(x1_lo, x1_hi, x1, m_p[j]);
+        pack<T>(y1_lo, y1_hi, y1, m_q[j]);
+        pack<T>(u1_lo, u1_hi, u1, m_r[j]);
+        pack<T>(v1_lo, v1_hi, v1, m_s[j]);
 
-        // BUTTERFLY_3_test(c1, &x1, &y1, &u1, &v1, card);
-        butterfly_ct(r1p1, c1, &x1, &y1, card);
-        butterfly_ct(r1p1, c1, &u1, &v1, card);
-        butterfly_ct(r2p1, c2, &x1, &u1, card);
-        butterfly_ct(r3p1, c3, &y1, &v1, card);
-
-        // Store back to memory
-        store_to_mem(p + j, x1);
-        store_to_mem(q + j, y1);
-        store_to_mem(r + j, u1);
-        store_to_mem(s + j, v1);
+        store_to_mem(p++, x1);
+        store_to_mem(q++, y1);
+        store_to_mem(r++, u1);
+        store_to_mem(s++, v1);
     }
 }
 
@@ -320,8 +322,9 @@ inline void butterfly_ct_two_layers_step(
     const unsigned bufs_nb = buf.get_n();
 
     const std::vector<T*>& mem = buf.get_mem();
+    const std::vector<uint8_t*>& meta = buf.get_meta();
     for (unsigned i = start; i < bufs_nb; i += step) {
-        do_butterfly_ct_2_layers(mem, r1, r2, r3, i, m, len, card);
+        do_butterfly_ct_2_layers(mem, meta, r1, r2, r3, i, m, len, card);
     }
 }
 
@@ -352,53 +355,36 @@ inline void butterfly_gs_step(
         return;
     }
     const unsigned step = m << 1;
-    const T rp1 = r + 1;
+    const CtGsCase gs_case = get_case<T>(r, card);
     VecType c = set_one(r);
 
-    const size_t end = (len > 3) ? len - 3 : 0;
     const unsigned bufs_nb = buf.get_n();
     const std::vector<T*>& mem = buf.get_mem();
+    const std::vector<uint8_t*>& meta = buf.get_meta();
     for (unsigned i = start; i < bufs_nb; i += step) {
-        VecType x1, x2, x3, x4;
-        VecType y1, y2, y3, y4;
         VecType* p = reinterpret_cast<VecType*>(mem[i]);
         VecType* q = reinterpret_cast<VecType*>(mem[i + m]);
+        MetaType* m_p = reinterpret_cast<MetaType*>(meta[i]);
+        MetaType* m_q = reinterpret_cast<MetaType*>(meta[i + m]);
 
-        size_t j = 0;
-        for (; j < end; j += 4) {
-            x1 = load_to_reg(p + j);
-            x2 = load_to_reg(p + j + 1);
-            x3 = load_to_reg(p + j + 2);
-            x4 = load_to_reg(p + j + 3);
-            y1 = load_to_reg(q + j);
-            y2 = load_to_reg(q + j + 1);
-            y3 = load_to_reg(q + j + 2);
-            y4 = load_to_reg(q + j + 3);
+        for (size_t j = 0; j < len; ++j) {
+            VecType x1 = load_to_reg(p);
+            VecType y1 = load_to_reg(q);
 
-            butterfly_gs(rp1, c, &x1, &y1, card);
-            butterfly_gs(rp1, c, &x2, &y2, card);
-            butterfly_gs(rp1, c, &x3, &y3, card);
-            butterfly_gs(rp1, c, &x4, &y4, card);
+            VecType x1_lo, x1_hi;
+            VecType y1_lo, y1_hi;
 
-            // Store back to memory
-            store_to_mem(p + j, x1);
-            store_to_mem(p + j + 1, x2);
-            store_to_mem(p + j + 2, x3);
-            store_to_mem(p + j + 3, x4);
-            store_to_mem(q + j, y1);
-            store_to_mem(q + j + 1, y2);
-            store_to_mem(q + j + 2, y3);
-            store_to_mem(q + j + 3, y4);
-        }
-        for (; j < len; ++j) {
-            x1 = load_to_reg(p + j);
-            y1 = load_to_reg(q + j);
+            unpack<T>(m_p[j], x1, x1_hi, x1_lo);
+            unpack<T>(m_q[j], y1, y1_hi, y1_lo);
 
-            butterfly_gs(rp1, c, &x1, &y1, card);
+            butterfly_gs<T>(gs_case, c, x1_lo, y1_lo);
+            butterfly_gs<T>(gs_case, c, x1_hi, y1_hi);
 
-            // Store back to memory
-            store_to_mem(p + j, x1);
-            store_to_mem(q + j, y1);
+            pack<T>(x1_lo, x1_hi, x1, m_p[j]);
+            pack<T>(y1_lo, y1_hi, y1, m_q[j]);
+
+            store_to_mem(p++, x1);
+            store_to_mem(q++, y1);
         }
     }
 }
@@ -429,95 +415,30 @@ inline void butterfly_gs_step_simple(
         return;
     }
     const unsigned step = m << 1;
-    const T rp1 = r + 1;
+    const CtGsCase gs_case = get_case<T>(r, card);
     VecType c = set_one(r);
 
-    const size_t end = (len > 1) ? len - 1 : 0;
     const unsigned bufs_nb = buf.get_n();
     const std::vector<T*>& mem = buf.get_mem();
+    const std::vector<uint8_t*>& meta = buf.get_meta();
     for (unsigned i = start; i < bufs_nb; i += step) {
-        VecType x1, y1;
-        VecType x2, y2;
         VecType* p = reinterpret_cast<VecType*>(mem[i]);
         VecType* q = reinterpret_cast<VecType*>(mem[i + m]);
+        MetaType* m_p = reinterpret_cast<MetaType*>(meta[i]);
+        MetaType* m_q = reinterpret_cast<MetaType*>(meta[i + m]);
 
-        size_t j = 0;
-        for (; j < end; j += 2) {
-            x1 = load_to_reg(p + j);
-            x2 = load_to_reg(p + j + 1);
+        for (size_t j = 0; j < len; ++j) {
+            VecType x = load_to_reg(p++);
+            VecType x_lo, x_hi;
 
-            y1 = butterfly_simple_gs(rp1, c, x1, card);
-            y2 = butterfly_simple_gs(rp1, c, x2, card);
+            unpack<T>(m_p[j], x, x_hi, x_lo);
 
-            // Store back to memory
-            store_to_mem(q + j, y1);
-            store_to_mem(q + j + 1, y2);
-        }
-        for (; j < len; ++j) {
-            x1 = load_to_reg(p + j);
+            butterfly_simple_gs<T>(gs_case, c, x_lo);
+            butterfly_simple_gs<T>(gs_case, c, x_hi);
 
-            y1 = butterfly_simple_gs(rp1, c, x1, card);
+            pack<T>(x_lo, x_hi, x, m_q[j]);
 
-            // Store back to memory
-            store_to_mem(q + j, y1);
-        }
-    }
-}
-
-template <typename T>
-inline void encode_post_process(
-    vec::Buffers<T>& output,
-    std::vector<Properties>& props,
-    off_t offset,
-    unsigned code_len,
-    T threshold,
-    size_t vecs_nb)
-{
-    const unsigned vec_size = countof<T>();
-    const T max = 1U << (sizeof(T) * CHAR_BIT - 1);
-    const VecType _threshold = set_one(threshold);
-    const VecType mask_hi = set_one(max);
-
-    const std::vector<T*>& mem = output.get_mem();
-    for (unsigned frag_id = 0; frag_id < code_len; ++frag_id) {
-        VecType* buf = reinterpret_cast<VecType*>(mem[frag_id]);
-
-        size_t vec_id = 0;
-        size_t end = (vecs_nb > 3) ? vecs_nb - 3 : 0;
-        for (; vec_id < end; vec_id += 4) {
-            VecType a1 = load_to_reg(buf + vec_id);
-            VecType a2 = load_to_reg(buf + vec_id + 1);
-            VecType a3 = load_to_reg(buf + vec_id + 2);
-            VecType a4 = load_to_reg(buf + vec_id + 3);
-
-            if (!and_is_zero(a1, _threshold)) {
-                const off_t curr_offset = offset + vec_id * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a1, curr_offset, max);
-            }
-            if (!and_is_zero(a2, _threshold)) {
-                const off_t curr_offset = offset + (vec_id + 1) * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a2, curr_offset, max);
-            }
-            if (!and_is_zero(a3, _threshold)) {
-                const off_t curr_offset = offset + (vec_id + 2) * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a3, curr_offset, max);
-            }
-            if (!and_is_zero(a4, _threshold)) {
-                const off_t curr_offset = offset + (vec_id + 3) * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a4, curr_offset, max);
-            }
-        }
-        for (; vec_id < vecs_nb; ++vec_id) {
-            VecType a = load_to_reg(buf + vec_id);
-            if (!and_is_zero(a, _threshold)) {
-                const off_t curr_offset = offset + vec_id * vec_size;
-                add_props(
-                    props[frag_id], _threshold, mask_hi, a, curr_offset, max);
-            }
+            store_to_mem(q++, x);
         }
     }
 }

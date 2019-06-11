@@ -76,6 +76,7 @@ enum class InstructionSet {
 
 using RegisterType = __m256;
 using MaskType = __m256i;
+using MetaType = uint32_t;
 
 static constexpr InstructionSet INSTRUCTION_SET = InstructionSet::AVX;
 
@@ -86,6 +87,7 @@ static constexpr InstructionSet INSTRUCTION_SET = InstructionSet::AVX;
 
 using RegisterType = __m128;
 using MaskType = __m128i;
+using MetaType = uint16_t;
 
 static constexpr InstructionSet INSTRUCTION_SET = InstructionSet::SSE;
 
@@ -98,9 +100,13 @@ static constexpr InstructionSet INSTRUCTION_SET = InstructionSet::SSE;
 #if __LP64__ == 1
 using RegisterType = uint64_t;
 using MaskType = uint64_t;
+using MetaType = uint8_t;
+
 #else
 using RegisterType = uint32_t;
 using MaskType = uint32_t;
+using MetaType = uint8_t;
+
 #endif
 
 static constexpr InstructionSet INSTRUCTION_SET = InstructionSet::NONE;

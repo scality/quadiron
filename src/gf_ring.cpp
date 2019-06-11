@@ -38,83 +38,36 @@ namespace quadiron {
 namespace gf {
 
 template <>
-void RingModN<uint16_t>::neg(size_t n, uint16_t* x) const
+void RingModN<uint16_t>::neg(vec::Buffers<uint16_t>& buf, size_t buf_id) const
 {
-    simd::neg(n, x, this->_card);
+    simd::neg(*this, buf, buf_id);
 }
 
 template <>
-void RingModN<uint32_t>::neg(size_t n, uint32_t* x) const
+void RingModN<uint32_t>::neg(vec::Buffers<uint32_t>& buf, size_t buf_id) const
 {
-    simd::neg(n, x, this->_card);
+    simd::neg(*this, buf, buf_id);
+}
+
+// @note We specialize the function for the case Buffers having meta
+template <>
+void RingModN<uint16_t>::mul_coef_to_buf(
+    uint16_t coef,
+    vec::Buffers<uint16_t>& src,
+    vec::Buffers<uint16_t>& dest,
+    size_t buf_id) const
+{
+    simd::mul_coef_to_buf(*this, coef, src, dest, buf_id);
 }
 
 template <>
 void RingModN<uint32_t>::mul_coef_to_buf(
-    uint32_t a,
-    uint32_t* src,
-    uint32_t* dest,
-    size_t len) const
+    uint32_t coef,
+    vec::Buffers<uint32_t>& src,
+    vec::Buffers<uint32_t>& dest,
+    size_t buf_id) const
 {
-    simd::mul_coef_to_buf(a, src, dest, len, this->_card);
-}
-
-template <>
-void RingModN<uint32_t>::add_two_bufs(uint32_t* src, uint32_t* dest, size_t len)
-    const
-{
-    simd::add_two_bufs(src, dest, len, this->_card);
-}
-
-template <>
-void RingModN<uint32_t>::sub_two_bufs(
-    uint32_t* bufa,
-    uint32_t* bufb,
-    uint32_t* res,
-    size_t len) const
-{
-    simd::sub_two_bufs(bufa, bufb, res, len, this->_card);
-}
-
-template <>
-void RingModN<uint16_t>::mul_coef_to_buf(
-    uint16_t a,
-    uint16_t* src,
-    uint16_t* dest,
-    size_t len) const
-{
-    simd::mul_coef_to_buf(a, src, dest, len, this->_card);
-}
-
-template <>
-void RingModN<uint16_t>::add_two_bufs(uint16_t* src, uint16_t* dest, size_t len)
-    const
-{
-    simd::add_two_bufs(src, dest, len, this->_card);
-}
-
-template <>
-void RingModN<uint16_t>::sub_two_bufs(
-    uint16_t* bufa,
-    uint16_t* bufb,
-    uint16_t* res,
-    size_t len) const
-{
-    simd::sub_two_bufs(bufa, bufb, res, len, this->_card);
-}
-
-template <>
-void RingModN<uint16_t>::hadamard_mul(int n, uint16_t* x_u16, uint16_t* y_u16)
-    const
-{
-    simd::mul_two_bufs(y_u16, x_u16, n, this->_card);
-}
-
-template <>
-void RingModN<uint32_t>::hadamard_mul(int n, uint32_t* x_u32, uint32_t* y_u32)
-    const
-{
-    simd::mul_two_bufs(y_u32, x_u32, n, this->_card);
+    simd::mul_coef_to_buf(*this, coef, src, dest, buf_id);
 }
 
 } // namespace gf

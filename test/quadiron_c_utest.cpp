@@ -169,22 +169,6 @@ class QuadironCTest : public ::testing::Test {
             }
         }
 
-        ASSERT_EQ(
-            quadiron_fnt32_decode(
-                inst,
-                _data.data(),
-                _parity.data(),
-                missing_idxs.data(),
-                block_size),
-            0);
-
-        for (int i = 0; i < n_data; i++) {
-            ASSERT_TRUE(std::equal(
-                _ref_data[i],
-                _ref_data[i] + block_size,
-                _data[i] + metadata_size));
-        }
-
         for (int i = 0; i < n_data; i++) {
             if (missing_idxs[i]) {
                 ASSERT_EQ(
@@ -211,6 +195,39 @@ class QuadironCTest : public ::testing::Test {
                         block_size),
                     0);
             }
+        }
+
+        for (int i = 0; i < n_data; i++) {
+            if (missing_idxs[i]) {
+                std::fill_n(_data[i], block_size + metadata_size, 0);
+            }
+        }
+
+        for (int i = 0; i < n_parities; i++) {
+            if (missing_idxs[n_data + i]) {
+                std::fill_n(_parity[i], block_size + metadata_size, 0);
+            }
+        }
+
+        // FIXME: for non-systematic FNT, `quadiron_fnt32_decode` will
+        // overwrite `_data` (that stores actually encoded fragments)
+        // by decoded data. Hence, if we test `reconstruct` after, we could use
+        // wrong fragments. A quick fix is to move the test of
+        // `quadiron_fnt32_decode` at the end.
+        ASSERT_EQ(
+            quadiron_fnt32_decode(
+                inst,
+                _data.data(),
+                _parity.data(),
+                missing_idxs.data(),
+                block_size),
+            0);
+
+        for (int i = 0; i < n_data; i++) {
+            ASSERT_TRUE(std::equal(
+                _ref_data[i],
+                _ref_data[i] + block_size,
+                _data[i] + metadata_size));
         }
 
         quadiron_fnt32_delete(inst);

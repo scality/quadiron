@@ -110,6 +110,7 @@ class Properties {
         unsigned i = 2;
         for (auto const& item : props) {
             dwords[i++] = htonl(narrow_cast<uint32_t>(item.first));
+            dwords[i++] = htonl(narrow_cast<uint32_t>(item.second));
         }
         dwords[1] = htonl(i - 2);
         std::fill(dwords + i, dwords + n_dwords - 1, htonl(0));
@@ -135,8 +136,9 @@ class Properties {
         if ((2 + _n_dwords) > n_dwords) {
             return -1;
         }
-        for (unsigned i = 0; i < _n_dwords; i++) {
-            add(static_cast<size_t>(ntohl(dwords[i + 2])), OOR_MARK);
+        for (unsigned i = 0; i < _n_dwords; i += 2) {
+            add(static_cast<size_t>(ntohl(dwords[i + 2])),
+                ntohl(dwords[i + 3]));
         }
         return 0;
     }

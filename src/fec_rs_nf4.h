@@ -110,6 +110,9 @@ class RsNf4 : public FecCode<T> {
         for (unsigned i = 0; i < this->n; i++) {
             this->r_powers->set(i, ngff4->exp(this->r, i));
         }
+
+        work_buf =
+            std::make_unique<vec::Buffers<T>>(this->n_data, this->pkt_size);
     }
 
     int get_n_outputs() override
@@ -168,6 +171,7 @@ class RsNf4 : public FecCode<T> {
     }
 
   private:
+    std::unique_ptr<vec::Buffers<T>> work_buf;
     const gf::Field<uint32_t>* sub_field;
     gf::NF4<T>* ngff4;
     int gf_n;
@@ -258,13 +262,28 @@ class RsNf4 : public FecCode<T> {
         off_t offset,
         vec::Buffers<T>& words) override
     {
+        // as Buffers has not meta, `words` contains only `buf_size = pkt_size *
+        // word_size` bytes from source. It is stored in first `buf_size /
+        // sizeof(T)` elements of `words`
+
+        const unsigned nb_words_per_element = sizeof(T) / this->word_size;
         for (unsigned i = 0; i < this->n_data; ++i) {
             T* chunk = words.get(i);
-            for (size_t j = 0; j < this->pkt_size; ++j) {
-                chunk[j] = ngff4->pack(chunk[j]);
+            T* work = work_buf->get(i);
+
+            size_t u = 0;
+            T element = chunk[u];
+            for (size_t j = 0, u = 0; j < this->pkt_size; ++j) {
+                work[j] = ngff4->pack(element);
+
+                (j + 1) % nb_words_per_element == 0
+                    ? element = chunk[++u]
+                    : element = static_cast<T>(element)
+                                >> (CHAR_BIT * this->word_size);
             }
         }
-        this->fft->fft(output, words);
+
+        this->fft->fft(output, *work_buf);
         encode_post_process(output, props, offset);
     }
 
@@ -273,17 +292,42 @@ class RsNf4 : public FecCode<T> {
         std::vector<Properties>& props,
         off_t offset) override
     {
-        size_t size = output.get_size();
+        // as Buffers has not meta, output write only `buf_size = pkt_size *
+        // word_size` bytes to destination
+        // This data should be stored in first `buf_size / sizeof(T)` elements.
+
+        const unsigned nb_words_per_element = sizeof(T) / this->word_size;
+        const size_t size = output.get_size();
         GroupedValues<T> true_val;
         for (unsigned frag_id = 0; frag_id < this->code_len; ++frag_id) {
             T* chunk = output.get(frag_id);
-            for (size_t symb_id = 0; symb_id < size; symb_id++) {
+
+            size_t out_symb_id = 0;
+            unsigned symb_offset = 0;
+            T element = 0;
+            for (size_t symb_id = 0; symb_id < size; ++symb_id) {
                 ngff4->unpack(chunk[symb_id], true_val);
                 if (true_val.flag > 0) {
                     const off_t loc = offset + symb_id;
                     props[frag_id].add(loc, true_val.flag);
                 }
-                chunk[symb_id] = true_val.values;
+
+                // for test
+                chunk[symb_id] = 0;
+
+                element |= (static_cast<T>(true_val.values) << symb_offset);
+                if ((symb_id + 1) % nb_words_per_element == 0) {
+                    chunk[out_symb_id] = element;
+                    out_symb_id++;
+                    symb_offset = 0;
+                    element = 0;
+                } else {
+                    symb_offset += (CHAR_BIT * this->word_size);
+                }
+            }
+            // for the last no-full element
+            if (symb_offset > 0) {
+                chunk[out_symb_id] = element;
             }
         }
     }
@@ -295,23 +339,35 @@ class RsNf4 : public FecCode<T> {
         vec::Buffers<T>& words) override
     {
         const vec::Vector<T>& fragments_ids = context.get_fragments_id();
+        // as Buffers has not meta, `words` contains only `buf_size = pkt_size *
+        // word_size` bytes from source. It is stored in first `buf_size /
+        // sizeof(T)` elements of `words`
+
+        const unsigned nb_words_per_element = sizeof(T) / this->word_size;
         for (unsigned i = 0; i < this->n_data; ++i) {
             const int frag_id = fragments_ids.get(i);
             T* chunk = words.get(i);
+            T* work = work_buf->get(i);
 
-            // pack marked symbols
-            for (size_t index = 0; index < this->pkt_size; ++index) {
+            size_t u = 0;
+            T element = chunk[u];
+            for (size_t j = 0, u = 0; j < this->pkt_size; ++j) {
                 if (props[frag_id].is_marked(
-                        context.props_indices[frag_id], offset + index)) {
+                        context.props_indices[frag_id], offset + j)) {
                     // pack marked symbol
-                    chunk[index] = ngff4->pack(
-                        chunk[index],
+                    work[j] = ngff4->pack(
+                        element,
                         props[frag_id].marker(context.props_indices[frag_id]));
                     context.props_indices.at(frag_id)++;
                 } else {
                     // pack un-marked symbol
-                    chunk[index] = ngff4->pack(chunk[index]);
+                    work[j] = ngff4->pack(element);
                 }
+
+                (j + 1) % nb_words_per_element == 0
+                    ? element = chunk[++u]
+                    : element = static_cast<T>(element)
+                                >> (CHAR_BIT * this->word_size);
             }
         }
     }
@@ -319,15 +375,42 @@ class RsNf4 : public FecCode<T> {
     void decode_apply(
         DecodeContext<T>& context,
         vec::Buffers<T>& output,
-        vec::Buffers<T>& words) override
+        vec::Buffers<T>&) override
     {
+        // as Buffers has not meta, output write only `buf_size = pkt_size *
+        // word_size` bytes to destination
+        // This data should be stored in first `buf_size / sizeof(T)` elements.
+
         // decode_apply: do the same thing as in fec_base
-        FecCode<T>::decode_apply(context, output, words);
+        FecCode<T>::decode_apply(context, output, *work_buf);
+
+        const unsigned nb_words_per_element = sizeof(T) / this->word_size;
+        GroupedValues<T> true_val;
         // unpack decoded symbols
-        for (unsigned i = 0; i < this->n_data; ++i) {
-            T* chunk = output.get(i);
-            for (unsigned j = 0; j < this->pkt_size; ++j) {
-                chunk[j] = ngff4->unpack(chunk[j]).values;
+        for (unsigned frag_id = 0; frag_id < this->n_data; ++frag_id) {
+            T* chunk = output.get(frag_id);
+
+            size_t out_symb_id = 0;
+            unsigned symb_offset = 0;
+            T element = 0;
+            for (size_t symb_id = 0; symb_id < this->pkt_size; ++symb_id) {
+                ngff4->unpack(chunk[symb_id], true_val);
+                // for test
+                chunk[symb_id] = 0;
+
+                element |= (static_cast<T>(true_val.values) << symb_offset);
+                if ((symb_id + 1) % nb_words_per_element == 0) {
+                    chunk[out_symb_id] = element;
+                    out_symb_id++;
+                    symb_offset = 0;
+                    element = 0;
+                } else {
+                    symb_offset += (CHAR_BIT * this->word_size);
+                }
+            }
+            // for the last no-full element
+            if (symb_offset > 0) {
+                chunk[out_symb_id] = element;
             }
         }
     }

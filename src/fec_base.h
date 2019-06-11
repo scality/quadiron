@@ -118,7 +118,8 @@ class FecCode {
         unsigned word_size,
         unsigned n_data,
         unsigned n_parities,
-        size_t pkt_size = 8);
+        size_t pkt_size = 8,
+        bool use_meta_buf = false);
     virtual ~FecCode() = default;
 
     /** Return the number of output parts.
@@ -173,8 +174,8 @@ class FecCode {
     bool readw(T* ptr, std::istream* stream);
     bool writew(T val, std::ostream* stream);
 
-    bool read_pkt(char* pkt, std::istream& stream);
-    bool write_pkt(char* pkt, std::ostream& stream, size_t bytes);
+    bool read_pkt(char* pkt, std::istream* stream);
+    bool write_pkt(char* pkt, std::ostream* stream, size_t bytes);
 
     void encode_streams_horizontal(
         std::vector<std::istream*> input_data_bufs,
@@ -250,6 +251,9 @@ class FecCode {
     std::unique_ptr<vec::Vector<T>> r_powers = nullptr;
     // buffers for intermediate symbols used for systematic FNT
     std::unique_ptr<vec::Buffers<T>> dec_inter_codeword;
+    // vector for intermediate symbols used for systematic FNT
+    std::unique_ptr<vec::Vector<T>> vec_dec_inter_codeword;
+    bool use_meta_buf = false;
 
     // pure abstract methods that will be defined in derived class
     virtual void check_params() = 0;
@@ -300,7 +304,8 @@ FecCode<T>::FecCode(
     unsigned word_size,
     unsigned n_data,
     unsigned n_parities,
-    size_t pkt_size)
+    size_t pkt_size,
+    bool use_meta_buf)
 {
     assert(type == FecType::SYSTEMATIC || type == FecType::NON_SYSTEMATIC);
 
@@ -312,7 +317,8 @@ FecCode<T>::FecCode(
     this->n_outputs =
         (type == FecType::SYSTEMATIC) ? this->n_parities : this->code_len;
     this->pkt_size = pkt_size;
-    this->buf_size = pkt_size * word_size;
+    this->buf_size = use_meta_buf ? pkt_size * sizeof(T) : pkt_size * word_size;
+    this->use_meta_buf = use_meta_buf;
 }
 
 template <typename T>
@@ -384,15 +390,15 @@ inline bool FecCode<T>::writew(T val, std::ostream* stream)
 }
 
 template <typename T>
-inline bool FecCode<T>::read_pkt(char* pkt, std::istream& stream)
+inline bool FecCode<T>::read_pkt(char* pkt, std::istream* stream)
 {
-    return static_cast<bool>(stream.read(pkt, buf_size));
+    return static_cast<bool>(stream->read(pkt, buf_size));
 }
 
 template <typename T>
-inline bool FecCode<T>::write_pkt(char* pkt, std::ostream& stream, size_t bytes)
+inline bool FecCode<T>::write_pkt(char* pkt, std::ostream* stream, size_t bytes)
 {
-    return static_cast<bool>(stream.write(pkt, bytes));
+    return static_cast<bool>(stream->write(pkt, bytes));
 }
 
 /** Encode streams
@@ -477,21 +483,15 @@ void FecCode<T>::encode_streams_vertical(
     bool cont = true;
     off_t offset = 0;
 
-    // vector of buffers storing data read from chunk
-    vec::Buffers<char> words_char(n_data, buf_size);
-    const std::vector<char*> words_mem_char = words_char.get_mem();
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> words(n_data, pkt_size);
-    const std::vector<T*> words_mem_T = words.get_mem();
+    vec::Buffers<T> words(n_data, pkt_size, use_meta_buf);
+    const std::vector<T*>& words_mem = words.get_mem();
 
     int output_len = get_n_outputs();
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> output(output_len, pkt_size);
-    const std::vector<T*> output_mem_T = output.get_mem();
-    // vector of buffers storing data in output chunk
-    vec::Buffers<char> output_char(output_len, buf_size);
-    const std::vector<char*> output_mem_char = output_char.get_mem();
+    vec::Buffers<T> output(output_len, pkt_size, use_meta_buf);
+    const std::vector<T*>& output_mem = output.get_mem();
 
     reset_stats_enc();
 
@@ -501,11 +501,13 @@ void FecCode<T>::encode_streams_vertical(
 
     while (cont) {
         for (unsigned i = 0; i < n_data; i++) {
-            if (!read_pkt(words_mem_char.at(i), *(input_data_bufs[i]))) {
+            if (!read_pkt(
+                    reinterpret_cast<char*>(words_mem.at(i)),
+                    input_data_bufs[i])) {
                 read_bytes = input_data_bufs[i]->gcount();
                 // Zero-out trailing part
                 std::fill_n(
-                    words_mem_char.at(i) + read_bytes,
+                    reinterpret_cast<char*>(words_mem.at(i)) + read_bytes,
                     buf_size - read_bytes,
                     0);
 
@@ -517,8 +519,9 @@ void FecCode<T>::encode_streams_vertical(
             break;
         }
 
-        vec::pack<char, T>(
-            words_mem_char, words_mem_T, n_data, pkt_size, word_size);
+        if (use_meta_buf) {
+            words.reset_meta();
+        }
 
         timeval t1 = tick();
         uint64_t start = hw_timer();
@@ -530,12 +533,11 @@ void FecCode<T>::encode_streams_vertical(
         total_encode_cycles += (end - start) / buf_size;
         n_encode_ops++;
 
-        vec::unpack<T, char>(
-            output_mem_T, output_mem_char, output_len, pkt_size, word_size);
-
         for (unsigned i = 0; i < n_outputs; i++) {
             write_pkt(
-                output_mem_char.at(i), *(output_parities_bufs[i]), read_bytes);
+                reinterpret_cast<char*>(output_mem.at(i)),
+                output_parities_bufs[i],
+                read_bytes);
         }
         offset += pkt_size;
     }
@@ -749,6 +751,11 @@ void FecCode<T>::decode(
 
     // Lagrange interpolation
     decode_apply(context, output, words);
+
+    if (type == FecType::SYSTEMATIC) {
+        this->fft->fft(*vec_dec_inter_codeword, output);
+        output.copy(vec_dec_inter_codeword.get(), n_data);
+    }
 }
 
 /* Initialize context for decoding
@@ -804,7 +811,13 @@ void FecCode<T>::decode_prepare(
 {
     const vec::Vector<T>& fragments_ids = context.get_fragments_id();
     for (unsigned i = 0; i < this->n_data; ++i) {
-        const int j = fragments_ids.get(i);
+        unsigned j = fragments_ids.get(i);
+        if (type == FecType::SYSTEMATIC && j < this->n_data) {
+            continue;
+        }
+        if (type == FecType::SYSTEMATIC) {
+            j -= this->n_data;
+        }
         if (props[j].is_marked(context.props_indices[j], offset)) {
             // Check if the symbol is a special case whick is marked by
             // `OOR_MARK`, i.e. true. Note: this check is necessary when
@@ -957,21 +970,15 @@ bool FecCode<T>::decode_streams_vertical(
 
     decode_build();
 
-    // vector of buffers storing data read from chunk
-    vec::Buffers<char> words_char(n_data, buf_size);
-    const std::vector<char*> words_mem_char = words_char.get_mem();
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> words(n_data, pkt_size);
-    const std::vector<T*> words_mem_T = words.get_mem();
+    vec::Buffers<T> words(n_data, pkt_size, use_meta_buf);
+    const std::vector<T*>& words_mem = words.get_mem();
 
     int output_len = n_data;
 
     // vector of buffers storing data that are performed in decoding, i.e. FFT
-    vec::Buffers<T> output(output_len, pkt_size);
-    const std::vector<T*> output_mem_T = output.get_mem();
-    // vector of buffers storing data in output chunk
-    vec::Buffers<char> output_char(output_len, buf_size);
-    const std::vector<char*> output_mem_char = output_char.get_mem();
+    vec::Buffers<T> output(output_len, pkt_size, use_meta_buf);
+    const std::vector<T*>& output_mem = output.get_mem();
 
     std::unique_ptr<DecodeContext<T>> context = init_context_dec(
         fragments_ids, input_parities_props, pkt_size, &output);
@@ -987,11 +994,12 @@ bool FecCode<T>::decode_streams_vertical(
             for (unsigned i = 0; i < avail_data_nb; i++) {
                 unsigned data_idx = fragments_ids.get(i);
                 if (!read_pkt(
-                        words_mem_char.at(i), *(input_data_bufs[data_idx]))) {
+                        reinterpret_cast<char*>(words_mem.at(i)),
+                        input_data_bufs[data_idx])) {
                     read_bytes = input_data_bufs[data_idx]->gcount();
                     // Zero-out trailing part
                     std::fill_n(
-                        words_mem_char.at(i) + read_bytes,
+                        reinterpret_cast<char*>(words_mem.at(i)) + read_bytes,
                         buf_size - read_bytes,
                         0);
 
@@ -1002,12 +1010,13 @@ bool FecCode<T>::decode_streams_vertical(
         for (unsigned i = 0; i < n_data - avail_data_nb; ++i) {
             unsigned parity_idx = avail_parity_ids.get(i);
             if (!read_pkt(
-                    words_mem_char.at(avail_data_nb + i),
-                    *(input_parities_bufs[parity_idx]))) {
+                    reinterpret_cast<char*>(words_mem.at(avail_data_nb + i)),
+                    input_parities_bufs[parity_idx])) {
                 read_bytes = input_parities_bufs[parity_idx]->gcount();
                 // Zero-out trailing part
                 std::fill_n(
-                    words_mem_char.at(avail_data_nb + i) + read_bytes,
+                    reinterpret_cast<char*>(words_mem.at(avail_data_nb + i))
+                        + read_bytes,
                     buf_size - read_bytes,
                     0);
 
@@ -1019,8 +1028,9 @@ bool FecCode<T>::decode_streams_vertical(
             break;
         }
 
-        vec::pack<char, T>(
-            words_mem_char, words_mem_T, n_data, pkt_size, word_size);
+        if (use_meta_buf) {
+            words.reset_meta();
+        }
 
         timeval t1 = tick();
         uint64_t start = hw_timer();
@@ -1032,13 +1042,12 @@ bool FecCode<T>::decode_streams_vertical(
         total_decode_cycles += (end - start) / word_size;
         n_decode_ops++;
 
-        vec::unpack<T, char>(
-            output_mem_T, output_mem_char, output_len, pkt_size, word_size);
-
         for (unsigned i = 0; i < n_data; i++) {
             if (output_data_bufs[i] != nullptr) {
                 write_pkt(
-                    output_mem_char.at(i), *(output_data_bufs[i]), read_bytes);
+                    reinterpret_cast<char*>(output_mem.at(i)),
+                    output_data_bufs[i],
+                    read_bytes);
             }
         }
         offset += pkt_size;
@@ -1080,23 +1089,18 @@ void FecCode<T>::encode_blocks_vertical(
     }
 
     size_t offset = 0;
-    size_t block_size = block_size_bytes / word_size;
+    const size_t element_size = use_meta_buf ? sizeof(T) : word_size;
+    size_t block_size = block_size_bytes / element_size;
 
-    // vector of buffers storing data read from chunk
-    vec::Buffers<uint8_t> words_char(n_data, buf_size);
-    const std::vector<uint8_t*> words_mem_char = words_char.get_mem();
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> words(n_data, pkt_size);
-    const std::vector<T*> words_mem_T = words.get_mem();
+    vec::Buffers<T> words(n_data, pkt_size, use_meta_buf);
+    const std::vector<T*>& words_mem = words.get_mem();
 
     int output_len = get_n_outputs();
 
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> output(output_len, pkt_size);
-    const std::vector<T*> output_mem_T = output.get_mem();
-    // vector of buffers storing data in output chunk
-    vec::Buffers<uint8_t> output_char(output_len, buf_size);
-    const std::vector<uint8_t*> output_mem_char = output_char.get_mem();
+    vec::Buffers<T> output(output_len, pkt_size, use_meta_buf);
+    const std::vector<T*>& output_mem = output.get_mem();
 
     reset_stats_enc();
 
@@ -1105,25 +1109,26 @@ void FecCode<T>::encode_blocks_vertical(
         size_t copy_size = std::min(pkt_size, remain_size);
         for (unsigned i = 0; i < n_data; i++) {
             memcpy(
-                reinterpret_cast<char*>(words_mem_char.at(i)),
-                data_bufs[i] + offset * word_size,
-                copy_size * word_size);
+                reinterpret_cast<char*>(words_mem.at(i)),
+                data_bufs[i] + offset * element_size,
+                copy_size * element_size);
         }
 
         // Zero-out trailing part of data
         if (copy_size < pkt_size) {
-            const size_t copy_bytes = copy_size * word_size;
+            const size_t copy_bytes = copy_size * element_size;
             const size_t trailing_bytes = buf_size - copy_bytes;
             for (unsigned i = 0; i < n_data; i++) {
                 memset(
-                    reinterpret_cast<char*>(words_mem_char.at(i)) + copy_bytes,
+                    reinterpret_cast<char*>(words_mem.at(i)) + copy_bytes,
                     0,
                     trailing_bytes);
             }
         }
 
-        vec::pack<uint8_t, T>(
-            words_mem_char, words_mem_T, n_data, pkt_size, word_size);
+        if (use_meta_buf) {
+            words.reset_meta();
+        }
 
         timeval t1 = tick();
         uint64_t start = hw_timer();
@@ -1132,18 +1137,15 @@ void FecCode<T>::encode_blocks_vertical(
         uint64_t t2 = hrtime_usec(t1);
 
         total_enc_usec += t2;
-        total_encode_cycles += (end - start) / (copy_size * word_size);
+        total_encode_cycles += (end - start) / (copy_size * element_size);
         n_encode_ops++;
-
-        vec::unpack<T, uint8_t>(
-            output_mem_T, output_mem_char, output_len, pkt_size, word_size);
 
         for (unsigned i = 0; i < n_outputs; i++) {
             if (wanted_idxs[i]) {
                 memcpy(
-                    parities_bufs[i] + offset * word_size,
-                    reinterpret_cast<char*>(output_mem_char.at(i)),
-                    copy_size * word_size);
+                    parities_bufs[i] + offset * element_size,
+                    reinterpret_cast<char*>(output_mem.at(i)),
+                    copy_size * element_size);
             }
         }
         offset += pkt_size;
@@ -1183,7 +1185,8 @@ bool FecCode<T>::decode_blocks_vertical(
     size_t block_size_bytes)
 {
     size_t offset = 0;
-    size_t block_size = block_size_bytes / word_size;
+    const size_t element_size = use_meta_buf ? sizeof(T) : word_size;
+    size_t block_size = block_size_bytes / element_size;
 
     unsigned fragment_index = 0;
     unsigned parity_index = 0;
@@ -1237,21 +1240,15 @@ bool FecCode<T>::decode_blocks_vertical(
 
     decode_build();
 
-    // vector of buffers storing data read from chunk
-    vec::Buffers<uint8_t> words_char(n_data, buf_size);
-    const std::vector<uint8_t*> words_mem_char = words_char.get_mem();
     // vector of buffers storing data that are performed in encoding, i.e. FFT
-    vec::Buffers<T> words(n_data, pkt_size);
-    const std::vector<T*> words_mem_T = words.get_mem();
+    vec::Buffers<T> words(n_data, pkt_size, use_meta_buf);
+    const std::vector<T*>& words_mem = words.get_mem();
 
     int output_len = n_data;
 
     // vector of buffers storing data that are performed in decoding, i.e. FFT
-    vec::Buffers<T> output(output_len, pkt_size);
-    const std::vector<T*> output_mem_T = output.get_mem();
-    // vector of buffers storing data in output chunk
-    vec::Buffers<uint8_t> output_char(output_len, buf_size);
-    const std::vector<uint8_t*> output_mem_char = output_char.get_mem();
+    vec::Buffers<T> output(output_len, pkt_size, use_meta_buf);
+    const std::vector<T*>& output_mem = output.get_mem();
 
     std::unique_ptr<DecodeContext<T>> context =
         init_context_dec(fragments_ids, parities_props, pkt_size, &output);
@@ -1265,33 +1262,34 @@ bool FecCode<T>::decode_blocks_vertical(
             for (unsigned i = 0; i < avail_data_nb; i++) {
                 unsigned data_idx = fragments_ids.get(i);
                 memcpy(
-                    reinterpret_cast<char*>(words_mem_char.at(i)),
-                    data_bufs[data_idx] + offset * word_size,
-                    copy_size * word_size);
+                    reinterpret_cast<char*>(words_mem.at(i)),
+                    data_bufs[data_idx] + offset * element_size,
+                    copy_size * element_size);
             }
         }
         for (unsigned i = 0; i < n_data - avail_data_nb; ++i) {
             unsigned parity_idx = avail_parity_ids.get(i);
             memcpy(
-                reinterpret_cast<char*>(words_mem_char.at(avail_data_nb + i)),
-                parities_bufs[parity_idx] + offset * word_size,
-                copy_size * word_size);
+                reinterpret_cast<char*>(words_mem.at(avail_data_nb + i)),
+                parities_bufs[parity_idx] + offset * element_size,
+                copy_size * element_size);
         }
 
         // Zero-out trailing part of data
         if (copy_size < pkt_size) {
-            const size_t copy_bytes = copy_size * word_size;
+            const size_t copy_bytes = copy_size * element_size;
             const size_t trailing_bytes = buf_size - copy_bytes;
             for (unsigned i = 0; i < n_data; i++) {
                 memset(
-                    reinterpret_cast<char*>(words_mem_char.at(i)) + copy_bytes,
+                    reinterpret_cast<char*>(words_mem.at(i)) + copy_bytes,
                     0,
                     trailing_bytes);
             }
         }
 
-        vec::pack<uint8_t, T>(
-            words_mem_char, words_mem_T, n_data, pkt_size, word_size);
+        if (use_meta_buf) {
+            words.reset_meta();
+        }
 
         timeval t1 = tick();
         uint64_t start = hw_timer();
@@ -1300,18 +1298,15 @@ bool FecCode<T>::decode_blocks_vertical(
         uint64_t t2 = hrtime_usec(t1);
 
         total_dec_usec += t2;
-        total_decode_cycles += (end - start) / word_size;
+        total_decode_cycles += (end - start) / element_size;
         n_decode_ops++;
-
-        vec::unpack<T, uint8_t>(
-            output_mem_T, output_mem_char, output_len, pkt_size, word_size);
 
         for (unsigned i = 0; i < n_data; i++) {
             if (wanted_idxs[i]) {
                 memcpy(
-                    data_bufs[i] + offset * word_size,
-                    reinterpret_cast<char*>(output_mem_char.at(i)),
-                    copy_size * word_size);
+                    data_bufs[i] + offset * element_size,
+                    reinterpret_cast<char*>(output_mem.at(i)),
+                    copy_size * element_size);
             }
         }
         offset += pkt_size;
@@ -1388,15 +1383,23 @@ void FecCode<T>::decode_prepare(
             // As loc.offset := offset + j
             const size_t j = (loc_offset - offset);
 
-            // Check if the symbol is a special case whick is marked by
-            // `OOR_MARK`.
-            // Note: this check is necessary when word_size is not large
-            // enough to cover all symbols of the field. Following check is
-            // used for FFT over FNT where the single special case symbol
-            // equals card - 1
-            if (props[frag_id].marker(context.props_indices.at(frag_id))
-                == OOR_MARK) {
-                chunk[j] = thres;
+            if (use_meta_buf) {
+                T meta =
+                    props[frag_id].marker(context.props_indices.at(frag_id));
+                if (meta) {
+                    words.set_meta(i, j, meta);
+                }
+            } else {
+                // Check if the symbol is a special case whick is marked by
+                // `OOR_MARK`.
+                // Note: this check is necessary when word_size is not large
+                // enough to cover all symbols of the field. Following check is
+                // used for FFT over FNT where the single special case symbol
+                // equals card - 1
+                if (props[frag_id].marker(context.props_indices.at(frag_id))
+                    == OOR_MARK) {
+                    chunk[j] = thres;
+                }
             }
             context.props_indices.at(frag_id)++;
         }

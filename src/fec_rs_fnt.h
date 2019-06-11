@@ -60,6 +60,13 @@ class RsFnt : public FecCode<T> {
     // decoding context used in encoding of systematic FNT
     std::unique_ptr<DecodeContext<T>> enc_context;
 
+    // vector for intermediate symbols used for systematic FNT
+    std::unique_ptr<vec::Vector<T>> vec_inter_words;
+    // vector of `n` symbols used for systematic FNT
+    std::unique_ptr<vec::Vector<T>> vec_inter_codeword;
+    // decoding context used in horizontal encoding of systematic FNT
+    std::unique_ptr<DecodeContext<T>> vec_enc_context;
+
     // Indices used for accelerated functions
     size_t simd_vec_len;
     size_t simd_trailing_len;
@@ -72,7 +79,7 @@ class RsFnt : public FecCode<T> {
         unsigned n_data,
         unsigned n_parities,
         size_t pkt_size = 8)
-        : FecCode<T>(type, word_size, n_data, n_parities, pkt_size)
+        : FecCode<T>(type, word_size, n_data, n_parities, pkt_size, true)
     {
         this->fec_init();
 
@@ -143,18 +150,29 @@ class RsFnt : public FecCode<T> {
                 enc_frag_ids->set(i, i);
             }
 
-            inter_words =
-                std::make_unique<vec::Buffers<T>>(this->n_data, this->pkt_size);
+            inter_words = std::make_unique<vec::Buffers<T>>(
+                this->n_data, this->pkt_size, true);
             suffix_words = std::make_unique<vec::Buffers<T>>(
-                this->n - this->n_data - this->n_outputs, this->pkt_size);
+                this->n - this->n_data - this->n_outputs, this->pkt_size, true);
 
             std::vector<Properties> dummy_props;
             enc_context = this->init_context_dec(
                 *enc_frag_ids, dummy_props, this->pkt_size, inter_words.get());
 
             // for decoding
-            this->dec_inter_codeword =
-                std::make_unique<vec::Buffers<T>>(this->n, this->pkt_size);
+            this->dec_inter_codeword = std::make_unique<vec::Buffers<T>>(
+                this->n, this->pkt_size, true);
+
+            vec_inter_words =
+                std::make_unique<vec::Vector<T>>(*(this->gf), this->n_data);
+            vec_inter_codeword =
+                std::make_unique<vec::Vector<T>>(*(this->gf), this->n);
+            vec_enc_context =
+                this->init_context_dec(*enc_frag_ids, dummy_props);
+
+            // for decoding
+            this->vec_dec_inter_codeword =
+                std::make_unique<vec::Vector<T>>(*(this->gf), this->n);
         }
     }
 
@@ -177,7 +195,14 @@ class RsFnt : public FecCode<T> {
         off_t offset,
         vec::Vector<T>& words) override
     {
-        this->fft->fft(output, words);
+        if (this->type == FecType::SYSTEMATIC) {
+            this->decode_apply(*vec_enc_context, *vec_inter_words, words);
+            this->fft->fft(*vec_inter_codeword, *vec_inter_words);
+            output.copy(
+                vec_inter_codeword.get(), this->n_parities, 0, this->n_data);
+        } else {
+            this->fft->fft(output, words);
+        }
         encode_post_process(output, props, offset);
     }
 
@@ -237,6 +262,7 @@ class RsFnt : public FecCode<T> {
     {
         if (this->type == FecType::SYSTEMATIC) {
             decode_data(*enc_context, *inter_words, words);
+            // this->decode_apply(*enc_context, *inter_words, words);
             vec::Buffers<T> _tmp(words, output);
             vec::Buffers<T> _output(_tmp, *suffix_words);
             this->fft->fft(_output, *inter_words);
@@ -251,14 +277,26 @@ class RsFnt : public FecCode<T> {
         std::vector<Properties>& props,
         off_t offset) override
     {
-        // check for out of range value in output
         unsigned size = output.get_size();
-        T thres = (this->gf->card() - 1);
-        for (unsigned i = 0; i < this->n_outputs; ++i) {
-            T* chunk = output.get(i);
-            for (unsigned j = 0; j < size; ++j) {
-                if (chunk[j] & thres) {
-                    props[i].add(offset + j, OOR_MARK);
+        if (output.has_meta()) {
+            // check meta of elements
+            for (unsigned i = 0; i < this->n_outputs; ++i) {
+                for (unsigned j = 0; j < size; ++j) {
+                    T meta = output.get_meta(i, j);
+                    if (meta) {
+                        props[i].add(offset + j, meta);
+                    }
+                }
+            }
+        } else {
+            // check for out of range value in output
+            T thres = (this->gf->card() - 1);
+            for (unsigned i = 0; i < this->n_outputs; ++i) {
+                T* chunk = output.get(i);
+                for (unsigned j = 0; j < size; ++j) {
+                    if (chunk[j] & thres) {
+                        props[i].add(offset + j, OOR_MARK);
+                    }
                 }
             }
         }

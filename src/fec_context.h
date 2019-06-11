@@ -117,11 +117,14 @@ class DecodeContext {
         } else {
             assert(output != nullptr);
 
+            bool b_meta = output->has_meta();
+
             // Buffers each of which is fully allocated
             // Buffer of length `len_2k`
-            buf1_2k = std::make_unique<vec::Buffers<T>>(len_2k, size);
+            buf1_2k = std::make_unique<vec::Buffers<T>>(len_2k, size, b_meta);
             // Buffer of length `max_n_2k - k`
-            bNmK = std::make_unique<vec::Buffers<T>>(max_n_2k - k, size);
+            bNmK =
+                std::make_unique<vec::Buffers<T>>(max_n_2k - k, size, b_meta);
 
             // Buffers that are derived from the two above ones
             // Buffer sliced from `k` first elements of `buf1_2k`
