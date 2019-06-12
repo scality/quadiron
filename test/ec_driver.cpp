@@ -52,6 +52,13 @@ static void xusage()
 }
 
 [[noreturn]]
+static void xfnt_bad_word_size()
+{
+    std::cerr << "FEC using FNT supports word_size = 1 or 2\n";
+    std::exit(EXIT_FAILURE);
+}
+
+[[noreturn]]
 static void xperror(const char* str)
 {
     std::cerr << str << "\n";
@@ -582,36 +589,46 @@ int main(int argc, char** argv)
     data_zpad = count_digits(n_data - 1);
 
     if (eflag == EC_TYPE_RS_FNT) {
-        if (word_size <= 4) {
+        switch (word_size) {
+        case 1:
+            run_fec_rs_fnt<uint16_t>(
+                word_size,
+                n_data,
+                n_parities,
+                rflag,
+                quadiron::fec::FecType::NON_SYSTEMATIC);
+            break;
+        case 2:
             run_fec_rs_fnt<uint32_t>(
                 word_size,
                 n_data,
                 n_parities,
                 rflag,
                 quadiron::fec::FecType::NON_SYSTEMATIC);
-        } else if (word_size <= 8) {
-            run_fec_rs_fnt<uint64_t>(
-                word_size,
-                n_data,
-                n_parities,
-                rflag,
-                quadiron::fec::FecType::NON_SYSTEMATIC);
+            break;
+        default:
+            xfnt_bad_word_size();
         }
     } else if (eflag == EC_TYPE_RS_FNT_SYS) {
-        if (word_size <= 4) {
+        switch (word_size) {
+        case 1:
+            run_fec_rs_fnt<uint16_t>(
+                word_size,
+                n_data,
+                n_parities,
+                rflag,
+                quadiron::fec::FecType::SYSTEMATIC);
+            break;
+        case 2:
             run_fec_rs_fnt<uint32_t>(
                 word_size,
                 n_data,
                 n_parities,
                 rflag,
                 quadiron::fec::FecType::SYSTEMATIC);
-        } else if (word_size <= 8) {
-            run_fec_rs_fnt<uint64_t>(
-                word_size,
-                n_data,
-                n_parities,
-                rflag,
-                quadiron::fec::FecType::SYSTEMATIC);
+            break;
+        default:
+            xfnt_bad_word_size();
         }
     } else if (eflag == EC_TYPE_RS_NF4) {
         if (word_size <= 2) {
