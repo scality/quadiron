@@ -180,7 +180,7 @@ inline __uint128_t add(__uint128_t a, __uint128_t b)
     HalfVecType res;
     VecType vec_a = load_to_reg(a);
     VecType vec_b = load_to_reg(b);
-    store_low_half_to_mem(&res, mod_add(vec_a, vec_b, F4));
+    store_low_half_to_mem(&res, mod_add<uint32_t>(vec_a, vec_b));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -189,7 +189,7 @@ inline __uint128_t sub(__uint128_t a, __uint128_t b)
     HalfVecType res;
     VecType vec_a = load_to_reg(a);
     VecType vec_b = load_to_reg(b);
-    store_low_half_to_mem(&res, mod_sub(vec_a, vec_b, F4));
+    store_low_half_to_mem(&res, mod_sub<uint32_t>(vec_a, vec_b));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -198,7 +198,7 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     HalfVecType res;
     VecType vec_a = load_to_reg(a);
     VecType vec_b = load_to_reg(b);
-    store_low_half_to_mem(&res, mod_mul_safe(vec_a, vec_b, F4));
+    store_low_half_to_mem(&res, mod_mul_safe<uint32_t>(vec_a, vec_b));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -217,8 +217,8 @@ inline void add_buf_to_two_bufs_rem(
         VecType _x_next_p = load_to_reg(_x_half[i]);
         VecType _y_p = load_to_reg(_y[i]);
 
-        store_low_half_to_mem(_x + i, mod_add(_x_p, _y_p, F4));
-        store_low_half_to_mem(_x_half + i, mod_add(_x_next_p, _y_p, F4));
+        store_low_half_to_mem(_x + i, mod_add<uint32_t>(_x_p, _y_p));
+        store_low_half_to_mem(_x_half + i, mod_add<uint32_t>(_x_next_p, _y_p));
     }
 }
 
@@ -230,7 +230,7 @@ inline void hadamard_mul_rem(unsigned n, __uint128_t* x, __uint128_t* y)
         VecType _x_p = load_to_reg(_x[i]);
         VecType _y_p = load_to_reg(_y[i]);
 
-        store_low_half_to_mem(_x + i, mod_mul_safe(_x_p, _y_p, F4));
+        store_low_half_to_mem(_x + i, mod_mul_safe<uint32_t>(_x_p, _y_p));
     }
 }
 
@@ -248,8 +248,9 @@ inline void hadamard_mul_doubled_rem(
         VecType _x_next_p = load_to_reg(_x_half[i]);
         VecType _y_p = load_to_reg(_y[i]);
 
-        store_low_half_to_mem(_x + i, mod_mul_safe(_x_p, _y_p, F4));
-        store_low_half_to_mem(_x_half + i, mod_mul_safe(_x_next_p, _y_p, F4));
+        store_low_half_to_mem(_x + i, mod_mul_safe<uint32_t>(_x_p, _y_p));
+        store_low_half_to_mem(
+            _x_half + i, mod_mul_safe<uint32_t>(_x_next_p, _y_p));
     }
 }
 
@@ -266,7 +267,7 @@ inline __uint128_t add(__uint128_t a, __uint128_t b)
     VecType res;
     VecType vec_a = load_to_reg(a);
     VecType vec_b = load_to_reg(b);
-    store_to_mem(&res, mod_add(vec_a, vec_b, F4));
+    store_to_mem(&res, mod_add<uint32_t>(vec_a, vec_b));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -275,7 +276,7 @@ inline __uint128_t sub(__uint128_t a, __uint128_t b)
     VecType res;
     VecType vec_a = load_to_reg(a);
     VecType vec_b = load_to_reg(b);
-    store_to_mem(&res, mod_sub(vec_a, vec_b, F4));
+    store_to_mem(&res, mod_sub<uint32_t>(vec_a, vec_b));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -284,7 +285,7 @@ inline __uint128_t mul(__uint128_t a, __uint128_t b)
     VecType res;
     VecType vec_a = load_to_reg(a);
     VecType vec_b = load_to_reg(b);
-    store_to_mem(&res, mod_mul_safe(vec_a, vec_b, F4));
+    store_to_mem(&res, mod_mul_safe<uint32_t>(vec_a, vec_b));
     return reinterpret_cast<__uint128_t>(res);
 }
 
@@ -327,12 +328,12 @@ inline void add_buf_to_two_bufs(unsigned n, __uint128_t* _x, __uint128_t* _y)
 
     // add y to the first half of `x`
     for (i = 0; i < vec_len; ++i) {
-        x[i] = mod_add(x[i], y[i], F4);
+        x[i] = mod_add<uint32_t>(x[i], y[i]);
     }
 
     // add y to the second half of `x`
     for (i = 0; i < vec_len; ++i) {
-        x_next[i] = mod_add(x_next[i], y[i], F4);
+        x_next[i] = mod_add<uint32_t>(x_next[i], y[i]);
     }
 
     if (rem_len > 0) {
@@ -354,7 +355,7 @@ inline void hadamard_mul(unsigned n, __uint128_t* _x, __uint128_t* _y)
 
     // multiply y to the first half of `x`
     for (i = 0; i < vec_len; ++i) {
-        x[i] = mod_mul_safe(x[i], y[i], F4);
+        x[i] = mod_mul_safe<uint32_t>(x[i], y[i]);
     }
 
     if (rem_len > 0) {
