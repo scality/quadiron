@@ -191,7 +191,7 @@ endif()
 
 # Release flags
 set(RELEASE_CXX_FLAGS
-  -O3 -DNDEBUG
+  -O3 -DNDEBUG -flto=full
 )
 foreach(flag ${RELEASE_CXX_FLAGS})
   check_cxx_compiler_flag(${flag} has_flag_${flag})
