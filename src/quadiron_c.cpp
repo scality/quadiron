@@ -215,6 +215,16 @@ int quadiron_fnt32_decode(
     if (!res)
         return -1;
 
+    // reset metadata of data
+    for (unsigned i = 0; i < fec->n_data; i++) {
+        parities_props[i].clear();
+        uint32_t* metadata = reinterpret_cast<uint32_t*>(data[i]);
+        int ret = parities_props[i].fnt_serialize(metadata, metadata_size / 4);
+        if (ret == -1) {
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -262,7 +272,6 @@ int quadiron_fnt32_reconstruct(
                     return -1;
             }
             parities_vec[i] = data[i] + metadata_size;
-            data_vec[i] = data[i] + metadata_size;
         }
         for (unsigned i = 0; i < fec->n_parities; i++) {
             if (!missing_idxs[fec->n_data + i]) {
