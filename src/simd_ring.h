@@ -56,13 +56,13 @@ inline void mul_coef_to_buf(const T a, T* src, T* dest, size_t len, T card)
     size_t i = 0;
     const size_t end = (_len > 3) ? _len - 3 : 0;
     for (; i < end; i += 4) {
-        _dest[i] = mod_mul(coef, _src[i], card);
-        _dest[i + 1] = mod_mul(coef, _src[i + 1], card);
-        _dest[i + 2] = mod_mul(coef, _src[i + 2], card);
-        _dest[i + 3] = mod_mul(coef, _src[i + 3], card);
+        _dest[i] = mod_mul<T>(coef, _src[i]);
+        _dest[i + 1] = mod_mul<T>(coef, _src[i + 1]);
+        _dest[i + 2] = mod_mul<T>(coef, _src[i + 2]);
+        _dest[i + 3] = mod_mul<T>(coef, _src[i + 3]);
     }
     for (; i < _len; ++i) {
-        _dest[i] = mod_mul(coef, _src[i], card);
+        _dest[i] = mod_mul<T>(coef, _src[i]);
     }
 
     if (_last_len > 0) {
@@ -84,7 +84,7 @@ inline void add_two_bufs(T* src, T* dest, size_t len, T card)
 
     size_t i;
     for (i = 0; i < _len; i++) {
-        _dest[i] = mod_add(_src[i], _dest[i], card);
+        _dest[i] = mod_add<T>(_src[i], _dest[i]);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
@@ -107,7 +107,7 @@ inline void sub_two_bufs(T* bufa, T* bufb, T* res, size_t len, T card)
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform subtraction
-        _res[i] = mod_sub(_bufa[i], _bufb[i], card);
+        _res[i] = mod_sub<T>(_bufa[i], _bufb[i]);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
@@ -133,7 +133,7 @@ inline void mul_two_bufs(T* src, T* dest, size_t len, T card)
     size_t i;
     for (i = 0; i < _len; i++) {
         // perform multiplicaton
-        _dest[i] = mod_mul_safe(_src[i], _dest[i], card);
+        _dest[i] = mod_mul_safe<T>(_src[i], _dest[i]);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {
@@ -155,7 +155,7 @@ inline void neg(size_t len, T* buf, T card)
 
     size_t i;
     for (i = 0; i < _len; i++) {
-        _buf[i] = mod_neg(_buf[i], card);
+        _buf[i] = mod_neg<T>(_buf[i]);
     }
     if (_last_len > 0) {
         for (i = _len * ratio; i < len; i++) {

@@ -130,42 +130,41 @@ TYPED_TEST(FecTestCommon, TestGf2nFftAdd) // NOLINT
 }
 
 template <typename T>
+class FecTestFnt : public FecTestCommon<T> {
+};
+
+using FntType = ::testing::Types<uint16_t, uint32_t>;
+TYPED_TEST_CASE(FecTestFnt, FntType);
+
+TYPED_TEST(FecTestFnt, TestFnt) // NOLINT
+{
+    const size_t word_size = sizeof(TypeParam) / 2;
+    fec::RsFnt<TypeParam> fec(
+        fec::FecType::NON_SYSTEMATIC,
+        word_size,
+        this->n_data,
+        this->n_parities);
+    this->run_test(fec, true);
+}
+
+TYPED_TEST(FecTestFnt, TestFntSys) // NOLINT
+{
+    const size_t word_size = sizeof(TypeParam) / 2;
+    fec::RsFnt<TypeParam> fec(
+        fec::FecType::SYSTEMATIC, word_size, this->n_data, this->n_parities);
+    this->run_test(fec, true);
+}
+
+template <typename T>
 class FecTestNo128 : public FecTestCommon<T> {
 };
 
-using No128 = ::testing::Types<uint32_t, uint64_t>;
+using No128 = ::testing::Types<uint16_t, uint32_t, uint64_t>;
 TYPED_TEST_CASE(FecTestNo128, No128);
-
-TYPED_TEST(FecTestNo128, TestFnt) // NOLINT
-{
-    for (unsigned word_size = 1; word_size <= 2; ++word_size) {
-        fec::RsFnt<TypeParam> fec(
-            fec::FecType::NON_SYSTEMATIC,
-            word_size,
-            this->n_data,
-            this->n_parities);
-        this->run_test(fec, true);
-    }
-}
-
-TYPED_TEST(FecTestNo128, TestFntSys) // NOLINT
-{
-    for (unsigned word_size = 1; word_size <= 2; ++word_size) {
-        fec::RsFnt<TypeParam> fec(
-            fec::FecType::SYSTEMATIC,
-            word_size,
-            this->n_data,
-            this->n_parities);
-        this->run_test(fec, true);
-    }
-}
 
 TYPED_TEST(FecTestNo128, TestGfpFft) // NOLINT
 {
-    for (size_t word_size = 1; word_size <= 4 && word_size < sizeof(TypeParam);
-         word_size *= 2) {
-        fec::RsGfpFft<TypeParam> fec(word_size, this->n_data, this->n_parities);
-
-        this->run_test(fec, true);
-    }
+    const size_t word_size = sizeof(TypeParam) / 2;
+    fec::RsGfpFft<TypeParam> fec(word_size, this->n_data, this->n_parities);
+    this->run_test(fec, true);
 }

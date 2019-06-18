@@ -127,12 +127,16 @@ class QuadironCTest : public ::testing::Test {
         } else {
             n_outputs = n_data + n_parities;
         }
-        std::vector<std::vector<uint8_t>> parity(n_outputs);
-        std::vector<uint8_t*> _parity(n_outputs); // for C API
+        std::vector<std::vector<uint8_t>> parity(n_parities);
+        std::vector<uint8_t*> _parity(n_parities); // for C API
         std::vector<int> wanted_idxs(n_outputs);
+        std::vector<std::vector<uint8_t>> encoded_data(n_outputs);
+        std::vector<uint8_t*> _encoded_data(n_outputs); // for C API
+
+        const size_t full_block_size = block_size + metadata_size;
 
         for (int i = 0; i < n_data; i++) {
-            data.at(i).resize(block_size + metadata_size);
+            data.at(i).resize(full_block_size);
             _data[i] = data.at(i).data();
             ref_data.at(i).resize(block_size);
             _ref_data[i] = ref_data.at(i).data();
@@ -140,8 +144,8 @@ class QuadironCTest : public ::testing::Test {
             std::copy_n(_data[i] + metadata_size, block_size, _ref_data[i]);
         }
 
-        for (int i = 0; i < n_outputs; i++) {
-            parity.at(i).resize(block_size + metadata_size);
+        for (int i = 0; i < n_parities; i++) {
+            parity.at(i).resize(full_block_size);
             _parity[i] = parity.at(i).data();
         }
 
@@ -157,15 +161,34 @@ class QuadironCTest : public ::testing::Test {
                 block_size),
             0);
 
-        for (int i = 0; i < n_data; i++) {
-            if (missing_idxs[i]) {
-                std::fill_n(_data[i], block_size + metadata_size, 0);
+        // get encoded data
+        for (int i = 0; i < n_outputs; i++) {
+            encoded_data.at(i).resize(full_block_size);
+            _encoded_data[i] = encoded_data.at(i).data();
+        }
+        if (systematic) {
+            for (int i = 0; i < n_parities; i++) {
+                std::copy_n(_parity[i], full_block_size, _encoded_data[i]);
+            }
+        } else {
+            for (int i = 0; i < n_data; i++) {
+                std::copy_n(_data[i], full_block_size, _encoded_data[i]);
+            }
+            for (int i = 0; i < n_parities; i++) {
+                std::copy_n(
+                    _parity[i], full_block_size, _encoded_data[i + n_data]);
             }
         }
 
+        // delete missing fragments
+        for (int i = 0; i < n_data; i++) {
+            if (missing_idxs[i]) {
+                std::fill_n(_data[i], full_block_size, 0);
+            }
+        }
         for (int i = 0; i < n_parities; i++) {
             if (missing_idxs[n_data + i]) {
-                std::fill_n(_parity[i], block_size + metadata_size, 0);
+                std::fill_n(_parity[i], full_block_size, 0);
             }
         }
 
@@ -185,6 +208,25 @@ class QuadironCTest : public ::testing::Test {
                 _data[i] + metadata_size));
         }
 
+        // get back first n_data parities for the non-systematic case
+        if (!systematic) {
+            for (int i = 0; i < n_data; i++) {
+                std::copy_n(_encoded_data[i], full_block_size, _data[i]);
+            }
+        }
+
+        // delete missing fragments
+        for (int i = 0; i < n_data; i++) {
+            if (missing_idxs[i]) {
+                std::fill_n(_data[i], full_block_size, 0);
+            }
+        }
+        for (int i = 0; i < n_parities; i++) {
+            if (missing_idxs[n_data + i]) {
+                std::fill_n(_parity[i], full_block_size, 0);
+            }
+        }
+
         for (int i = 0; i < n_data; i++) {
             if (missing_idxs[i]) {
                 ASSERT_EQ(
@@ -196,6 +238,17 @@ class QuadironCTest : public ::testing::Test {
                         i,
                         block_size),
                     0);
+                if (systematic) {
+                    ASSERT_TRUE(std::equal(
+                        _ref_data[i],
+                        _ref_data[i] + block_size,
+                        _data[i] + metadata_size));
+                } else {
+                    ASSERT_TRUE(std::equal(
+                        _encoded_data[i],
+                        _encoded_data[i] + full_block_size,
+                        _data[i]));
+                }
             }
         }
 
@@ -210,6 +263,17 @@ class QuadironCTest : public ::testing::Test {
                         n_data + i,
                         block_size),
                     0);
+                if (systematic) {
+                    ASSERT_TRUE(std::equal(
+                        _encoded_data[i],
+                        _encoded_data[i] + full_block_size,
+                        _parity[i]));
+                } else {
+                    ASSERT_TRUE(std::equal(
+                        _encoded_data[n_data + i],
+                        _encoded_data[n_data + i] + full_block_size,
+                        _parity[i]));
+                }
             }
         }
 
