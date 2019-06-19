@@ -134,6 +134,10 @@ set(TEST_SRC
   FORCE
 )
 
+if (USE_SIMD STREQUAL "ON" OR USE_SIMD STREQUAL "SSE" OR USE_SIMD STREQUAL "AVX")
+  list(APPEND TEST_SRC ${CMAKE_CURRENT_SOURCE_DIR}/simd/test_simd_fnt.cpp)
+endif()
+
 add_executable(${UNIT_TESTS}
   ${TEST_SRC}
 )

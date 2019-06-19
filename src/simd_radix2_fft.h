@@ -33,6 +33,8 @@
 
 #include <x86intrin.h>
 
+#include "vec_buffers.h"
+
 namespace quadiron {
 namespace simd {
 
