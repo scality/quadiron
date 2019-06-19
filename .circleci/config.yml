@@ -102,6 +102,9 @@ jobs:
       - run:
           name: Benchmark
           command: cd build && make benchmark
+      - run:
+          name: Components performance
+          command: cd build && make perf
 
 workflows:
   version: 2
