@@ -357,6 +357,10 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
 {
     const unsigned len = this->n;
     const unsigned input_len = input.get_n();
+
+    assert(input_len > 0);
+    assert(data_len > 0);
+
     // to support FFT on input vectors of length greater than from `data_len`
     const unsigned group_len =
         (input_len > data_len) ? len / input_len : len / data_len;
