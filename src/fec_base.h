@@ -177,20 +177,20 @@ class FecCode {
     bool write_pkt(char* pkt, std::ostream& stream, size_t bytes);
 
     void encode_streams_horizontal(
-        std::vector<std::istream*> input_data_bufs,
-        std::vector<std::ostream*> output_parities_bufs,
+        const std::vector<std::istream*>& input_data_bufs,
+        std::vector<std::ostream*>& output_parities_bufs,
         std::vector<Properties>& output_parities_props);
 
     void encode_streams_vertical(
-        std::vector<std::istream*> input_data_bufs,
-        std::vector<std::ostream*> output_parities_bufs,
+        const std::vector<std::istream*>& input_data_bufs,
+        std::vector<std::ostream*>& output_parities_bufs,
         std::vector<Properties>& output_parities_props);
 
     bool decode_streams_horizontal(
-        std::vector<std::istream*> input_data_bufs,
-        std::vector<std::istream*> input_parities_bufs,
+        const std::vector<std::istream*>& input_data_bufs,
+        const std::vector<std::istream*>& input_parities_bufs,
         std::vector<Properties>& input_parities_props,
-        std::vector<std::ostream*> output_data_bufs);
+        std::vector<std::ostream*>& output_data_bufs);
 
     virtual std::unique_ptr<DecodeContext<T>> init_context_dec(
         vec::Vector<T>& fragments_ids,
@@ -199,24 +199,24 @@ class FecCode {
         vec::Buffers<T>* output = nullptr);
 
     bool decode_streams_vertical(
-        std::vector<std::istream*> input_data_bufs,
-        std::vector<std::istream*> input_parities_bufs,
+        const std::vector<std::istream*>& input_data_bufs,
+        const std::vector<std::istream*>& input_parities_bufs,
         std::vector<Properties>& input_parities_props,
-        std::vector<std::ostream*> output_data_bufs);
+        std::vector<std::ostream*>& output_data_bufs);
 
     void encode_blocks_vertical(
-        std::vector<uint8_t*> data_bufs,
-        std::vector<uint8_t*> parities_bufs,
+        std::vector<uint8_t*>& data_bufs,
+        std::vector<uint8_t*>& parities_bufs,
         std::vector<Properties>& parities_props,
-        std::vector<bool> wanted_idxs,
+        std::vector<bool>& wanted_idxs,
         size_t block_size_bytes);
 
     bool decode_blocks_vertical(
-        std::vector<uint8_t*> data_bufs,
-        std::vector<uint8_t*> parities_bufs,
+        std::vector<uint8_t*>& data_bufs,
+        std::vector<uint8_t*>& parities_bufs,
         std::vector<Properties>& parities_props,
-        std::vector<int> missing_idxs,
-        std::vector<bool> wanted_idxs,
+        std::vector<int>& missing_idxs,
+        std::vector<bool>& wanted_idxs,
         size_t block_size_bytes);
 
     const gf::Field<T>& get_gf()
@@ -407,8 +407,8 @@ inline bool FecCode<T>::write_pkt(char* pkt, std::ostream& stream, size_t bytes)
  */
 template <typename T>
 void FecCode<T>::encode_streams_horizontal(
-    std::vector<std::istream*> input_data_bufs,
-    std::vector<std::ostream*> output_parities_bufs,
+    const std::vector<std::istream*>& input_data_bufs,
+    std::vector<std::ostream*>& output_parities_bufs,
     std::vector<Properties>& output_parities_props)
 {
     bool cont = true;
@@ -461,8 +461,8 @@ void FecCode<T>::encode_streams_horizontal(
 
 template <typename T>
 void FecCode<T>::encode_streams_vertical(
-    std::vector<std::istream*> input_data_bufs,
-    std::vector<std::ostream*> output_parities_bufs,
+    const std::vector<std::istream*>& input_data_bufs,
+    std::vector<std::ostream*>& output_parities_bufs,
     std::vector<Properties>& output_parities_props)
 {
     assert(input_data_bufs.size() == n_data);
@@ -558,10 +558,10 @@ void FecCode<T>::encode_streams_vertical(
  */
 template <typename T>
 bool FecCode<T>::decode_streams_horizontal(
-    std::vector<std::istream*> input_data_bufs,
-    std::vector<std::istream*> input_parities_bufs,
+    const std::vector<std::istream*>& input_data_bufs,
+    const std::vector<std::istream*>& input_parities_bufs,
     std::vector<Properties>& input_parities_props,
-    std::vector<std::ostream*> output_data_bufs)
+    std::vector<std::ostream*>& output_data_bufs)
 {
     off_t offset = 0;
     bool cont = true;
@@ -896,10 +896,10 @@ void FecCode<T>::decode_apply(
  */
 template <typename T>
 bool FecCode<T>::decode_streams_vertical(
-    std::vector<std::istream*> input_data_bufs,
-    std::vector<std::istream*> input_parities_bufs,
+    const std::vector<std::istream*>& input_data_bufs,
+    const std::vector<std::istream*>& input_parities_bufs,
     std::vector<Properties>& input_parities_props,
-    std::vector<std::ostream*> output_data_bufs)
+    std::vector<std::ostream*>& output_data_bufs)
 {
     bool cont = true;
     off_t offset = 0;
@@ -1064,10 +1064,10 @@ bool FecCode<T>::decode_streams_vertical(
  */
 template <typename T>
 void FecCode<T>::encode_blocks_vertical(
-    std::vector<uint8_t*> data_bufs,
-    std::vector<uint8_t*> parities_bufs,
+    std::vector<uint8_t*>& data_bufs,
+    std::vector<uint8_t*>& parities_bufs,
     std::vector<Properties>& parities_props,
-    std::vector<bool> wanted_idxs,
+    std::vector<bool>& wanted_idxs,
     size_t block_size_bytes)
 {
     assert(data_bufs.size() == n_data);
@@ -1175,11 +1175,11 @@ void FecCode<T>::encode_blocks_vertical(
  */
 template <typename T>
 bool FecCode<T>::decode_blocks_vertical(
-    std::vector<uint8_t*> data_bufs,
-    std::vector<uint8_t*> parities_bufs,
+    std::vector<uint8_t*>& data_bufs,
+    std::vector<uint8_t*>& parities_bufs,
     std::vector<Properties>& parities_props,
-    std::vector<int> missing_idxs,
-    std::vector<bool> wanted_idxs,
+    std::vector<int>& missing_idxs,
+    std::vector<bool>& wanted_idxs,
     size_t block_size_bytes)
 {
     size_t offset = 0;
