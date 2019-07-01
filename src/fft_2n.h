@@ -84,6 +84,9 @@ class Radix2 : public FourierTransform<T> {
     void ifft(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
     void fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input) override;
 
+    OpCounter fft_op_counter(size_t input_len) override;
+    OpCounter ifft_op_counter(size_t input_len) override;
+
   private:
     void init_bitrev();
     void bit_rev_permute(vec::Vector<T>& vec);
@@ -173,6 +176,8 @@ template <typename T>
 Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
     : FourierTransform<T>(gf, n)
 {
+    assert(n >= data_len);
+
     if ((gf.get_p() - 1) % n != 0) {
         throw InvalidArgument("Radix2: card-1 not divisible by n");
     }
@@ -631,6 +636,92 @@ void Radix2<T>::ifft(vec::Buffers<T>& output, vec::Buffers<T>& input)
      * We need to divide output to `N` for the inverse formular
      */
     this->gf->mul_vec_to_vecp(*(this->vec_inv_n), output, output);
+}
+
+template <typename T>
+OpCounter Radix2<T>::fft_op_counter(size_t input_len)
+{
+    assert(input_len > 0);
+    assert(data_len > 0);
+
+    const size_t len = this->n;
+    const size_t group_len =
+        (input_len > data_len) ? len / input_len : len / data_len;
+    const T card_minus_one = this->gf->card_minus_one();
+
+    OpCounter counter;
+    for (size_t m = group_len; m < len; m <<= 1) {
+        const size_t step = 2 * m;
+        const size_t ratio = len / step;
+        for (size_t start = 0; start < m; ++start) {
+            const T coef = vec_W[start * ratio];
+            // one butterfly_ct_step operation
+            // butterfly_ct_step(output, coef, start, m, step);
+            for (size_t i = start; i < len; i += step) {
+                // one butterfly_ct on buffers of pkt_size elements
+                counter.butterfly++;
+                counter.add++;
+                counter.sub++;
+                if (coef > 1 && coef < card_minus_one) {
+                    counter.mul++;
+                }
+            }
+        }
+    }
+
+    return counter;
+}
+
+template <typename T>
+OpCounter Radix2<T>::ifft_op_counter(size_t input_len)
+{
+    const size_t len = this->n;
+    const T card_minus_one = this->gf->card_minus_one();
+
+    OpCounter counter;
+
+    size_t m = len / 2;
+    if (input_len < len) {
+        // For Q are zeros only => Q = c * P
+        for (; m >= input_len; m /= 2) {
+            const size_t step = 2 * m;
+            for (size_t start = 0; start < m; ++start) {
+                const T coef = inv_W->get(start * len / step);
+                // one butterfly_gs_step_simple operation
+                // butterfly_gs_step_simple(output, coef, start, m, step)
+                for (size_t i = start; i < len; i += step) {
+                    // one butterfly_gs_simple on buffers of pkt_size elements
+                    counter.butterfly++;
+                    if (coef == card_minus_one) {
+                        counter.neg++;
+                    } else if (coef > 1) {
+                        counter.mul++;
+                    }
+                }
+            }
+        }
+    }
+
+    // Next, normal butterlfy GS is performed
+    for (; m >= 1; m /= 2) {
+        const size_t step = 2 * m;
+        for (size_t start = 0; start < m; ++start) {
+            const T coef = inv_W->get(start * len / step);
+            // one butterfly_gs_step operation
+            // butterfly_gs_step(output, coef, start, m, step)
+            for (size_t i = start; i < len; i += step) {
+                // one butterfly_gs on buffers of pkt_size elements
+                counter.butterfly++;
+                counter.add++;
+                counter.sub++;
+                if (coef > 1 && coef < card_minus_one) {
+                    counter.mul++;
+                }
+            }
+        }
+    }
+
+    return counter;
 }
 
 #ifdef QUADIRON_USE_SIMD
