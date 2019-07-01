@@ -48,7 +48,7 @@ for word_size in 1 2; do
     type_size=$((word_size*2))
     max_len=$((256**word_size))
     if ((type_size>word_size)); then
-        for ec_type in rs-fnt rs-fnt-sys; do
+        for ec_type in rs-fnt; do
           for k in 16 64; do
             for n in 32 256 1024; do
               if ((n<max_len)) && ((n>k)); then
