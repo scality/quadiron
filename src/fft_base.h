@@ -40,6 +40,14 @@ namespace quadiron {
 /** Various Fast Fourier Transform (FFT) implementations. */
 namespace fft {
 
+typedef struct OpCounter {
+    size_t add = 0;
+    size_t sub = 0;
+    size_t mul = 0;
+    size_t neg = 0;
+    size_t butterfly = 0;
+} OpCounter;
+
 /** Base class for Fourier Transform on Galois Fields.
  *
  *  The Fourier Transform is applied on vector of size `n` with ω as
@@ -63,6 +71,17 @@ class FourierTransform {
     virtual void fft_inv(vec::Vector<T>& output, vec::Vector<T>& input) = 0;
     virtual void
     fft_inv(vec::Buffers<T>& /* output */, vec::Buffers<T>& /* input */){};
+
+    virtual OpCounter fft_op_counter(size_t /* input_len */)
+    {
+        OpCounter counter;
+        return counter;
+    };
+    virtual OpCounter ifft_op_counter(size_t /* input_len */)
+    {
+        OpCounter counter;
+        return counter;
+    };
 
   protected:
     const gf::Field<T>* gf;

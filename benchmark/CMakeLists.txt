@@ -77,3 +77,82 @@ add_custom_target(benchmark
   COMMENT "run the benchmark"
 )
 add_dependencies(benchmark ${BENCH_DRIVER})
+
+#########################################################
+# Google Benchmark
+#########################################################
+
+# Download and install GoogleBenchmark
+
+include(ExternalProject)
+
+# NOTE: we do not enable link-time optimisation as it require GCC_AR and
+# GCC_RANLIB for gcc or LLVMAR_EXECUTABLE, LLVMNM_EXECUTABLE and
+# LLVMRANLIB_EXECUTABLE for clang.
+# If these packages are available, we can enable this option by adding the
+# following flags: "-DBENCHMARK_ENABLE_LTO=true"
+set(CMAKE_ARGS_LIST
+    "-DBENCHMARK_ENABLE_GTEST_TESTS=OFF"
+    "-DCMAKE_BUILD_TYPE=Release"
+    "-DCMAKE_CXX_FLAGS=-fPIC"
+    "-DCMAKE_AR=${CMAKE_AR}"
+)
+
+if(CMAKE_CXX_COMPILER MATCHES "^(\/arm64*|\/ARM64*)")
+  list(APPEND CMAKE_ARGS_LIST "-DCMAKE_CROSSCOMPILING=1" "-DRUN_HAVE_POSIX_REGEX=0")
+endif()
+
+
+ExternalProject_Add(gbench
+  PREFIX          ${CMAKE_CURRENT_BINARY_DIR}/gbench
+  GIT_REPOSITORY  https://github.com/google/benchmark.git
+  GIT_TAG         v1.5.0
+  CMAKE_ARGS      ${CMAKE_ARGS_LIST}
+  INSTALL_COMMAND ""
+)
+
+# Get paths of the installed GoogleBenchmark.
+ExternalProject_Get_Property(gbench source_dir binary_dir)
+set(GBENCH_SOURCE_DIR ${source_dir})
+
+# GoogleTest target (to be used as a dependency by our test driver).
+add_library(libgbench IMPORTED STATIC GLOBAL)
+add_dependencies(libgbench gbench)
+set_target_properties(libgbench PROPERTIES
+    "IMPORTED_LOCATION" "${binary_dir}/src/libbenchmark.a"
+    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+)
+
+##############################
+# Components performance tests
+##############################
+
+set(COMP_PERF  comp_perf)
+
+# Source files.
+set(COMP_PERF_SRC
+  ${CMAKE_CURRENT_SOURCE_DIR}/components/main.cpp
+)
+
+add_executable(${COMP_PERF}
+  ${COMP_PERF_SRC}
+)
+
+target_link_libraries(${COMP_PERF}
+  libgbench
+  ${STATIC_LIB}
+)
+# Use SYSTEM so that our strict compilers settings are not applied on this code.
+target_include_directories(${COMP_PERF} SYSTEM
+    PUBLIC "${GBENCH_SOURCE_DIR}/include"
+)
+
+###########
+# Execution
+###########
+
+add_custom_target(perf
+  COMMAND "$<TARGET_FILE:${COMP_PERF}>" --benchmark_counters_tabular=true
+  COMMENT "run the component performance"
+)
+add_dependencies(perf ${COMP_PERF})

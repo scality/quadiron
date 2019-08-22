@@ -114,6 +114,10 @@ class RsFnt : public FecCode<T> {
         this->fft = std::make_unique<fft::Radix2<T>>(
             *(this->gf), this->n, m, this->pkt_size);
 
+        // FIXME Issue #286: current decoding algorithm use FFT of length `2*k`
+        // that should be less than `q`
+        assert(2 * this->n_data < this->gf->card());
+
         unsigned len_2k = this->gf->get_code_len_high_compo(2 * this->n_data);
         this->fft_2k = std::make_unique<fft::Radix2<T>>(
             *(this->gf), len_2k, len_2k, this->pkt_size);
