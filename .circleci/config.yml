@@ -4,6 +4,8 @@ jobs:
     docker:
       - image: slaperche0scality/quadiron:latest
     steps:
+      # Ensure your image has git, otherwise the checkout step will fail
+      - run: apt-get -qq update; apt-get -y install git
       - checkout
       - run:
           name: Compile with Clang 6 (Debug mode/No SIMD)
