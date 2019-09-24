@@ -130,6 +130,17 @@ class RingModN {
     virtual void hadamard_mul(int n, T* x, T* y) const;
     virtual void neg(size_t n, T* x) const;
     virtual void neg(vec::Buffers<T>& buf) const;
+    void butterfly_ct(T* p, T* q, size_t len, T coef, size_t offset) const;
+    void butterfly_ct_double_layers(
+        T* p,
+        T* q,
+        T* r,
+        T* s,
+        size_t len,
+        T r1,
+        T r2,
+        T r3,
+        size_t offset) const;
 
     RingModN(RingModN&&) = default;
 
@@ -851,6 +862,84 @@ inline void RingModN<T>::neg(vec::Buffers<T>& buf) const
     size_t size = buf.get_size();
     for (int i = 0; i < buf.get_n(); i++) {
         neg(size, buf.get(i));
+    }
+}
+
+/**
+ * Butterfly Cooley-Tukey operation
+ * It works on two elements `(x, y)` with a coefficient `r`
+ * x <- x + r * y
+ * y <- x - r * y
+ *
+ * @param p buffer of elements
+ * @param q buffer of elements
+ * @param len number of elements
+ * @param coef coefficient
+ * @param offset element offset
+ */
+template <typename T>
+inline void
+RingModN<T>::butterfly_ct(T* p, T* q, size_t len, T coef, size_t offset) const
+{
+    for (size_t i = offset; i < len; ++i) {
+        T res = mul_bounded(q[i], coef);
+        q[i] = sub(p[i], res);
+        p[i] = add(p[i], res);
+    }
+}
+
+/**
+ * Butterfly Cooley-Tukey operation on two layers in each step
+ * It works on 4 elements `(a, b, c, d)` with 3 coefficient `r1, r2, r3`
+ * At the 1st layer, Cooley-Tukey operation applied on two pairs `(a, b)` and
+ * `(c, d)` with the coefficient `r1`
+ * (a, b) <- CT(a, b, r1)
+ * (c, d) <- CT(c, d, r1)
+ * At the 1st layer, Cooley-Tukey operation applied on `(a, c)` with coefficient
+ * `r2` and on `(b, d)` with coefficient `r3`
+ * (a, c) <- CT(a, c, r2)
+ * (b, d) <- CT(b, d, r3)
+ *
+ * @param p buffer of elements
+ * @param q buffer of elements
+ * @param r buffer of elements
+ * @param s buffer of elements
+ * @param len number of elements
+ * @param r1 coefficient
+ * @param r2 coefficient
+ * @param r3 coefficient
+ * @param offset element offset
+ */
+template <typename T>
+inline void RingModN<T>::butterfly_ct_double_layers(
+    T* p,
+    T* q,
+    T* r,
+    T* s,
+    size_t len,
+    T r1,
+    T r2,
+    T r3,
+    size_t offset) const
+{
+    for (size_t i = offset; i < len; ++i) {
+        // 1st layer (p, q) & (r, s) with coef = r1
+        T res = mul_bounded(q[i], r1);
+        q[i] = sub(p[i], res);
+        p[i] = add(p[i], res);
+
+        res = mul_bounded(s[i], r1);
+        s[i] = sub(r[i], res);
+        r[i] = add(r[i], res);
+
+        // 2nd layer (p, r) with coef r2
+        res = mul_bounded(r[i], r2);
+        r[i] = sub(p[i], res);
+        p[i] = add(p[i], res);
+        // 2nd layer (q, s) with coef = r3
+        res = mul_bounded(s[i], r3);
+        s[i] = sub(q[i], res);
+        q[i] = add(q[i], res);
     }
 }
 
