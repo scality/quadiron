@@ -34,7 +34,7 @@
 #include "arith.h"
 #include "fec_base.h"
 #include "fft_2n.h"
-#include "gf_prime.h"
+#include "gf_fnt.h"
 #include "vec_buffers.h"
 #include "vec_vector.h"
 
@@ -91,8 +91,7 @@ class RsFnt : public FecCode<T> {
     inline void init_gf() override
     {
         // warning all fermat numbers >= to F_5 (2^32+1) are composite!!!
-        T gf_p = (1ULL << (8 * this->word_size)) + 1;
-        this->gf = gf::alloc<gf::Field<T>, gf::Prime<T>>(gf_p);
+        this->gf = gf::alloc<gf::Field<T>, gf::Fnt<T>>();
 
         assert(
             arith::jacobi<T>(this->gf->get_primitive_root(), this->gf->card())
