@@ -40,12 +40,11 @@ namespace gf {
 template <typename T>
 class Prime : public gf::Field<T> {
   public:
+    explicit Prime(T p);
     Prime(Prime&&) = default;
     T inv_exp(T a);
 
   private:
-    explicit Prime(T p);
-
     template <typename Class, typename... Args>
     friend Class create(Args... args);
 
