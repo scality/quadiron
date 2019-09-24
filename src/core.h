@@ -78,6 +78,35 @@ struct SignedDoubleSize<__uint128_t> {
     typedef Int256 T;
 };
 
+template <typename Type>
+struct HalfSize {
+};
+template <>
+struct HalfSize<uint16_t> {
+    typedef uint8_t T;
+};
+template <>
+struct HalfSize<uint32_t> {
+    typedef uint16_t T;
+};
+template <>
+struct HalfSize<uint64_t> {
+    typedef uint32_t T;
+};
+template <>
+struct HalfSize<__uint128_t> {
+    typedef uint64_t T;
+};
+
+template <typename T>
+using DoubleSizeVal = typename DoubleSize<T>::T;
+
+template <typename T>
+using SignedDoubleSizeVal = typename SignedDoubleSize<T>::T;
+
+template <typename T>
+using HalfSizeVal = typename HalfSize<T>::T;
+
 /** A group of values stored as one.
  *
  * This allows faster processing, as the values can be processed as one.

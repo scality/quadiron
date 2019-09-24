@@ -41,12 +41,6 @@
 
 namespace quadiron {
 
-template <typename T>
-using DoubleSizeVal = typename DoubleSize<T>::T;
-
-template <typename T>
-using SignedDoubleSizeVal = typename SignedDoubleSize<T>::T;
-
 /** Base/core arithmetical functions of QuadIron. */
 namespace arith {
 
