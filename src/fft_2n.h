@@ -463,20 +463,25 @@ void Radix2<T>::butterfly_ct_two_layers_step_slow(
     //  ---------
     // First layer
     //  ---------
-    const T r1 = W->get(start * this->n / m / 2);
-    // first pair
-    butterfly_ct_step_slow(buf, r1, start, m, step, offset);
-    // second pair
-    butterfly_ct_step_slow(buf, r1, start + 2 * m, m, step, offset);
+    T r1 = vec_W[start * this->n / m / 2];
     //  ---------
     // Second layer
     //  ---------
-    // first pair
-    const T r2 = W->get(start * this->n / m / 4);
-    butterfly_ct_step_slow(buf, r2, start, 2 * m, step, offset);
-    // second pair
-    const T r3 = W->get((start + m) * this->n / m / 4);
-    butterfly_ct_step_slow(buf, r3, start + m, 2 * m, step, offset);
+    T r2 = vec_W[start * this->n / m / 4];
+    T r3 = vec_W[(start + m) * this->n / m / 4];
+
+    const std::vector<T*>& mem = buf.get_mem();
+
+    for (int i = start; i < this->n; i += step) {
+        T* p = mem[i];
+        T* q = mem[i + m];
+        T* r = mem[i + 2 * m];
+        T* s = mem[i + 3 * m];
+
+        // perform butterfly operation for Cooley-Tukey FFT algorithm
+        this->gf->butterfly_ct_double_layers(
+            p, q, r, s, this->pkt_size, r1, r2, r3, offset);
+    }
 }
 
 template <typename T>
@@ -488,15 +493,14 @@ void Radix2<T>::butterfly_ct_step_slow(
     unsigned step,
     size_t offset)
 {
+    T r = coef;
+    const std::vector<T*>& mem = buf.get_mem();
+
     for (int i = start; i < this->n; i += step) {
-        T* a = buf.get(i);
-        T* b = buf.get(i + m);
+        T* p = mem[i];
+        T* q = mem[i + m];
         // perform butterfly operation for Cooley-Tukey FFT algorithm
-        for (size_t j = offset; j < this->pkt_size; ++j) {
-            T x = this->gf->mul(coef, b[j]);
-            b[j] = this->gf->sub(a[j], x);
-            a[j] = this->gf->add(a[j], x);
-        }
+        this->gf->butterfly_ct(p, q, this->pkt_size, r, offset);
     }
 }
 
