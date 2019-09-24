@@ -86,6 +86,7 @@ class RingModN {
     virtual T add(T a, T b) const;
     virtual T sub(T a, T b) const;
     virtual T mul(T a, T b) const;
+    virtual T mul_bounded(T a, T b) const;
     virtual T div(T a, T b) const;
     T inv_bezout(T a) const;
     virtual T inv(T a) const;
@@ -217,9 +218,7 @@ inline T RingModN<T>::add(T a, T b) const
     assert(check(b));
 
     T c = a + b;
-    if (c >= this->_card)
-        c -= this->_card;
-    return c;
+    return (c < this->_card) ? c : c - this->_card;
 }
 
 template <typename T>
@@ -228,10 +227,7 @@ inline T RingModN<T>::sub(T a, T b) const
     assert(check(a));
     assert(check(b));
 
-    if (a >= b)
-        return a - b;
-    else
-        return this->_card - (b - a);
+    return (b > a) ? this->_card - b + a : a - b;
 }
 
 template <typename T>
@@ -240,7 +236,18 @@ inline T RingModN<T>::mul(T a, T b) const
     assert(check(a));
     assert(check(b));
 
-    return T((DoubleSizeVal<T>(a) * b) % this->_card);
+    DoubleSizeVal<T> c = DoubleSizeVal<T>(a) * b;
+    return c % this->_card;
+}
+
+template <typename T>
+inline T RingModN<T>::mul_bounded(T a, T b) const
+{
+    assert(check(a));
+    assert(check(b));
+
+    DoubleSizeVal<T> c = DoubleSizeVal<T>(a) * b;
+    return c % this->_card;
 }
 
 template <typename T>
