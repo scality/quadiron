@@ -1,0 +1,138 @@
+\begin{thebibliography}{10}
+
+\bibitem{li_confidentiality}
+Mingqiang Li.
+\newblock On the confidentiality of information dispersal algorithms and their
+  erasure codes.
+\newblock {\em CoRR}, abs/1206.4123, 2012.
+
+\bibitem{reed_sol}
+I.~S. Reed and G.~Solomon.
+\newblock Polynomial codes over certain finite fields.
+\newblock {\em Journal of the Society for Industrial and Applied Mathematics},
+  8(2):300--304, 1960.
+
+\bibitem{plank_ldpc}
+J.~S. Plank and M.~G. Thomason.
+\newblock On the practical use of ldpc erasure codes for distributed storage
+  applications.
+\newblock Technical Report CS-03-510, University of Tennessee, September 2003.
+
+\bibitem{wirehair}
+Christopher Taylor.
+\newblock {Fast and Portable Fountain Codes in C}.
+\newblock https://github.com/catid/wirehair, 2018.
+\newblock [Online; accessed 1-July-2018].
+
+\bibitem{park_ldpc}
+Hyegyeong Park, Dongwon Lee, and Jaekyun Moon.
+\newblock {LDPC} code design for distributed storage: Balancing repair
+  bandwidth, reliability and storage overhead.
+\newblock {\em CoRR}, abs/1710.05615, 2017.
+
+\bibitem{xor_elephant}
+Maheswaran Sathiamoorthy, Megasthenis Asteris, Dimitris~S. Papailiopoulos,
+  Alexandros~G. Dimakis, Ramkumar Vadali, Scott Chen, and Dhruba Borthakur.
+\newblock Xoring elephants: Novel erasure codes for big data.
+\newblock {\em CoRR}, abs/1301.3791, 2013.
+
+\bibitem{erasure_azure}
+Cheng Huang, Huseyin Simitci, Yikang Xu, Aaron Ogus, Brad Calder, Parikshit
+  Gopalan, Jin Li, and Sergey Yekhanin.
+\newblock Erasure coding in windows azure storage.
+\newblock In {\em USENIX ATC 2012 (Winner of the Best Paper Award)}. USENIX,
+  June 2012.
+
+\bibitem{book_ecc}
+F.J. MacWilliams and N.J.A. Sloane.
+\newblock {\em The Theory of Error-Correcting Codes}.
+\newblock North-holland Publishing Company, 2nd edition, 1978.
+
+\bibitem{cooley_tukey}
+James~W. Cooley and John~W. Tukey.
+\newblock An algorithm for the machine calculation of complex fourier series.
+\newblock {\em Mathematics of Computation}, 19(90):297--301, 1965.
+
+\bibitem{fnt_lacan}
+A.~Soro and J.~Lacan.
+\newblock Fnt-based reed-solomon erasure codes.
+\newblock In {\em 2010 7th IEEE Consumer Communications and Networking
+  Conference}, pages 1--5, Jan 2010.
+
+\bibitem{fnt_ida}
+S.~J. Lin and W.~H. Chung.
+\newblock An efficient $(n,k)$ information dispersal algorithm based on fermat
+  number transforms.
+\newblock {\em IEEE Transactions on Information Forensics and Security},
+  8(8):1371--1383, Aug 2013.
+
+\bibitem{fft_add_wang_zhu}
+Y.~Wang and X.~Zhu.
+\newblock A fast algorithm for the fourier transform over finite fields and its
+  vlsi implementation.
+\newblock {\em IEEE Journal on Selected Areas in Communications},
+  6(3):572--577, Apr 1988.
+
+\bibitem{fft_add_cantor}
+David~G Cantor.
+\newblock On arithmetical algorithms over finite fields.
+\newblock {\em Journal of Combinatorial Theory, Series A}, 50(2):285 -- 300,
+  1989.
+
+\bibitem{fft_add_gao_mateer}
+S.~Gao and T.~Mateer.
+\newblock Additive fast fourier transforms over finite fields.
+\newblock {\em IEEE Transactions on Information Theory}, 56(12):6265--6272, Dec
+  2010.
+
+\bibitem{fft_add_chung}
+S.~J. Lin, T.~Y. Al-Naffouri, Y.~S. Han, and W.~H. Chung.
+\newblock Novel polynomial basis with fast fourier transform and its
+  application to reed-solomon erasure codes.
+\newblock {\em IEEE Transactions on Information Theory}, 62(11):6284--6299, Nov
+  2016.
+
+\bibitem{isal}
+Intel.
+\newblock Intel intelligent storage acceleration library (intel isa-l) open
+  source version.
+\newblock 01.org/intel-storage-acceleration-library-open-source-version.
+\newblock Online; accessed 30 April 2018.
+
+\bibitem{leopard}
+Christopher Taylor.
+\newblock {MDS Reed-Solomon Erasure Correction Codes for Large Data in C}.
+\newblock https://github.com/catid/leopard, 2017.
+\newblock [Online; accessed 1-July-2018].
+
+\bibitem{cauchycaterpillar}
+Christopher Taylor.
+\newblock {Short-Window Streaming Erasure Codes}.
+\newblock https://github.com/catid/CauchyCaterpillar, 2018.
+\newblock [Online; accessed 1-July-2018].
+
+\bibitem{al_fec}
+Martin Ellis, Dimitrios~P. Pezaros, and Colin Perkins.
+\newblock Performance analysis of {AL-FEC} for rtp-based streaming video
+  traffic to residential users.
+\newblock In {\em {PV}}, pages 1--6. {IEEE}, 2012.
+
+\bibitem{gao_decode}
+Shuhong Gao.
+\newblock A new algorithm for decoding reed-solomon codes.
+\newblock In {\em in Communications, Information and Network Security,
+  V.Bhargava, H.V.Poor, V.Tarokh, and S.Yoon}, pages 55--68. Kluwer, 2002.
+
+\bibitem{frobenius_fft}
+Joris van~der Hoeven and Robin Larrieu.
+\newblock The frobenius fft.
+\newblock In {\em Proceedings of the 2017 ACM on International Symposium on
+  Symbolic and Algebraic Computation}, ISSAC '17, pages 437--444. ACM, 2017.
+
+\bibitem{frob_additive}
+Wen{-}Ding Li, Ming{-}Shing Chen, Po{-}Chun Kuo, Chen{-}Mou Cheng, and Bo{-}Yin
+  Yang.
+\newblock Frobenius additive fast fourier transform.
+\newblock {\em CoRR}, abs/1802.03932, 2018.
+
+\end{thebibliography}
