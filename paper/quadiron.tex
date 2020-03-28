@@ -520,10 +520,10 @@ u_i + v_i =
  \KwResult{Element-wise addition modulo $q$ of $\vec{u}, \vec{v}$}
  \tcc{compute element-wise addition}
  $\vec{r} := \texttt{vector\_add}(\vec{u}, \vec{v})$\;
- \tcc{mask indicating elements > $(q-1)$}
- $\vec{m} := \texttt{vector\_cmpgt}(\vec{u}, \vec{h})$\;
- \tcc{modulo using the mask}
- \KwRet{$\texttt{vector\_sub}(\vec{r}, \texttt{vector\_and}(\vec{q}, \vec{m})$}
+ \tcc{subtract to $q$}
+ $\vec{m} := \texttt{vector\_sub}(\vec{r}, \vec{q})$\;
+ \tcc{If $r_i \ge q $, result is $m_i$. Otherwise, i.e. $r_i < q$, result is $r_i$}
+ \KwRet{$\texttt{vector\_min}(\vec{r}, \vec{m})$}
  \caption{Addition}
 \end{algorithm}
 
@@ -540,18 +540,26 @@ u_i - v_i =
 \begin{algorithm}[]
  \KwData{two vectors $\vec{u}, \vec{v}$}
  \KwResult{Element-wise subtraction modulo $q$ of $\vec{u}, \vec{v}$}
- \tcc{mask indicating $v_i > u_i$}
- $\vec{m} := \texttt{vector\_cmpgt}(\vec{v}, \vec{u})$\;
- \tcc{add $q$ on $\vec{u}$'s elements using mask}
- $\vec{r} := \texttt{vector\_add}(\vec{u}, \texttt{vector\_and}(\vec{q}, \vec{m}))$\;
- \tcc{return element-wise subtraction}
- \KwRet{$\texttt{vector\_sub}(\vec{r}, \vec{v})$}
+ \tcc{compute element-wise subtraction}
+ $\vec{r} := \texttt{vector\_sub}(\vec{u}, \vec{v})$\;
+ \tcc{add by $q$}
+ $\vec{m} := \texttt{vector\_add}(\vec{r}, \vec{q})$\;
+ \tcc{If $r_i \ge 0 $, result is $r_i$. Otherwise, i.e. $r_i < 0$, result is $m_i$}
+ \KwRet{$\texttt{vector\_min}(\vec{r}, \vec{m})$}
  \caption{Subtraction}
 \end{algorithm}
 
 \subsubsection{Hadamard multiplication}
 
-The multiplication consists in two steps:
+Note, we need to check and to perform extra operations for the case both elements $u_i, v_i$ are equal to $(q-1)$. However, this case occurs with a low probability. Hence, we implement two multiplication operations:
+\begin{itemize}
+	\item Simple multiplication of $u, v$ whose pair elements  $u_i, v_i$ are not both equal to $(q-1)$.
+	\item General multiplication of $u, v$ where the special case will be handled.
+\end{itemize}
+
+Obviously the simple multiplication is faster than the general multiplication. And it?s useful in performing FFT techniques in which a term of multiplications (twiddle factors) is generally known at compile-time. 
+
+The general multiplication consists in two steps:
 \begin{itemize}
 \item Step 1: compute element-wise multiplication.
 	\texttt{vector\_mullo}$(\vec{u}, \vec{v})$ does element-wise multiplication. We should handle the overflow case where
@@ -575,26 +583,33 @@ r &= r_{\text{hi}} * (q-1) + r_{\text{lo}} \\
 \end{equation}
 
 \begin{algorithm}[]
- \KwData{two vectors $\vec{u}, \vec{v}$}
- \KwResult{Hadamard modulation modulo $q$ of $\vec{u}, \vec{v}$}
- \tcc{Step1}
+ \KwData{two vectors $\vec{u}, \vec{v}$ whose elements $u_i, v_i$ are not both equal to $(q-1)$}
+ \KwResult{$\texttt{simp\_mul}(\vec{u}, \vec{v})$: simple multiplication modulo $q$ of $\vec{u}, \vec{v}$}
  \tcc{compute element-wise addition}
- $\vec{s}$ := \texttt{vector\_mullo}$(\vec{u}, \vec{v})$\;
- \tcc{mask indicating $u_i=v_i=q-1$}
- $\vec{m} := \texttt{vector\_and}($\\
-	$\texttt{vector\_cmpeq}(\vec{u}, \vec{h}),$
-	$\texttt{vector\_cmpeq}(\vec{v}, \vec{h}))$\;
- \tcc{set 1 at found indices}
- $\vec{r} = \texttt{vec\_or}(\vec{1}, \texttt{vector\_andnot}(\vec{m}, \vec{s}))$\;
- 
- \tcc{Step2}
- \tcc{mask to get low part}
- $\vec{r}_{\text{lo}} := \texttt{vec\_and}(\vec{r}, \overrightarrow{(q-2)})$\;
- \tcc{right shift $\vec{r}$ on $(w-2)$ bytes and use mask to get high part}
- $\vec{r}_{\text{hi}} := \texttt{vector\_and}(\overrightarrow{(q-2)}, \texttt{vector\_rshift}(\vec{r}, w-2))$\;
- \tcc{result is high part subtracts low part}
- \KwRet{$\texttt{vector\_sub}(\vec{r}_{\text{hi}}, \vec{r}_{\text{lo}})$}
- \caption{Hadamard multiplication}
+ $\vec{s} := \texttt{vector\_mullo}(\vec{u}, \vec{v})$\;
+ \tcc{get low part of $s$}
+ $\vec{l} := \texttt{vector\_blend}(0, \vec{s},0x55)$\;
+ \tcc{get high part of $s$}
+ $\vec{h} := \texttt{vector\_blend}(0, \texttt{vector\_rshift}(\vec{s}, 2), 0x55)$\;
+  \tcc{result is returned by subtracting the low part by the high part}
+  \KwRet{$subtraction(\vec{l}, \vec{h})$}
+ \caption{Simple multiplication}
+\end{algorithm}
+
+\begin{algorithm}[]
+ \KwData{two vectors $\vec{u}, \vec{v}$}
+ \KwResult{General multiplication modulo $q$ of $\vec{u}, \vec{v}$}
+ \tcc{perform a simple multiplication}
+ $\vec{s} := \texttt{simp\_mul}(\vec{u}, \vec{v})$\;
+ \tcc{create a mask checking whether both of elements $u_i, v_i$ are equal to $q-1$}
+ $\vec{m} := \texttt{vector\_and}(\texttt{vector\_cmpeq}(u, h), \texttt{vector\_cmpeq}(v, h))$\;
+ \tcc{return simple multiplication if no pair of elements $u_i, v_i$ are equal to $q-1$}
+  \lIf{$\texttt{is\_zero}(\vec{m})$} { \Return $\vec{s}$ }
+ \tcc{create a vector whose element is 1 according to the mask, otherwise zero}
+  $\vec{d} := \texttt{vector\_and}(1, \vec{m})$\;
+ \tcc{set specified element $s_i=1$ for $u_i= v_i=q-1$ and return it}
+ \KwRet{$\texttt{vector\_or}(\vec{s}, \vec{d})$}
+ \caption{General multiplication}
 \end{algorithm}
 
 \subsection{Testing}
@@ -614,17 +629,21 @@ The implementation is open source (licensed under the 3-Clause BSD License) and 
 
 \section{Performance}
 
-Encoding performance is expressed by the encoding speed metric that is the ratio of encoded data size to encoding time, i.e. for non-systematic codes
+Encoding performance is expressed by the encoding speed metric that is the ratio of encoded data size to encoding time.
+
+In our measurements, for systematic codes whose encoding performs a matrix multiplication, the encoding speed is given by:
+
+\begin{equation}\label{eq:enc_metric_def_sys}
+\text{Encoding speed} =  \frac{ n - k }{ k } \times  \frac{ \text{file size}  }{ \text{encoding time} }
+\end{equation}
+
+For other codes, i.e. FFT-based codes, the encoding speed is given by:
 
 \begin{equation}\label{eq:enc_metric_def}
 \text{Encoding speed} =  \frac{ n }{ k } \times  \frac{ \text{file size}  }{ \text{encoding time} }
 \end{equation}
 
-and for systematic codes
-
-\begin{equation}\label{eq:enc_metric_def_sys}
-\text{Encoding speed} =  \frac{ n - k }{ k } \times  \frac{ \text{file size}  }{ \text{encoding time} }
-\end{equation}
+We use the two different formulas that expresses the computational cost of the corresponding encoder.
 
 Decoding performance is expressed by the decoding speed metric that is the ratio of information data size to decoding time, i.e.
 
