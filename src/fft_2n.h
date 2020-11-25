@@ -155,7 +155,7 @@ class Radix2 : public FourierTransform<T> {
     size_t simd_trailing_len;
     size_t simd_offset;
 
-    std::unique_ptr<T[]> rev = nullptr;
+    std::vector<T> rev;
     std::unique_ptr<vec::Vector<T>> W = nullptr;
     std::unique_ptr<vec::Vector<T>> inv_W = nullptr;
     T* vec_W;
@@ -197,7 +197,7 @@ Radix2<T>::Radix2(const gf::Field<T>& gf, int n, int data_len, size_t pkt_size)
     card = this->gf->card();
     card_minus_one = this->gf->card_minus_one();
 
-    rev = std::unique_ptr<T[]>(new T[n]);
+    rev.reserve(n);
     init_bitrev();
 
     // Indices used for accelerated functions
@@ -370,21 +370,7 @@ void Radix2<T>::fft(vec::Buffers<T>& output, vec::Buffers<T>& input)
     const unsigned group_len =
         (input_len > data_len) ? len / input_len : len / data_len;
 
-    const std::vector<T*>& i_mem = input.get_mem();
-    const std::vector<T*>& o_mem = output.get_mem();
-
-    for (unsigned idx = 0; idx < input_len; ++idx) {
-        // set output  = scramble(input), i.e. bit reversal ordering
-        for (unsigned i = rev[idx]; i < rev[idx] + group_len; ++i) {
-            memcpy(o_mem[i], i_mem[idx], buf_size);
-        }
-    }
-    for (unsigned idx = input_len; idx < data_len; ++idx) {
-        // set output  = scramble(input), i.e. bit reversal ordering
-        for (unsigned i = rev[idx]; i < rev[idx] + group_len; ++i) {
-            memset(o_mem[i], 0, buf_size);
-        }
-    }
+    output.radix2_fft_prepare(input, rev, data_len, group_len);
 
     // ----------------------
     // Two layers at a time
@@ -522,38 +508,29 @@ void Radix2<T>::fft_inv(vec::Buffers<T>& output, vec::Buffers<T>& input)
     bit_rev_permute(output);
 
     // copy input to output
-    const std::vector<T*>& i_mem = input.get_mem();
-    const std::vector<T*>& o_mem = output.get_mem();
-    unsigned i;
-    for (i = 0; i < input_len; ++i) {
-        memcpy(o_mem[i], i_mem[i], buf_size);
-    }
+    output.radix2_fft_inv_prepare(input);
 
     unsigned m = len / 2;
+    unsigned doubled_m = len;
 
     if (input_len < len) {
-        const unsigned input_len_power_2 = arith::ceil2<unsigned>(input_len);
-        for (; i < input_len_power_2; ++i) {
-            memset(o_mem[i], 0, buf_size);
-        }
-
         // For Q are zeros only => Q = c * P
         for (; m >= input_len; m /= 2) {
-            unsigned doubled_m = 2 * m;
             for (unsigned j = 0; j < m; ++j) {
                 const T r = inv_W->get(j * len / doubled_m);
                 butterfly_gs_step_simple(output, r, j, m, doubled_m);
             }
+            doubled_m = m;
         }
     }
 
     // Next, normal butterlfy GS is performed
     for (; m >= 1; m /= 2) {
-        unsigned doubled_m = 2 * m;
         for (unsigned j = 0; j < m; ++j) {
             const T r = inv_W->get(j * len / doubled_m);
             butterfly_gs_step(output, r, j, m, doubled_m);
         }
+        doubled_m = m;
     }
 
     // 2nd reversion of elements of output to return its natural order
